@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "algo": "am_gate",
+  "fMin": 17000,
+  "fMax": 21000,
+  "vol": 8,
+  "pulseMs": 100,
+  "shriekMs": 60,
+  "vibThreshold": 0.12,
+  "seedAction": "keep",
+  "rationale": "Local mock patch: AM gate at residential-safe gain for scientific tooling dry-run.",
+  "engineId": "iot-asp-autoroute",
+  "trigger": "offline-mock"
+}

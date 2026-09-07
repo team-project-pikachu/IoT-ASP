@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from . import gcs_io
-from .clamps import CLAMPS, validate_patch
+from .clamps import CLAMPS, SCHEMA_VERSION, validate_patch
 from .priors import prior_text
 from .sudden_freq import author_sudden_freq_patch, is_sudden_freq_event
 
@@ -52,6 +52,7 @@ def write_patch(node_id: str, patch_json: str) -> dict[str, Any]:
     if not ok:
         return {"ok": False, "error": msg, "patch": clamped}
 
+    clamped.setdefault("schemaVersion", SCHEMA_VERSION)
     clamped.setdefault("engineId", ENGINE_ID)
     clamped.setdefault(
         "createdAt", datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -108,8 +109,17 @@ def ingest_telemetry(telemetry_json: str) -> dict[str, Any]:
     except json.JSONDecodeError as exc:
         return {"ok": False, "error": f"invalid JSON: {exc}"}
 
+    tel.setdefault("schemaVersion", SCHEMA_VERSION)
+    # Accept absA / a and audioContextState / ctxState aliases from the static app
+    if "absA" not in tel and "a" in tel:
+        tel["absA"] = tel["a"]
+    if "audioContextState" not in tel and "ctxState" in tel:
+        tel["audioContextState"] = tel["ctxState"]
+    if "suddenFreq" not in tel:
+        tel["suddenFreq"] = is_sudden_freq_event(tel)
+
     node = str(tel.get("deviceId") or tel.get("nodeId") or "node1")
-    ts = tel.get("ts") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
+    ts = tel.get("ts") or tel.get("t") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
     if isinstance(ts, (int, float)):
         ts = datetime.fromtimestamp(ts / 1000.0 if ts > 1e12 else ts, tz=timezone.utc).strftime(
             "%Y-%m-%dT%H-%M-%SZ"

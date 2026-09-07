@@ -46,9 +46,10 @@ gcloud auth application-default login
 adk web   # or: adk run iot_asp_autoroute
 ```
 
-## Deploy
+## Deploy (independent of Vercel)
 
-See `docs/adk-autoroute.md`. Service account + Vertex; no API keys in git.
+See `docs/adk-autoroute.md` and wire format `docs/api-contract.md`.  
+`adk deploy …` / Cloud Run updates the backend only — do not redeploy Vercel unless `public/` changed. Service account + Vertex; no API keys in git.
 
 ## WAF notes
 

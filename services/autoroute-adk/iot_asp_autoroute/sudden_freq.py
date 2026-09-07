@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from .clamps import ALLOWED_ALGOS, validate_patch
+from .clamps import ALLOWED_ALGOS, SCHEMA_VERSION, normalize_vol_ui_percent, validate_patch
 from .priors import prior_text
 
 ALGO_ROTATE = ("hop", "am_gate", "shriek_chirp", "shriek_sweep", "burst")
@@ -32,6 +32,8 @@ def is_sudden_freq_event(telemetry: dict[str, Any]) -> bool:
     """True when phone flagged gemini autoroute / sudden rotate state."""
     if telemetry.get("holdManual"):
         return False
+    if telemetry.get("suddenFreq") is True:
+        return True
     if telemetry.get("geminiAutorouteFlag"):
         return True
     if telemetry.get("event") in ("suddenFreq", "sudden_freq", "spectrum_onset", "mic_onset"):
@@ -73,8 +75,8 @@ def author_sudden_freq_patch(telemetry: dict[str, Any]) -> tuple[bool, str, dict
     # Neighbor-safe jitter
     pulse = max(20.0, min(200.0, pulse + 10))
     shriek = max(20.0, min(120.0, shriek + 5))
-    vol = float(telemetry.get("vol") or 0.08)
-    vol = min(vol, 0.12)
+    vol = normalize_vol_ui_percent(float(telemetry.get("vol") or 8))
+    vol = min(vol, 12.0)
 
     rationale = (
         f"suddenFreq autorotate for {node}"
@@ -83,6 +85,7 @@ def author_sudden_freq_patch(telemetry: dict[str, Any]) -> tuple[bool, str, dict
         + "NS/linearized priors as constraints only"
     )
     patch: dict[str, Any] = {
+        "schemaVersion": SCHEMA_VERSION,
         "algo": algo if algo in ALLOWED_ALGOS else "hop",
         "fMin": float(telemetry.get("fMin") or 17000),
         "fMax": float(telemetry.get("fMax") or 23000),

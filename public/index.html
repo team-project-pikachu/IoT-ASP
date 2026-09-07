@@ -10,10 +10,10 @@
 <meta name="application-name" content="HOP">
 <meta name="theme-color" content="#141519">
 <meta name="format-detection" content="telephone=no">
-<meta name="description" content="Near-ultrasonic hopping tone and FSK link for iPhone Safari.">
+<meta name="description" content="Scientific near-ultrasonic hop / pulse / shriek tooling for multi-node fleets via iPhone native Bluetooth audio (not Web Bluetooth).">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>HOP — near-ultrasonic tone + FSK link</title>
+<title>HOP — near-ultrasonic scientific tooling</title>
 <style>
 :root{
   --panel:#141519;
@@ -191,6 +191,20 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 .syslist .na{color:var(--dead)}
 .syscheck a{text-decoration:none}
 
+
+.vibpill{font:400 11px/1 var(--mono);color:var(--dim);margin-top:8px}
+.vibpill b{color:var(--uv-hot);font-weight:400}
+.algo-active{color:var(--lime)}
+
+.mon{padding:16px 0;border-bottom:1px solid var(--rule)}
+.mon-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px 14px;margin-top:10px;font:400 11px/1.45 var(--mono);color:var(--dim);font-variant-numeric:tabular-nums}
+.mon-grid b{color:var(--ink);font-weight:400}
+.mon-log{margin-top:10px;max-height:112px;overflow:auto;background:#0E0F13;border:1px solid var(--rule);border-radius:3px;padding:8px 10px;font:400 11px/1.5 var(--mono);color:var(--dim)}
+.mon-log .line{padding:2px 0;border-bottom:1px solid #1a1d26}
+.mon-log .line:last-child{border-bottom:0}
+.mon-log .hi{color:var(--uv-hot)}
+.hold-on{border-color:var(--amber)!important;color:var(--amber)!important}
+
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 @media (max-width:520px){
   .deck{justify-content:center}
@@ -209,20 +223,22 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   <section class="syscheck" id="syscheck">
     <div class="plot-head">
-      <p class="legend">Fleet · 3 blasters · 1 iPhone ↔ 1 Soundcore 2</p>
+      <p class="legend">Fleet · 2 nodes 1:1 native BT audio · optional chair node</p>
       <button type="button" class="tap" id="sysBtn">Systems check</button>
     </div>
     <div class="seg" role="group" aria-label="This phone mode" style="margin-top:10px">
       <button type="button" id="roleTx" aria-pressed="true">Blaster / TX</button>
-      <button type="button" id="roleHop" aria-pressed="false">Hop only</button>
+      <button type="button" id="roleHop" aria-pressed="false">Carrier only</button>
       <button type="button" id="roleRx" aria-pressed="false">Listen (debug)</button>
     </div>
     <p class="sub" style="margin-top:10px">
-      Open this same URL on all three phones. Each pairs to its own
-      <a href="https://www.anker.com/ca/products/soundcore-2" style="color:var(--uv-hot)">Soundcore 2</a>
-      (1:1). Tap <b>Signal on</b> on every phone so all hop and blast at once —
-      each Safari tab uses its own independent random hop schedule.
+      Open this URL on two phones; each pairs <b>1:1</b> via <b>iPhone native Bluetooth</b>
+      (system audio route — not Web Bluetooth) to its own speaker
+      (e.g. <a href="https://www.anker.com/ca/products/soundcore-2" style="color:var(--uv-hot)">Soundcore 2</a>).
+      Optional third node: phone mounted on a chair for structure-borne / accel-biased sensing.
+      Tap <b>Signal on</b> so nodes transmit concurrently — each tab uses an independent RNG (incoherent).
     </p>
+    <p class="vibpill">vib class <b id="vibClass">none</b> · algo <b id="algoLive" class="algo-active">hop</b> · auto <b id="vibAutoLive">off</b> · sudden <b id="suddenLive">idle</b></p>
     <ul class="syslist" id="sysList"></ul>
   </section>
 
@@ -292,6 +308,28 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     </div>
 
     <div class="grp">
+      <p class="legend">Algorithm · EE first cut</p>
+      <div class="seg" role="group" aria-label="Carrier algorithm">
+        <button type="button" id="algoHop" aria-pressed="true">Hop</button>
+        <button type="button" id="algoPulse" aria-pressed="false">AM gate</button>
+        <button type="button" id="algoShriek" aria-pressed="false">Shriek</button>
+      </div>
+      <div class="seg" role="group" aria-label="Vib auto-route" style="margin-top:10px">
+        <button type="button" id="vibAutoOff" aria-pressed="true">Vib off</button>
+        <button type="button" id="vibAutoOn" aria-pressed="false">Vib auto</button>
+      </div>
+      <div class="seg" role="group" aria-label="Sudden frequency autorotate" style="margin-top:10px">
+        <button type="button" id="suddenOff" aria-pressed="false">Sudden off</button>
+        <button type="button" id="suddenOn" aria-pressed="true">Autorotate on sudden frequency</button>
+      </div>
+      <div class="tapbar" style="margin-top:10px">
+        <button type="button" class="tap" id="holdPatchBtn" aria-pressed="false">Hold / Manual</button>
+      </div>
+      <p class="sub" style="margin-top:8px">patch <b id="patchUrlLabel">/patch.json</b> · <b id="patchStatus">idle</b> · gemini flag <b id="geminiFlagLive">—</b></p>
+      <div class="row" style="margin-top:12px"><label for="vibSens">sens</label><input type="range" id="vibSens" min="1" max="40" step="1" value="12"><output id="vibSensOut">12</output></div>
+    </div>
+
+    <div class="grp">
       <p class="legend">Symbol</p>
       <div class="row"><label for="symMs">dur</label><input type="range" id="symMs" min="60" max="500" step="10" value="200"><output id="symMsOut">200 ms</output></div>
       <p class="legend" style="margin-top:4px" id="msgLen">—</p>
@@ -309,10 +347,44 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   </section>
 
 
+
+  <section class="mon" id="monitor">
+    <div class="plot-head">
+      <p class="legend">Monitor · telemetry beacon (no site PII)</p>
+      <p class="legend" id="ctxStateLabel">ctx —</p>
+    </div>
+    <p class="sub" style="margin:8px 0 0">Fleet audio: <b>iPhone native Bluetooth</b> → paired Soundcore (OS route). No Web Bluetooth.</p>
+    <div class="mon-grid">
+      <div>deviceId <b id="telDevice">—</b></div>
+      <div>seed <b id="telSeed">—</b></div>
+      <div>algo <b id="telAlgo">hop</b></div>
+      <div>peakHz <b id="telPeak">—</b></div>
+      <div>|a| <b id="telAccel">—</b></div>
+      <div>micEnergy <b id="telMic">—</b></div>
+      <div>vibClass <b id="telVib">none</b></div>
+      <div>hold <b id="telHold">off</b></div>
+      <div>sudden <b id="telSudden">idle</b></div>
+    </div>
+    <div class="mon-log" id="monLog" aria-live="polite"></div>
+  </section>
+
   <div class="note">
-    <b>Incoherent fleet · all blast.</b> Three phones, three Soundcore 2s — each iPhone pairs 1:1 to its own speaker
-    and transmits at once. Hop schedules are independent per tab (<code>Math.random</code> locally; no shared seed or sync).
-    Listen is optional loopback/debug only.
+    <b>Public scientific tooling.</b> Generalized near-ultrasonic lab UI — no street addresses or study-site PII.
+    Telemetry is device metrics only (no site PII). <b>Hold / Manual</b> freezes autoroute param patches so humans keep the knobs.
+    Patches poll <code>/patch.json</code> mock offline, or <code>?patch=</code> / <code>?telemetry=</code> for a live GCP ingest — browser never embeds Gemini keys.
+  </div>
+
+  <div class="note">
+    <b>Incoherent multi-node fleet.</b> Default: two phones, each paired 1:1 via <b>iPhone native Bluetooth</b>
+    (system audio route to a Soundcore — <b>not</b> Web Bluetooth), transmitting at once.
+    Optional third node may be chair-mounted for accel / structure-borne bias. Schedules are independent per tab
+    (<code>Math.random</code>; no shared seed). Listen is optional loopback/debug only.
+  </div>
+
+  <div class="note">
+    <b>Algorithms.</b> <code>hop</code> = incoherent frequency hop (default). <code>am_gate</code>/<code>pulse</code> = AM gated carrier.
+    <code>shriek</code>/<code>shriek_chirp</code> = short upward chirp bursts. With <b>Vib auto</b>, physical accel prefers pulse/shriek;
+    acoustic mic energy prefers pulse/hop. Debounced ≥300&nbsp;ms. <b>Autorotate on sudden frequency</b>: spectral/mic onset Δf or energy spike rotates algo/params locally; flags Gemini autoroute when patch endpoint is configured. Keep output low for neighbor-safe levels (default 8%).
   </div>
 
   <div class="note warn">
@@ -357,6 +429,17 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 (() => {
   "use strict";
 
+  // ══ backend endpoints (env-like; no Gemini/Vertex keys — poll/apply only) ══
+  // Override live targets without redeploying ADK: ?patch= / ?telemetry= / ?pollMs=
+  // Leave telemetry empty for offline; patch defaults to static mock /patch.json
+  const SCHEMA_VERSION = 1;
+  const BACKEND_BASE_URL = "";           // e.g. "https://iot-asp-ingest-xxxxx.run.app"
+  const BACKEND_PATCH_URL = "";          // absolute patch URL, or "" → mock / base
+  const BACKEND_TELEMETRY_URL = "";      // absolute ingest URL, or "" → base+/ingest
+  const BACKEND_PATCH_PATH = "/patch.json";
+  const BACKEND_TELEMETRY_PATH = "/ingest";
+  const BACKEND_POLL_MS_DEFAULT = 3000;
+
   const $ = id => document.getElementById(id);
   const powerBtn = $("power"), powerLabel = $("powerLabel");
   const freqBig = $("freqBig"), measuredEl = $("measured"), targetEl = $("target");
@@ -366,6 +449,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const fMin = $("fMin"), fMax = $("fMax"), fMinOut = $("fMinOut"), fMaxOut = $("fMaxOut");
   const dMin = $("dMin"), dMax = $("dMax"), dMinOut = $("dMinOut"), dMaxOut = $("dMaxOut");
   const modeJump = $("modeJump"), modeGlide = $("modeGlide");
+  const algoHop = $("algoHop"), algoPulse = $("algoPulse"), algoShriek = $("algoShriek");
+  const vibAutoOff = $("vibAutoOff"), vibAutoOn = $("vibAutoOn");
+  const vibSens = $("vibSens"), vibSensOut = $("vibSensOut");
+  const vibClassEl = $("vibClass"), algoLive = $("algoLive"), vibAutoLive = $("vibAutoLive");
+  const suddenLive = $("suddenLive"), suddenOff = $("suddenOff"), suddenOn = $("suddenOn"), geminiFlagLive = $("geminiFlagLive");
   const vol = $("vol"), volOut = $("volOut"), dbfs = $("dbfs");
   const msgIn = $("msg"), txBtn = $("txBtn"), loopBtn = $("loopBtn"), micBtn = $("micBtn");
   const symMs = $("symMs"), symMsOut = $("symMsOut"), msgLen = $("msgLen");
@@ -373,6 +461,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const rxSrc = $("rxSrc"), rxTone = $("rxTone"), rxSnr = $("rxSnr");
   const rxCount = $("rxCount"), rxErr = $("rxErr"), rxBar = $("rxBar");
   const specCv = $("spectrum"), traceCv = $("trace");
+  const holdPatchBtn = $("holdPatchBtn");
+  const patchUrlLabel = $("patchUrlLabel"), patchStatusEl = $("patchStatus");
+  const telDevice = $("telDevice"), telSeed = $("telSeed"), telAlgo = $("telAlgo");
+  const telPeak = $("telPeak"), telAccel = $("telAccel"), telMic = $("telMic");
+  const telVib = $("telVib"), telHold = $("telHold"), ctxStateLabel = $("ctxStateLabel");
+  const monLogEl = $("monLog");
 
   // ══ FSK tone plan ═════════════════════════════════════════════════════
   // 32 data tones on a 100 Hz grid from 17 650 Hz, framed by START and END
@@ -389,6 +483,46 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let ctx=null, osc=null, toneGain=null, bus=null, analyser=null, loopAnalyser=null;
   let running=false, glide=false;
   let nextHopAt=0, lastTarget=19000, hopCount=0;
+  let algo="hop"; // hop | pulse | shriek  (pulse≡am_gate, shriek≡shriek_chirp)
+  let vibAuto=false, vibClass="none", lastVibSwitch=0;
+  let suddenAuto=true, suddenState="idle", lastSuddenAt=0, geminiAutorouteFlag=false;
+  let prevSpecPeakHz=null, prevSpecEnergy=-120, prevMicPeakHz=null;
+  let accelMag=0, lfMag=0, acousticEnergy=-120;
+  let pulseOn=true;
+  let holdManual=false, lastPeakHz=null, lastPatchAt=0, patchStatus="idle";
+  let pulseMs=120, shriekMs=55;
+  let deviceId="", seed=0;
+  try {
+    deviceId = localStorage.getItem("hop.deviceId") || "";
+    if (!deviceId) {
+      deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem("hop.deviceId", deviceId);
+    }
+    const ss = localStorage.getItem("hop.seed");
+    seed = ss ? (+ss || 0) : (Math.floor(Math.random() * 1e9) + 1);
+    if (!ss) localStorage.setItem("hop.seed", String(seed));
+  } catch (_) {
+    deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
+    seed = Math.floor(Math.random() * 1e9) + 1;
+  }
+  const qs = new URLSearchParams(location.search);
+  function joinBackend(base, path){
+    if (!base) return path || "";
+    const b = String(base).replace(/\/$/, "");
+    const p = String(path || "").replace(/^\//, "");
+    return p ? b + "/" + p : b;
+  }
+  const PATCH_URL = qs.get("patch")
+    || BACKEND_PATCH_URL
+    || (BACKEND_BASE_URL ? joinBackend(BACKEND_BASE_URL, BACKEND_PATCH_PATH) : BACKEND_PATCH_PATH);
+  const TELEMETRY_URL = qs.get("telemetry")
+    || BACKEND_TELEMETRY_URL
+    || (BACKEND_BASE_URL ? joinBackend(BACKEND_BASE_URL, BACKEND_TELEMETRY_PATH) : "");
+  const POLL_MS = Math.max(2000, Math.min(5000, +(qs.get("pollMs") || BACKEND_POLL_MS_DEFAULT)));
+  const VOL_PATCH_MAX = 12, BAND_ABS_LO = 17000, BAND_ABS_HI = 23000;
+  function mulberry32(a){ return function(){ let t = (a += 0x6D2B79F5); t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  let rng = mulberry32(seed >>> 0);
+  const rand = () => rng();
   const pending=[], history=[];
   let specData=null, loopData=null;
 
@@ -405,14 +539,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const dwellLo  = () => Math.min(+dMin.value,+dMax.value);
   const dwellHi  = () => Math.max(+dMin.value,+dMax.value);
   const level    = () => +vol.value/100;
-  const pickFreq  = () => bandLow() + Math.random()*(bandHigh()-bandLow());
-  const pickDwell = () => dwellLo() + Math.random()*(dwellHi()-dwellLo());
+  const pickFreq  = () => bandLow() + rand()*(bandHigh()-bandLow());
+  const pickDwell = () => dwellLo() + rand()*(dwellHi()-dwellLo());
 
-  // ══ hop scheduler ═════════════════════════════════════════════════════
+  // ══ carrier schedulers (hop / pulse / shriek) ══════════════════════════
   // Unbounded loop, refilled against the audio clock so intervals stay exact
   // over hours instead of drifting the way a setTimeout chain would.
-  function schedule(){
-    if (!running || !ctx) return;
+  function bandMid(){ return (bandLow() + bandHigh()) / 2; }
+
+  function scheduleHop(){
     const glideSec = Math.min(0.4, dwellLo()*0.8);
     while (nextHopAt < ctx.currentTime + LOOKAHEAD){
       const f = pickFreq(), d = pickDwell(), p = osc.frequency;
@@ -420,13 +555,225 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         p.setValueAtTime(lastTarget, nextHopAt);
         p.linearRampToValueAtTime(f, nextHopAt + glideSec);
       } else {
-        p.setValueAtTime(f, nextHopAt);   // held exactly, no automation running
+        p.setValueAtTime(f, nextHopAt);
       }
-      pending.push({ t:nextHopAt, f, d });
+      if (toneGain && !txActive){
+        const amp = Math.max(level(), 0.0002);
+        toneGain.gain.setValueAtTime(amp, nextHopAt);
+      }
+      pending.push({ t:nextHopAt, f, d, kind:"hop" });
       lastTarget = f;
       nextHopAt += d;
     }
   }
+
+  function schedulePulse(){
+    // AM / gated pulses (am_gate): carrier near mid-band (slow hop every few gates), gain on/off.
+    const period = Math.max(0.04, (pulseMs || 120) / 1000);
+    const duty = 0.35;
+    while (nextHopAt < ctx.currentTime + LOOKAHEAD){
+      if (rand() < 0.08) lastTarget = pickFreq();
+      else lastTarget = bandMid() + (rand()-0.5)*400;
+      const f = Math.min(bandHigh(), Math.max(bandLow(), lastTarget));
+      osc.frequency.setValueAtTime(f, nextHopAt);
+      if (toneGain && !txActive){
+        const amp = Math.max(level(), 0.0002);
+        const onEnd = nextHopAt + period * duty;
+        toneGain.gain.setValueAtTime(amp, nextHopAt);
+        toneGain.gain.setValueAtTime(0.0001, onEnd);
+      }
+      pending.push({ t:nextHopAt, f, d:period, kind:"pulse" });
+      nextHopAt += period;
+    }
+  }
+
+  function scheduleShriek(){
+    // Short upward chirps (shriek_chirp) across the band, then silence.
+    const chirp = Math.max(0.03, (shriekMs || 55) / 1000), gap = Math.max(0.08, chirp * 3);
+    while (nextHopAt < ctx.currentTime + LOOKAHEAD){
+      const f0 = bandLow() + rand()*200;
+      const f1 = Math.min(bandHigh(), f0 + 3000 + rand()*2000);
+      osc.frequency.setValueAtTime(f0, nextHopAt);
+      osc.frequency.linearRampToValueAtTime(f1, nextHopAt + chirp);
+      if (toneGain && !txActive){
+        const amp = Math.max(level(), 0.0002);
+        toneGain.gain.setValueAtTime(amp, nextHopAt);
+        toneGain.gain.setValueAtTime(0.0001, nextHopAt + chirp);
+      }
+      pending.push({ t:nextHopAt, f:f1, d:chirp+gap, kind:"shriek" });
+      lastTarget = f1;
+      nextHopAt += chirp + gap;
+    }
+  }
+
+  function schedule(){
+    if (!running || !ctx || !osc) return;
+    if (algo === "pulse") schedulePulse();
+    else if (algo === "shriek") scheduleShriek();
+    else scheduleHop();
+  }
+
+  function normalizeAlgo(a){
+    if (a === "am_gate") return "pulse";
+    if (a === "shriek_chirp" || a === "shriek_sweep" || a === "burst") return "shriek";
+    return a;
+  }
+  function algoWireName(){
+    return algo === "pulse" ? "am_gate" : algo === "shriek" ? "shriek_chirp" : "hop";
+  }
+  function setAlgo(a, fromVib){
+    a = normalizeAlgo(a);
+    if (a !== "hop" && a !== "pulse" && a !== "shriek") return;
+    if (algo === a && !fromVib) return;
+    algo = a;
+    algoHop.setAttribute("aria-pressed", String(a === "hop"));
+    algoPulse.setAttribute("aria-pressed", String(a === "pulse"));
+    algoShriek.setAttribute("aria-pressed", String(a === "shriek"));
+    if (algoLive) algoLive.textContent = algoWireName();
+    if (typeof updateTelUI === "function") updateTelUI();
+    try { localStorage.setItem("hop.algo", a); } catch(_){}
+    // Reschedule cleanly from now
+    if (running && ctx && osc){
+      pending.length = 0;
+      nextHopAt = ctx.currentTime + 0.05;
+      try {
+        osc.frequency.cancelScheduledValues(ctx.currentTime);
+        if (toneGain) toneGain.gain.cancelScheduledValues(ctx.currentTime);
+      } catch(_){}
+      schedule();
+    }
+  }
+
+  function setVibAuto(on){
+    vibAuto = !!on;
+    vibAutoOff.setAttribute("aria-pressed", String(!vibAuto));
+    vibAutoOn.setAttribute("aria-pressed", String(vibAuto));
+    if (vibAutoLive) vibAutoLive.textContent = vibAuto ? "on" : "off";
+    try { localStorage.setItem("hop.vibAuto", vibAuto ? "1" : "0"); } catch(_){}
+    if (vibAuto) ensureMotion();
+  }
+
+  function routeFromVib(cls){
+    if (!vibAuto) return;
+    const now = performance.now();
+    if (now - lastVibSwitch < 300) return;
+    let next = algo;
+    if (cls === "physical" || cls === "infra_felt") next = rand() < 0.55 ? "shriek" : "pulse";
+    else if (cls === "acoustic") next = rand() < 0.5 ? "pulse" : "hop";
+    else return;
+    if (next !== algo){
+      lastVibSwitch = now;
+      setAlgo(next, true);
+    }
+  }
+
+  function updateVibClass(cls){
+    if (cls === vibClass) return;
+    vibClass = cls;
+    if (vibClassEl) vibClassEl.textContent = cls;
+    routeFromVib(cls);
+  }
+
+  function setSuddenAuto(on){
+    suddenAuto = !!on;
+    if (suddenOff) suddenOff.setAttribute("aria-pressed", String(!suddenAuto));
+    if (suddenOn) suddenOn.setAttribute("aria-pressed", String(suddenAuto));
+    try { localStorage.setItem("hop.suddenAuto", suddenAuto ? "1" : "0"); } catch(_){}
+    if (!suddenAuto) {
+      suddenState = "idle";
+      if (suddenLive) suddenLive.textContent = "off";
+    } else if (suddenLive && suddenState === "idle") {
+      suddenLive.textContent = "armed";
+      suddenState = "armed";
+    }
+  }
+
+  function flagGeminiAutoroute(reason){
+    geminiAutorouteFlag = true;
+    if (geminiFlagLive) geminiFlagLive.textContent = "pending";
+    if (typeof monLog === "function") monLog("gemini autoroute flag · " + reason);
+    if (typeof updateTelUI === "function") updateTelUI();
+  }
+
+  function autorotateOnSudden(reason, peakHz){
+    if (!suddenAuto || holdManual) return;
+    const now = performance.now();
+    if (now - lastSuddenAt < 900) return;
+    lastSuddenAt = now;
+    suddenState = "rotate";
+    if (suddenLive) suddenLive.textContent = "rotate";
+    // Local immediate rotate: cycle algo + nudge dwell/params
+    const order = ["hop", "pulse", "shriek"];
+    const next = order[(order.indexOf(algo) + 1 + Math.floor(rand() * 2)) % order.length];
+    setAlgo(next, true);
+    // light param jitter (neighbor-safe)
+    const dSpan = Math.max(1, +dMax.value - +dMin.value);
+    dMin.value = Math.max(1, Math.min(60, +dMin.value + (rand() < 0.5 ? -1 : 1)));
+    dMax.value = Math.max(+dMin.value, Math.min(60, +dMin.value + dSpan));
+    if (typeof syncDwell === "function") syncDwell();
+    pulseMs = Math.max(40, Math.min(220, pulseMs + Math.round((rand() - 0.5) * 40)));
+    shriekMs = Math.max(30, Math.min(120, shriekMs + Math.round((rand() - 0.5) * 20)));
+    flagGeminiAutoroute(reason + (peakHz != null ? (" @ " + Math.round(peakHz) + " Hz") : ""));
+    if (typeof monLog === "function") monLog("autorotate on sudden frequency → " + algoWireName());
+    setTimeout(() => {
+      if (suddenAuto) {
+        suddenState = "armed";
+        if (suddenLive) suddenLive.textContent = "armed";
+      }
+    }, 1200);
+  }
+
+  function detectSuddenFrequency(an, data, fromMic){
+    if (!suddenAuto || !an || !data || !ctx) return;
+    an.getFloatFrequencyData(data);
+    const binHz = ctx.sampleRate / an.fftSize;
+    const lo = Math.floor(17000 / binHz);
+    const hi = Math.min(data.length - 1, Math.ceil(23000 / binHz));
+    let k = lo, best = -Infinity, sum = 0, n = 0;
+    for (let i = lo; i <= hi; i++) {
+      if (data[i] > best) { best = data[i]; k = i; }
+      sum += data[i]; n++;
+    }
+    const floor = n ? sum / n : -120;
+    const peakHz = k * binHz;
+    const snr = best - floor;
+    const prevHz = fromMic ? prevMicPeakHz : prevSpecPeakHz;
+    const prevE = prevSpecEnergy;
+    const df = prevHz != null ? Math.abs(peakHz - prevHz) : 0;
+    const dE = best - prevE;
+    // Sudden onset: large frequency jump with usable SNR, or sharp energy rise
+    const onset = (prevHz != null && df > 350 && snr > 8) || (dE > 12 && snr > 10);
+    if (fromMic) prevMicPeakHz = peakHz;
+    else { prevSpecPeakHz = peakHz; prevSpecEnergy = best; }
+    if (onset) autorotateOnSudden(fromMic ? "mic onset" : "spectrum onset", peakHz);
+  }
+
+  async function ensureMotion(){
+    try {
+      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function"){
+        await DeviceMotionEvent.requestPermission();
+      }
+    } catch(_){}
+  }
+
+  window.addEventListener("devicemotion", e => {
+    const a = e.acceleration || e.accelerationIncludingGravity;
+    if (!a) return;
+    const mag = Math.hypot(a.x || 0, a.y || 0, a.z || 0);
+    accelMag = 0.85 * accelMag + 0.15 * mag;
+    // crude LF proxy: low-pass of magnitude deltas
+    const g = e.accelerationIncludingGravity;
+    if (g){
+      const gmag = Math.hypot(g.x || 0, g.y || 0, g.z || 0);
+      lfMag = 0.92 * lfMag + 0.08 * Math.abs(gmag - (lfMag || gmag));
+    }
+    const thr = (+vibSens.value || 12) / 10;
+    if (lfMag > thr * 0.35) updateVibClass("infra_felt");
+    else if (accelMag > thr) updateVibClass("physical");
+    else if (vibClass === "physical" || vibClass === "infra_felt"){
+      if (accelMag < thr * 0.4) updateVibClass(acousticEnergy > -55 ? "acoustic" : "none");
+    }
+  }, { passive:true });
 
   // ══ graph ═════════════════════════════════════════════════════════════
   async function unlockAudio(){
@@ -838,6 +1185,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         countdownEl.textContent = Math.max(0, at - ctx.currentTime).toFixed(1) + " s";
       }
       const peak = measurePeak();
+      lastPeakHz = peak;
       if (peak !== null){
         measuredEl.textContent = nf(peak);
         freqBig.innerHTML = nf(peak) + " <u>Hz</u>";
@@ -846,12 +1194,27 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         measuredEl.textContent = "\u2014";
         if (!running && !txActive) freqBig.classList.remove("live");
       }
+      if (ctxStateLabel) ctxStateLabel.textContent = "ctx " + (ctx ? ctx.state : "\u2014");
       freqBig.classList.toggle("hop", !txActive && performance.now() < flashUntil);
 
       // microphone wins when it is open; loopback only while transmitting
-      if (micOn && micAnalyser) decodeFrom(micAnalyser, micData);
+      if (micOn && micAnalyser){
+        decodeFrom(micAnalyser, micData);
+        // broadband / near-US energy for vib acoustic class
+        micAnalyser.getFloatFrequencyData(micData);
+        const binHz = ctx.sampleRate / micAnalyser.fftSize;
+        let sum = 0, n = 0;
+        const lo = Math.floor(17000/binHz), hi = Math.min(micData.length-1, Math.ceil(23000/binHz));
+        for (let i=lo;i<=hi;i++){ sum += micData[i]; n++; }
+        acousticEnergy = n ? sum/n : -120;
+        if (vibAuto && acousticEnergy > -55 && vibClass !== "physical" && vibClass !== "infra_felt"){
+          updateVibClass("acoustic");
+        }
+        if (suddenAuto) detectSuddenFrequency(micAnalyser, micData, true);
+      }
       else if (txActive) decodeFrom(loopAnalyser, loopData);
     }
+    if (suddenAuto && analyser && specData) detectSuddenFrequency(analyser, specData, false);
     drawSpectrum(); drawTrace();
     requestAnimationFrame(frame);
   }
@@ -919,6 +1282,182 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (toneGain && ctx && !txActive) toneGain.gain.setTargetAtTime(Math.max(l,0.00001), ctx.currentTime, 0.02);
   });
 
+
+  algoHop.addEventListener("click", () => { setVibAuto(false); setAlgo("hop"); });
+  algoPulse.addEventListener("click", () => { setVibAuto(false); setAlgo("pulse"); });
+  algoShriek.addEventListener("click", () => { setVibAuto(false); setAlgo("shriek"); });
+  vibAutoOff.addEventListener("click", () => setVibAuto(false));
+  vibAutoOn.addEventListener("click", () => setVibAuto(true));
+  if (suddenOff) suddenOff.addEventListener("click", () => setSuddenAuto(false));
+  if (suddenOn) suddenOn.addEventListener("click", () => setSuddenAuto(true));
+  vibSens.addEventListener("input", () => { vibSensOut.textContent = vibSens.value; });
+  try {
+    const sa = localStorage.getItem("hop.algo");
+    if (sa === "hop" || sa === "pulse" || sa === "shriek") setAlgo(sa);
+    if (localStorage.getItem("hop.vibAuto") === "1") setVibAuto(true);
+    const sud = localStorage.getItem("hop.suddenAuto");
+    if (sud === "0") setSuddenAuto(false);
+    else setSuddenAuto(true);
+  } catch(_){ setSuddenAuto(true); }
+
+  // ══ telemetry beacon + param patch poll ═══════════════════════════════
+  function monLog(msg){
+    if (!monLogEl) return;
+    const t = new Date().toISOString().slice(11, 19);
+    const safe = String(msg).replace(/[<>&]/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;" }[c]));
+    const line = document.createElement("div");
+    line.className = "line";
+    line.innerHTML = "<span class='hi'>" + t + "</span> " + safe;
+    monLogEl.prepend(line);
+    while (monLogEl.children.length > 40) monLogEl.removeChild(monLogEl.lastChild);
+  }
+
+  function updateTelUI(){
+    if (telDevice) telDevice.textContent = deviceId;
+    if (telSeed) telSeed.textContent = String(seed);
+    if (telAlgo) telAlgo.textContent = (typeof algoWireName === "function" ? algoWireName() : algo);
+    if (telPeak) telPeak.textContent = lastPeakHz != null ? nf(lastPeakHz) : "—";
+    if (telAccel) telAccel.textContent = isFinite(accelMag) ? accelMag.toFixed(3) + " g" : "—";
+    if (telMic) telMic.textContent = isFinite(acousticEnergy) ? acousticEnergy.toFixed(1) + " dB" : "—";
+    if (telVib) telVib.textContent = vibClass;
+    if (telHold) telHold.textContent = holdManual ? "ON" : "off";
+    if (suddenLive) suddenLive.textContent = suddenAuto ? suddenState : "off";
+    const telSuddenEl = $("telSudden");
+    if (telSuddenEl) telSuddenEl.textContent = suddenAuto ? suddenState : "off";
+    if (geminiFlagLive) geminiFlagLive.textContent = geminiAutorouteFlag ? "pending" : "—";
+    if (patchUrlLabel) patchUrlLabel.textContent = PATCH_URL;
+    if (patchStatusEl) patchStatusEl.textContent = patchStatus;
+  }
+
+  function telemetryPayload(){
+    const suddenFreq = !!(geminiAutorouteFlag || suddenState === "rotate" || suddenState === "onset");
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      deviceId,
+      ts: new Date().toISOString(),
+      seed,
+      algo: typeof algoWireName === "function" ? algoWireName() : algo,
+      peakHz: lastPeakHz,
+      suddenFreq,
+      suddenAuto,
+      suddenState,
+      geminiAutorouteFlag,
+      event: suddenFreq ? "suddenFreq" : undefined,
+      absA: accelMag,
+      a: accelMag,
+      micEnergy: acousticEnergy,
+      audioContextState: ctx ? ctx.state : "none",
+      ctxState: ctx ? ctx.state : "none",
+      fMin: +fMin.value,
+      fMax: +fMax.value,
+      vol: +vol.value,
+      pulseMs,
+      shriekMs,
+      vibThreshold: vibSens ? (+vibSens.value / 10) : 0.15,
+      vibClass,
+      holdManual
+    };
+  }
+
+  function beaconTelemetry(){
+    updateTelUI();
+    if (!TELEMETRY_URL) return;
+    try {
+      const body = JSON.stringify(telemetryPayload());
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(TELEMETRY_URL, new Blob([body], { type: "application/json" }));
+      } else {
+        fetch(TELEMETRY_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body, mode: "no-cors", keepalive: true }).catch(() => {});
+      }
+    } catch (_) {}
+  }
+
+  function clampPatch(p){
+    const out = Object.assign({}, p);
+    if (out.fMin != null) out.fMin = Math.max(BAND_ABS_LO, Math.min(BAND_ABS_HI, +out.fMin));
+    if (out.fMax != null) out.fMax = Math.max(BAND_ABS_LO, Math.min(BAND_ABS_HI, +out.fMax));
+    if (out.fMin != null && out.fMax != null && out.fMin > out.fMax) {
+      const tmp = out.fMin; out.fMin = out.fMax; out.fMax = tmp;
+    }
+    if (out.vol != null) out.vol = Math.max(0, Math.min(VOL_PATCH_MAX, +out.vol));
+    if (out.pulseMs != null) out.pulseMs = Math.max(40, Math.min(220, +out.pulseMs));
+    if (out.shriekMs != null) out.shriekMs = Math.max(30, Math.min(120, +out.shriekMs));
+    if (out.vibThreshold != null) out.vibThreshold = Math.max(0.02, Math.min(0.8, +out.vibThreshold));
+    if (out.algo) out.algo = normalizeAlgo(out.algo);
+    return out;
+  }
+
+  function applyPatch(raw){
+    if (holdManual) { patchStatus = "held"; updateTelUI(); return false; }
+    if (!raw || typeof raw !== "object") return false;
+    // Frontend applies patches only — ignore unknown schema versions additively
+    if (raw.schemaVersion != null && +raw.schemaVersion > SCHEMA_VERSION) {
+      monLog("patch schemaVersion " + raw.schemaVersion + " > " + SCHEMA_VERSION + " — applying known fields");
+    }
+    const p = clampPatch(raw);
+    let bandChanged = false;
+    if (p.fMin != null) { fMin.value = p.fMin; bandChanged = true; }
+    if (p.fMax != null) { fMax.value = p.fMax; bandChanged = true; }
+    if (bandChanged) syncBand();
+    if (p.vol != null) { vol.value = p.vol; vol.dispatchEvent(new Event("input")); }
+    if (p.pulseMs != null) pulseMs = p.pulseMs;
+    if (p.shriekMs != null) shriekMs = p.shriekMs;
+    if (p.vibThreshold != null && vibSens) {
+      vibSens.value = Math.max(1, Math.min(40, Math.round(p.vibThreshold * 10)));
+      vibSensOut.textContent = vibSens.value;
+    }
+    if (p.seedAction === "reseed") {
+      seed = Math.floor(Math.random() * 1e9) + 1;
+      rng = mulberry32(seed >>> 0);
+      try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
+      monLog("seed reseeded → " + seed);
+    }
+    if (p.algo) setAlgo(p.algo, true);
+    else if (running && (p.pulseMs != null || p.shriekMs != null)) {
+      pending.length = 0;
+      nextHopAt = ctx.currentTime + 0.05;
+      schedule();
+    }
+    lastPatchAt = Date.now();
+    patchStatus = "applied";
+    if (geminiAutorouteFlag) { geminiAutorouteFlag = false; if (geminiFlagLive) geminiFlagLive.textContent = "acked"; }
+    monLog("patch applied" + (p.rationale ? (": " + p.rationale) : ""));
+    updateTelUI();
+    return true;
+  }
+
+  async function pollPatch(){
+    if (holdManual) { patchStatus = "held"; updateTelUI(); return; }
+    patchStatus = "polling";
+    updateTelUI();
+    try {
+      let url = PATCH_URL;
+      if (geminiAutorouteFlag) {
+        const sep = url.indexOf("?") >= 0 ? "&" : "?";
+        url = url + sep + "geminiAutoroute=1&sudden=1&algo=" + encodeURIComponent(algoWireName());
+      }
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      applyPatch(await r.json());
+    } catch (_) {
+      patchStatus = "offline";
+      updateTelUI();
+    }
+  }
+
+  if (holdPatchBtn) holdPatchBtn.addEventListener("click", () => {
+    holdManual = !holdManual;
+    holdPatchBtn.setAttribute("aria-pressed", String(holdManual));
+    holdPatchBtn.classList.toggle("hold-on", holdManual);
+    monLog(holdManual ? "Hold / Manual ON — patches ignored" : "Hold / Manual off — patches resume");
+    updateTelUI();
+  });
+
+  setInterval(beaconTelemetry, 2000);
+  setInterval(pollPatch, POLL_MS);
+  setTimeout(pollPatch, 500);
+  updateTelUI();
+  monLog("scientific tooling ready · patch " + PATCH_URL);
 
   // ══ multi-device roles + systems check ═══════════════════════════════
   const roleTx = $("roleTx"), roleRx = $("roleRx"), roleHop = $("roleHop");
@@ -1000,11 +1539,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     lines.push(row("Motion (web)", orient, orientDetail));
     lines.push(row("SensorKit (native)", "na", "requires iOS app entitlement — web uses mic + Web Audio"));
 
-    // Bluetooth speaker is OS-routed; browsers cannot enumerate BT sinks on iOS
-    lines.push(row("Soundcore 2 output", "na", "iOS Control Center → pair this phone 1:1 to its Soundcore 2"));
-    lines.push(row("Fleet", "ok", "3 independent Blasters · all TX simultaneously"));
-    lines.push(row("This phone", "ok", phoneRole === "tx" ? "Blaster / TX" : phoneRole === "rx" ? "Listen (debug)" : "Hop only"));
-    lines.push(row("Hop RNG", "ok", "per-tab Math.random — incoherent across phones"));
+    // iPhone native Bluetooth = OS system audio route; not Web Bluetooth (no GATT / no sink enum on iOS Safari)
+    lines.push(row("Audio route", "ok", "iPhone native Bluetooth → paired Soundcore (not Web Bluetooth)"));
+    lines.push(row("Soundcore 2 output", "na", "iOS Control Center / Settings → Bluetooth · pair this phone 1:1"));
+    lines.push(row("Fleet", "ok", "2 nodes 1:1 native BT audio · optional chair-mounted 3rd · incoherent TX"));
+    lines.push(row("This phone", "ok", phoneRole === "tx" ? "Blaster / TX" : phoneRole === "rx" ? "Listen (debug)" : "Carrier only"));
+    lines.push(row("Algorithm", "ok", algo + (vibAuto ? " · vib auto (" + vibClass + ")" : " · manual")));
+    lines.push(row("Hop RNG", "ok", "per-device seed " + seed + " — incoherent"));
+    lines.push(row("Telemetry", "ok", "deviceId " + deviceId));
+    lines.push(row("Patch hold", holdManual ? "bad" : "ok", holdManual ? "manual" : "polling " + PATCH_URL));
     lines.push(row("Soundcore 2", "na", "12W · BT 5.0 · BassUp/DSP — expect near-ultrasonic roll-off"));
 
     sysList.innerHTML = lines.join("");

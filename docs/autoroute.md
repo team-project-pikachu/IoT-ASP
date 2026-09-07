@@ -1,84 +1,68 @@
-# Autoroute — telemetry, patches, clamps
+# Autoroute — sudden-frequency → Gemini autorotates noises
 
-Hybrid control plane for continuous monitoring + continuous audio-engineering parameter updates. **ADK agent** is the patch author (see [adk-autoroute.md](adk-autoroute.md)).
+**Primary control loop** for IoT-ASP. Hybrid local heuristic + ADK/Gemini patches. See [adk-autoroute.md](adk-autoroute.md).
+
+**Formal API contract (telemetry + patch + `schemaVersion`):** [api-contract.md](api-contract.md). Frontend polls/applies patches only — never embeds Gemini/Vertex keys or ADK logic. Backend (`services/autoroute-adk/`) deploys independently of Vercel `public/`.
+
+**Formal constraints:** [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) — phone TX is **iOS native A2DP only** (not Web Bluetooth). Details: [iphone-bluetooth.md](iphone-bluetooth.md).
 
 Gemini Enterprise engine: **`iot-asp-autoroute`** on project `bear-iot-asp-rec` ([gemini-enterprise.md](gemini-enterprise.md)).
 
-## Telemetry beacon (v0)
+## Intent
 
-Nodes POST compact JSON (no addresses / no speech):
+**Gemini autorotates the noises based on detection of sudden frequencies.**
 
-```json
-{
-  "deviceId": "node1",
-  "ts": "2026-09-07T23:00:00Z",
-  "seed": 42,
-  "algo": "hop",
-  "peakHz": 19500,
-  "absA": 0.12,
-  "micEnergy": 0.03,
-  "audioContextState": "running",
-  "fMin": 17000,
-  "fMax": 23000,
-  "vol": 0.08,
-  "pulseMs": 80,
-  "shriekMs": 50,
-  "vibThreshold": 0.15,
-  "vibClass": "physical",
-  "holdManual": false
-}
+1. Continuous mic / spectrum (optional vib) detects **sudden frequency events** (onsets, spikes, band energy jumps).
+2. Emit telemetry **`suddenFreq`**; local heuristic rotates TX algo/params immediately.
+3. When online, ADK/Gemini authors `patch.json` (unless **Hold / Manual**).
+4. Material preset ([materials-engineering.md](materials-engineering.md)) soft-biases channel/algo choice.
+
+```text
+Web Audio TX ──► iOS system A2DP ──► Soundcore (1:1 OS route)
+mic/analyser/accel
+        │
+        ▼
+ suddenFreq detector (flux / peak jump / energy onset)
+        ├─► local rotate (debounce ≥300–400 ms)
+        └─► telemetry → GCS → ADK/Gemini → patch.json → poll/apply
 ```
 
-Store: `gs://<private-bucket>/meta/telemetry/<deviceId>/<ts>.json`
+## Telemetry / patch schemas
 
-## Param patch schema (v0)
+Canonical schemas (incl. `schemaVersion`, `suddenFreq`, UI-percent `vol`) live in **[api-contract.md](api-contract.md)**. Do not fork field lists here.
 
-```json
-{
-  "algo": "am_gate",
-  "fMin": 17000,
-  "fMax": 23000,
-  "vol": 0.08,
-  "pulseMs": 100,
-  "shriekMs": 60,
-  "vibThreshold": 0.2,
-  "seedAction": "keep",
-  "rationale": "physical vib ↑ → prefer gated pulses; NS prior: structure-borne coupling",
-  "priors": ["structure_borne", "linearized_acoustic"],
-  "engineId": "iot-asp-autoroute",
-  "createdAt": "ISO-8601"
-}
-```
+Store telemetry: `gs://<private-bucket>/meta/telemetry/<deviceId>/<ts>.json`  
+Write patches: `gs://<private-bucket>/meta/patches/<deviceId>.json`  
+Poll interval: **2–5 s**. Human **Hold / Manual** freezes remote apply (local suddenFreq rotate may continue).
 
 Allowed `algo`: `hop` | `am_gate` | `shriek_chirp` | `shriek_sweep` | `burst` | `infra_mod` (future).  
 `seedAction`: `keep` | `reseed`.
-
-Write: `gs://<private-bucket>/meta/patches/<deviceId>.json`  
-Poll interval: **2–5 s**. Human **Hold / Manual** freezes apply.
 
 ## Safety clamps (worker must enforce)
 
 | Param | Clamp |
 |-------|--------|
 | `fMin`/`fMax` | ∈ [17000, 23000], `fMin` < `fMax` |
-| `vol` | ≤ 0.12 (residential default); hard refuse > 0.20 |
+| `vol` | **UI percent** ≤ 12 (residential soft); hard refuse > 20; legacy linear ≤1 normalized ×100 |
 | `pulseMs` | 20–200 |
 | `shriekMs` | 20–120; shriek duty refuse if continuous high |
 | `algo` | whitelist only |
 | Out-of-policy | refuse patch; log rationale |
 
-Cite VHF/ultrasound human-effects literature in [reference/LITERATURE.md](../reference/LITERATURE.md) (e.g. Fletcher/Leighton JASA DOI `10.1121/1.5063819`) — **not** medical claims.
+Cite VHF/ultrasound human-effects literature in [reference/LITERATURE.md](../reference/LITERATURE.md) — **not** medical claims.
 
-## Physics priors (prompt/context, not on-phone CFD)
+## Physics / materials priors
 
-Agent may reason with linearized acoustic / Navier–Stokes–derived wave equations and seismo-acoustic coupling as **constraints** for structure-borne vs air-borne routing — see [physics.md](physics.md). Do **not** claim full CFD on the phone.
+- [physics.md](physics.md) — linearized acoustic / NS / seismo-acoustic
+- [materials-engineering.md](materials-engineering.md) — mount presets
+
+Do **not** claim full CFD on the phone. BT latency makes hop timing soft ([iphone-bluetooth.md](iphone-bluetooth.md)).
 
 ## ADK (primary implementation)
 
-- Overview: https://docs.cloud.google.com/agent-builder/agent-development-kit/overview  
-- Scaffold: `services/autoroute-adk/`  
-- Local: `adk web` or `adk run` from that package  
-- Deploy: `adk deploy agent_engine` / `adk deploy cloud_run` → project `bear-iot-asp-rec`, region `us-central1`
+- Overview: https://docs.cloud.google.com/agent-builder/agent-development-kit/overview
+- Scaffold: `services/autoroute-adk/`
+- Local: `adk web` or `adk run` · Deploy: `adk deploy agent_engine` / `cloud_run` → `bear-iot-asp-rec` / `us-central1`
 
 ## Dev dry-run
 

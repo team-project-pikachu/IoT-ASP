@@ -29,13 +29,15 @@ from iot_asp_autoroute.clamps import validate_patch
 print("clamps:", list_safety_clamps())
 print("priors keys:", list(seismo_acoustic_priors().keys()))
 print("ingest:", ingest_telemetry(json.dumps({
+    "schemaVersion": 1,
     "deviceId": "node1",
     "algo": "hop",
     "peakHz": 19500,
+    "suddenFreq": True,
     "absA": 0.12,
     "micEnergy": 0.03,
     "vibClass": "physical",
-    "vol": 0.08,
+    "vol": 8,
     "fMin": 17000,
     "fMax": 23000,
     "holdManual": False,
@@ -43,10 +45,11 @@ print("ingest:", ingest_telemetry(json.dumps({
 print("telemetry:", read_telemetry("node1"))
 print("colab:", colab_handoff_note("node1"))
 r = write_patch("node1", json.dumps({
+    "schemaVersion": 1,
     "algo": "am_gate",
     "fMin": 17000,
     "fMax": 22000,
-    "vol": 0.08,
+    "vol": 8,
     "pulseMs": 90,
     "shriekMs": 50,
     "vibThreshold": 0.2,
@@ -55,7 +58,8 @@ r = write_patch("node1", json.dumps({
 }))
 print("patch:", r)
 assert r.get("ok"), r
-ok, msg, _ = validate_patch({"algo": "hop", "vol": 0.5, "fMin": 17000, "fMax": 23000})
+# UI percent > hard max 20 must refuse (legacy linear 0.5 → 50% also refuses)
+ok, msg, _ = validate_patch({"algo": "hop", "vol": 50, "fMin": 17000, "fMax": 23000})
 assert not ok, msg
 print("OK autoroute_dev dry-run")
 PY

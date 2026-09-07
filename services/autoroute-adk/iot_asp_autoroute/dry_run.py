@@ -23,17 +23,19 @@ from iot_asp_autoroute.tools import ingest_telemetry, process_sudden_freq  # noq
 
 def sample_sudden_freq_telemetry(node_id: str = "node1") -> dict:
     return {
+        "schemaVersion": 1,
         "deviceId": node_id,
         "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "seed": 42,
         "algo": "hop",
         "peakHz": 19500,
+        "suddenFreq": True,
         "absA": 0.12,
         "micEnergy": 0.03,
         "audioContextState": "running",
         "fMin": 17000,
         "fMax": 23000,
-        "vol": 0.08,
+        "vol": 8,
         "pulseMs": 80,
         "shriekMs": 50,
         "vibThreshold": 0.15,
