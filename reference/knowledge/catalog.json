@@ -1,0 +1,102 @@
+{
+  "source": "firecrawl-knowledge-ingest",
+  "url": "multi-portal",
+  "extractedAt": "2026-09-07T23:03:18.711726+00:00",
+  "totalArticles": 7,
+  "sections": [
+    {
+      "name": "apple-sensorkit",
+      "articleCount": 1,
+      "articles": [
+        {
+          "title": "SensorKit | Apple Developer Documentation",
+          "url": "https://developer.apple.com/documentation/sensorkit",
+          "section": "apple-sensorkit",
+          "metadata": {
+            "path": "reference/knowledge/apple-sensorkit/sensorkit-apple-developer-documentation.md",
+            "bytes": 35743
+          },
+          "note": "full markdown under reference/knowledge/<section>/"
+        }
+      ]
+    },
+    {
+      "name": "apple-coremotion",
+      "articleCount": 2,
+      "articles": [
+        {
+          "title": "Core Motion | Apple Developer Documentation",
+          "url": "https://developer.apple.com/documentation/coremotion",
+          "section": "apple-coremotion",
+          "metadata": {
+            "path": "reference/knowledge/apple-coremotion/core-motion-apple-developer-documentation.md",
+            "bytes": 37851
+          },
+          "note": "full markdown under reference/knowledge/<section>/"
+        },
+        {
+          "title": "CMDeviceMotion | Apple Developer Documentation",
+          "url": "https://developer.apple.com/documentation/coremotion/cmdevicemotion",
+          "section": "apple-coremotion",
+          "metadata": {
+            "path": "reference/knowledge/apple-coremotion/cmdevicemotion-apple-developer-documentation.md",
+            "bytes": 35531
+          },
+          "note": "full markdown under reference/knowledge/<section>/"
+        }
+      ]
+    },
+    {
+      "name": "mdn-devicemotion",
+      "articleCount": 3,
+      "articles": [
+        {
+          "title": "DeviceMotionEvent - Web APIs | MDN",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/DeviceMotionEvent",
+          "section": "mdn-devicemotion",
+          "metadata": {
+            "path": "reference/knowledge/mdn-devicemotion/devicemotionevent-web-apis-mdn.md",
+            "bytes": 26376
+          },
+          "note": "full markdown under reference/knowledge/<section>/"
+        },
+        {
+          "title": "DeviceMotionEvent: acceleration property - Web APIs | MDN",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/DeviceMotionEvent/acceleration",
+          "section": "mdn-devicemotion",
+          "metadata": {
+            "path": "reference/knowledge/mdn-devicemotion/devicemotionevent-acceleration-property-web-apis-mdn.md",
+            "bytes": 20493
+          },
+          "note": "full markdown under reference/knowledge/<section>/"
+        },
+        {
+          "title": "DeviceMotionEvent: requestPermission() static method - Web APIs | MDN",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/DeviceMotionEvent/requestPermission_static",
+          "section": "mdn-devicemotion",
+          "metadata": {
+            "path": "reference/knowledge/mdn-devicemotion/devicemotionevent-requestpermission-static-method-web-apis-mdn.md",
+            "bytes": 21982
+          },
+          "note": "full markdown under reference/knowledge/<section>/"
+        }
+      ]
+    },
+    {
+      "name": "acoustics-materials",
+      "articleCount": 1,
+      "articles": [
+        {
+          "title": "Soundcore 2 | Portable Bluetooth Speaker",
+          "url": "https://www.anker.com/ca/products/soundcore-2",
+          "section": "acoustics-materials",
+          "metadata": {
+            "path": "reference/knowledge/acoustics-materials/soundcore-2-portable-bluetooth-speaker.md",
+            "bytes": 29852
+          },
+          "note": "full markdown under reference/knowledge/<section>/"
+        }
+      ]
+    }
+  ]
+}

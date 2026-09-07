@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HOP">
+<meta name="application-name" content="HOP">
+<meta name="theme-color" content="#141519">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="Near-ultrasonic hopping tone and FSK link for iPhone Safari.">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>HOP — near-ultrasonic tone + FSK link</title>
+<style>
+:root{
+  --panel:#141519;
+  --face:#1D1F27;
+  --face-hi:#262933;
+  --rule:#333747;
+  --ink:#C8CCD8;
+  --dim:#767C8C;
+  --dead:#3E4351;
+  --uv:#9D5CFF;
+  --uv-hot:#E3A8FF;
+  --amber:#FFA23A;
+  --lime:#7BE0A8;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, system-ui, Arial, sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+html{height:100%;background:var(--panel)}
+body{
+  background:var(--panel);color:var(--ink);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;min-height:100%;min-height:100dvh;min-height:-webkit-fill-available;
+  display:flex;justify-content:center;
+  padding:calc(24px + var(--safe-top)) calc(16px + var(--safe-right)) calc(48px + var(--safe-bottom)) calc(16px + var(--safe-left));
+  overscroll-behavior-y:none;touch-action:manipulation;
+}
+.rig{width:100%;max-width:780px}
+
+.legend{
+  font:600 10px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;
+  color:var(--dim);margin:0;
+}
+
+/* ── masthead ─────────────────────────────────── */
+.masthead{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:16px;padding-bottom:10px;border-bottom:1px solid var(--rule);flex-wrap:wrap;
+}
+.wordmark{font:600 13px/1 var(--sans);letter-spacing:.30em;text-transform:uppercase;margin:0}
+.wordmark span{color:var(--uv)}
+.sr{font:400 11px/1 var(--mono);color:var(--dim);white-space:nowrap}
+.sr b{color:var(--ink);font-weight:400}
+
+/* ── readout deck ─────────────────────────────── */
+.deck{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:24px;padding:26px 0 22px;border-bottom:1px solid var(--rule);flex-wrap:wrap;
+}
+.readout{min-width:0}
+.value{
+  font-family:var(--mono);font-size:clamp(50px,12.5vw,92px);line-height:.9;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--dead);
+  transition:color .18s ease;display:flex;align-items:baseline;gap:.14em;
+}
+.value.live{color:var(--ink)}
+.value.hop{color:var(--uv-hot)}
+.value.tx{color:var(--lime)}
+.value u{text-decoration:none;font-size:.22em;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+.sub{font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--dim);margin-top:12px;font-variant-numeric:tabular-nums}
+.sub b{color:var(--ink);font-weight:400}
+.sub i{font-style:normal;color:var(--uv-hot)}
+
+/* ── power latch ──────────────────────────────── */
+.power{
+  flex:0 0 auto;width:128px;height:128px;border-radius:14px;
+  background:linear-gradient(180deg,var(--face-hi),var(--face));
+  border:1px solid var(--rule);color:var(--dim);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  font:600 10px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 2px 6px rgba(0,0,0,.5);
+  transition:transform .12s ease, box-shadow .12s ease, color .12s ease, border-color .12s ease;
+  -webkit-touch-callout:none;user-select:none;touch-action:manipulation;
+}
+.power svg{width:34px;height:34px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.power:hover{border-color:#4A4F63}
+.power:focus-visible{outline:2px solid var(--uv);outline-offset:3px}
+.power[aria-pressed="true"]{
+  color:var(--uv-hot);border-color:var(--uv);transform:translateY(2px);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.6), 0 0 0 1px rgba(157,92,255,.25), 0 0 26px rgba(157,92,255,.30);
+}
+
+/* ── plots ────────────────────────────────────── */
+.plot{padding:18px 0;border-bottom:1px solid var(--rule)}
+.plot-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:12px}
+canvas{display:block;width:100%;border-radius:3px;background:#0E0F13}
+#spectrum{height:124px}
+#trace{height:104px}
+
+/* ── modem ────────────────────────────────────── */
+.modem{padding:20px 0;border-bottom:1px solid var(--rule)}
+.modem-grid{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end;margin-top:12px}
+@media (max-width:620px){.modem-grid{grid-template-columns:1fr}}
+input[type=text]{
+  width:100%;background:#0E0F13;border:1px solid var(--rule);border-radius:3px;
+  color:var(--ink);font:400 16px/1.2 var(--mono);padding:12px 11px;letter-spacing:.03em;
+  -webkit-appearance:none;appearance:none;
+}
+input[type=text]:focus-visible{outline:2px solid var(--uv);outline-offset:-1px}
+.tapbar{display:flex;gap:8px;flex-wrap:wrap}
+.tap{
+  background:var(--face);color:var(--ink);border:1px solid var(--rule);border-radius:4px;
+  cursor:pointer;padding:12px 16px;min-height:44px;font:600 10px/1 var(--sans);
+  letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;
+  -webkit-touch-callout:none;user-select:none;touch-action:manipulation;
+}
+.tap:hover{border-color:#4A4F63}
+.tap:focus-visible{outline:2px solid var(--uv);outline-offset:2px}
+.tap[aria-pressed="true"]{background:var(--uv);border-color:var(--uv);color:#12030F}
+.tap.rx[aria-pressed="true"]{background:var(--lime);border-color:var(--lime);color:#04120B}
+
+.tonemap{margin-top:16px;font:400 11px/2 var(--mono);color:var(--dim);word-break:break-word}
+.tonemap span{color:var(--uv-hot)}
+.tonemap em{font-style:normal;color:var(--ink)}
+
+.rxwrap{margin-top:16px;border:1px solid var(--rule);border-radius:3px;background:#0E0F13;overflow:hidden}
+.rxhead{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:8px 12px;border-bottom:1px solid var(--rule);flex-wrap:wrap;
+}
+.rxmeta{font:400 11px/1 var(--mono);color:var(--dim);font-variant-numeric:tabular-nums}
+.rxmeta b{color:var(--lime);font-weight:400}
+.rxmeta s{text-decoration:none;color:var(--amber)}
+.rx{padding:12px 14px;font:400 15px/1.6 var(--mono);color:var(--lime);min-height:46px;word-break:break-word}
+.rx.idle{color:var(--dead)}
+.bar{height:3px;background:var(--rule);position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--lime);transition:width .08s linear}
+
+/* ── control rail ─────────────────────────────── */
+.rail{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));
+  gap:22px 28px;padding-top:22px;
+}
+.grp{min-width:0}
+.grp .legend{margin-bottom:12px}
+.row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.row label{font:400 11px/1 var(--mono);color:var(--dim);flex:0 0 26px}
+.row output{font:400 11px/1 var(--mono);color:var(--ink);flex:0 0 64px;text-align:right;font-variant-numeric:tabular-nums}
+
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1 1 auto;min-width:0;height:16px;background:transparent;cursor:pointer}
+input[type=range]:focus-visible{outline:2px solid var(--uv);outline-offset:2px;border-radius:3px}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--rule)}
+input[type=range]::-moz-range-track{height:2px;background:var(--rule)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:2px;background:var(--ink);margin-top:-5px;border:0}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;background:var(--ink);border:0}
+
+.seg{display:flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden;width:fit-content;max-width:100%}
+.seg button{
+  background:var(--face);color:var(--dim);border:0;cursor:pointer;padding:8px 14px;
+  font:600 10px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+}
+.seg button + button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--uv);color:#12030F}
+.seg button:focus-visible{outline:2px solid var(--uv);outline-offset:-2px}
+
+/* ── notices ──────────────────────────────────── */
+.note{margin-top:24px;padding:12px 14px;border-left:2px solid var(--rule);font:400 12px/1.65 var(--sans);color:var(--dim)}
+.note.warn{border-left-color:var(--amber);color:var(--amber)}
+.note b{color:var(--ink);font-weight:600}
+.note.warn b{color:var(--amber)}
+.note code{font:400 11px/1 var(--mono);color:var(--ink);background:#0E0F13;padding:2px 5px;border-radius:2px}
+.hidden{display:none}
+
+
+.syscheck{padding:16px 0;border-bottom:1px solid var(--rule)}
+.syslist{list-style:none;margin:12px 0 0;padding:0;font:400 12px/1.55 var(--mono);color:var(--dim)}
+.syslist li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid #22252E}
+.syslist li:last-child{border-bottom:0}
+.syslist .ok{color:var(--lime)}
+.syslist .bad{color:var(--amber)}
+.syslist .na{color:var(--dead)}
+.syscheck a{text-decoration:none}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+@media (max-width:520px){
+  .deck{justify-content:center}
+  .power{width:100%;height:96px;flex-direction:row;gap:16px}
+}
+</style>
+</head>
+<body>
+<main class="rig">
+
+  <header class="masthead">
+    <h1 class="wordmark">Hop<span>·</span>17–23k</h1>
+    <div class="sr">out <b id="srVal">—</b> · in <b id="rxSrVal">—</b> · nyquist <b id="nyVal">—</b></div>
+  </header>
+
+
+  <section class="syscheck" id="syscheck">
+    <div class="plot-head">
+      <p class="legend">Fleet · 3 blasters · 1 iPhone ↔ 1 Soundcore 2</p>
+      <button type="button" class="tap" id="sysBtn">Systems check</button>
+    </div>
+    <div class="seg" role="group" aria-label="This phone mode" style="margin-top:10px">
+      <button type="button" id="roleTx" aria-pressed="true">Blaster / TX</button>
+      <button type="button" id="roleHop" aria-pressed="false">Hop only</button>
+      <button type="button" id="roleRx" aria-pressed="false">Listen (debug)</button>
+    </div>
+    <p class="sub" style="margin-top:10px">
+      Open this same URL on all three phones. Each pairs to its own
+      <a href="https://www.anker.com/ca/products/soundcore-2" style="color:var(--uv-hot)">Soundcore 2</a>
+      (1:1). Tap <b>Signal on</b> on every phone so all hop and blast at once —
+      each Safari tab uses its own independent random hop schedule.
+    </p>
+    <ul class="syslist" id="sysList"></ul>
+  </section>
+
+  <section class="deck">
+    <div class="readout">
+      <div class="value" id="freqBig">— — — — <u>Hz</u></div>
+      <div class="sub">
+        measured peak <b id="measured">—</b> Hz · target <b id="target">—</b> Hz<br>
+        holding <b id="hold">—</b> · next hop in <i id="countdown">—</i> · hops <b id="hops">0</b>
+      </div>
+    </div>
+    <button class="power" id="power" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>
+      <span id="powerLabel">Signal off</span>
+    </button>
+  </section>
+
+  <section class="plot">
+    <div class="plot-head">
+      <p class="legend">Spectrum · violet out · green in</p>
+      <p class="legend" id="spanLabel">8k — 24k</p>
+    </div>
+    <canvas id="spectrum"></canvas>
+  </section>
+
+  <section class="plot">
+    <div class="plot-head">
+      <p class="legend">Hop trace · flat segments are held tone</p>
+      <p class="legend">last 3 min</p>
+    </div>
+    <canvas id="trace"></canvas>
+  </section>
+
+  <section class="modem">
+    <p class="legend">FSK link · one tone per character · 17 500 – 21 000 Hz</p>
+    <div class="modem-grid">
+      <input type="text" id="msg" value="hop fleet check" spellcheck="false" aria-label="Message to transmit">
+      <div class="tapbar">
+        <button class="tap" id="txBtn">Transmit</button>
+        <button class="tap" id="loopBtn" aria-pressed="false">Repeat</button>
+        <button class="tap rx" id="micBtn" aria-pressed="false">Listen</button>
+      </div>
+    </div>
+    <div class="tonemap" id="tonemap"></div>
+
+    <div class="rxwrap">
+      <div class="rxhead">
+        <span class="legend">Receive · <span id="rxSrc">loopback</span></span>
+        <span class="rxmeta">tone <b id="rxTone">—</b> · snr <b id="rxSnr">—</b> · chars <b id="rxCount">0</b> <s id="rxErr"></s></span>
+      </div>
+      <div class="bar"><i id="rxBar"></i></div>
+      <div class="rx idle" id="rx">idle — transmit to see the carrier read back</div>
+    </div>
+  </section>
+
+  <section class="rail">
+    <div class="grp">
+      <p class="legend">Band · 17k–23k</p>
+      <div class="row"><label for="fMin">low</label><input type="range" id="fMin" min="17000" max="23000" step="50" value="17000"><output id="fMinOut">17 000</output></div>
+      <div class="row"><label for="fMax">high</label><input type="range" id="fMax" min="17000" max="23000" step="50" value="21000"><output id="fMaxOut">21 000</output></div>
+    </div>
+
+    <div class="grp">
+      <p class="legend">Dwell · random each hop</p>
+      <div class="row"><label for="dMin">min</label><input type="range" id="dMin" min="1" max="60" step="1" value="8"><output id="dMinOut">8 s</output></div>
+      <div class="row"><label for="dMax">max</label><input type="range" id="dMax" min="1" max="60" step="1" value="19"><output id="dMaxOut">19 s</output></div>
+    </div>
+
+    <div class="grp">
+      <p class="legend">Symbol</p>
+      <div class="row"><label for="symMs">dur</label><input type="range" id="symMs" min="60" max="500" step="10" value="200"><output id="symMsOut">200 ms</output></div>
+      <p class="legend" style="margin-top:4px" id="msgLen">—</p>
+    </div>
+
+    <div class="grp">
+      <p class="legend">Transition · level</p>
+      <div class="seg" role="group" aria-label="Transition mode">
+        <button id="modeJump" aria-pressed="true">Jump</button>
+        <button id="modeGlide" aria-pressed="false">Glide</button>
+      </div>
+      <div class="row" style="margin-top:12px"><label for="vol">out</label><input type="range" id="vol" min="0" max="60" step="1" value="8"><output id="volOut">8 %</output></div>
+      <p class="legend" id="dbfs">−22 dBFS</p>
+    </div>
+  </section>
+
+
+  <div class="note">
+    <b>Incoherent fleet · all blast.</b> Three phones, three Soundcore 2s — each iPhone pairs 1:1 to its own speaker
+    and transmits at once. Hop schedules are independent per tab (<code>Math.random</code> locally; no shared seed or sync).
+    Listen is optional loopback/debug only.
+  </div>
+
+  <div class="note warn">
+    <b>Soundcore 2 ultrasonic warning.</b> Anker lists 12&nbsp;W dual neodymium drivers, BassUp + DSP, IPX7,
+    5&nbsp;200&nbsp;mAh / 24&nbsp;h, Bluetooth&nbsp;5.0 — <b>no frequency-response curve</b> published.
+    BT codecs (SBC/AAC) and speaker DSP will likely crush or erase 17–23&nbsp;kHz carriers. See <code>SPEC.md</code>.
+  </div>
+
+  <div class="note warn hidden" id="warn"></div>
+  <div class="note warn hidden" id="micWarn"></div>
+
+  <div class="note">
+    <b>iPhone / Safari.</b> Add to Home Screen for a full-screen app. Audio and mic only unlock after
+    you tap Signal / Transmit / Listen. Use volume buttons — silent switch does not mute Web Audio
+    on modern iOS, but hardware volume still caps the carrier. Prefer HTTPS (this Vercel deploy).
+  </div>
+
+  <div class="note">
+    <b>Over-air needs the browser's cleanup turned off.</b> Echo cancellation, noise suppression and
+    auto gain control all assume they are handling speech, and all three will destroy a 20 kHz
+    carrier — the capture request explicitly disables them. Microphone access also needs a secure
+    context (HTTPS), which this deploy provides.
+  </div>
+
+  <div class="note">
+    <b>Both ends must run at 48 kHz to reach the top of the band.</b> A capture device at 44.1 kHz
+    tops out at 22 050 Hz, and many laptop mics roll off hard above 18 kHz regardless of sample rate.
+    If the decode fails, narrow the band downward before assuming the link is broken — the green
+    input trace on the spectrum plot shows exactly how much of the band survived the trip. Raising
+    symbol duration also buys margin, which is why the default moved to 200 ms; over-air is far less
+    forgiving than loopback.
+  </div>
+
+  <div class="note">
+    <b>The phrase is carried as tones, not as speech.</b> Speech identity lives in formant ratios
+    spanning roughly 100 Hz to 8 kHz — an 80:1 range. 17 500 to 21 000 Hz is a 1.2:1 range, so no
+    transposition of a voice survives the move. Every character gets its own frequency instead, and
+    the receiver quantises each detected tone back to the nearest slot in that plan.
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const powerBtn = $("power"), powerLabel = $("powerLabel");
+  const freqBig = $("freqBig"), measuredEl = $("measured"), targetEl = $("target");
+  const holdEl = $("hold"), countdownEl = $("countdown"), hopsEl = $("hops");
+  const srVal = $("srVal"), rxSrVal = $("rxSrVal"), nyVal = $("nyVal");
+  const spanLabel = $("spanLabel"), warn = $("warn"), micWarn = $("micWarn");
+  const fMin = $("fMin"), fMax = $("fMax"), fMinOut = $("fMinOut"), fMaxOut = $("fMaxOut");
+  const dMin = $("dMin"), dMax = $("dMax"), dMinOut = $("dMinOut"), dMaxOut = $("dMaxOut");
+  const modeJump = $("modeJump"), modeGlide = $("modeGlide");
+  const vol = $("vol"), volOut = $("volOut"), dbfs = $("dbfs");
+  const msgIn = $("msg"), txBtn = $("txBtn"), loopBtn = $("loopBtn"), micBtn = $("micBtn");
+  const symMs = $("symMs"), symMsOut = $("symMsOut"), msgLen = $("msgLen");
+  const tonemapEl = $("tonemap"), rxEl = $("rx");
+  const rxSrc = $("rxSrc"), rxTone = $("rxTone"), rxSnr = $("rxSnr");
+  const rxCount = $("rxCount"), rxErr = $("rxErr"), rxBar = $("rxBar");
+  const specCv = $("spectrum"), traceCv = $("trace");
+
+  // ══ FSK tone plan ═════════════════════════════════════════════════════
+  // 32 data tones on a 100 Hz grid from 17 650 Hz, framed by START and END
+  // markers with a GAP tone between symbols so repeated characters survive
+  // the run-length collapse in the decoder.
+  const ALPHABET = " abcdefghijklmnopqrstuvwxyz.,!?'";
+  const F_START = 17500, F_GAP = 21000, F_END = 20900, F_BASE = 17650, F_STEP = 100;
+  const toneFor = ch => { const i = ALPHABET.indexOf(ch); return i < 0 ? null : F_BASE + i*F_STEP; };
+  const TONES = [{f:F_START,k:"START"},{f:F_GAP,k:"GAP"},{f:F_END,k:"END"}];
+  for (let i=0;i<ALPHABET.length;i++) TONES.push({ f:F_BASE + i*F_STEP, k:ALPHABET[i] });
+  const clean = s => s.toLowerCase().split("").filter(c => ALPHABET.indexOf(c) >= 0).join("");
+
+  // ══ state ═════════════════════════════════════════════════════════════
+  let ctx=null, osc=null, toneGain=null, bus=null, analyser=null, loopAnalyser=null;
+  let running=false, glide=false;
+  let nextHopAt=0, lastTarget=19000, hopCount=0;
+  const pending=[], history=[];
+  let specData=null, loopData=null;
+
+  let txOsc=null, txGain=null, txActive=false, txTimer=null, txLoop=false;
+  let micStream=null, micAnalyser=null, micData=null, micOn=false, micSr=0;
+
+  const LOOKAHEAD=0.25, TICK_MS=40, TRACE_SEC=180, SPAN_LO=8000;
+  const nf = n => Math.round(n).toLocaleString("en-US").replace(/,/g," ");
+
+  const nyquist  = () => ctx ? ctx.sampleRate/2 : 24000;
+  const ceilHz   = () => Math.floor(nyquist()*0.98);
+  const bandLow  = () => Math.min(+fMin.value, ceilHz());
+  const bandHigh = () => Math.min(+fMax.value, ceilHz());
+  const dwellLo  = () => Math.min(+dMin.value,+dMax.value);
+  const dwellHi  = () => Math.max(+dMin.value,+dMax.value);
+  const level    = () => +vol.value/100;
+  const pickFreq  = () => bandLow() + Math.random()*(bandHigh()-bandLow());
+  const pickDwell = () => dwellLo() + Math.random()*(dwellHi()-dwellLo());
+
+  // ══ hop scheduler ═════════════════════════════════════════════════════
+  // Unbounded loop, refilled against the audio clock so intervals stay exact
+  // over hours instead of drifting the way a setTimeout chain would.
+  function schedule(){
+    if (!running || !ctx) return;
+    const glideSec = Math.min(0.4, dwellLo()*0.8);
+    while (nextHopAt < ctx.currentTime + LOOKAHEAD){
+      const f = pickFreq(), d = pickDwell(), p = osc.frequency;
+      if (glide){
+        p.setValueAtTime(lastTarget, nextHopAt);
+        p.linearRampToValueAtTime(f, nextHopAt + glideSec);
+      } else {
+        p.setValueAtTime(f, nextHopAt);   // held exactly, no automation running
+      }
+      pending.push({ t:nextHopAt, f, d });
+      lastTarget = f;
+      nextHopAt += d;
+    }
+  }
+
+  // ══ graph ═════════════════════════════════════════════════════════════
+  async function unlockAudio(){
+    ensureContext();
+    if (ctx.state === "suspended") await ctx.resume();
+  }
+
+  function ensureContext(){
+    if (ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    try { ctx = new AC({ sampleRate:48000, latencyHint:"playback" }); }
+    catch(_){ ctx = new AC(); }
+
+    bus = ctx.createGain(); bus.gain.value = 1;
+
+    // 16384 for the spectrum plot: 2.9 Hz bins, fine frequency resolution
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 16384; analyser.smoothingTimeConstant = 0;
+    analyser.minDecibels = -120; analyser.maxDecibels = -10;
+    specData = new Float32Array(analyser.frequencyBinCount);
+
+    // 2048 for decoding: 23 Hz bins but a 43 ms window, and window length is
+    // what matters when symbols are only a couple hundred milliseconds long
+    loopAnalyser = ctx.createAnalyser();
+    loopAnalyser.fftSize = 2048; loopAnalyser.smoothingTimeConstant = 0;
+    loopAnalyser.minDecibels = -120; loopAnalyser.maxDecibels = -10;
+    loopData = new Float32Array(loopAnalyser.frequencyBinCount);
+
+    bus.connect(analyser); analyser.connect(ctx.destination);
+    bus.connect(loopAnalyser);
+
+    srVal.textContent = nf(ctx.sampleRate)+" Hz";
+    nyVal.textContent = nf(nyquist())+" Hz";
+    spanLabel.textContent = (SPAN_LO/1000)+"k \u2014 "+Math.round(nyquist()/1000)+"k";
+    checkCeiling();
+  }
+
+  async function start(){
+    await unlockAudio();
+
+    toneGain = ctx.createGain();
+    toneGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    osc = ctx.createOscillator(); osc.type = "sine";
+    lastTarget = pickFreq();
+    osc.frequency.setValueAtTime(lastTarget, ctx.currentTime);
+    osc.connect(toneGain); toneGain.connect(bus);
+    osc.start();
+    if (!txActive) toneGain.gain.exponentialRampToValueAtTime(Math.max(level(),0.0002), ctx.currentTime+0.02);
+
+    running = true; hopCount = 0;
+    nextHopAt = ctx.currentTime + 0.05;
+    pending.length = 0; history.length = 0;
+    history.push({ t:performance.now(), f:lastTarget });
+
+    powerBtn.setAttribute("aria-pressed","true");
+    powerLabel.textContent = "Signal on";
+    freqBig.classList.add("live");
+    schedule();
+  }
+
+  function stop(){
+    running = false;
+    if (toneGain && ctx){
+      const t = ctx.currentTime;
+      toneGain.gain.cancelScheduledValues(t);
+      toneGain.gain.setValueAtTime(Math.max(toneGain.gain.value,0.0002), t);
+      toneGain.gain.exponentialRampToValueAtTime(0.0001, t+0.03);
+      osc.stop(t+0.06);
+    }
+    osc = null; toneGain = null; pending.length = 0;
+    powerBtn.setAttribute("aria-pressed","false");
+    powerLabel.textContent = "Signal off";
+    freqBig.classList.remove("live","hop");
+    measuredEl.textContent = "\u2014"; targetEl.textContent = "\u2014";
+    holdEl.textContent = "\u2014"; countdownEl.textContent = "\u2014";
+  }
+
+  const toggle = () => running ? stop() : start();
+  powerBtn.addEventListener("click", toggle);
+  window.addEventListener("keydown", e => {
+    if (e.code === "Space" && e.target === document.body){ e.preventDefault(); toggle(); }
+  });
+  setInterval(schedule, TICK_MS);
+
+  // ══ transmitter ═══════════════════════════════════════════════════════
+  // Continuous-phase FSK: amplitude stays flat across the burst and only the
+  // frequency steps. Gating each symbol would splatter broadband clicks
+  // straight down into the audible range.
+  function buildFrame(text){
+    const sym = +symMs.value/1000, gap = sym*0.5;
+    const slots = [{ f:F_START, d:sym }];
+    for (const ch of text){
+      slots.push({ f:F_GAP, d:gap });
+      slots.push({ f:toneFor(ch), d:sym });
+    }
+    slots.push({ f:F_GAP, d:gap });
+    slots.push({ f:F_END, d:sym });
+    return slots;
+  }
+
+  function runPass(){
+    const text = clean(msgIn.value);
+    if (!text){ endTx(); return; }
+    const slots = buildFrame(text);
+
+    txOsc = ctx.createOscillator(); txOsc.type = "sine";
+    txGain = ctx.createGain(); txGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    txOsc.connect(txGain); txGain.connect(bus);
+
+    let t = ctx.currentTime + 0.08;
+    txOsc.frequency.setValueAtTime(slots[0].f, t);
+    for (const s of slots){ txOsc.frequency.setValueAtTime(s.f, t); t += s.d; }
+
+    const amp = Math.max(level(), 0.0002);
+    txOsc.start();
+    txGain.gain.exponentialRampToValueAtTime(amp, ctx.currentTime + 0.09);
+    txGain.gain.setValueAtTime(amp, t - 0.02);
+    txGain.gain.exponentialRampToValueAtTime(0.0001, t);
+    txOsc.stop(t + 0.05);
+
+    txTimer = setTimeout(() => { txLoop ? runPass() : endTx(); }, (t - ctx.currentTime)*1000 + 160);
+  }
+
+  async function startTx(){
+    await unlockAudio();
+    if (txActive) clearTimeout(txTimer);
+    txActive = true;
+    if (toneGain) toneGain.gain.setTargetAtTime(0.00001, ctx.currentTime, 0.01);
+    if (!micOn) resetRx();
+    freqBig.classList.add("tx");
+    txBtn.textContent = "Stop";
+    runPass();
+  }
+
+  function endTx(){
+    txActive = false; txLoop = false;
+    clearTimeout(txTimer);
+    loopBtn.setAttribute("aria-pressed","false");
+    txBtn.textContent = "Transmit";
+    freqBig.classList.remove("tx");
+    if (toneGain && ctx) toneGain.gain.setTargetAtTime(Math.max(level(),0.00001), ctx.currentTime, 0.02);
+  }
+
+  txBtn.addEventListener("click", () => txActive ? endTx() : startTx());
+  loopBtn.addEventListener("click", () => {
+    txLoop = !txLoop;
+    loopBtn.setAttribute("aria-pressed", String(txLoop));
+    if (txLoop && !txActive) startTx();
+  });
+
+  // ══ microphone ════════════════════════════════════════════════════════
+  async function micStart(){
+    await unlockAudio();
+    micWarn.classList.add("hidden");
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      micFail("This browser exposes no microphone API, or the page is not in a secure context. Serve it over localhost or https.");
+      return;
+    }
+    try {
+      // Every one of these processors assumes it is cleaning up speech, and
+      // every one of them will annihilate a 20 kHz carrier.
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation:false, noiseSuppression:false, autoGainControl:false,
+          channelCount:1, sampleRate:48000
+        }
+      });
+    } catch (e){
+      micFail("Microphone refused: " + (e && e.name ? e.name : "unknown") +
+        ". A page opened directly from disk is not a secure context \u2014 serve it over localhost instead.");
+      return;
+    }
+
+    const src = ctx.createMediaStreamSource(micStream);
+    micAnalyser = ctx.createAnalyser();
+    micAnalyser.fftSize = 2048; micAnalyser.smoothingTimeConstant = 0;
+    micAnalyser.minDecibels = -130; micAnalyser.maxDecibels = -10;
+    micData = new Float32Array(micAnalyser.frequencyBinCount);
+    src.connect(micAnalyser);            // never routed onward \u2014 that is feedback
+
+    const track = micStream.getAudioTracks()[0];
+    const st = track.getSettings ? track.getSettings() : {};
+    micSr = st.sampleRate || ctx.sampleRate;
+    rxSrVal.textContent = nf(micSr) + " Hz";
+
+    micOn = true;
+    micBtn.setAttribute("aria-pressed","true");
+    micBtn.textContent = "Stop";
+    rxSrc.textContent = "microphone";
+    resetRx();
+
+    if (micSr < 44100){
+      micWarn.classList.remove("hidden");
+      micWarn.innerHTML = "<b>Capture rate is " + nf(micSr) + " Hz.</b> Nyquist on the input is " +
+        nf(micSr/2) + " Hz, so part of the tone plan cannot be represented at all. Narrow the band downward or the decode will be partial.";
+    }
+  }
+
+  function micFail(text){
+    micWarn.classList.remove("hidden");
+    micWarn.innerHTML = "<b>No microphone.</b> " + text;
+    micOn = false;
+    micBtn.setAttribute("aria-pressed","false");
+    micBtn.textContent = "Listen";
+    rxSrc.textContent = "loopback";
+  }
+
+  function micStop(){
+    if (micStream) micStream.getTracks().forEach(t => t.stop());
+    micStream = null; micAnalyser = null; micData = null;
+    micOn = false;
+    micBtn.setAttribute("aria-pressed","false");
+    micBtn.textContent = "Listen";
+    rxSrc.textContent = "loopback";
+    rxSrVal.textContent = "\u2014";
+  }
+
+  micBtn.addEventListener("click", () => micOn ? micStop() : micStart());
+
+  // ══ decoder ═══════════════════════════════════════════════════════════
+  // Shared by loopback and microphone. Over-air is noisy, so a candidate must
+  // hold for several consecutive frames and clear the local noise floor by a
+  // margin before it is committed as a symbol.
+  const HOLD_FRAMES = 3, SNR_MIN = 9, MAX_OFFSET = 45;
+  let rxBuf = "", lastCommitted = null, capturing = false;
+  let cand = null, candFrames = 0, errCount = 0;
+
+  function resetRx(){
+    rxBuf = ""; lastCommitted = null; capturing = false;
+    cand = null; candFrames = 0; errCount = 0;
+    rxCount.textContent = "0"; rxErr.textContent = "";
+    rxEl.classList.remove("idle"); rxEl.textContent = "\u2026";
+  }
+
+  function decodeFrom(an, data){
+    an.getFloatFrequencyData(data);
+    const binHz = ctx.sampleRate / an.fftSize;
+    const lo = Math.floor(17300/binHz);
+    const hi = Math.min(data.length-1, Math.ceil(21200/binHz));
+
+    let k = lo, best = -Infinity, sum = 0, n = 0;
+    for (let i=lo;i<=hi;i++){
+      if (data[i] > best){ best = data[i]; k = i; }
+      sum += data[i]; n++;
+    }
+    const floor = n ? sum/n : -120;
+    const snr = best - floor;
+
+    rxSnr.textContent = isFinite(snr) ? snr.toFixed(0) + " dB" : "\u2014";
+    rxBar.style.width = Math.max(0, Math.min(100, (snr/40)*100)) + "%";
+
+    if (snr < SNR_MIN){ cand = null; candFrames = 0; rxTone.textContent = "\u2014"; return; }
+
+    const f = k * binHz;
+    let hit = null, dist = Infinity;
+    for (const t of TONES){
+      const dd = Math.abs(t.f - f);
+      if (dd < dist){ dist = dd; hit = t; }
+    }
+    rxTone.textContent = nf(f);
+
+    // too far from any slot to be one of ours
+    if (!hit || dist > MAX_OFFSET){
+      if (cand !== null){ errCount++; rxErr.textContent = "\u00b7 " + errCount + " off-grid"; }
+      cand = null; candFrames = 0;
+      return;
+    }
+
+    if (hit.k !== cand){ cand = hit.k; candFrames = 1; return; }
+    if (++candFrames !== HOLD_FRAMES) return;      // fires once per stable run
+    if (cand === lastCommitted) return;
+    lastCommitted = cand;
+
+    if (cand === "START"){ rxBuf = ""; capturing = true; }
+    else if (cand === "END"){ capturing = false; }
+    else if (cand === "GAP"){ lastCommitted = null; }   // separator: re-arm
+    else if (capturing){ rxBuf += cand; rxCount.textContent = rxBuf.length; }
+
+    rxEl.textContent = rxBuf || "\u2026";
+  }
+
+  // ══ measurement ═══════════════════════════════════════════════════════
+  function measurePeak(){
+    if (!analyser) return null;
+    analyser.getFloatFrequencyData(specData);
+    const binHz = ctx.sampleRate / analyser.fftSize;
+    const from = Math.floor(SPAN_LO/binHz), to = specData.length - 2;
+    let k = from, best = -Infinity;
+    for (let i=from;i<=to;i++) if (specData[i] > best){ best = specData[i]; k = i; }
+    if (best < -95) return null;
+    const a = specData[k-1], b = specData[k], c = specData[k+1];
+    const den = a - 2*b + c;
+    const p = den !== 0 ? 0.5*(a-c)/den : 0;
+    return (k + p) * binHz;
+  }
+
+  // ══ plots ═════════════════════════════════════════════════════════════
+  function fit(cv){
+    const dpr = window.devicePixelRatio || 1;
+    const r = cv.getBoundingClientRect();
+    cv.width = Math.max(1, Math.round(r.width*dpr));
+    cv.height = Math.max(1, Math.round(r.height*dpr));
+    const g = cv.getContext("2d");
+    g.setTransform(dpr,0,0,dpr,0,0);
+    return { g, w:r.width, h:r.height };
+  }
+
+  function drawSpectrum(){
+    const { g,w,h } = fit(specCv);
+    g.clearRect(0,0,w,h);
+    if (!analyser) return;
+    const ny = nyquist(), x = hz => (hz-SPAN_LO)/(ny-SPAN_LO)*w;
+    const lo = bandLow(), hi = bandHigh();
+
+    g.fillStyle = "rgba(157,92,255,.10)";
+    g.fillRect(x(lo), 0, Math.max(1, x(hi)-x(lo)), h);
+    if (txActive || micOn){
+      g.fillStyle = "rgba(123,224,168,.07)";
+      g.fillRect(x(F_START), 0, Math.max(1, x(F_GAP)-x(F_START)), h);
+    }
+
+    g.strokeStyle = "#22252E"; g.lineWidth = 1;
+    g.font = "9px ui-monospace, monospace"; g.textAlign = "center";
+    for (let f=10000; f<ny; f+=2000){
+      const px = Math.round(x(f)) + .5;
+      g.beginPath(); g.moveTo(px,0); g.lineTo(px,h-13); g.stroke();
+      g.fillStyle = (f >= lo && f <= hi) ? "#9D5CFF" : "#4A4F5C";
+      g.fillText((f/1000)+"k", px, h-3);
+    }
+
+    const norm = d => h-15 - Math.max(0, Math.min(1, (d+110)/100))*(h-22);
+    const binHz = ctx.sampleRate/analyser.fftSize, from = Math.floor(SPAN_LO/binHz);
+    g.lineWidth = 1;
+    for (const seg of [[0,lo,"#3E4351"],[lo,hi,"#DFA0FF"],[hi,ny,"#3E4351"]]){
+      g.strokeStyle = seg[2]; g.beginPath();
+      let started = false;
+      for (let i=from;i<specData.length;i++){
+        const f = i*binHz;
+        if (f < Math.max(SPAN_LO, seg[0]) || f > seg[1]) continue;
+        const px = x(f), py = norm(specData[i]);
+        started ? g.lineTo(px,py) : (g.moveTo(px,py), started = true);
+      }
+      g.stroke();
+    }
+
+    // microphone spectrum overlaid, so the far end's view is directly visible
+    if (micOn && micAnalyser){
+      micAnalyser.getFloatFrequencyData(micData);
+      const mb = ctx.sampleRate/micAnalyser.fftSize;
+      g.strokeStyle = "rgba(123,224,168,.8)"; g.beginPath();
+      let started = false;
+      for (let i = Math.floor(SPAN_LO/mb); i < micData.length; i++){
+        const px = x(i*mb), py = norm(micData[i]);
+        started ? g.lineTo(px,py) : (g.moveTo(px,py), started = true);
+      }
+      g.stroke();
+    }
+  }
+
+  function drawTrace(){
+    const { g,w,h } = fit(traceCv);
+    g.clearRect(0,0,w,h);
+    const now = performance.now();
+    while (history.length > 1 && now - history[0].t > TRACE_SEC*1000) history.shift();
+
+    const lo = bandLow(), hi = bandHigh(), pad = (hi-lo)*0.12 || 200;
+    const yTop = lo - pad, yBot = hi + pad;
+    const X = t => w - (now-t)/(TRACE_SEC*1000)*w;
+    const Y = f => h-4 - (f-yTop)/(yBot-yTop)*(h-8);
+
+    g.strokeStyle = "#22252E"; g.lineWidth = 1;
+    for (const f of [lo,hi]){
+      const py = Math.round(Y(f)) + .5;
+      g.beginPath(); g.moveTo(0,py); g.lineTo(w,py); g.stroke();
+    }
+    for (let s=30; s<TRACE_SEC; s+=30){
+      const px = Math.round(w - (s*1000)/(TRACE_SEC*1000)*w) + .5;
+      g.beginPath(); g.moveTo(px,0); g.lineTo(px,h); g.stroke();
+    }
+
+    if (!history.length) return;
+    g.strokeStyle = "#9D5CFF"; g.lineWidth = 1.5; g.lineJoin = "round";
+    g.beginPath(); g.moveTo(X(history[0].t), Y(history[0].f));
+    for (let i=1;i<history.length;i++){
+      const px = X(history[i].t);
+      if (glide) g.lineTo(px, Y(history[i].f));
+      else { g.lineTo(px, Y(history[i-1].f)); g.lineTo(px, Y(history[i].f)); }
+    }
+    const last = history[history.length-1];
+    g.lineTo(w, Y(last.f)); g.stroke();
+    if (running){ g.fillStyle = "#E3A8FF"; g.fillRect(w-3, Y(last.f)-1.5, 3, 3); }
+  }
+
+  // ══ frame loop ════════════════════════════════════════════════════════
+  let flashUntil = 0;
+  function frame(){
+    if (ctx){
+      if (running){
+        while (pending.length && pending[0].t <= ctx.currentTime){
+          const hop = pending.shift();
+          history.push({ t:performance.now(), f:hop.f });
+          targetEl.textContent = nf(hop.f);
+          holdEl.textContent = hop.d.toFixed(1) + " s";
+          hopsEl.textContent = ++hopCount;
+          flashUntil = performance.now() + 220;
+        }
+        const at = pending.length ? pending[0].t : nextHopAt;
+        countdownEl.textContent = Math.max(0, at - ctx.currentTime).toFixed(1) + " s";
+      }
+      const peak = measurePeak();
+      if (peak !== null){
+        measuredEl.textContent = nf(peak);
+        freqBig.innerHTML = nf(peak) + " <u>Hz</u>";
+        if (!running) freqBig.classList.add("live");
+      } else {
+        measuredEl.textContent = "\u2014";
+        if (!running && !txActive) freqBig.classList.remove("live");
+      }
+      freqBig.classList.toggle("hop", !txActive && performance.now() < flashUntil);
+
+      // microphone wins when it is open; loopback only while transmitting
+      if (micOn && micAnalyser) decodeFrom(micAnalyser, micData);
+      else if (txActive) decodeFrom(loopAnalyser, loopData);
+    }
+    drawSpectrum(); drawTrace();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ══ controls ══════════════════════════════════════════════════════════
+  function checkCeiling(){
+    if (!ctx) return;
+    const c = ceilHz();
+    if (+fMax.value > c){
+      warn.classList.remove("hidden");
+      warn.innerHTML = "<b>Above Nyquist.</b> This device runs at " + nf(ctx.sampleRate) +
+        " Hz, so nothing above " + nf(nyquist()) +
+        " Hz can exist in the signal. The upper limit is clamped to " + nf(c) + " Hz.";
+    } else warn.classList.add("hidden");
+  }
+
+  function syncBand(){
+    if (+fMin.value > +fMax.value){
+      if (document.activeElement === fMin) fMax.value = fMin.value; else fMin.value = fMax.value;
+    }
+    fMinOut.textContent = nf(+fMin.value);
+    fMaxOut.textContent = nf(+fMax.value);
+    checkCeiling();
+  }
+  fMin.addEventListener("input", syncBand);
+  fMax.addEventListener("input", syncBand);
+
+  function syncDwell(){
+    if (+dMin.value > +dMax.value){
+      if (document.activeElement === dMin) dMax.value = dMin.value; else dMin.value = dMax.value;
+    }
+    dMinOut.textContent = dMin.value + " s";
+    dMaxOut.textContent = dMax.value + " s";
+  }
+  dMin.addEventListener("input", syncDwell);
+  dMax.addEventListener("input", syncDwell);
+
+  function setMode(g){
+    glide = g;
+    modeJump.setAttribute("aria-pressed", String(!g));
+    modeGlide.setAttribute("aria-pressed", String(g));
+  }
+  modeJump.addEventListener("click", () => setMode(false));
+  modeGlide.addEventListener("click", () => setMode(true));
+
+  function renderTonemap(){
+    const text = clean(msgIn.value);
+    tonemapEl.innerHTML = text.length
+      ? text.split("").map(c =>
+          '<em>' + (c === " " ? "\u2423" : c) + '</em>\u2009<span>' + nf(toneFor(c)) + '</span>'
+        ).join("\u2002\u00b7\u2002")
+      : '<span style="color:var(--dead)">nothing encodable in the message</span>';
+    const sym = +symMs.value, gap = sym*0.5;
+    const total = (sym + text.length*(sym+gap) + gap + sym)/1000;
+    msgLen.textContent = text.length + " chars \u00b7 " + total.toFixed(1) + " s";
+  }
+  msgIn.addEventListener("input", renderTonemap);
+  symMs.addEventListener("input", () => { symMsOut.textContent = symMs.value + " ms"; renderTonemap(); });
+
+  vol.addEventListener("input", () => {
+    volOut.textContent = vol.value + " %";
+    const l = level();
+    dbfs.textContent = l > 0 ? (20*Math.log10(l)).toFixed(1).replace("-","\u2212") + " dBFS" : "muted";
+    if (toneGain && ctx && !txActive) toneGain.gain.setTargetAtTime(Math.max(l,0.00001), ctx.currentTime, 0.02);
+  });
+
+
+  // ══ multi-device roles + systems check ═══════════════════════════════
+  const roleTx = $("roleTx"), roleRx = $("roleRx"), roleHop = $("roleHop");
+  const sysBtn = $("sysBtn"), sysList = $("sysList");
+  let phoneRole = "tx"; // tx = blaster, rx = listen debug, hop = hop only
+
+  function setRole(r){
+    phoneRole = r;
+    roleTx.setAttribute("aria-pressed", String(r === "tx"));
+    roleRx.setAttribute("aria-pressed", String(r === "rx"));
+    roleHop.setAttribute("aria-pressed", String(r === "hop"));
+    try { localStorage.setItem("hop.role", r); } catch(_){}
+    if (r === "rx"){
+      if (running) stop();
+      if (txActive) endTx();
+      if (!micOn) micStart();
+    } else if (r === "hop"){
+      if (micOn) micStop();
+      if (txActive) endTx();
+      if (!running) start();
+    } else {
+      if (micOn) micStop();
+    }
+  }
+  roleTx.addEventListener("click", () => setRole("tx"));
+  roleRx.addEventListener("click", () => setRole("rx"));
+  roleHop.addEventListener("click", () => setRole("hop"));
+  try {
+    const saved = localStorage.getItem("hop.role");
+    if (saved === "tx" || saved === "rx" || saved === "hop") setRole(saved);
+  } catch(_){}
+
+  function row(label, status, detail){
+    const cls = status === "ok" ? "ok" : status === "bad" ? "bad" : "na";
+    return "<li><span>" + label + "</span><span class='" + cls + "'>" + detail + "</span></li>";
+  }
+
+  async function systemsCheck(){
+    sysList.innerHTML = row("check", "na", "running…");
+    const lines = [];
+    const secure = window.isSecureContext;
+    lines.push(row("HTTPS / secure context", secure ? "ok" : "bad", secure ? "ok" : "required"));
+    lines.push(row("iOS Safari / WebKit", /iPhone|iPad|iPod/.test(navigator.userAgent) ? "ok" : "na",
+      /iPhone|iPad|iPod/.test(navigator.userAgent) ? "iPhone detected" : (navigator.platform || "desktop")));
+    lines.push(row("User agent", "na", (navigator.userAgent.match(/iPhone OS [\\d_]+/) || ["—"])[0].replace(/_/g,".")));
+
+    await unlockAudio();
+    lines.push(row("Web Audio", ctx ? "ok" : "bad", ctx ? ("AudioContext " + ctx.state + " · " + nf(ctx.sampleRate) + " Hz") : "unavailable"));
+    lines.push(row("Nyquist", ctx && ctx.sampleRate >= 44100 ? "ok" : "bad",
+      ctx ? nf(ctx.sampleRate/2) + " Hz ceiling" : "—"));
+
+    let micOk = false, micDetail = "not tested";
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("no mediaDevices");
+      const s = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1, sampleRate:48000 }
+      });
+      const t = s.getAudioTracks()[0];
+      const st = t.getSettings ? t.getSettings() : {};
+      micOk = true;
+      micDetail = (st.sampleRate ? nf(st.sampleRate) + " Hz" : "granted") + " · AEC/NS/AGC off";
+      s.getTracks().forEach(tr => tr.stop());
+    } catch (e){
+      micDetail = (e && e.name) ? e.name : "refused";
+    }
+    lines.push(row("Microphone", micOk ? "ok" : "bad", micDetail));
+
+    // Motion / orientation — web stand-ins; SensorKit is native-only
+    let orient = "na", orientDetail = "SensorKit not available in Safari";
+    try {
+      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function"){
+        const p = await DeviceMotionEvent.requestPermission();
+        orient = p === "granted" ? "ok" : "bad";
+        orientDetail = "DeviceMotion " + p;
+      } else if ("DeviceMotionEvent" in window){
+        orient = "ok"; orientDetail = "DeviceMotion available";
+      }
+    } catch (e){ orient = "bad"; orientDetail = String(e && e.name || e); }
+    lines.push(row("Motion (web)", orient, orientDetail));
+    lines.push(row("SensorKit (native)", "na", "requires iOS app entitlement — web uses mic + Web Audio"));
+
+    // Bluetooth speaker is OS-routed; browsers cannot enumerate BT sinks on iOS
+    lines.push(row("Soundcore 2 output", "na", "iOS Control Center → pair this phone 1:1 to its Soundcore 2"));
+    lines.push(row("Fleet", "ok", "3 independent Blasters · all TX simultaneously"));
+    lines.push(row("This phone", "ok", phoneRole === "tx" ? "Blaster / TX" : phoneRole === "rx" ? "Listen (debug)" : "Hop only"));
+    lines.push(row("Hop RNG", "ok", "per-tab Math.random — incoherent across phones"));
+    lines.push(row("Soundcore 2", "na", "12W · BT 5.0 · BassUp/DSP — expect near-ultrasonic roll-off"));
+
+    sysList.innerHTML = lines.join("");
+  }
+  if (sysBtn) sysBtn.addEventListener("click", () => { systemsCheck(); });
+
+  syncBand(); syncDwell(); renderTonemap();
+  vol.dispatchEvent(new Event("input"));
+})();
+</script>
+</main>
+</body>
+</html>
