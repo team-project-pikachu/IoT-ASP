@@ -1,0 +1,221 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/ts1WLDqW2lZlOtwdKhzUDjagxRM</id>
+  <title>arXiv Query: search_query=all:aeroacoustics AND all:"Navier-Stokes"&amp;id_list=&amp;start=0&amp;max_results=10</title>
+  <updated>2026-09-07T23:31:11Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:aeroacoustics+AND+all:%22Navier-Stokes%22&amp;start=0&amp;max_results=10&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>10</opensearch:itemsPerPage>
+  <opensearch:totalResults>18</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2307.01775v1</id>
+    <title>Equation for Aeroacoustics in a Quiescent Environment</title>
+    <updated>2023-07-04T15:27:43Z</updated>
+    <link href="https://arxiv.org/abs/2307.01775v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2307.01775v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The perturbation equation for aeroacoustics has been derived in a dissipative medium from the linearized compressible Navier-Stokes equation without any assumption, by expressing the same in spectral plane as in Continuum perturbation field in quiescent ambience: Common foundation of flows and acoustics Sengupta et al., Phys. Fluids,35, 056111 (2023). The governing partial differential equation (PDE) for the free-field propagation of the disturbances in the spectral plane provides the dispersion relation between wavenumber and circular frequency in the dissipative medium, as characterized by a nondimensional diffusion number. Here, the implications of the dispersion relation of the perturbation field in the quiescent medium are probed for different orders of magnitude of the generalized kinematic viscosity, across large ranges of the wavenumber and the circular frequency. The adopted global spectral analysis helps not only classify the PDE into parabolic and hyperbolic types, but also explain the existence of a critical wavenumber depending on space-time scales.</summary>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-07-04T15:27:43Z</published>
+    <arxiv:comment>19 pages, 10 figures</arxiv:comment>
+    <arxiv:primary_category term="physics.flu-dyn"/>
+    <author>
+      <name>Tapan K. Sengupta</name>
+    </author>
+    <author>
+      <name>Aditi Sengupta</name>
+    </author>
+    <author>
+      <name>Bhavna Joshi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2212.12365v1</id>
+    <title>Large Eddy Simulations of Supersonic Jet Flows for Aeroacoustic Applications</title>
+    <updated>2022-12-23T14:38:41Z</updated>
+    <link href="https://arxiv.org/abs/2212.12365v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2212.12365v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Current design constraints have encouraged the studies of aeroacoustics fields around compressible jet flows. The present work addresses the numerical study of unsteady turbulent jet flows for aeroacoustic analyses of main engine rocket plumes. A novel large eddy simulation (LES) tool is developed in order to reproduce high fidelity results of compressible jet flows which could be used for aeroacoustic studies with the Ffowcs Williams and Hawkings approach. The numerical solver is an upgrade of an existing Reynolds-averaged Navier-Stokes solver previously developed in the group. The original framework is rewritten in a modern fashion and intensive parallel computation capabilities have been added to the code. The LES formulation is written using the finite difference approach. The energy equation is carefully discretized in order to model the energy equation of the filtered Navier-Stokes formulation. The classical Smagorinsky model is the chosen subgrid scale closure for the present work. Numerical simulations of perfectly expanded jets are performed and compared with the literature in order to validate the new solver. Moreover, speedup and the computational performance of the code are evaluated and discussed. Flow results are used for an initial evaluation of the noise radiated from the rocket plume.</summary>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-12-23T14:38:41Z</published>
+    <arxiv:comment>25 pages conference paper</arxiv:comment>
+    <arxiv:primary_category term="physics.flu-dyn"/>
+    <arxiv:journal_ref>C. Junqueira-Junior, S. Yamouni, J. L. F. Azevedo and W. R. Wolf. Large Eddy Simulations of Supersonic Jet Flows for Aeroacoustic Applications, AIAA 2015-3306. 33rd AIAA Applied Aerodynamics Conference. June 2015</arxiv:journal_ref>
+    <author>
+      <name>Carlos Junqueira-Junior</name>
+    </author>
+    <author>
+      <name>Sami Yamouni</name>
+    </author>
+    <author>
+      <name>Joao Luiz F. Azevedo</name>
+    </author>
+    <author>
+      <name>William Wolf</name>
+    </author>
+    <arxiv:doi>10.2514/6.2015-3306</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.2514/6.2015-3306" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2401.11300v1</id>
+    <title>Aeroacoustics -- Theory and methods for analyzing flow-induced sound generation of technical and biological applications</title>
+    <updated>2024-01-20T19:13:00Z</updated>
+    <link href="https://arxiv.org/abs/2401.11300v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2401.11300v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Flow instabilities, wave propagation phenomena, and structural interaction are current topics of the field "Flow acoustics" also named "Aeroacoustics". Assuming the theory of classical mechanics, aeroacoustic applications are modeled by the conservation equations and suitable material models. In particular, the continuity equation, the Navier-Stokes equation, energy conservation, and the Navier equation are coupled. Depending on the field of application (e.g., slow flow speeds in relation to the speed of sound), further assumptions can simplify the calculation considerably. A systematic derivation of the models according to physical accuracy and calculation efficiency allows us to categorize a computational aeroacoustic model into a hierarchy of models in terms of accuracy, applicability and computational effort. In the simplest case, flow acoustics is described by analytical models in the form of scale models (class~1), like the eighth power law of Lighthill or the methods of VDI 2081 and VDI 3731 for technical sound emissions. Class~2 models (e.g. Sharland, Költzsch, stochastic noise generation and radiation, random particle mesh method) allow empirical factors to be incorporated, which are based on experience (such as fan noise) and allow prediction of the sound. Class~3 models use a numerical decoupling of flow, acoustics, and structure. Thus, this class of models describe a pure forward coupling from the higher energy containing flow field to the sound field. Finally, to solve the full fluid-structure-acoustic interaction numerically, the field equations are solved in a coupled manner (class~4). The class~4 models are characterized by high computational effort and are physically most general but struggle with considerable numerical challenges.</summary>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.app-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-01-20T19:13:00Z</published>
+    <arxiv:comment>Habilitation thesis</arxiv:comment>
+    <arxiv:primary_category term="physics.flu-dyn"/>
+    <author>
+      <name>Stefan Schoder</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1107.4543v1</id>
+    <title>Optimal low-dispersion low-dissipation LBM schemes for computational aeroacoustics</title>
+    <updated>2011-07-22T15:31:48Z</updated>
+    <link href="https://arxiv.org/abs/1107.4543v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1107.4543v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Lattice Boltmzmann Methods (LBM) have been proved to be very effective methods for computational aeroacoustics (CAA), which have been used to capture the dynamics of weak acoustic fluctuations. In this paper, we propose a strategy to reduce the dispersive and disspative errors of the two-dimensional (2D) multi-relaxation-time lattice Boltzmann method (MRT-LBM). By presenting an effective algorithm, we obtain a uniform form of the linearized Navier-Stokes equations corresponding to the MRT-LBM in wave-number space. Using the matrix perturbation theory and the equivalent modified equation approach for finite difference methods, we propose a class of minimization problems to optimize the free-parameters in the MRT-LBM. We obtain this way a dispersion-relation-preserving LBM (DRP-LBM) to circumvent the minimized dispersion error of the MRT-LBM. The dissipation relation precision is also improved.And the stability of the MRT-LBM with the small bulk viscosity is guaranteed. Von Neuman analysis of the linearized MRT-LBM is performed to validate the optimized dispersion/dissipation relations considering monochromatic wave solutions. Meanwhile, dispersion and dissipation errors of the optimized MRT-LBM are quantitatively compared with the original MRT-LBM . Finally, some numerical simulations are carried out to assess the new optimized MRT-LBM schemes.</summary>
+    <category term="physics.comp-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2011-07-22T15:31:48Z</published>
+    <arxiv:comment>33 pages</arxiv:comment>
+    <arxiv:primary_category term="physics.comp-ph"/>
+    <arxiv:journal_ref>J.Comput.Phys.230(13)(2011): 5353-5382</arxiv:journal_ref>
+    <author>
+      <name>Hui Xu</name>
+    </author>
+    <author>
+      <name>Pierre Sagaut</name>
+    </author>
+    <arxiv:doi>10.1016/j.jcp.2011.03.040</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1016/j.jcp.2011.03.040" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2408.04250v1</id>
+    <title>The oscillating and vibrating cylinder: a benchmark to study low Mach number aeroacoustics</title>
+    <updated>2024-08-08T06:33:28Z</updated>
+    <link href="https://arxiv.org/abs/2408.04250v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2408.04250v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Hydrodynamic and acoustic scales separate as the Mach number decreases, making the modelling of aeroacoustic phenomena singular in this flow regime. The benchmark of the flow developing around an oscillating and vibrating cylinder is one of the scarce configuration that is fully analytically tractable, and is thus precious in the validation of new theories or solvers. This work carefully derives the complete incompressible flow solution for this case, extending the axisymmetric results of the literature to more complex cylinder motion. High-order finite element method solution of the incompressible Navier-Stokes equations provide a reference to validate the analytical formulae derived here. Both analytical and numerical investigations agree on an independence of the configuration to the Reynolds number. Up to the critical Reynolds number, found to lie above $10^4$, the hydrodynamic solution of this configuration is solely governed by the Stokes number. The exact expression of the sound radiated in the far field is computed by accounting for the cylinder scattering by means of tailored Green's functions.</summary>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-08-08T06:33:28Z</published>
+    <arxiv:primary_category term="physics.flu-dyn"/>
+    <author>
+      <name>Étienne Spieser</name>
+    </author>
+    <author>
+      <name>Siyang Zhong</name>
+    </author>
+    <author>
+      <name>Xin Zhang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.17986v1</id>
+    <title>Whistling of turbulent cavity flows: Self-consistent predictions with the linearized compressible Navier-Stokes equations</title>
+    <updated>2025-09-22T16:29:40Z</updated>
+    <link href="https://arxiv.org/abs/2509.17986v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.17986v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A self-consistent saturation model for the prediction of aeroacoustic limit cycles emerging in turbulent low-Mach cavity flows (Re=O(10^5), M\simeq 0.2) is proposed. It predicts the nonlinear interactions between the acoustic modes of a deep rectangular cavity and the hydrodynamic instabilities of the turbulent shear-layer that forms over its opening due to the presence of a grazing flow. The model is based on the triple decomposition of the flow variables and the compressible Navier-Stokes equations. At each step of the iterative process, the nonlinear eigenvalue problem associated to perturbations around the mean flow is updated with the steady component of the forcing from the unstable eigenmode's Reynolds stress. The iterations are performed until the dominant eigenmode becomes marginally stable, i.e. its growth rate vanishes. The evolution of the coherent velocity fluctuations as function of the oscillation amplitude is in good qualitative agreement with previously published compressible Large Eddy Simulations. Furthermore, the predictions of the frequency and amplitude of the aeroacoustic limit cycle oscillations are validated against the ones obtained from a low order model, whose parameters were adjusted to reproduce the experimental measurements of the deep cavity whistling.</summary>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-22T16:29:40Z</published>
+    <arxiv:comment>24 pages, 11 figures</arxiv:comment>
+    <arxiv:primary_category term="physics.flu-dyn"/>
+    <author>
+      <name>Nikolaos Bozikis</name>
+    </author>
+    <author>
+      <name>Dilara Özev</name>
+    </author>
+    <author>
+      <name>Nicolas Noiray</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.05547v1</id>
+    <title>Investigation of Aeroacoustics and In-flight Particle Transport in Thermal Spray Supersonic Jets</title>
+    <updated>2026-03-04T23:36:13Z</updated>
+    <link href="https://arxiv.org/abs/2603.05547v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.05547v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The acoustic signature of thermal spray processes is known to vary with changes in operating conditions, which also influence particle in-flight velocity and distribution. Building on this idea, the present work first develops an analytical model that links chamber and nozzle parameters to far-field acoustic levels using gas-dynamics relations and simplified acoustic power propagation. The model is then calibrated to reduce systematic error associated with neglected turbulence effects and to improve agreement across operating conditions. In addition, a numerical framework is implemented to complement the analytical model and to resolve supersonic jet flow and in-flight particle transport. The second part of the study uses unsteady compressible simulations with hybrid turbulence modeling such as Unsteady Reynolds-Averaged Navier-Stokes (URANS) and Delayed Detached Eddy Simulation (DDES) to capture the development of the shock-containing jet and the associated near-field pressure fluctuations. Far-field sound is predicted using the Ffowcs Williams-Hawkings acoustic analogy, while a Lagrangian approach tracks particles injected at the nozzle exit to quantify velocity evolution, radial spreading, and downstream flux distributions. The influence of operating conditions (e.g., chamber pressure and temperature) is assessed, and predictions are evaluated against published microphone spectra and particle flux measurements. Overall, the combined analytical and numerical approach captures how changes in nozzle operating conditions affect jet unsteadiness and mixing, leading to measurable shifts in acoustic level and spectral content. These results suggest that aeroacoustic signatures could be used as a non-intrusive pathway to monitor and potentially control thermal spray operating conditions.</summary>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.comp-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-03-04T23:36:13Z</published>
+    <arxiv:primary_category term="physics.flu-dyn"/>
+    <author>
+      <name>D. Rahmat Samii</name>
+    </author>
+    <author>
+      <name>M. Tembely</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2304.13900v2</id>
+    <title>Data-driven Balanced Truncation for Predictive Model Order Reduction of Aeroacoustic Response</title>
+    <updated>2023-05-30T17:48:56Z</updated>
+    <link href="https://arxiv.org/abs/2304.13900v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2304.13900v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Rapid prediction of the aeroacoustic response is a key component in the design of aircraft and turbomachinery. While it is possible to achieve accurate predictions using direct solution of the compressible Navier-Stokes equations, applications of such solvers is not feasible in design optimization due to the high cost of resolving wave phenomena in an Eulerian setting. In this work, we propose a technique for highly accelerated predictions of aeroacoustic response using a data-driven model reduction approach based on the eigensystem realization algorithm (ERA), as a non-intrusive balanced truncation method. Specifically, we create and compare ERA ROMs based on the training data generated by solving the linearized and nonlinear Euler equations with Gaussian pulse inputs, and use them for prediction of the aeroacoustic response of an airfoil subject to different types of gust loading. The results show that both ROMs are in good agreement with the full-order model (FOM) solution in a purely predictive setting, while achieving orders of magnitude reduction in the online computation time. Using ERA for prediction of the acoustic response requires activating each input channel separately in the FOM for training ROMs, and operating on a large Hankel matrix, that can become computationally infeasible. We address this bottleneck in two steps: first, we propose a multi-fidelity gappy POD method to identify the most impactful input channels based on a coarser grid. Therefore, we reduce the computation cost on the FOM and ROM levels as we build the Markov sequence by querying the high-resolution FOM only for the input channels identified by gappy POD. Second, we use tangential interpolation at the ROM level to reduce the size of the Hankel matrix. The proposed methods enable application of ERA for highly accurate online acoustic response prediction and reduce the offline computation cost of ROMs.</summary>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="eess.SY" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-04-27T00:56:11Z</published>
+    <arxiv:primary_category term="physics.flu-dyn"/>
+    <author>
+      <name>Elnaz Rezaian</name>
+    </author>
+    <author>
+      <name>Karthik Duraisamy</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2301.00651v1</id>
+    <title>Influence of Different Subgrid Scale Models in LES of Supersonic Jet Flows</title>
+    <updated>2023-01-02T13:13:30Z</updated>
+    <link href="https://arxiv.org/abs/2301.00651v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2301.00651v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Current design constraints have encouraged the studies of aeroacoustics fields around compressible jet flows. The present work addresses the numerical study of subgrid scale modeling for unsteady turbulent jet flows as a preliminary step for future aeroacoustic analyses of main engine rocket plumes. An in-house large eddy simulation (LES) tool is developed in order to reproduce high fidelity results of compressible jet flows. In the present study, perfectly expanded jets are considered because the authors want to emphasize the effects of the jet mixing phenomena. The large eddy simulation formulation is written using the finite difference approach, with an explicit time integration and using a second order spatial discretization. The energy equation is carefully discretized in order to model the energy equation of the filtered Navier-Stokes formulation. The classical Smagorinsky model, the dynamic Smagorinsky model and the Vreman models are the chosen subgrid scale closures for the present work. Numerical simulations of perfectly expanded jets are performed and compared with the literature in order to validate and compare the performance of each subgrid closure in the solver.</summary>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-01-02T13:13:30Z</published>
+    <arxiv:comment>conference paper - AIAA Aviation 2016. arXiv admin note: substantial text overlap with arXiv:2212.12353, arXiv:2212.12365</arxiv:comment>
+    <arxiv:primary_category term="physics.flu-dyn"/>
+    <arxiv:journal_ref>Carlos Junqueira-Junior, Sami Yamouni, Joao Luiz F. Azevedo and William Wolf. "Influence of Different Subgrid Scale Models in LES of Supersonic Jet Flows," AIAA 2016-4093. 46th AIAA Fluid Dynamics Conference. June 2016</arxiv:journal_ref>
+    <author>
+      <name>Carlos Junqueira-Junior</name>
+    </author>
+    <author>
+      <name>Sami Yamouni</name>
+    </author>
+    <author>
+      <name>Joao Luiz F. Azevedo</name>
+    </author>
+    <author>
+      <name>William Wolf</name>
+    </author>
+    <arxiv:doi>10.2514/6.2016-4093</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.2514/6.2016-4093" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.15982v1</id>
+    <title>Real-Time Inviscid Fluid Dynamics and Aero-acoustics on a Sphere</title>
+    <updated>2026-01-22T14:04:03Z</updated>
+    <link href="https://arxiv.org/abs/2601.15982v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.15982v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Real-time fluid and aeroacoustic simulation on complex surfaces can have interactive applications - from globe-based weather visualizations to immersive computer games with physically accurate wind and sound. However, conventional grid-based solvers struggle with numerical instability near surface singularities, and mesh-based approaches lack a straightforward path to solving partial differential equations (PDEs) with stable, high-order accuracy.
+  Our model presents a unified framework for real-time inviscid fluid simulation and aeroacoustics on spherical surfaces with embedded obstacles, combining the Closest Point Method (CPM), projection-based Navier-Stokes solvers, and the Ffowcs Williams-Hawkings (FWH) analogy. CPM enables surface PDEs to be solved in a Cartesian embedding without parametrization by restricting computation to a narrow band around the sphere. Each band point is mapped to its nearest surface location, where band operators project results onto the local tangent space. Surface obstacles are modelled with signed distance functions (SDFs), enforcing no-slip velocity constraints and Bernoulli-based pressure adjustments for consistent real-world boundary interactions. Aeroacoustic sources are computed directly from surface pressure force derivatives and mapped to real-time audio via frequency and amplitude modulation with artifact-suppressing hysteresis smoothing.
+  Our findings from this model simulate the behaviour of inviscid fluid on spherical surfaces while generating sound using the pressure of the fluid flowing on the surface. This approach gives results that offer stability, geometric consistency, and support applications in scientific visualization, virtual reality, and educational tools.</summary>
+    <category term="math.AP" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.flu-dyn" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-22T14:04:03Z</published>
+    <arxiv:comment>All source code is made publicly available via the GitHub repository https://github.com/jstr01/RealTime-CFD-Acoustics-Sphere</arxiv:comment>
+    <arxiv:primary_category term="math.AP"/>
+    <author>
+      <name>Madhusraba Sinha</name>
+    </author>
+    <author>
+      <name>Jan Stratmann</name>
+    </author>
+  </entry>
+</feed>

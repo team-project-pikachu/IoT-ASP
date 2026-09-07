@@ -1,0 +1,41 @@
+{
+  "extractedAt": "2026-09-07T23:32:22.222986+00:00",
+  "articles": [
+    {
+      "title": "Agent Development Kit \u00a0|\u00a0 Gemini Enterprise Agent Platform \u00a0|\u00a0 Google Cloud Documentation",
+      "url": "https://docs.cloud.google.com/agent-builder/agent-development-kit/overview",
+      "path": "reference/knowledge/adk/agent-development-kit-gemini-enterprise-agent-platform-googl.md",
+      "section": "adk"
+    },
+    {
+      "title": "Agent Development Kit \u00a0|\u00a0 Gemini Enterprise Agent Platform \u00a0|\u00a0 Google Cloud Documentation",
+      "url": "https://docs.cloud.google.com/agent-builder/agent-development-kit/get-started",
+      "path": "reference/knowledge/adk/agent-development-kit-gemini-enterprise-agent-platform-googl.md",
+      "section": "adk"
+    },
+    {
+      "title": "Agent Development Kit (ADK) - Agent Development Kit (ADK)",
+      "url": "https://google.github.io/adk-docs/",
+      "path": "reference/knowledge/adk/agent-development-kit-adk-agent-development-kit-adk.md",
+      "section": "adk"
+    },
+    {
+      "title": "Agent Development Kit \u00a0|\u00a0 Gemini Enterprise Agent Platform \u00a0|\u00a0 Google Cloud Documentation",
+      "url": "https://docs.cloud.google.com/agent-builder/agent-development-kit/overview",
+      "path": "reference/knowledge/adk/agent-development-kit-gemini-enterprise-agent-platform-googl.md",
+      "section": "adk"
+    },
+    {
+      "title": "Python - Agent Development Kit (ADK)",
+      "url": "https://google.github.io/adk-docs/get-started/python/",
+      "path": "reference/knowledge/adk/python-agent-development-kit-adk.md",
+      "section": "adk"
+    },
+    {
+      "title": "Python - Agent Development Kit (ADK)",
+      "url": "https://google.github.io/adk-docs/get-started/python/",
+      "path": "reference/knowledge/adk/python-agent-development-kit-adk.md",
+      "section": "adk"
+    }
+  ]
+}

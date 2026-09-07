@@ -1,0 +1,4 @@
+# Pin ranges — no @latest. ADK optional for dry-run (stdlib path).
+google-adk>=1.0.0,<2
+google-cloud-storage>=2.14.0,<4
+google-genai>=1.0.0,<2

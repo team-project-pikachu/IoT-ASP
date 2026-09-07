@@ -1,0 +1,1 @@
+WARN: ctx7 CLI docs empty; call MCP query-docs libraryId=/google/adk-python

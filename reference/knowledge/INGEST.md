@@ -49,3 +49,9 @@ format: json/markdown/merged
 max_pages: 20
 also: coremotion, MDN DeviceMotionEvent (+ acceleration, requestPermission), anker soundcore-2
 ```
+
+## ADK / Agent Platform (2026-09-07)
+
+Portal: https://docs.cloud.google.com/agent-builder/agent-development-kit/overview
+
+Firecrawl scrapes under `reference/knowledge/adk/`. Context7 library `/google/adk-python`. Living KB: `reference/knowledge-base/` (`scripts/kb_refresh.sh`).

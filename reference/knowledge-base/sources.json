@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "updated": "2026-09-07",
+  "context7_stable": "~/.cursor/plugins/local/research-cli-kit/scripts/context7_stable.sh",
+  "libraries": [
+    {
+      "id": "/google/adk-python",
+      "name": "ADK Python",
+      "queries": [
+        "LlmAgent root_agent tools FunctionTool local adk web run",
+        "Deploy ADK agent to Agent Engine agent_engine Cloud Run"
+      ],
+      "topic": "adk"
+    },
+    {
+      "id": "/websites/cloud_google_gemini-enterprise-agent-platform",
+      "name": "Gemini Enterprise Agent Platform / Vertex AI",
+      "queries": [
+        "google genai Client vertexai project location generateContent",
+        "Agent Runtime deploy ADK agent"
+      ],
+      "topic": "gemini-enterprise"
+    },
+    {
+      "id": "/websites/ai_google_dev_gemini-api",
+      "name": "Gemini API",
+      "queries": [
+        "structured JSON output generateContent safety settings"
+      ],
+      "topic": "gemini-enterprise"
+    },
+    {
+      "id": "/websites/developer_mozilla_org_en-US_docs_Web_API_Web_Audio_API",
+      "name": "MDN Web Audio API",
+      "queries": [
+        "OscillatorNode AudioContext frequency gain"
+      ],
+      "topic": "autoroute",
+      "optional": true
+    }
+  ],
+  "firecrawl_portals": [
+    {
+      "url": "https://docs.cloud.google.com/agent-builder/agent-development-kit/overview",
+      "section": "adk",
+      "artifacts": "reference/knowledge/adk/"
+    },
+    {
+      "url": "https://google.github.io/adk-docs/get-started/python/",
+      "section": "adk",
+      "artifacts": "reference/knowledge/adk/"
+    }
+  ]
+}

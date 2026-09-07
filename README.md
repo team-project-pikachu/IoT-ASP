@@ -32,11 +32,23 @@ Docs ingest: `reference/knowledge/INGEST.md`.
 
 Tracked as GitHub milestones M0–M5 (seeds, monitoring, vib rotation, RLHF ±, SensorKit research). Parked features are issues labeled `parked`.
 
+## Control plane
+
+- Gemini Enterprise engine: **`iot-asp-autoroute`** (`docs/gemini-enterprise.md`)
+- ADK agent: `services/autoroute-adk/` (`docs/adk-autoroute.md`) — https://docs.cloud.google.com/agent-builder/agent-development-kit/overview
+- Colab ETL stub: `notebooks/iot_asp_colab_etl.ipynb`
+- Knowledge base: `reference/knowledge-base/` + `bash scripts/kb_refresh.sh`
+- Private study: local `study/` (gitignored)
+
 ## Layout
 
 ```
-public/          # shipped static web blaster (PWA)
-SPEC.md          # Soundcore 2 manufacturer notes
-reference/knowledge/  # Firecrawl + Context7 ingest
-vercel.json      # static deploy headers
+public/                 # shipped static web blaster (PWA)
+docs/                   # gemini, ADK, autoroute, physics, Colab
+services/autoroute-adk/ # Google ADK Python agent
+notebooks/              # Colab ETL stub
+reference/knowledge-base/  # Context7 refreshable KB
+reference/knowledge/    # Firecrawl ingest (incl. ADK)
+SPEC.md
+vercel.json
 ```

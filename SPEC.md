@@ -27,8 +27,10 @@ Comparison table on the same page repeats: Output Power 12W · Water IPX7 · Pla
 
 ## Fleet topology (app requirement)
 
-- **3 independent blasters:** 2× iPhone 16 + 1× iPhone 14, each paired **1:1** to its own Soundcore 2.
-- All phones open the same public URL and transmit concurrently (incoherent hop schedules — no shared seed).
+- **2 nodes** paired **1:1** phone ↔ Bluetooth speaker (e.g. Soundcore 2).
+- **Optional 3rd node:** phone chair-mounted for structure-borne / accelerometer-biased sensing.
+- All nodes open the same public URL and may transmit concurrently (incoherent schedules — no shared seed).
+- Algorithms: `hop` / `pulse` / `shriek`, optionally switched by vib class (accel vs acoustic).
 
 ## Capture method
 
