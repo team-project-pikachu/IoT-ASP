@@ -17,6 +17,9 @@ know what must be acknowledged before live Nest / Gemini paths.
 - Nest detector prompt contract: features only — no audio bytes / URLs / raw ids
   (`iot_asp_autoroute/nest/detector.py` `_prompt_payload`).
 - Fleet invariant: no site PII in telemetry ([`docs/api-contract.md`](../api-contract.md)).
+- Docs drain index: [`docs/milestones/M8-docs-acceptance.md`](../milestones/M8-docs-acceptance.md).
+- **Sibling privacy lane (M9):** [#113](https://github.com/team-project-pikachu/IoT-ASP/issues/113) / PR [#124](https://github.com/team-project-pikachu/IoT-ASP/pull/124) → `docs/privacy-entitlements-native.md` (SensorKit · CoreMotion · mic). This #99 file is Nest/glass-shatter recording consent only.
+- In-app consent UX copy deferred to feature stack [#117](https://github.com/team-project-pikachu/IoT-ASP/pull/117) (#97) / [#115](https://github.com/team-project-pikachu/IoT-ASP/pull/115) (#101).
 
 ## Shipped on `main`
 
@@ -29,9 +32,10 @@ know what must be acknowledged before live Nest / Gemini paths.
 
 ## Remaining scope
 
-- Owner-facing in-app consent copy on HomeNest / PWA when live linking ships (#97 / #101).
+- Owner-facing in-app consent copy on HomeNest / PWA when live linking ships (#97 / PR #117 · #101 / PR #115).
 - Live OAuth consent screen steps stay on #93 (parked — agents do not browser-login).
 - Retention TTLs for private `meta/nest/` objects — owner GCS policy (not public git).
+- M9 SensorKit entitlement docs stay on #113 / PR #124 (`privacy-entitlements-native.md`) — do not overwrite.
 
 ## Consent checklist (owner)
 

@@ -2,9 +2,11 @@
 
 **Issue:** [#99](https://github.com/team-project-pikachu/IoT-ASP/issues/99)  
 **Spec:** [`docs/specs/99-glass-shatter-privacy.md`](specs/99-glass-shatter-privacy.md)  
-**Related:** [`docs/nest-device-access.md`](nest-device-access.md) · [`docs/STUDY_PRIVATE.md`](STUDY_PRIVATE.md)
+**Related:** [`docs/nest-device-access.md`](nest-device-access.md) · [`docs/STUDY_PRIVATE.md`](STUDY_PRIVATE.md) · drain [`docs/milestones/M8-docs-acceptance.md`](milestones/M8-docs-acceptance.md)
 
-Public-safe owner checklist. No credentials, Device Access UUIDs, or clip URLs belong in this file.
+Public-safe owner checklist for **glass-shatter Nest audio/video context**. No credentials, Device Access UUIDs, or clip URLs belong in this file.
+
+**Not this doc:** Apple SensorKit / CoreMotion / mic entitlement strings live under M9 [#113](https://github.com/team-project-pikachu/IoT-ASP/issues/113) → [`privacy-entitlements-native.md`](privacy-entitlements-native.md) (PR #124). Different filename on purpose — do not merge those lanes.
 
 ## What the public fleet may observe
 

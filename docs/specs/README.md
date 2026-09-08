@@ -48,7 +48,11 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 
 | Issue(s) | Spec | Status | Owner surface |
 |----------|------|--------|---------------|
-| #99 | [99-glass-shatter-privacy.md](99-glass-shatter-privacy.md) — privacy / recording consent | docs checklist shipped; live OAuth parked on #93 | docs |
+| #98 | [98-glass-shatter-e2e.md](98-glass-shatter-e2e.md) — glass shatter E2E acceptance | offline pytest + checklist; lab/notify pending | docs + backend |
+| #99 | [99-glass-shatter-privacy.md](99-glass-shatter-privacy.md) — privacy / recording consent | docs checklist; live OAuth parked on #93 | docs |
+| #100 | [100-platform-matrix.md](100-platform-matrix.md) — Vercel / iOS / Playground × Nest × SDM | docs matrix; live cells owner-gated | docs |
+
+Index: [`docs/milestones/M8-docs-acceptance.md`](../milestones/M8-docs-acceptance.md). Feature stack PRs #114–#117 (do not duplicate). #93 OAuth parked. M9 SensorKit privacy is #113 (`privacy-entitlements-native.md`), not #99.
 
 Public checklist: [`docs/glass-shatter-privacy.md`](../glass-shatter-privacy.md).
 
