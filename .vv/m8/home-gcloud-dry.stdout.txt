@@ -1,0 +1,22 @@
+=== gcloud identity (dry check; emails redacted in logs) ===
+account_configured=yes
+project=bear-iot-asp-rec
+expected_owner_configured=yes
+owner_account_match=yes
+
+=== ADC / auth status (no account emails printed) ===
+active_credential_status=*
+
+=== Required / related API service names (document only) ===
+ - aiplatform.googleapis.com
+ - pubsub.googleapis.com
+ - smartdevicemanagement.googleapis.com
+Home APIs iOS OAuth / Device & Automation: Google Home Developer Console (not a gcloud services enable alone).
+CLI surfaces to explore later: gcloud ai … ; gcloud beta ai … ; gcloud alpha ai …
+
+=== Enablement commands (printed; applied only with --apply) ===
+gcloud services enable aiplatform.googleapis.com --project=${PROJECT}
+gcloud services enable pubsub.googleapis.com --project=${PROJECT}
+gcloud services enable smartdevicemanagement.googleapis.com --project=${PROJECT}
+
+DRY-RUN complete. Re-run with --apply after owner confirmation to enable APIs.

@@ -1,4 +1,4 @@
-# Feature specs — index (Project 5, issues #1–#27)
+# Feature specs — index (Project 5, issues #1–#27 + M8 #83–#104)
 
 One spec per Project 5 issue (or per tightly coupled group), each with the sections
 Status · Goal · Shipped on `main` (cited `file:line`) · Remaining scope · Wire fields · Clamps / safety ·
@@ -44,6 +44,36 @@ tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items
 Owner surface legend: **frontend** = `public/` (Vercel), **backend** = `services/autoroute-adk/` (GCP,
 independent deploy), **infra** = `.github/`, `scripts/`, `vercel.json`, edge hardware, **docs** = `docs/`,
 `reference/`, Notion.
+
+## M8 Nest / Gemini specs (#83–#104)
+
+PR #105 (`feat/m8-nest-gemini-home-ios`). Stubs OK for parked/pending honesty.
+Evidence: `.vv/m8/EVIDENCE.md`.
+
+| Issue(s) | Spec | Status | Owner surface |
+|----------|------|--------|---------------|
+| #83 | [83-home-apis-ios-oauth-sdk.md](83-home-apis-ios-oauth-sdk.md) — Register Home APIs iOS OAuth + SDK path for Nest camera access. | parked | native |
+| #84 | [84-nest-camera-discovery.md](84-nest-camera-discovery.md) — Discover Nest cameras / Device API camera traits for catalog context. | stubbed on branch | native |
+| #85 | [85-premium-nest-features-checklist.md](85-premium-nest-features-checklist.md) — Document premium Nest features required for the MVP (owner account). | parked | docs |
+| #86 | [86-audio-event-path-micdiff.md](86-audio-event-path-micdiff.md) — Define Nest mic or ASP micDiff → burst feature vector path. | stubbed | native + backend |
+| #87 | [87-gemini-burst-detector-stub.md](87-gemini-burst-detector-stub.md) — gcloud/Vertex Gemini Enterprise burst detector stub (no metered calls … | implemented stub | backend |
+| #88 | [88-reactive-alarm-escalation.md](88-reactive-alarm-escalation.md) — Escalate alarm louder over time via alarmState/volBlast concepts. | stubbed | native |
+| #89 | [89-e2e-mvp-acceptance.md](89-e2e-mvp-acceptance.md) — E2E MVP: burst → detect → escalate → camera context. | todo | native + infra |
+| #90 | [90-security-privacy.md](90-security-privacy.md) — Security/privacy: no credentials in git; OAuth scopes; recording conse… | in progress | docs + native |
+| #91 | [91-app-scaffold-stub-build.md](91-app-scaffold-stub-build.md) — App scaffold + Home SDK SPM/CocoaPods placeholder that builds without … | implemented stub | native |
+| #92 | [92-gcloud-bootstrap-ci-dry.md](92-gcloud-bootstrap-ci-dry.md) — gcloud bootstrap script + CI dry-check for Vertex/SDM/PubSub names. | implemented | infra |
+| #93 | [93-oauth-consent-owner-steps.md](93-oauth-consent-owner-steps.md) — Document OAuth consent steps for betty@bearresearch.io. | parked | docs |
+| #94 | [94-camera-device-type-stub.md](94-camera-device-type-stub.md) — Camera device type integration stub via Home Device API. | stubbed | native |
+| #95 | [95-glass-shatter-discovery.md](95-glass-shatter-discovery.md) — Glass shatter discovery as event-triggered acoustic class. | stubbed | backend + research |
+| #96 | [96-glass-shatter-event-class.md](96-glass-shatter-event-class.md) — Model/event class enum shared Python/Swift (`escalateDb`, eventClass). | implemented stub | backend + native |
+| #97 | [97-glass-shatter-home-wiring.md](97-glass-shatter-home-wiring.md) — Glass shatter Home app wiring + Automation/notify TODO. | todo | native |
+| #98 | [98-glass-shatter-e2e.md](98-glass-shatter-e2e.md) — Glass shatter E2E acceptance criteria. | todo | native + infra |
+| #99 | [99-glass-shatter-privacy.md](99-glass-shatter-privacy.md) — Glass shatter privacy / recording consent. | todo | docs + native |
+| #100 | [100-platform-matrix.md](100-platform-matrix.md) — Platform matrix: Vercel / iOS / Playground × Nest hardware × SDM event… | in progress | docs |
+| #101 | [101-vercel-pwa-glass-shatter-ui.md](101-vercel-pwa-glass-shatter-ui.md) — Vercel PWA Nest/SDM + glass_shatter event UI surface. | pending | frontend |
+| #102 | [102-swift-playground-homenest.md](102-swift-playground-homenest.md) — Swift Playground / Xcode playground-adjacent HomeNestAlarm stub. | pending | native |
+| #103 | [103-sdm-camerasound-pubsub.md](103-sdm-camerasound-pubsub.md) — SDM CameraSound + Pub/Sub → Gemini detector → louder alarm. | stubbed | backend + infra |
+| #104 | [104-hardware-ladder.md](104-hardware-ladder.md) — Hardware ladder: Nest cam variants / doorbell / phone mic / Sonos sink… | parked | docs + research |
 
 ## Known missing docs
 

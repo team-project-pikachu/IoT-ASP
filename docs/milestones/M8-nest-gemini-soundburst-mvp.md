@@ -54,15 +54,19 @@ Nest cam mic / ASP micDiff features
 
 ## Pending outside this pass
 
-- Per-issue `docs/specs/<n>-*.md` for #83–#104 (index update) — leftover for follow-up
-- Fresh `.vv/` M8 evidence bundle — leftover for follow-up after local `make home-ios-build`
-- #101 PWA `eventClass` / glass_shatter UI and #102 Playgrounds workflow
+- #101 PWA `eventClass` / glass_shatter UI and #102 Playgrounds workflow (honest pending; specs stubbed)
+
+## Specs + evidence (this pass)
+
+- Per-issue specs: `docs/specs/83-*.md` … `docs/specs/104-*.md` (index in `docs/specs/README.md`)
+- Fresh evidence: [`.vv/m8/EVIDENCE.md`](../../.vv/m8/EVIDENCE.md) (UTC procedure, exit codes, pass/fail; no secrets)
 
 ## Build proof
 
 ```bash
 make home-ios-build
 # or: bash scripts/home_ios_build.sh
+# evidence refresh: see .vv/m8/EVIDENCE.md
 ```
 
 ## gcloud surfaces (names)
