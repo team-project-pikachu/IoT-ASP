@@ -78,11 +78,39 @@ jobs:
 
           TITLE="$(gh issue view "$N" -R "$REPO" --json title --jq .title)"
           if [ "$EVENT_NAME" = "issues" ]; then
-            OUTCOME="$(gh api "repos/${REPO}/issues/${N}/comments" \
-              --jq 'if length>0 then .[-1].body else empty end')"
+            # Closing-associated comment from timeline (not latest comment page).
+            # Prefer last ISSUE_COMMENT at/before CLOSED_EVENT; else title fallback.
+            OUTCOME="$(gh api graphql -f query='
+              query($owner:String!,$name:String!,$n:Int!) {
+                repository(owner:$owner, name:$name) {
+                  issue(number:$n) {
+                    title
+                    timelineItems(last: 100, itemTypes: [CLOSED_EVENT, ISSUE_COMMENT]) {
+                      nodes {
+                        __typename
+                        ... on IssueComment { body createdAt }
+                        ... on ClosedEvent { createdAt }
+                      }
+                    }
+                  }
+                }
+              }' -f owner="${REPO%/*}" -f name="${REPO#*/}" -F n="$N" --jq '
+                .data.repository.issue as $i
+                | ($i.timelineItems.nodes
+                    | map(select(.__typename == "ClosedEvent"))
+                    | last
+                    | .createdAt) as $closed
+                | if $closed == null then empty
+                  else
+                    ($i.timelineItems.nodes
+                      | map(select(.__typename == "IssueComment" and .createdAt <= $closed and ((.body // "") | length) > 0))
+                      | last
+                      | .body // empty)
+                  end
+              ')"
             OUTCOME="$(printf '%s' "$OUTCOME" | head -n 1)"
             if [ -z "$OUTCOME" ]; then
-              OUTCOME="closed"
+              OUTCOME="$TITLE"
             fi
           else
             OUTCOME="${INPUT_OUTCOME:-closed}"
@@ -117,7 +145,14 @@ jobs:
 
           BRANCH="automation/mvp-closed-log"
           git fetch origin main
-          git checkout -B "$BRANCH" origin/main
+          # Preserve unmerged rows: reuse remote automation branch, then merge main.
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            git fetch origin "$BRANCH"
+            git checkout -B "$BRANCH" "origin/${BRANCH}"
+            git merge --no-edit origin/main
+          else
+            git checkout -B "$BRANCH" origin/main
+          fi
 
           LOG=docs/mvp-closed-log.md
           if ! grep -F "| #${N} |" "$LOG" >/dev/null 2>&1; then
@@ -134,7 +169,8 @@ jobs:
             git push origin "HEAD:main" && exit 0
           fi
 
-          git push -u origin "$BRANCH" --force-with-lease
+          # Fast-forward from remote tip after merge — no force-push of a recreated tip.
+          git push -u origin "$BRANCH"
           if gh pr view "$BRANCH" -R "$REPO" >/dev/null 2>&1; then
             echo "PR for ${BRANCH} already open"
           else
@@ -143,7 +179,7 @@ jobs:
               --head "$BRANCH" \
               --title "chore: mvp closed-log (#${N})" \
               --body "## Summary
-          - Append closed issue #${N} to \`docs/mvp-closed-log.md\`
+          - Append closed issue #${N} to `docs/mvp-closed-log.md`
           - Automation for #65 (no new secrets)
 
           ## Test plan

@@ -49,9 +49,10 @@ When an issue **closes**:
 
 1. Automation ([#65](https://github.com/team-project-pikachu/IoT-ASP/issues/65), workflow `mvp-closed-log.yml`) appends one line to [mvp-closed-log.md](mvp-closed-log.md).
 2. Line format: `YYYY-MM-DD | #N | <title> | <one-line outcome>`
-3. Outcome = first line of the closing user comment if present; else `closed` / duplicate note.
+3. Outcome = first line of the **closing-associated** timeline comment if present; else the issue title (never an unrelated later comment).
 4. Do **not** delete historical rows. Duplicates of the same `#N` are skipped.
-5. Manual backfill: `bash scripts/mvp_closed_log_append.sh <n> [outcome…]`
+5. Manual append: `bash scripts/mvp_closed_log_append.sh <n> [outcome…]`
+6. Bulk backfill: `bash scripts/mvp_closed_log_append.sh --backfill` (paginated `gh` closed-issue list; idempotent)
 
 Update this roadmap table only when milestones/issue ownership change — not on every close (the log is the chronological record).
 
