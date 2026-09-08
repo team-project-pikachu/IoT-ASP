@@ -104,8 +104,9 @@ def test_parked_google_adk_pin_stays_major_1():
 
 def test_spec_lists_expected_tool_names():
     spec = SPEC.read_text(encoding="utf-8")
-    for name in EXPECTED_ROOT_AGENT_TOOL_NAMES:
-        assert name in spec, name
+    goal = spec.split("## Goal", 1)[1].split("## Prior art", 1)[0]
+    expected = ", ".join(f"`{name}`" for name in EXPECTED_ROOT_AGENT_TOOL_NAMES) + "."
+    assert expected in {line.strip() for line in goal.splitlines()}
     assert "len(root_agent.tools) == 7" not in spec
     assert "seven tools" not in spec
 
