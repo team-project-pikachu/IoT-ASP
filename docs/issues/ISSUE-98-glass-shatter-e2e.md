@@ -42,4 +42,5 @@ Print / tick on device when Nest + HomeNest / PWA UI are linked:
 ## Next
 
 - Owner paste lab outcomes into the GitHub issue comment
-- Wire HomeNest simulate button / PWA UI via #97 / #101 when those PRs land
+- Wire HomeNest simulate button / PWA UI via #97 / #101 when PRs [#117](https://github.com/team-project-pikachu/IoT-ASP/pull/117) / [#115](https://github.com/team-project-pikachu/IoT-ASP/pull/115) land
+- Keep offline pytest green independently of CI Playwright `e2e smoke` (unblocked by [#130](https://github.com/team-project-pikachu/IoT-ASP/pull/130))

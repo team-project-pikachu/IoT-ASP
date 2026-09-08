@@ -5,5 +5,6 @@
 - [x] Offline pytest `tests/test_glass_shatter_e2e.py` (GS-01…GS-07)
 - [x] Notify documented as pending (honest)
 - [ ] Physical Nest / shatter lab — owner
-- [ ] HomeNest UI simulate path — #97 / native package
+- [x] Cross-linked feature stack PRs #114–#117 (docs only)
+- [ ] HomeNest UI simulate path — #97 / PR #117
 - [ ] Project Status → Done + issue comment — **integrate lane**

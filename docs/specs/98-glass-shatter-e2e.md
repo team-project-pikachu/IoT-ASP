@@ -16,6 +16,8 @@ Prove the **simulate → classify → escalate louder → snapshot context stub 
 - Field checklist pattern: [`docs/issues/ISSUE-62-mvp-field-acceptance-e2e.md`](../issues/ISSUE-62-mvp-field-acceptance-e2e.md).
 - PWA alarm machine: `alarmState` / `volBlast` / Hold ([`docs/api-contract.md`](../api-contract.md)).
 - Platform matrix: [#100](https://github.com/team-project-pikachu/IoT-ASP/issues/100) · Privacy: [#99](https://github.com/team-project-pikachu/IoT-ASP/issues/99).
+- Docs drain index: [`docs/milestones/M8-docs-acceptance.md`](../milestones/M8-docs-acceptance.md).
+- Feature stack (UI / native — **not** duplicated here): [#114](https://github.com/team-project-pikachu/IoT-ASP/pull/114) (#96), [#115](https://github.com/team-project-pikachu/IoT-ASP/pull/115) (#101 PWA), [#116](https://github.com/team-project-pikachu/IoT-ASP/pull/116) (#102 Playground), [#117](https://github.com/team-project-pikachu/IoT-ASP/pull/117) (#97 Home wiring).
 
 ## Shipped on `main`
 
@@ -32,9 +34,11 @@ Prove the **simulate → classify → escalate louder → snapshot context stub 
 | Item | Gate |
 |------|------|
 | Physical glass / recorded shatter trial | Owner lab + private evidence |
-| HomeNest UI “Simulate glass shatter” | `native/IoTASPHome` (#97 / PR #105 stack) |
-| Push / Automation notify | Honest **pending** (#97) |
-| PWA eventClass surface | #101 |
+| HomeNest UI “Simulate glass shatter” | #97 / PR [#117](https://github.com/team-project-pikachu/IoT-ASP/pull/117) (stacks on #114) |
+| Push / Automation notify | Honest **pending** (#97 / PR #117) |
+| PWA eventClass surface | #101 / PR [#115](https://github.com/team-project-pikachu/IoT-ASP/pull/115) |
+| AcousticEventClass + gemini-burst-detect | #96 / PR [#114](https://github.com/team-project-pikachu/IoT-ASP/pull/114) |
+| Swift Playground / home-ios-build | #102 / PR [#116](https://github.com/team-project-pikachu/IoT-ASP/pull/116) |
 | Live Gemini Enterprise classify | Owner ADC + engine |
 
 ## Wire fields

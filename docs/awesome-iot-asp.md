@@ -77,6 +77,7 @@ Caches under `.context7/` (see [asp-prior-art.md](asp-prior-art.md)).
 - AI Edge Portal (#23) — [ai-edge-portal.md](ai-edge-portal.md)
 - Multi-LLM autoroute registry (#13) — [multi-llm-registry.md](multi-llm-registry.md) (design sketch; no prod non-Gemini)
 - Telemetry logging enrichment (#22)
+- **M8 glass shatter E2E (#98):** [specs/98-glass-shatter-e2e.md](specs/98-glass-shatter-e2e.md) · `tests/test_glass_shatter_e2e.py` · [milestones/M8-docs-acceptance.md](milestones/M8-docs-acceptance.md)
 - Missing ops note (later lane): `docs/gcp-recordings.md` (`bear-iot-asp-rec`)
 
 ## Privacy
