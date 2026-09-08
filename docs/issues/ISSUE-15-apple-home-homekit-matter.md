@@ -5,6 +5,8 @@
 **Owner surface:** infra  
 **Canonical spec / ADR:** `docs/specs/14-15-21-23-edge-integrations.md`
 
+**Not Google Home:** Nest / Google Home APIs iOS + Gemini acoustic MVP is **M8** ([milestone/9](https://github.com/team-project-pikachu/IoT-ASP/milestone/9), `native/IoTASPHome/`). Do not conflate with HomeKit/Matter.
+
 ## Scope (this pass)
 
 Research stub — no HomeKit accessory / Matter commissioning.

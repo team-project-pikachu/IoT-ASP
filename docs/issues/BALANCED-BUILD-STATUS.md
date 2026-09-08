@@ -1,7 +1,7 @@
 # Balanced build status — open issues
 
 **Election:** 2 = Balanced (stub-first iterate).
-**Branch tip:** `feat/balanced-mvp-roadmap-docs` (rebased onto `main`)
+**Branch tip (this PR):** `feat/m8-nest-gemini-home-ios` (stack on PR8 `feat/balanced-ops-secrets-adk`)
 **Date:** 2026-09-08
 
 | Issue | Classification | Title | Key paths |
@@ -23,6 +23,10 @@
 | #22 | implemented+wired | Structured fleet logs | `services/autoroute-adk/iot_asp_autoroute/fleet_log.py`, `tests/test_fleet_log.py`, `docs/specs/22-structured-fleet-logs.md` |
 | #24 | parked stub | google-adk / google-genai 2.x | `docs/specs/24-adk-2x-migration.md` + `docs/issues/ISSUE-24-*` |
 | #25 | parked stub | HW-limited LF/AEC micDiff | `docs/specs/25-hw-limited-lf-aec-micdiff.md` + `docs/issues/ISSUE-25-*` |
+| #26 | stubbed-live | Colab live GCS features | `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `notebooks/iot_asp_colab_etl.md`, `scripts/colab_live_gcs.sh` |
+| #27 | docs+inventory | Vercel Actions secrets | ORG/PROJECT set; **TOKEN missing**; `gh_secrets_names_check.sh` |
+| #34 | implemented | mdc_convert GEN_MARK guard | `scripts/mdc_convert.py`, `tests/test_mdc_convert.py`, `docs/mdc-conversion.md` |
+| #39 | parked stub | Sonos Beam Gen 2 sink | `docs/specs/39-sonos-beam-sink.md` + `docs/issues/ISSUE-39-*` |
 | #26 | fixture+dry-run | Colab live GCS features | `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `notebooks/iot_asp_colab_etl.md`, `scripts/colab_live_gcs.sh` |
 | #27 | docs+name-check | Vercel Actions secrets | `docs/deploy.md`, `.vv/deploy/VERCEL.md`, `scripts/vercel_secrets_check.sh` |
 | #34 | implemented+wt-guard | mdc_convert GEN_MARK guard | `scripts/mdc_convert.py`, `tests/test_mdc_convert.py`, `docs/mdc-conversion.md` |
@@ -40,31 +44,30 @@
 | #51 | duplicate | dup of #45 | see #45 |
 | #52 | duplicate | dup of #41 | see #41 |
 | #53 | duplicate | dup of #43 | see #43 |
-| #60 | stub | ADK Cloud Run deploy | `docs/issues/ISSUE-60-*` |
-| #61 | qs+UI | Backend URL wiring | `?patch=` / `?telemetry=` + `telemetryUrlLabel` |
-| #62 | checklist | Field acceptance + e2e | `docs/issues/ISSUE-62-*`, `tests/e2e/` |
-| #63 | stub | Main protection apply | ruleset JSON + script |
-| #64 | stub | SEBoK V&V pass | `.vv/matrix.md` |
-| #65 | closed tracker | closed-log automation | see #68 |
-| #68 | docs+workflow | Closed-issue log | `docs/mvp-closed-log.md` + Action |
-| #69 | docs | MVP roadmap | `docs/mvp-roadmap.md` + README |
+| #60 | dry-check | ADK Cloud Run deploy | `scripts/adk_deploy_dry_check.sh` (no live deploy) |
+| #63 | status script | Main protection apply | `scripts/gh_protect_main_status.sh` (report-only) |
 
 ## Summary
-- **Implemented / docs shipped:** #1 (already), #22 (extended), #26 dry-run (live pending), #27 docs, #34 GEN_MARK, #43 Soundcore docs.
+- **Implemented / docs shipped:** #1 (already), #22 (extended), #26 dry-run (live pending), #27 docs+inventory, #34 GEN_MARK, #43 Soundcore docs.
 - **Working stubs:** #11 static fleet cards, #41 native Xcode/SPM stub, #42/#44/#45 impulse+alarm web, #39 Sonos ADR + shell.
-- **PR6 (this branch):** MVP roadmap/closed-log (#68/#69), #61 telemetry label, #60–#64 stubs, #62 checklist.
+- **M8 (this PR):** Nest cameras + Gemini sound-burst + glass shatter; `make home-ios-build` stub; #15 cross-linked (Apple ≠ Google).
+- **PR8 (stack base):** #27 Actions inventory (ORG/PROJECT yes, TOKEN no), #63 ruleset status script, #60 ADK layout dry-check.
 - **Parked ADR-only:** #2–#8, #10, #14, #15, #18, #19, #24, #25 (+ duplicates #46–#53).
-- **Blocked on owner secrets:** #27 (VERCEL_*), #26 live GCS (`GCP_SA_JSON` / `IOT_ASP_GCS_BUCKET` / `LIVE_GCS`), #60/#61 live URLs, #63 apply, #64 pass rows.
-
-## Stacked PRs
-
-See [STACKED-PRS.md](STACKED-PRS.md).
+- **Blocked on owner secrets:** #27 (`VERCEL_TOKEN`), #26 live GCS (`GCP_SA_JSON` / `IOT_ASP_GCS_BUCKET` / `LIVE_GCS`).
 
 ## Overlap with open PRs
 - PR #35 — same #34 GEN_MARK guard (landed here too for Balanced PR).
 - PR #40 — Sonos #39 docs (this branch includes `docs/sonos-beam.md` + shell stub).
 - PR #36 — ADK vendor (orthogonal; not forced here).
-- PR #74 / #79 — parallel MVP closed-log / study-package tracks (coordinate on merge).
+- PR #73 — MVP roadmap/closed-log stubs for #60–#69 (coordinate on merge).
 
 ## Stacked PRs
+
 See [STACKED-PRS.md](STACKED-PRS.md).
+## Outstanding themes (log-only — 2026-09-08)
+1. **Merge order / conflicts:** resolve `#70` and `#76` before tip `#105`.
+2. **Secrets:** Vercel `#27`, GCS `#26`, Nest/OAuth `#83`/`#93`.
+3. **Nest console / Gemini live:** M8 `#87`/`#103` stubbed only.
+4. **HW parked:** `#104`/`#39`/`#14`/`#18`.
+5. **Field + V&V:** `#61`→`#62`→`#64`.
+Comments + project 5 board refreshed same day; see [STACKED-PRS.md](STACKED-PRS.md).

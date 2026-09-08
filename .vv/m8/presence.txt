@@ -1,0 +1,5 @@
+Package.swift: present
+detect.py: present
+home_ios_build.sh: present
+home_apis_gcloud_bootstrap.sh: present
+KNOWLEDGE-INGEST.md: present
