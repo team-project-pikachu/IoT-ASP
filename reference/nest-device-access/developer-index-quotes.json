@@ -1,0 +1,226 @@
+[
+  {
+    "query_file": "dev-camerasound.json",
+    "id": "web:https://www.home-assistant.io/integrations/nest/",
+    "url": "https://www.home-assistant.io/integrations/nest/",
+    "title": "Google Nest - Home Assistant",
+    "passage": "{'text': 'The Nest integration subscribes a Google Pub/sub subscription to listen for camera motion or person events. ... If the Pub/Sub topic starts with projects/sdm ...'}"
+  },
+  {
+    "query_file": "dev-camerasound.json",
+    "id": "web:https://stackoverflow.com/questions/76562492/google-nest-camera-events-not-published-to-device-access-console-topic",
+    "url": "https://stackoverflow.com/questions/76562492/google-nest-camera-events-not-published-to-device-access-console-topic",
+    "title": "Google Nest camera events not published to device-access console ...",
+    "passage": "{'text': 'I created a Pub/Sub Subscription in the google cloud console but is not receiving any messages. I issued the sdm api listDevices command, but no ...Google PubSub Subscriber issues with Google SDM API (Nest Devices)Googler Nest API - Get Motion video clip from Resource EventMore results from stackoverflow.com'}"
+  },
+  {
+    "query_file": "dev-camerasound.json",
+    "id": "web:https://allenporter.github.io/python-google-nest-sdm/",
+    "url": "https://allenporter.github.io/python-google-nest-sdm/",
+    "title": "google_nest_sdm API documentation",
+    "passage": "{'text': 'Library for using the Google Nest SDM API. ... google_nest_subscriber : A wrapper around the pub/sub system for efficiently listening to changes in device state.'}"
+  },
+  {
+    "query_file": "dev-camerasound.json",
+    "id": "web:https://plugins.hoobs.org/plugin/homebridge-google-nest-sdm",
+    "url": "https://plugins.hoobs.org/plugin/homebridge-google-nest-sdm",
+    "title": "Google Nest Sdm - HOOBS",
+    "passage": "{'text': 'Note the \"+https://www.googleapis.com/auth/pubsub\" on the end. This is so you will have access to events. FAQ. Q: I don\\'t see camera snapshots ...'}"
+  },
+  {
+    "query_file": "dev-camerasound.json",
+    "id": "web:https://www.openhab.org/addons/bindings/nest/",
+    "url": "https://www.openhab.org/addons/bindings/nest/",
+    "title": "Nest - Bindings - openHAB",
+    "passage": "{'text': 'After configuring the SDM parameters, an SDM Account Thing can be updated so it can listen to SDM events using Pub/Sub. This is required if you want to download ...'}"
+  },
+  {
+    "query_file": "dev-camerasound.json",
+    "id": "web:https://issuetracker.google.com/358755975",
+    "url": "https://issuetracker.google.com/358755975",
+    "title": "[Device Access] Event snapshots no longer published to SDM after ...",
+    "passage": "{'text': 'Successfully follow instructions to setup a camera using SDM API; Verify pub/sub events are published to topic (for over a year); Onboard an ...'}"
+  },
+  {
+    "query_file": "dev-camerasound.json",
+    "id": "web:https://groups.google.com/g/cloud-pubsub-discuss/c/wAaqgQ36rpE",
+    "url": "https://groups.google.com/g/cloud-pubsub-discuss/c/wAaqgQ36rpE",
+    "title": "Google Smart Device Management API Data Issue",
+    "passage": "{'text': 'I am using the new Google SDM API to listen to events that occur on my Nest thermostat. I am listening to these events through a pub/sub topic.'}"
+  },
+  {
+    "query_file": "dev-camerasound.json",
+    "id": "readme:allenporter/python-google-nest-sdm",
+    "url": "https://github.com/allenporter/python-google-nest-sdm",
+    "title": "allenporter/python-google-nest-sdm",
+    "passage": "{'text': '# Fetching Data\\n\\n# Subscriptions\\n- Create the topic:\\n  - Enable Pub/Sub and note the full `topic` based on the `project_id`', 'citation_url': 'https://raw.githubusercontent.com/allenporter/python-google-nest-sdm/HEAD/README.md'}"
+  },
+  {
+    "query_file": "dev-clippreview.json",
+    "id": "web:https://medium.com/@tamirmayer/google-nest-camera-internal-api-fdf9dc3ce167",
+    "url": "https://medium.com/@tamirmayer/google-nest-camera-internal-api-fdf9dc3ce167",
+    "title": "Google Nest Camera [Internal] API | by TamirMayer - Medium",
+    "passage": "{'text': \"It's called \u201cSmart Device Management API\u201d That is the API being used in Home Assistant. Create your project on the Google Nest Device Access ...\"}"
+  },
+  {
+    "query_file": "dev-clippreview.json",
+    "id": "web:https://developers.google.com/nest/device-access/api",
+    "url": "https://developers.google.com/nest/device-access/api",
+    "title": "Smart Device Management API - Google for Developers",
+    "passage": "{'text': 'The SDM API is a REST API that lets you manage Google Nest devices by viewing their traits and executing commands. Camera Camera (battery)'}"
+  },
+  {
+    "query_file": "dev-clippreview.json",
+    "id": "web:https://community.home-assistant.io/t/add-nest-device-access-through-the-smart-device-management-sdm-api/230187",
+    "url": "https://community.home-assistant.io/t/add-nest-device-access-through-the-smart-device-management-sdm-api/230187",
+    "title": "Add Nest Device Access through the Smart Device Management (SDM ...",
+    "passage": "{'text': 'Google has introduced support for Nest integration through their Smart Device Management (SDM) API. It costs $5 to register, ...'}"
+  },
+  {
+    "query_file": "dev-clippreview.json",
+    "id": "web:https://apis.io/collections/google-nest/postman-google-nest-devices-api/",
+    "url": "https://apis.io/collections/google-nest/postman-google-nest-devices-api/",
+    "title": "Google Nest Smart Device Management - APIs.io",
+    "passage": "{'text': 'The Smart Device Management (SDM) API is a REST API that allows developers to manage Google Nest devices. It provides access to device traits and commands for ...'}"
+  },
+  {
+    "query_file": "dev-clippreview.json",
+    "id": "web:https://developer.android.com/reference/android/hardware/camera2/CameraDevice",
+    "url": "https://developer.android.com/reference/android/hardware/camera2/CameraDevice",
+    "title": "CameraDevice | API reference - Android Developers",
+    "passage": "{'text': 'Device \u00b7 Device.Builder \u00b7 DistanceRecord \u00b7 DistanceRecord.Builder ... Session. android.security. Overview. Interfaces. KeyChainAliasCallback. Classes.'}"
+  },
+  {
+    "query_file": "dev-clippreview.json",
+    "id": "web:https://developers.google.com/nest/device-access/api/camera-battery",
+    "url": "https://developers.google.com/nest/device-access/api/camera-battery",
+    "title": "Camera (battery) | Device Access - Google for Developers",
+    "passage": "{'text': 'These camera devices support live streaming, motion detection, and person detection through specific traits and commands.'}"
+  },
+  {
+    "query_file": "dev-clippreview.json",
+    "id": "web:https://support.google.com/googlehome/answer/10904254?hl=en",
+    "url": "https://support.google.com/googlehome/answer/10904254?hl=en",
+    "title": "Learn about video history in the Google Home app",
+    "passage": "{'text': 'Your Google Nest camera or doorbell automatically saves footage to a cloud-based video history service, enabling secure and accessible video recordings.'}"
+  },
+  {
+    "query_file": "dev-clippreview.json",
+    "id": "web:https://developers.home.google.com/apis/android/device/camera",
+    "url": "https://developers.home.google.com/apis/android/device/camera",
+    "title": "Camera device guide for Android | Home APIs",
+    "passage": "{'text': 'The Camera device type is implemented using two traits: PushAvStreamTransport , which handles audio and video stream transport using ...'}"
+  },
+  {
+    "query_file": "dev-glass.json",
+    "id": "web:https://9to5google.com/2019/11/06/nest-secure-glass-break-detection/",
+    "url": "https://9to5google.com/2019/11/06/nest-secure-glass-break-detection/",
+    "title": "Nest Secure adds 'Glass break detection' using microphone on Guard",
+    "passage": "{'text': '\u201cGlass break detection\u201d listens for breaking glass when your security system is armed and sounds an alarm if it happens. Only the Nest Guard ...'}"
+  },
+  {
+    "query_file": "dev-glass.json",
+    "id": "web:https://help.adt.com/article/Google-NestAware-for-Control-and-Pulse-Smart-Home-Systems",
+    "url": "https://help.adt.com/article/Google-NestAware-for-Control-and-Pulse-Smart-Home-Systems",
+    "title": "Google Nest Aware for Control and Pulse Smart Home Systems",
+    "passage": "{'text': 'Glass break sound detection is available in the US with Nest Aware on Nest speakers and displays. Some features, including mobile notifications, remote control ...'}"
+  },
+  {
+    "query_file": "dev-glass.json",
+    "id": "web:https://www.googlenestcommunity.com/t5/Cameras-and-Doorbells/Nest-Outdoor-Cam-glass-broken/m-p/323013",
+    "url": "https://www.googlenestcommunity.com/t5/Cameras-and-Doorbells/Nest-Outdoor-Cam-glass-broken/m-p/323013",
+    "title": "Nest Outdoor Cam glass broken",
+    "passage": "{'text': 'The glass lens fell off my Nest Outdoor Cam. This all started with the lens itself fogging up while it was outside, even though I have the unit covered.'}"
+  },
+  {
+    "query_file": "dev-glass.json",
+    "id": "readme:potmat/homebridge-google-nest-sdm",
+    "url": "https://github.com/potmat/homebridge-google-nest-sdm",
+    "title": "potmat/homebridge-google-nest-sdm",
+    "passage": "{'text': 'verified-by-homebridge\\nDonate\\n\\n# homebridge-google-nest-sdm\\n\\nA Homebridge plugin for Google Nest devices that uses the Google Smart Device Management API. Supports Cameras, Doorbells, Displays, and Thermostats.  Supports HomeKit Secure Video (please read the section on HKSV below).\\n\\n**Please read the FAQ before creating an issue.** If you are having trouble with the setup process you can try reaching out to others in Discussions, on Discord, or Reddit, some people there may be able to help.\\n\\n# Disclaimer\\n\\nThis package is not affiliated with, provided, endorsed, or supported by Google in any way.  It is intended for personal, non-commercial use only.  Please review the Google Smart Device Management Terms of Service to ensure that your usage of this package is not in violation.\\n\\n# Installation\\n\\n``npm install -g --unsafe-perm homebridge-google-nest-sdm``\\n\\nDon\\'t forget the ``--unsafe-perm`` part!\\n\\n# Example Homebridge config:\\n\\n    {\\n        \"platform\" : \"homebridge-google-nest-sdm\",\\n        \"clientId\": \"...\",\\n        \"clientSecret\": \"...\",\\n        \"projectId\": \"...\",\\n        \"refreshToken\": \"...\",\\n        \"subscriptionId\": \"...\",\\n        \"gcpProjectId\": \"<optional>\",\\n        \"vEncoder\": \"<optional>\"\\n        \"showFan\": \"<optional>\"\\n        \"fanDuration\": \"<optional>\"\\n    }\\n\\nI recommend you use the plugin config UI to enter these values.\\n\\n# Where do the config values come from?\\n\\nFollow the getting started guide here: https://developers.google.com/nest/device-access/get-started  Please mind the \"ONE IMPORTANT DIFFERENCE\" section below.\\n\u2026 (108 more lines)', 'citation_url': 'https://raw.githubusercontent.com/potmat/homebridge-google-nest-sdm/HEAD/README.md', 'truncated': True, 'full_tokens_est': 2866}"
+  },
+  {
+    "query_file": "dev-glass.json",
+    "id": "web:https://developers.google.com/nest/device-access",
+    "url": "https://developers.google.com/nest/device-access",
+    "title": "Device Access - Google for Developers",
+    "passage": "{'text': 'Device Access enables access, control, and management of Nest devices within partner apps, solutions, and smart home ecosystems,'}"
+  },
+  {
+    "query_file": "dev-glass.json",
+    "id": "web:https://support.google.com/googlehome/thread/454236368/ongoing-nest-camera-playback-event-detection-and-performance-issues?hl=en",
+    "url": "https://support.google.com/googlehome/thread/454236368/ongoing-nest-camera-playback-event-detection-and-performance-issues?hl=en",
+    "title": "Ongoing Nest Camera Playback, Event Detection, and Performance ...",
+    "passage": "{'text': 'Restart the affected cameras and your network equipment (modem and router) to rule out any long-running connectivity issues. Review your Video ...'}"
+  },
+  {
+    "query_file": "dev-glass.json",
+    "id": "web:https://issuetracker.google.com/358755975",
+    "url": "https://issuetracker.google.com/358755975",
+    "title": "[Device Access] Event snapshots no longer published to SDM after ...",
+    "passage": "{'text': 'Events are no longer published to SDM events topic after conversion of a camera from Nest to Google Home. I have one camera converted in ...'}"
+  },
+  {
+    "query_file": "dev-glass.json",
+    "id": "web:https://www.justanswer.com/home-security-systems/t62dt-goggle-cameras-able-happening.html",
+    "url": "https://www.justanswer.com/home-security-systems/t62dt-goggle-cameras-able-happening.html",
+    "title": "Google Cameras Event History Access: Subscription Help Q&A",
+    "passage": "{'text': 'Nest cameras often lose event history access when subscription lapses or account changes occur. Without a Nest. Google Nest cameras only show ...'}"
+  },
+  {
+    "query_file": "dev-traits.json",
+    "id": "web:https://apis.io/providers/google-nest/",
+    "url": "https://apis.io/providers/google-nest/",
+    "title": "Google Nest Smart Device Management - APIs.io",
+    "passage": "{'text': 'The Smart Device Management (SDM) API is a REST API that allows developers to manage Google Nest devices including thermostats, cameras, doorbells, and displays ...'}"
+  },
+  {
+    "query_file": "dev-traits.json",
+    "id": "web:https://github.com/api-evangelist/google-nest",
+    "url": "https://github.com/api-evangelist/google-nest",
+    "title": "api-evangelist/google-nest: Google Nest Smart Device Management",
+    "passage": "{'text': 'The Smart Device Management (SDM) API is a REST API that allows developers to manage Google Nest devices including thermostats, cameras, ...'}"
+  },
+  {
+    "query_file": "dev-traits.json",
+    "id": "issue:alexxit/go2rtc#834",
+    "url": "https://github.com/alexxit/go2rtc/issues/834",
+    "title": "Nest Hello Doorbell#834",
+    "passage": "{'text': '# Nest Hello Doorbell\\\\#834\\n\\n## Description\\n\\ntr1ckz\\n\\nHi,\\n\\nI was able to add the normal Next camera via the go2rtc nest integration, but it didn\\'t see my gen 1 doorbell.\\n\\nTried to add the device-id manually as a nest? integration, I got the device-id from the command:\\n\\n`curl -X GET \\'https://smartdevicemanagement.googleapis.com/v1/enterprises/xxxxx/devices\\' \\\\ -H \\'Content-Type: application/json\\' \\\\ -H \\'Authorization: Bearer xxxxxxxxx\\'`\\n\\nBut when I check the streams on go2rtc dashboard it just says \"mse: streams: nest: wrong status: 404 Not Found\"\\n\\nThe main difference that I noticed in the GET api call was that the camera is type `\"sdm.devices.types.CAMERA\"` while the doorbell is type `\"sdm.devices.types.DOORBELL\"`.\\n\\nIs this not intended to work yet? Just trying to figure out if I should continue to bang my head against the wall.\\n\\nThanks for all your work.\\n\\nAre you sure your device model works over WebRTC proto?'}"
+  },
+  {
+    "query_file": "dev-traits.json",
+    "id": "web:https://developers.google.com/nest/device-access/api",
+    "url": "https://developers.google.com/nest/device-access/api",
+    "title": "Smart Device Management API - Google for Developers",
+    "passage": "{'text': 'The SDM API is a REST API that provides various methods to view traits and execute trait commands for management of Google Nest devices.'}"
+  },
+  {
+    "query_file": "dev-traits.json",
+    "id": "web:https://medium.com/@tamirmayer/google-nest-camera-internal-api-fdf9dc3ce167",
+    "url": "https://medium.com/@tamirmayer/google-nest-camera-internal-api-fdf9dc3ce167",
+    "title": "Google Nest Camera [Internal] API | by TamirMayer - Medium",
+    "passage": "{'text': \"At least I thought I found it. It's called \u201cSmart Device Management API\u201d. That is the API being used in Home Assistant (the well-beloved Smart ...\"}"
+  },
+  {
+    "query_file": "dev-traits.json",
+    "id": "web:https://googleapis.dev/java/google-api-services-smartdevicemanagement/latest/",
+    "url": "https://googleapis.dev/java/google-api-services-smartdevicemanagement/latest/",
+    "title": "Overview (Smart Device Management API v1-rev20260427-2.0.0)",
+    "passage": "{'text': 'Smart Device Management API v1-rev20260427-2.0.0. Packages. Package, Description. com.google.api.services.smartdevicemanagement.v1 \u00b7 com.google.api.services ...'}"
+  },
+  {
+    "query_file": "dev-traits.json",
+    "id": "issue:jurajnyiri/homeassistant-tapo-control#926",
+    "url": "https://github.com/jurajnyiri/homeassistant-tapo-control/issues/926",
+    "title": "Motion and Person d\u00e9tection no longer working#926",
+    "passage": "{'text': '# Motion and Person d\u00e9tection no longer working\\\\#926\\n\\n## Description\\n\\nman010\\n\\nLast edited by man010\\n\\n### Description\\n\\nThe person and motion dectection binary sensors seem not to be a available any longer. Thus although the camera detects movements and persons, the detection information is not forwarded to HA and we cannot trigger any action bases on this event\\n\\n### Reproduction Steps\\n\\nImage\\n\\n### Expected behavior\\n\\nHave these sensors available\\n\\n### If applicable, add error logs.\\n\\n_No response_\\n\\n### Device Firmware\\n\\n1.4.4 build 241211\\n\\n### Integration Version\\n\\n6.1.4\\n\\n### Using stream component\\n\\nYes\\n\\n### Does camera work via official integrations?\\n\\nYes\\n\u2026 (18 more lines)', 'truncated': True, 'full_tokens_est': 439}"
+  },
+  {
+    "query_file": "dev-traits.json",
+    "id": "web:https://stackoverflow.com/questions/64936537/thermostat-device-missing-from-google-smart-device-management-api-calls",
+    "url": "https://stackoverflow.com/questions/64936537/thermostat-device-missing-from-google-smart-device-management-api-calls",
+    "title": "Thermostat Device Missing from Google Smart Device Management ...",
+    "passage": "{'text': 'I just experienced this same issue today: my thermostat had been exposed via the SDM API for months, along with my cameras, but suddenly ...'}"
+  }
+]

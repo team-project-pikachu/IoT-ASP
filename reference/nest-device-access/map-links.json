@@ -1,0 +1,122 @@
+[
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/api"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/api/events"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/api/libraries"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/reference/rest"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/registration"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/support"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits#"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits#main-content"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/camera-clip-preview"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/camera-event-image"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/camera-image"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/camera-live-stream"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/camera-motion"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/camera-person"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/camera-sound"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/connectivity"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/doorbell-chime"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/fan"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/humidity"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/info"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/settings"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/temperature"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/thermostat-eco"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/thermostat-hvac"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/thermostat-mode"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/device/thermostat-temperature-setpoint"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/structure/info"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.google.com/nest/device-access/traits/structure/room-info"
+  },
+  {
+    "from": "traits-scrape+seed",
+    "url": "https://developers.home.google.com/apis/ios/get-started"
+  }
+]

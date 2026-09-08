@@ -1,0 +1,51 @@
+{
+  "source": "Google Nest Device Access / SDM + Home APIs iOS",
+  "extractedAt": "2026-09-08T05:41:55.795815+00:00",
+  "ownerGatedConsole": {
+    "url": "https://console.nest.google.com/device-access/project-list",
+    "scraped": false,
+    "reason": "Auth wall / owner-only. Do not scrape login. Owner: bettyctai@gmail.com"
+  },
+  "endpoint": "https://smartdevicemanagement.googleapis.com/v1",
+  "traits": {
+    "CameraSound": "sdm.devices.traits.CameraSound",
+    "CameraMotion": "sdm.devices.traits.CameraMotion",
+    "CameraPerson": "sdm.devices.traits.CameraPerson",
+    "CameraClipPreview": "sdm.devices.traits.CameraClipPreview",
+    "CameraEventImage": "sdm.devices.traits.CameraEventImage"
+  },
+  "sources": [
+    "https://developers.google.com/nest/device-access/api",
+    "https://developers.google.com/nest/device-access/traits",
+    "https://developers.google.com/nest/device-access/traits/device/camera-clip-preview",
+    "https://developers.google.com/nest/device-access/api/libraries",
+    "https://developers.google.com/nest/device-access/traits/device/camera-sound",
+    "https://developers.google.com/nest/device-access/traits/device/camera-motion",
+    "https://developers.google.com/nest/device-access/traits/device/camera-event-image",
+    "https://developers.home.google.com/apis/ios/get-started"
+  ],
+  "cameraSoundExcerptLines": [
+    "- [CameraClipPreview](https://developers.google.com/nest/device-access/traits/device/camera-clip-preview)",
+    "- [CameraSound](https://developers.google.com/nest/device-access/traits/device/camera-sound)",
+    "# CameraSound Schema",
+    "`sdm.devices.traits.CameraSound`",
+    "\"sdm.devices.events.CameraSound.Sound\" : {"
+  ],
+  "clipPreviewExcerptLines": [
+    "- [CameraClipPreview](https://developers.google.com/nest/device-access/traits/device/camera-clip-preview)",
+    "- [CameraSound](https://developers.google.com/nest/device-access/traits/device/camera-sound)",
+    "- [ClipPreview](https://developers.google.com/nest/device-access/traits/device/camera-clip-preview#clippreview)",
+    "- [ClipPreview](https://developers.google.com/nest/device-access/traits/device/camera-clip-preview#clippreview)",
+    "# CameraClipPreview Schema    Stay organized with collections      Save and categorize content based on your preferences.",
+    "`sdm.devices.traits.CameraClipPreview`",
+    "### ClipPreview",
+    "#### ClipPreview event",
+    "\"sdm.devices.events.CameraClipPreview.ClipPreview\" : {",
+    "#### ClipPreview event fields"
+  ],
+  "apiExcerptLines": [
+    "- All API calls should be made to the endpoint `https://smartdevicemanagement.googleapis.com/v1` with the provided access token.",
+    "Google Nest devices. Use the access token granted during the",
+    "`https://smartdevicemanagement.googleapis.com/v1`"
+  ]
+}

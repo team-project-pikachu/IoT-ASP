@@ -63,6 +63,18 @@
       "slug": "asp-prior-art",
       "source": ".cursor/rules/asp-prior-art.mdc",
       "target": "claude"
+    },
+    {
+      "alwaysApply": true,
+      "cursorType": "always",
+      "description": "No browser automation and no ad-hoc HTTPS page fetch; use local CLI (gh, git, pytest, scripts) only",
+      "globs": [],
+      "output": "CLAUDE.md",
+      "scope": "",
+      "sha256": "6cd561fcec0f",
+      "slug": "no-browser-no-https-browse",
+      "source": ".cursor/rules/no-browser-no-https-browse.mdc",
+      "target": "claude"
     }
   ],
   "tool": "scripts/mdc_convert.py",
