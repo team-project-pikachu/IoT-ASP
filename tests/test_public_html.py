@@ -49,7 +49,8 @@ def test_invariant_literals(html: str) -> None:
 
 
 # ── 2. ids ───────────────────────────────────────────────────────────────────
-NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog")
+NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog",
+           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal")
 OLD_IDS = ("telDevice", "telSeed", "telAlgo", "telPeak", "telAccel", "telMic", "telVib", "telHold",
            "telSudden", "monLog", "sysList", "sysBtn", "vol", "fMin", "fMax", "holdPatchBtn", "power")
 
@@ -62,7 +63,7 @@ def test_ids_present_once(html: str, el_id: str) -> None:
 # ── 3. telemetryPayload keys ─────────────────────────────────────────────────
 PAYLOAD_TOKENS = ("band", "power", "nightNY", "lfArmed", "lfDriveCapable", "lastHopAgeMs",
                   "ctxResumes", "watchdogTrips", "logSeq", "logTail", "holdManual",
-                  "schemaVersion: SCHEMA_VERSION")
+                  "schemaVersion: SCHEMA_VERSION", "impulse", "volBlast", "alarmState")
 
 
 def test_telemetry_payload_tokens(html: str) -> None:
@@ -182,7 +183,8 @@ def test_banner_lines_well_formed(html: str) -> None:
 
 # ── 12. size guard ───────────────────────────────────────────────────────────
 def test_size_guard() -> None:
-    assert HTML_PATH.stat().st_size < 120_000
+    # Raised 2026-09-08 for fleet cards + impulse/alarm stubs (#11/#42/#44/#45).
+    assert HTML_PATH.stat().st_size < 140_000
 
 
 # ── spec 02: max-entropy seeds ───────────────────────────────────────────────
@@ -309,3 +311,18 @@ def test_systems_check_rows_escaped(html: str) -> None:
     assert "const safe = escHtml(rec.msg);" in html
     # innerHTML sinks: every string concatenated into sysList / monLog lines is escaped
     assert html.count("sysList.innerHTML") == 2
+
+
+def test_impulse_alarm_and_fleet_stub(html: str) -> None:
+    assert html.count("function noteImpulse(") == 1
+    assert html.count("function alarmTick(") == 1
+    assert html.count("function blastVolJump(") == 1
+    assert html.count("function clearAlarm(") == 1
+    assert "BroadcastChannel" in html and "iot-asp-fleet" in html
+    for el_id in ("telImpulse", "telVolBlast", "telAlarm", "fleetLocal", "fleetPeer2", "fleetPeer3"):
+        assert html.count(f'id="{el_id}"') == 1, el_id
+    body = _fn_body(html, "function telemetryPayload(){")
+    for tok in ("impulse: !!impulse", "volBlast: !!volBlast", "alarmState"):
+        assert tok in body, tok
+    assert "clearAlarm(" in html and "IMPULSE_ACCEL_DELTA" in html
+    assert "setInterval(function(){ alarmTick(performance.now()); }, 200)" in html

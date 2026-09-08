@@ -42,6 +42,7 @@ KIND = "fleet_log"
 NIGHT_HOURS = frozenset(range(22, 24)) | frozenset(range(0, 7))
 LEVELS = ("debug", "info", "warn", "error")
 BANDS = ("17-23k", "10-20")
+ALARM_STATES = ("armed", "triggered", "sustaining", "cleared")
 DEFAULT_POWER = "ac120"
 MSG_MAX = 240
 WIRE_TS_FMT = "%Y-%m-%dT%H:%M:%SZ"
@@ -71,6 +72,9 @@ RECORD_KEYS: list[str] = [
     "peakHz",
     "absA",
     "micEnergy",
+    "impulse",
+    "volBlast",
+    "alarmState",
     "msg",
 ]
 
@@ -251,6 +255,13 @@ def _as_bool(v: Any) -> bool:
     return bool(v)
 
 
+def _alarm_state(v: Any) -> str | None:
+    if v is None:
+        return None
+    s = str(v).strip().lower()
+    return s if s in ALARM_STATES else None
+
+
 def _vib_class(v: Any) -> str:
     """``priors.normalize_vib_class`` for any wire value (non-strings → ``none``, never raises)."""
     return normalize_vib_class(v if isinstance(v, str) else None)
@@ -335,6 +346,9 @@ def log_record(
         "peakHz": _num(t.get("peakHz")),
         "absA": _num(abs_a),
         "micEnergy": _num(t.get("micEnergy")),
+        "impulse": _as_bool(t.get("impulse", False)),
+        "volBlast": _as_bool(t.get("volBlast", False)),
+        "alarmState": _alarm_state(t.get("alarmState")),
         "msg": str(msg or "")[:MSG_MAX],
     }
 

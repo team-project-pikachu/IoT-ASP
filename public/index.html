@@ -204,6 +204,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 .mon-log .line:last-child{border-bottom:0}
 .mon-log .hi{color:var(--uv-hot)}
 .hold-on{border-color:var(--amber)!important;color:var(--amber)!important}
+.fleet{padding:16px 0;border-bottom:1px solid var(--rule)}
+.fleet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.fleet-card{background:#0E0F13;border:1px solid var(--rule);padding:10px;min-width:0}
+.fleet-card .id{font:600 11px/1.3 var(--mono);color:var(--ink);word-break:break-all}
+.fleet-card .meta{font:400 11px/1.45 var(--mono);color:var(--dim);margin-top:6px}
+.fleet-card.local{border-color:var(--lime)}
+@media (max-width:520px){.fleet-grid{grid-template-columns:1fr}}
 
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 @media (max-width:520px){
@@ -362,6 +369,25 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
 
 
+  <section class="fleet" id="fleetPanel" aria-label="Fleet nodes">
+    <p class="legend">Fleet · this tab + peers (stub — not React)</p>
+    <p class="sub" style="margin:8px 0 0">Same-origin tabs advertise over <code>BroadcastChannel</code>. Other phones stay placeholders until native/#10.</p>
+    <div class="fleet-grid">
+      <div class="fleet-card local" id="fleetLocal">
+        <div class="id">local</div>
+        <div class="meta" id="fleetLocalMeta">—</div>
+      </div>
+      <div class="fleet-card" id="fleetPeer2">
+        <div class="id">node-2</div>
+        <div class="meta" id="fleetPeer2Meta">waiting for peer tab</div>
+      </div>
+      <div class="fleet-card" id="fleetPeer3">
+        <div class="id">node-3</div>
+        <div class="meta" id="fleetPeer3Meta">chair / Sonos research (#18 #39)</div>
+      </div>
+    </div>
+  </section>
+
   <section class="mon" id="monitor">
     <div class="plot-head">
       <p class="legend">Monitor · telemetry beacon (no site PII)</p>
@@ -397,6 +423,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <div>hop age <b id="telHopAge">—</b></div>
       <div>ctx resumes <b id="telResumes">0</b></div>
       <div>watchdog <b id="telWatchdog">0</b></div>
+      <div>impulse <b id="telImpulse">off</b></div>
+      <div>volBlast <b id="telVolBlast">off</b></div>
+      <div>alarm <b id="telAlarm">armed</b></div>
     </div>
     <div class="tapbar" style="margin-top:10px">
       <button type="button" class="tap" id="copyLogBtn">Copy log JSON</button>
@@ -547,6 +576,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let bandBurst="none", wireAlgoHint=null;
   const BURST_ONSET_DB = 9, BURST_RELEASE_DB = 5, BURST_EMA = 0.08;
   const BURST_JITTER_MS = 450, BURST_QUIET_MS = 2500, OUT_ALPHA = 0.85;
+  let alarmState="armed", impulse=false, volBlast=false;
+  let lastImpulseAt=0, alarmQuietSince=0, accelBaseline=0.05;
+  const IMPULSE_ACCEL_DELTA = 0.45;
+  let ax=0, ay=0, az=0;
   let accelMag=0, lfMag=0, acousticEnergy=-120;
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
@@ -1137,6 +1170,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       soundBurst = true;
       if (!extremeActive) enterExtremeFromBurst(delta, which);
       else applyExtremeVarianceTick("soundBurst hold");
+      noteImpulse(false, true);
     } else if (extremeActive) {
       // Sustained extreme while hot; exit only after quiet hysteresis window
       if (stillHot) {
@@ -1149,6 +1183,62 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     } else {
       soundBurst = false;
       if (bandBurst !== "none" && (now - lastBurstAt) > BURST_QUIET_MS) bandBurst = "none";
+    }
+    alarmTick(now);
+  }
+
+  function blastVolJump(){
+    if (holdManual) return;
+    let next = VOL_PATCH_MAX;
+    if (nightActive) next = Math.min(nightTargetVol, VOL_PATCH_MAX);
+    applyVolUi(next, false);
+    volBlast = true;
+  }
+
+  function clearAlarm(reason){
+    impulse = false;
+    volBlast = false;
+    alarmQuietSince = 0;
+    lastImpulseAt = 0;
+    alarmState = "cleared";
+    if (typeof monLog === "function" && reason) monLog("alarm cleared · " + reason);
+  }
+
+  function noteImpulse(fromAccel, fromMic){
+    if (holdManual) return;
+    impulse = true;
+    lastImpulseAt = performance.now();
+    alarmQuietSince = 0;
+    if (alarmState === "cleared" || alarmState === "armed") alarmState = "triggered";
+    else alarmState = "sustaining";
+    blastVolJump();
+    if (typeof monLog === "function") {
+      monLog("impulse · " + (fromAccel ? "accel" : "") + (fromAccel && fromMic ? "+" : "") + (fromMic ? "micDiff" : "")
+        + " → " + alarmState);
+    }
+    if (typeof updateTelUI === "function") updateTelUI();
+  }
+
+  function alarmTick(now){
+    if (holdManual) return;
+    const t = now || performance.now();
+    if (impulse && (t - lastImpulseAt) > 80) impulse = false;
+    if (alarmState !== "triggered" && alarmState !== "sustaining") return;
+    const quiet = !impulse && (t - lastImpulseAt) > 80;
+    if (!quiet) {
+      alarmState = "sustaining";
+      volBlast = true;
+      alarmQuietSince = 0;
+      return;
+    }
+    if (!alarmQuietSince) alarmQuietSince = t;
+    if ((t - alarmQuietSince) >= BURST_QUIET_MS) {
+      volBlast = false;
+      alarmState = "armed";
+      alarmQuietSince = 0;
+    } else {
+      alarmState = "sustaining";
+      volBlast = true;
     }
   }
 
@@ -1163,8 +1253,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.addEventListener("devicemotion", e => {
     const a = e.acceleration || e.accelerationIncludingGravity;
     if (!a) return;
-    const mag = Math.hypot(a.x || 0, a.y || 0, a.z || 0);
+    ax = a.x || 0; ay = a.y || 0; az = a.z || 0;
+    const mag = Math.hypot(ax, ay, az);
     accelMag = 0.85 * accelMag + 0.15 * mag;
+    const emaA = 0.9 * accelBaseline + 0.1 * mag;
+    const dA = mag - accelBaseline;
+    accelBaseline = emaA;
+    if (dA >= IMPULSE_ACCEL_DELTA) noteImpulse(true, false);
     // crude LF proxy: low-pass of magnitude deltas
     const g = e.accelerationIncludingGravity;
     if (g){
@@ -2121,7 +2216,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource }),
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState, impulse, volBlast, deviceId }),
     getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
 
@@ -2156,6 +2251,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (hopAgeEl) hopAgeEl.textContent = age == null ? "—" : age + " ms";
     if (resumesEl) resumesEl.textContent = String(ctxResumes || 0);
     if (wdEl) wdEl.textContent = String(watchdogTrips || 0);
+    const telImpulseEl = $("telImpulse"), telVolBlastEl = $("telVolBlast"), telAlarmEl = $("telAlarm");
+    if (telImpulseEl) telImpulseEl.textContent = impulse ? "ON" : "off";
+    if (telVolBlastEl) telVolBlastEl.textContent = volBlast ? "ON" : "off";
+    if (telAlarmEl) telAlarmEl.textContent = alarmState;
+    paintFleetCards();
     if (geminiFlagLive) geminiFlagLive.textContent = geminiAutorouteFlag ? "pending" : "—";
     if (patchUrlLabel) patchUrlLabel.textContent = PATCH_URL;
     if (patchStatusEl) patchStatusEl.textContent = patchStatus;
@@ -2223,12 +2323,67 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       logSeq,
       logTail: records.slice(-3),
       net: netKind(),
-      route: hwCaps.route || "a2dp"
+      route: hwCaps.route || "a2dp",
+      impulse: !!impulse,
+      volBlast: !!volBlast,
+      alarmState,
+      ax, ay, az
     };
+  }
+
+  const fleetPeers = {};
+  let fleetBc = null;
+  try { if (typeof BroadcastChannel !== "undefined") fleetBc = new BroadcastChannel("iot-asp-fleet"); } catch (_) {}
+  if (fleetBc) {
+    fleetBc.onmessage = function(ev){
+      const d = ev && ev.data;
+      if (!d || !d.deviceId || d.deviceId === deviceId) return;
+      fleetPeers[d.deviceId] = d;
+      paintFleetCards();
+    };
+  }
+
+  function publishFleetHeartbeat(){
+    const snap = {
+      deviceId, seed, seedSource, algo: (typeof algoWireName === "function" ? algoWireName() : algo),
+      alarmState, impulse: !!impulse, volBlast: !!volBlast, holdManual, ts: Date.now()
+    };
+    try { localStorage.setItem("hop.fleetLocal", JSON.stringify(snap)); } catch (_) {}
+    try { if (fleetBc) fleetBc.postMessage(snap); } catch (_) {}
+  }
+
+  function paintFleetCards(){
+    const localMeta = $("fleetLocalMeta");
+    const localCard = $("fleetLocal");
+    if (localCard) {
+      const idEl = localCard.querySelector(".id");
+      if (idEl) idEl.textContent = deviceId || "local";
+    }
+    if (localMeta) {
+      localMeta.textContent = "seed " + seed + " · " + (typeof algoWireName === "function" ? algoWireName() : algo)
+        + " · alarm " + alarmState + (holdManual ? " · HOLD" : "");
+    }
+    const ids = Object.keys(fleetPeers).sort();
+    const p2 = $("fleetPeer2Meta"), p3 = $("fleetPeer3Meta");
+    const c2 = $("fleetPeer2"), c3 = $("fleetPeer3");
+    function fill(card, meta, peer, fallbackId, fallback){
+      if (card) {
+        const idEl = card.querySelector(".id");
+        if (idEl) idEl.textContent = peer ? peer.deviceId : fallbackId;
+      }
+      if (meta) {
+        meta.textContent = peer
+          ? ("seed " + peer.seed + " · " + (peer.algo || "—") + " · alarm " + (peer.alarmState || "—"))
+          : fallback;
+      }
+    }
+    fill(c2, p2, ids[0] ? fleetPeers[ids[0]] : null, "node-2", "waiting for peer tab");
+    fill(c3, p3, ids[1] ? fleetPeers[ids[1]] : null, "node-3", "chair / Sonos research (#18 #39)");
   }
 
   function beaconTelemetry(){
     updateTelUI();
+    publishFleetHeartbeat();
     if (!TELEMETRY_URL) return;
     try {
       const body = JSON.stringify(telemetryPayload());
@@ -2345,12 +2500,18 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     holdManual = !holdManual;
     holdPatchBtn.setAttribute("aria-pressed", String(holdManual));
     holdPatchBtn.classList.toggle("hold-on", holdManual);
-    if (holdManual) exitExtremeMode();
+    if (holdManual) {
+      exitExtremeMode();
+      clearAlarm("hold");
+    } else if (alarmState === "cleared") {
+      alarmState = "armed";
+    }
     monLog(holdManual ? "Hold / Manual ON — patches ignored" : "Hold / Manual off — patches resume");
     updateTelUI();
   });
 
   setInterval(beaconTelemetry, 2000);
+  setInterval(function(){ alarmTick(performance.now()); }, 200);
   setInterval(pollPatch, POLL_MS); // default 3000 ms; ?pollMs= clamps 2000–5000
   setTimeout(pollPatch, 500);
   updateTelUI();

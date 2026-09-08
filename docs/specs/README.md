@@ -39,6 +39,13 @@ Owner surface legend: **frontend** = `public/` (Vercel), **backend** = `services
 independent deploy), **infra** = `.github/`, `scripts/`, `vercel.json`, edge hardware, **docs** = `docs/`,
 `reference/`, Notion.
 
+
+| #39 | [../sonos-beam.md](../sonos-beam.md) — Sonos Beam Gen 2 Node 3 (AirPlay research) | parked — ADR + shell stub | research |
+| #41 #48 #52 | [../native-xcode.md](../native-xcode.md) + `native/IoTASP/` — iOS/Watch stubs | stubbed (not signed) | native |
+| #42 #44 #45 (+dups) | [../algorithms.md](../algorithms.md) § Impulse/alarm — web PWA stubs | stubbed in `public/index.html` | frontend |
+| #43 #49 #53 | [../hardware/soundcore-specs.md](../hardware/soundcore-specs.md) — Anker Soundcore 2 | docs shipped | docs |
+| Balanced board | [../issues/BALANCED-BUILD-STATUS.md](../issues/BALANCED-BUILD-STATUS.md) | status artifact | docs |
+
 ## Known missing docs
 
 Computed on 2026-09-08; refreshed after merging #28/#30/#31/#32 into this PR. The former "Mac-only"

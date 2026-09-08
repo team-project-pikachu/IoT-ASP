@@ -1,0 +1,7 @@
+# OPTIONAL / PARKED — issue #24. Do NOT copy over requirements.txt until unparked.
+# google-adk 2.x has breaking agent/event/session changes (see docs/specs/24-adk-2x-migration.md).
+google-adk>=2.8.0,<3
+google-genai>=2.22.0,<3
+google-cloud-storage>=3.13.0,<4
+scipy>=1.14.0,<1.19
+numpy>=2.0.0,<3

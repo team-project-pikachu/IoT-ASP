@@ -75,6 +75,19 @@ micDiff_band = micEnergy_band − α · outLevel_band
 
 Wire fields: `soundBurst`, `extremeActive`, `micEnergy`, `outLevel`, `micDiff` / `micNet`, `bandBurst`. Evidence: `.vv/burst-shriek.md`.
 
+## Impulse → blast + alarm-system reactivity
+
+**Web stub (issues #42 / #44 / #45; duplicates #46/#47/#50/#51).** Short-rise **impulses** (DeviceMotion accel delta vs EMA baseline, or micDiff burst onset) jump volume toward `VOL_PATCH_MAX` (100) within night / `nightTargetVol` clamps. Hold / Manual wins (disarm + freeze).
+
+| `alarmState` | Meaning |
+|--------------|---------|
+| `armed` | Listening; no active blast |
+| `triggered` | Impulse this cycle; blast vol engaged immediately |
+| `sustaining` | Impulse train / still-hot; blast held |
+| `cleared` | Quiet hysteresis (`BURST_QUIET_MS` ≈ 2.5 s) then re-arm |
+
+Telemetry (additive, `schemaVersion` stays 1): `impulse`, `volBlast`, `alarmState`. Native mirror: `native/IoTASP/Shared/Alarm/AlarmStateMachine.swift` (stub — not a signed App Store build).
+
 ## Algorithms
 
 ### 1. `hop` — incoherent frequency hop (default)
