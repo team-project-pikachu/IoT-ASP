@@ -900,7 +900,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (algoSiren) algoSiren.setAttribute("aria-pressed", String(a === "siren"));
     if (algoMetal) algoMetal.setAttribute("aria-pressed", String(a === "metal"));
     if (algoLive) algoLive.textContent = algoWireName();
-    if (typeof updateTelUI === "function") updateTelUI();
+    updateTelUI();
     try { localStorage.setItem("hop.algo", a); } catch(_){}
     // Reschedule cleanly from now
     if (running && ctx && osc){
@@ -968,7 +968,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     geminiAutorouteFlag = true;
     if (geminiFlagLive) geminiFlagLive.textContent = "pending";
     if (typeof monLog === "function") monLog("gemini autoroute flag · " + reason);
-    if (typeof updateTelUI === "function") updateTelUI();
+    updateTelUI();
   }
 
   function autorotateOnSudden(reason, peakHz){
@@ -1117,7 +1117,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       monLog("extreme · " + algoWireName() + " · micDiff " + micDiff.toFixed(1)
         + " · " + bandBurst);
     }
-    if (typeof updateTelUI === "function") updateTelUI();
+    updateTelUI();
   }
 
   function enterExtremeFromBurst(deltaDb, which){
@@ -1130,7 +1130,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     bandBurst = which || bandBurst || "us";
     lastBurstAt = performance.now();
     if (running) applyExtremeVarianceTick("soundBurst enter");
-    else if (typeof updateTelUI === "function") updateTelUI();
+    else updateTelUI();
   }
 
   function exitExtremeMode(){
@@ -1143,7 +1143,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       if (suddenLive) suddenLive.textContent = "armed";
     }
     if (typeof monLog === "function") monLog("extreme off · micDiff quiet " + (BURST_QUIET_MS/1000) + "s");
-    if (typeof updateTelUI === "function") updateTelUI();
+    updateTelUI();
   }
 
   function detectSoundBurst(an, data, fromMic){
@@ -1242,7 +1242,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       monLog("impulse · " + (fromAccel ? "accel" : "") + (fromAccel && fromMic ? "+" : "") + (fromMic ? "micDiff" : "")
         + " → " + alarmState);
     }
-    if (typeof updateTelUI === "function") updateTelUI();
+    updateTelUI();
   }
 
   function alarmTick(now){
