@@ -143,9 +143,11 @@ def test_html_parses_single_script(html: str) -> None:
 # ── 8. README (M0 record, no PII) ────────────────────────────────────────────
 def test_readme_m0_record() -> None:
     txt = README_PATH.read_text(encoding="utf-8")
-    # exact-token match on extracted URLs (CodeQL py/incomplete-url-substring-sanitization)
+    # exact equality against extracted URL tokens — never a substring/`in` test on a URL literal
+    # (CodeQL py/incomplete-url-substring-sanitization matches `<url> in <expr>` regardless of type).
+    live_url = "https://hop-ultrasonic-1digital-design.vercel.app/"
     urls = re.findall(r"https?://[^\s<>\"')]+", txt)
-    assert "https://hop-ultrasonic-1digital-design.vercel.app/" in urls, urls
+    assert any(u == live_url for u in urls), urls
     assert "iPhone 16" in txt and "iPhone 14" in txt
     assert re.search(r"\b(three|3)\b", txt)
     assert "native Bluetooth" in txt

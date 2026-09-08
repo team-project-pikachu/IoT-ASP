@@ -122,7 +122,8 @@ def test_dp05_environments(jobs: dict):
     assert "PROD_URL" in prod_env["url"]
     # exact hostname match on extracted URLs (CodeQL py/incomplete-url-substring-sanitization)
     hosts = [urlparse(u).hostname for u in re.findall(r"https?://[^\s<>\"'}]+", str(prod_env["url"]))]
-    assert "hop-ultrasonic-1digital-design.vercel.app" in hosts, prod_env["url"]
+    prod_host = "hop-ultrasonic-1digital-design.vercel.app"
+    assert any(h == prod_host for h in hosts), prod_env["url"]
 
 
 # ── DP-06 ────────────────────────────────────────────────────────────────────
