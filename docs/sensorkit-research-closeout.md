@@ -3,7 +3,8 @@
 **Status:** Research ACs complete · **native entitlement / Xcode shell implementation parked**  
 **Issue:** [team-project-pikachu/IoT-ASP#9](https://github.com/team-project-pikachu/IoT-ASP/issues/9)  
 **Evidence:** [`.vv/9/`](../.vv/9/)  
-**Revision anchor:** see evidence package (git HEAD at closeout)
+**Revision anchor:** see evidence package (git HEAD at closeout)  
+**M9 build path (not this freeze):** privacy strings + entitlement *names* → [privacy-entitlements-native.md](privacy-entitlements-native.md) (#113); app/stub/CI → #109–#112.
 
 This document freezes the research deliverable for Project 5 Todo **#9**. It does **not** authorize SensorKit entitlement work, App Store research-study approval, or an Xcode shell in this wave.
 

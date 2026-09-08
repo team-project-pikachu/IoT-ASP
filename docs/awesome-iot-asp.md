@@ -81,4 +81,5 @@ Caches under `.context7/` (see [asp-prior-art.md](asp-prior-art.md)).
 
 ## Privacy
 
+- Native iOS privacy / entitlements (SensorKit · CoreMotion · mic) — M9 [#113](https://github.com/team-project-pikachu/IoT-ASP/issues/113): [privacy-entitlements-native.md](privacy-entitlements-native.md)
 - Private study protocol: companion `IoT-ASP-study`. Pointer: [STUDY_PRIVATE.md](STUDY_PRIVATE.md)

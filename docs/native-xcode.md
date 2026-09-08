@@ -1,6 +1,7 @@
 # Native Xcode path (parked — issue #9)
 
 **Research closeout (docs only):** [sensorkit-research-closeout.md](sensorkit-research-closeout.md) · evidence [`.vv/9/`](../.vv/9/).  
+**Privacy / entitlements (M9 #113):** [privacy-entitlements-native.md](privacy-entitlements-native.md) — Info.plist keys, SensorKit entitlement names, agent no-invent rules.  
 **Balanced stub (2026-09-08):** source sketch under [`native/IoTASP/`](../native/IoTASP/) + [`native/README.md`](../native/README.md) (issues #41/#48/#52). Still **no** SensorKit entitlement grant and **no** signed App Store build.
 
 CLT-only hosts: `bash scripts/native_compile_check.sh` / `make native-check` runs `alarm_smoke.swift` + SPM Shared build (no `xcodebuild` claim).
