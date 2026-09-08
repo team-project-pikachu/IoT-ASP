@@ -382,6 +382,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <div>sudden <b id="telSudden">idle</b></div>
       <div>burst <b id="telBurst">—</b></div>
       <div>extreme <b id="telExtreme">off</b></div>
+      <div>alarm <b id="telAlarm">armed</b></div>
+      <div>impulse <b id="telImpulse">off</b></div>
+      <div>volBlast <b id="telVolBlast">off</b></div>
       <div>bandBurst <b id="telBandBurst">—</b></div>
       <div>sensors <b id="telSensors">idle</b></div>
       <div>mic <b id="telSensMic">—</b></div>
@@ -424,8 +427,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     <code>shriek</code>/<code>shriek_chirp</code> = short upward chirp bursts.
     Contour-mirrors (generative, <b>not</b> recordings): <code>cry_mirror</code> = irregular pitch glides + sob AM;
     <code>siren_mirror</code> = two-tone / rising–falling sweep; <code>death_metal_mirror</code> = harsh saw/square + blast-beat AM + detuned drone/shriek.
-    Extreme/burst rotation can pick shriek family or these mirrors. With <b>Vib auto</b>, physical accel prefers pulse/shriek;
-    acoustic mic energy prefers pulse/hop. Debounced ≥300&nbsp;ms. <b>Hold / Manual</b> freezes remote patches. Default output is <b>100%</b> Web Audio gain (max practical); BT/hardware still limit SPL.
+    Extreme/burst rotation can pick shriek family or these mirrors. Quick <b>impulses</b> (micDiff rise/peak or accel spike) react like an
+    <b>alarm</b>: armed → triggered → sustaining (blast vol + extreme) → cleared only after quiet hysteresis.
+    With <b>Vib auto</b>, physical accel prefers pulse/shriek;
+    acoustic mic energy prefers pulse/hop. Debounced ≥300&nbsp;ms. <b>Hold / Manual</b> freezes remote patches and disarms blast. Default output is <b>100%</b> Web Audio gain (max practical); BT/hardware still limit SPL.
   </div>
 
   <div class="note warn">
@@ -547,6 +552,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let bandBurst="none", wireAlgoHint=null;
   const BURST_ONSET_DB = 9, BURST_RELEASE_DB = 5, BURST_EMA = 0.08;
   const BURST_JITTER_MS = 450, BURST_QUIET_MS = 2500, OUT_ALPHA = 0.85;
+  // Impulse→blast alarm SM (armed→triggered→sustaining→cleared); quiet=BURST_QUIET_MS
+  const IMPULSE_RISE_DB = 11, IMPULSE_PEAK_DB = 14, IMPULSE_ACCEL_RISE = 0.55;
+  const IMPULSE_LATCH_MS = 700, ALARM_CLEARED_MS = 450;
+  let alarmState = "armed"; // armed | triggered | sustaining | cleared | off
+  let impulse = false, volBlast = false;
+  let lastImpulseAt = 0, alarmClearedAt = 0;
+  let prevMicDiffSample = -120, accelRawPrev = 0, accelEma = 0;
   let accelMag=0, lfMag=0, acousticEnergy=-120;
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
@@ -1003,13 +1015,119 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     outLevel = Math.max(outLevelLf, outLevelUs);
   }
 
+  function alarmCapVol(){
+    // Night caps blast; day=VOL_PATCH_MAX (C4). Hold refuses.
+    return nightActive ? Math.min(VOL_PATCH_MAX, nightTargetVol) : VOL_PATCH_MAX;
+  }
+
+  function setAlarmState(next){
+    if (holdManual) next = "cleared";
+    else if (!suddenAuto) next = "off";
+    if (alarmState === next) return;
+    alarmState = next;
+    if (typeof updateTelUI === "function") updateTelUI();
+  }
+
+  function blastVolJump(reason){
+    // Jump to cap in VOL_STEP quanta (alarm, not soft nudge).
+    if (holdManual) return false;
+    const cap = alarmCapVol();
+    let next = Math.round(cap / VOL_STEP) * VOL_STEP;
+    next = Math.min(VOL_PATCH_MAX, Math.max(0, next));
+    if (nightActive) next = Math.min(nightTargetVol, next);
+    const before = +vol.value;
+    applyVolUi(next, false);
+    volBlast = true;
+    if (typeof monLog === "function" && Math.abs(before - next) >= VOL_STEP * 0.49) {
+      monLog("volBlast · " + before.toFixed(1) + "→" + next.toFixed(1)
+        + (reason ? (" · " + reason) : ""));
+    }
+    return true;
+  }
+
   function burstVolNudge(){
+    // Alarm sustain → blast to cap; else legacy ±VOL_STEP jitter.
+    if (volBlast || alarmState === "triggered" || alarmState === "sustaining") {
+      blastVolJump("alarm sustain");
+      return;
+    }
     const dir = rand() < 0.5 ? -VOL_STEP : VOL_STEP;
     let next = +vol.value + dir * (1 + Math.floor(rand() * 2));
     next = Math.round(next / VOL_STEP) * VOL_STEP;
     if (nightActive) next = Math.min(nightTargetVol, Math.max(0, next));
     else next = Math.min(VOL_PATCH_MAX, Math.max(0, next));
     applyVolUi(next, false);
+  }
+
+  function clearImpulseAlarm(reason){
+    const wasLive = impulse || volBlast || alarmState === "triggered" || alarmState === "sustaining";
+    impulse = false;
+    volBlast = false;
+    if (holdManual || !suddenAuto) {
+      setAlarmState(holdManual ? "cleared" : "off");
+    } else if (wasLive || alarmState !== "armed") {
+      setAlarmState("cleared");
+      alarmClearedAt = performance.now();
+    }
+    if (wasLive && typeof monLog === "function") {
+      monLog("alarm cleared · " + (reason || "quiet"));
+    }
+  }
+
+  function rearmAlarmIfDue(now){
+    if (alarmState !== "cleared") return;
+    if (holdManual || !suddenAuto) return;
+    if ((now - alarmClearedAt) >= ALARM_CLEARED_MS) setAlarmState("armed");
+  }
+
+  function noteImpulse(source, deltaHint){
+    // armed→triggered→sustaining + blast; Hold wins.
+    if (!suddenAuto || holdManual) return false;
+    if (!running && !sensorsArmed) return false;
+    const now = performance.now();
+    const train = impulse && (now - lastImpulseAt) < IMPULSE_LATCH_MS;
+    lastImpulseAt = now;
+    impulse = true;
+    if (alarmState === "armed" || alarmState === "cleared" || alarmState === "off") {
+      setAlarmState("triggered");
+    } else {
+      setAlarmState("sustaining");
+    }
+    blastVolJump(source || "impulse");
+    if (!extremeActive) {
+      enterExtremeFromBurst(typeof deltaHint === "number" ? deltaHint : IMPULSE_PEAK_DB, bandBurst || "us");
+    } else {
+      applyExtremeVarianceTick((source || "impulse") + " train");
+    }
+    // triggered→sustaining after first engage
+    if (alarmState === "triggered") setAlarmState("sustaining");
+    if (typeof monLog === "function" && !train) {
+      monLog("impulse · " + (source || "micDiff") + " · alarm sustaining");
+    }
+    if (typeof updateTelUI === "function") updateTelUI();
+    return true;
+  }
+
+  function tickAlarmHysteresis(now, stillHot){
+    rearmAlarmIfDue(now);
+    if (holdManual) return;
+    if (!(alarmState === "triggered" || alarmState === "sustaining" || impulse || volBlast)) return;
+    if (stillHot || (impulse && (now - lastImpulseAt) < IMPULSE_LATCH_MS)) {
+      if (alarmState === "triggered") setAlarmState("sustaining");
+      blastVolJump("alarm hold");
+      return;
+    }
+    if ((now - lastImpulseAt) >= BURST_QUIET_MS && (now - lastBurstAt) >= BURST_QUIET_MS) {
+      clearImpulseAlarm("quiet " + (BURST_QUIET_MS / 1000) + "s");
+    }
+  }
+
+  function detectMicImpulse(diffNow, delta, rise){
+    // Rise-time or peak vs EMA (stricter than BURST_ONSET).
+    if (!isFinite(diffNow) || diffNow <= -80) return false;
+    const riseHit = rise > IMPULSE_RISE_DB;
+    const peakHit = delta > IMPULSE_PEAK_DB;
+    return riseHit || peakHit;
   }
 
   function alignTxToBurstBand(which){
@@ -1078,10 +1196,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function exitExtremeMode(){
-    if (!extremeActive && !soundBurst) return;
+    if (!extremeActive && !soundBurst && !impulse && !volBlast
+        && alarmState !== "triggered" && alarmState !== "sustaining") return;
     extremeActive = false;
     soundBurst = false;
     bandBurst = "none";
+    clearImpulseAlarm("extreme exit");
     if (suddenAuto) {
       suddenState = "armed";
       if (suddenLive) suddenLive.textContent = "armed";
@@ -1115,6 +1235,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
     const prevBase = rollMicDiff;
     const delta = (prevBase < -119) ? 0 : (diffNow - prevBase);
+    const rise = (prevMicDiffSample < -119) ? 0 : (diffNow - prevMicDiffSample);
+    prevMicDiffSample = diffNow;
     if (prevBase < -119) rollMicDiff = diffNow;
     else rollMicDiff = (1 - BURST_EMA) * prevBase + BURST_EMA * diffNow;
     burstBaseline = Math.round(rollMicDiff * 10) / 10;
@@ -1130,26 +1252,38 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
     const onset = which !== "none";
     const now = performance.now();
-    const stillHot = (diffNow - rollMicDiff) > BURST_RELEASE_DB || delta > BURST_RELEASE_DB;
+    const stillHot = (diffNow - rollMicDiff) > BURST_RELEASE_DB || delta > BURST_RELEASE_DB
+      || (impulse && (now - lastImpulseAt) < IMPULSE_LATCH_MS);
+    const micImpulse = detectMicImpulse(diffNow, delta, rise);
+    if (micImpulse) {
+      if (which !== "none") bandBurst = which;
+      noteImpulse("micDiff rise=" + rise.toFixed(1) + " Δ=" + delta.toFixed(1), Math.max(delta, rise));
+    }
     if (onset) {
       lastBurstAt = now;
       bandBurst = which;
       soundBurst = true;
-      if (!extremeActive) enterExtremeFromBurst(delta, which);
-      else applyExtremeVarianceTick("soundBurst hold");
-    } else if (extremeActive) {
-      // Sustained extreme while hot; exit only after quiet hysteresis window
+      // Environmental onset also blasts (alarm-fast)
+      if (!micImpulse) noteImpulse("soundBurst " + which, delta);
+      else if (extremeActive) applyExtremeVarianceTick("soundBurst hold");
+    } else if (extremeActive || alarmState === "triggered" || alarmState === "sustaining") {
+      // Sustain while hot; quiet hysteresis only exits
       if (stillHot) {
         lastBurstAt = now;
         soundBurst = true;
+        if (alarmState === "triggered" || alarmState === "sustaining" || volBlast) {
+          setAlarmState("sustaining");
+          blastVolJump("alarm sustain");
+        }
         applyExtremeVarianceTick("soundBurst sustain");
-      } else if ((now - lastBurstAt) >= BURST_QUIET_MS) {
+      } else if ((now - lastBurstAt) >= BURST_QUIET_MS && (now - lastImpulseAt) >= BURST_QUIET_MS) {
         exitExtremeMode();
       }
     } else {
       soundBurst = false;
       if (bandBurst !== "none" && (now - lastBurstAt) > BURST_QUIET_MS) bandBurst = "none";
     }
+    tickAlarmHysteresis(now, stillHot || onset || micImpulse);
   }
 
   async function ensureMotion(){
@@ -1164,6 +1298,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const a = e.acceleration || e.accelerationIncludingGravity;
     if (!a) return;
     const mag = Math.hypot(a.x || 0, a.y || 0, a.z || 0);
+    const accelRise = mag - (accelEma || mag);
+    accelEma = accelEma ? (0.88 * accelEma + 0.12 * mag) : mag;
+    accelRawPrev = mag;
     accelMag = 0.85 * accelMag + 0.15 * mag;
     // crude LF proxy: low-pass of magnitude deltas
     const g = e.accelerationIncludingGravity;
@@ -1172,6 +1309,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       lfMag = 0.92 * lfMag + 0.08 * Math.abs(gmag - (lfMag || gmag));
     }
     const thr = (+vibSens.value || 12) / 10;
+    // Accel impulse vs EMA; thr scales sensitivity
+    if (suddenAuto && !holdManual && (running || sensorsArmed)
+        && accelRise > Math.max(IMPULSE_ACCEL_RISE, thr * 0.45)) {
+      noteImpulse("accel rise=" + accelRise.toFixed(2), accelRise);
+    }
     if (lfMag > thr * 0.35) updateVibClass("infra_felt");
     else if (accelMag > thr) updateVibClass("physical");
     else if (vibClass === "physical" || vibClass === "infra_felt"){
@@ -2121,7 +2263,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource }),
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState, impulse, volBlast }),
     getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
 
@@ -2149,6 +2291,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     }
     const telEx = $("telExtreme");
     if (telEx) telEx.textContent = extremeActive ? "ON" : "off";
+    const telAlarm = $("telAlarm");
+    if (telAlarm) telAlarm.textContent = holdManual ? "cleared" : (suddenAuto ? alarmState : "off");
+    const telImpulse = $("telImpulse");
+    if (telImpulse) telImpulse.textContent = impulse ? "ON" : "off";
+    const telVolBlast = $("telVolBlast");
+    if (telVolBlast) telVolBlast.textContent = volBlast ? "ON" : "off";
     const telBb = $("telBandBurst");
     if (telBb) telBb.textContent = bandBurst || "—";
     const age = lastHopAgeMs(), hopAgeEl = $("telHopAge");
@@ -2181,6 +2329,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       suddenFreq,
       soundBurst: !!soundBurst,
       extremeActive: !!extremeActive,
+      impulse: !!impulse,
+      volBlast: !!volBlast,
+      alarmState: holdManual ? "cleared" : (suddenAuto ? alarmState : "off"),
       bandBurst: bandBurst || "none",
       soundBurstMeta: {
         energyDelta: burstEnergyDelta,
@@ -2193,7 +2344,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       suddenAuto,
       suddenState,
       geminiAutorouteFlag,
-      event: (soundBurst || extremeActive) ? "soundBurst" : (suddenFreq ? "suddenFreq" : undefined),
+      event: (impulse || volBlast) ? "impulse"
+        : ((soundBurst || extremeActive) ? "soundBurst" : (suddenFreq ? "suddenFreq" : undefined)),
       absA: accelMag,
       a: accelMag,
       micEnergy: Math.round((isFinite(acousticEnergy) ? acousticEnergy : -120) * 10) / 10,

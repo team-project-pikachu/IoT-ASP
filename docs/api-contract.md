@@ -74,6 +74,9 @@ Compact JSON heartbeat. Required fields marked ★.
   "bandBurst": "us",
   "soundBurst": false,
   "extremeActive": false,
+  "impulse": false,
+  "volBlast": false,
+  "alarmState": "armed",
   "audioContextState": "running",
   "materialPreset": "table",
   "fMin": 17000,
@@ -121,6 +124,9 @@ Compact JSON heartbeat. Required fields marked ★.
 | `soundBurst` | | bool | Environmental energy onset (sustained while true) |
 | `soundBurstMeta` | | object | Optional `{ energyDelta, baselineDb, onsetDb, micDiff, … }` |
 | `extremeActive` | | bool | Extreme variance mode active until quiet hysteresis |
+| `impulse` | | bool | Short micDiff rise/peak or accel spike detected (latched briefly) — #44 |
+| `volBlast` | | bool | Alarm blast: vol jumped toward max within night/Hold rules — #44 #45 |
+| `alarmState` | | string | `armed` \| `triggered` \| `sustaining` \| `cleared` \| `off` — #45 |
 | `audioContextState` / `ctxState` | | string | Either key |
 | `vol` | | number | **UI percent 0–100** (matches slider max); legacy linear ≤1 accepted by ingest/author |
 | `holdManual` | | bool | If true, backend must refuse patches |
@@ -137,6 +143,7 @@ Compact JSON heartbeat. Required fields marked ★.
 | `micDiff` | | number | `micEnergy − 0.85·outLevel` (best-effort AEC; browser cannot do full AEC) — #25 |
 | `bandBurst` | | string | `lf` \| `us` \| `both` burst classification — #25/#26 |
 | `soundBurst` / `extremeActive` | | bool | Environmental burst detected / sustained extreme shriek mode — #25 |
+| `impulse` / `volBlast` / `alarmState` | | bool / bool / string | Impulse→blast alarm SM — #44 #45 #42 |
 | `lfEnergy` / `usEnergy` | | number | LF (<20 Hz proxy) and US (>17 kHz) band energy (dB) — #25 |
 
 Backend enrichment (`fleet_log.enrich_telemetry`) fills `band`, `power`, `nightNY`, `lfArmed`,

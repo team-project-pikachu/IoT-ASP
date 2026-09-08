@@ -46,10 +46,15 @@ def test_invariant_literals(html: str) -> None:
     assert re.search(r"const SCHEMA_VERSION = 1;", html)
     assert re.search(r"const VOL_PATCH_MAX = 100,", html), "VOL_PATCH_MAX must match clamps.py hard max (C4)"
     assert "BAND_ABS_LO = 17000, BAND_ABS_HI = 23000" in html
+    for lit in ("function blastVolJump(", "function noteImpulse(", "alarmState", "volBlast", "IMPULSE_RISE_DB"):
+        assert lit in html, lit
+    assert "micEnergy_band" not in html  # keep subtract in JS netMicDiff only
+    assert "function netMicDiff(" in html
 
 
 # ── 2. ids ───────────────────────────────────────────────────────────────────
-NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog")
+NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog",
+           "telAlarm", "telImpulse", "telVolBlast")
 OLD_IDS = ("telDevice", "telSeed", "telAlgo", "telPeak", "telAccel", "telMic", "telVib", "telHold",
            "telSudden", "monLog", "sysList", "sysBtn", "vol", "fMin", "fMax", "holdPatchBtn", "power")
 
@@ -62,6 +67,7 @@ def test_ids_present_once(html: str, el_id: str) -> None:
 # ── 3. telemetryPayload keys ─────────────────────────────────────────────────
 PAYLOAD_TOKENS = ("band", "power", "nightNY", "lfArmed", "lfDriveCapable", "lastHopAgeMs",
                   "ctxResumes", "watchdogTrips", "logSeq", "logTail", "holdManual",
+                  "impulse", "volBlast", "alarmState",
                   "schemaVersion: SCHEMA_VERSION")
 
 
@@ -182,7 +188,7 @@ def test_banner_lines_well_formed(html: str) -> None:
 
 # ── 12. size guard ───────────────────────────────────────────────────────────
 def test_size_guard() -> None:
-    assert HTML_PATH.stat().st_size < 120_000
+    assert HTML_PATH.stat().st_size < 130_000
 
 
 # ── spec 02: max-entropy seeds ───────────────────────────────────────────────
