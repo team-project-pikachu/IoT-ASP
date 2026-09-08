@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+from urllib.parse import urlparse
 import subprocess
 from pathlib import Path
 
@@ -119,7 +120,9 @@ def test_dp05_environments(jobs: dict):
     prod_env = jobs["deploy_prod"]["environment"]
     assert prod_env["name"] == "production"
     assert "PROD_URL" in prod_env["url"]
-    assert "hop-ultrasonic-1digital-design.vercel.app" in prod_env["url"]
+    # exact hostname match on extracted URLs (CodeQL py/incomplete-url-substring-sanitization)
+    hosts = [urlparse(u).hostname for u in re.findall(r"https?://[^\s<>\"'}]+", str(prod_env["url"]))]
+    assert "hop-ultrasonic-1digital-design.vercel.app" in hosts, prod_env["url"]
 
 
 # ── DP-06 ────────────────────────────────────────────────────────────────────
