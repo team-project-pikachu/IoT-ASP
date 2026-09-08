@@ -14,7 +14,10 @@ final class ASPSessionModel: ObservableObject {
         didSet { syncMotion() }
     }
     @Published var micArmed = false {
-        didSet { syncMic() }
+        didSet {
+            syncMic()
+            applySink()
+        }
     }
     @Published var micStatus = UltrasonicMicStatus.stub()
     @Published var lastAbsA: Double = 0
@@ -120,7 +123,7 @@ final class ASPSessionModel: ObservableObject {
 
     func applySink() {
         do {
-            try ASPAudioSession.configureForFleetSink(sink)
+            try ASPAudioSession.configureForFleetSink(sink, micArmed: micArmed)
             sessionError = nil
         } catch {
             sessionError = error.localizedDescription

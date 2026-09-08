@@ -136,6 +136,14 @@ struct IoTASPSmoke {
         check("slow sway can infra_felt", felt || lf.lfEnergyDb > -120)
         check("thump not infra", LfAccelProxy().observe(absA: 1.5) == nil)
 
+        // #146 routes
+        let a2dp = AudioRouteMatrix.plan(for: .soundcore2A2DP, micArmed: true)
+        check("a2dp no hfp", a2dp.hfpRisk == false && a2dp.options.contains("allowBluetoothA2DP"))
+        check("a2dp playAndRecord", a2dp.category == "playAndRecord")
+        let air = AudioRouteMatrix.plan(for: .sonosBeamAirPlay, micArmed: true)
+        check("sonos longform", air.options.contains("longFormAudio") && air.category == "playback")
+        check("recover", AudioRouteMatrix.recoverAfterRouteChange(.soundcore2A2DP).contains("phoneSpeaker"))
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()
