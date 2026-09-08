@@ -1,7 +1,7 @@
 # Soundcore 2 — A2DP fleet sink (TODO manufacturer specs)
 
 **Issue:** [#43](https://github.com/team-project-pikachu/IoT-ASP/issues/43)  
-**Status:** Placeholder until official Anker/Soundcore sources are fetched and cited.  
+**Status:** Canonical manufacturer FR + honesty land in **PR #55** / issue **#43** (`docs/specs/43-soundcore-2-a2dp.md`, root `SPEC.md`). This file remains the native-wiring pointer.  
 **Fleet:** Nodes **1–2** = iPhone 16 ↔ Soundcore 2 over **iOS native A2DP** ([DESIGN_CONSTRAINTS.md](../DESIGN_CONSTRAINTS.md) **C1**). Node **3** = Sonos Beam AirPlay ([sonos-beam.md](../sonos-beam.md)).
 
 ## Known product constraints (already in-repo; not a substitute for #43)
@@ -19,6 +19,5 @@
 
 ## TODO
 
-- [ ] Firecrawl / fetch official Anker Soundcore 2 spec pages only
-- [ ] Fill FR / codec / power table with citations
-- [ ] Update `SPEC.md` cross-links if numbers change
+- [x] Official FR cited via #43 / PR #55 (70 Hz–20 kHz A3105 manual)
+- [ ] Optional expanded dossier (`docs/hardware/soundcore-specs.md` from closed #56) if reviewers want the longer table
