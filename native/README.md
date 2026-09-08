@@ -5,6 +5,7 @@ Balanced stub-first landing for issues **#41 / #48 / #52** (native) and **#39** 
 | Path | Role |
 |------|------|
 | [`IoTASP/`](IoTASP/) | Multi-target sketch: iPhone + Watch + shared alarm/impulse/fleet (Swift Package + `.xcodeproj`) |
+| [`IoTASPHome/`](IoTASPHome/) | **M8:** HomeNestAlarm + Glass Shatter tabs (`make home-ios-build`); event class #96 + wiring #97 |
 | [`ios-sonos-shell/`](ios-sonos-shell/) | Minimal `AVRoutePickerView` AirPlay shell for Beam Gen 2 research |
 
 ## Honesty
@@ -13,4 +14,5 @@ Balanced stub-first landing for issues **#41 / #48 / #52** (native) and **#39** 
 - Studio may only have Command Line Tools — `xcodebuild` needs full Xcode.app.
 - Shared alarm logic smoke: `cd IoTASP && swift Scripts/alarm_smoke.swift`
 - Repo gate (CLT): `bash scripts/native_compile_check.sh` or `make native-check`
-- Docs: [`docs/native-xcode.md`](../docs/native-xcode.md), [`docs/sonos-beam.md`](../docs/sonos-beam.md), [`docs/hardware/soundcore-specs.md`](../docs/hardware/soundcore-specs.md)
+- M8 event-class stub (macOS): `bash scripts/home_ios_build.sh` or `make home-ios-build`
+- Docs: [`docs/native-xcode.md`](../docs/native-xcode.md), [`docs/sonos-beam.md`](../docs/sonos-beam.md), [`docs/hardware/soundcore-specs.md`](../docs/hardware/soundcore-specs.md), [`docs/milestones/M8-nest-gemini-soundburst-mvp.md`](../docs/milestones/M8-nest-gemini-soundburst-mvp.md)

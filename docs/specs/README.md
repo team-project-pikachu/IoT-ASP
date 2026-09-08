@@ -43,6 +43,8 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #64 | [64-sebok-vv-mvp-matrix.md](64-sebok-vv-mvp-matrix.md) — SEBoK matrix pass for MVP ship slice | open — `.vv/matrix.md` scaffold | docs |
 | #65 #68 | [65-68-mvp-closed-log.md](65-68-mvp-closed-log.md) — closed-issue log CLI + Actions | implemented on branch | infra + docs |
 | #69 | [69-mvp-roadmap.md](69-mvp-roadmap.md) — durable MVP milestone → issue roadmap | implemented on branch | docs |
+| #96 | [96-glass-shatter-event-class.md](96-glass-shatter-event-class.md) — AcousticEventClass + gemini-burst-detect stub | stubbed on branch | native + detector |
+| #97 | [97-glass-shatter-home-wiring.md](97-glass-shatter-home-wiring.md) — Glass Shatter tab + Automation/notify TODO | stubbed on branch | native |
 
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
 tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items referenced from
