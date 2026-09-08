@@ -49,6 +49,16 @@
       "url": "https://google.github.io/adk-docs/get-started/python/",
       "section": "adk",
       "artifacts": "reference/knowledge/adk/"
+    },
+    {
+      "url": "https://docs.cloud.google.com/architecture/framework/perspectives/ai-ml/security",
+      "section": "waf",
+      "artifacts": "reference/knowledge-base/raw/"
+    },
+    {
+      "url": "https://vercel.com/docs/deployment-protection",
+      "section": "vercel",
+      "artifacts": "reference/knowledge-base/raw/"
     }
   ]
 }

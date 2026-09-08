@@ -1,0 +1,23 @@
+## [arxiv:2004.06195] AiR-ViBeR: Exfiltrating Data from Air-Gapped Computers via Covert Surface ViBrAtIoNs
+Air-gap covert channels are special types of covert communication channels that enable attackers to exfiltrate data from isolated, network-less computers. Various types of air-gap covert channels have been demonstrated over the years, including electromagnetic, magnetic, acoustic, optical, and thermal. In this paper, we introduce a new type of vibrational (seismic) covert channel. We observe that computers vibrate at a frequency correlated to the rotation speed of their internal fans. These inaudible vibrations affect the entire structure on which the computer is placed. Our method is based on
+
+## [pmid:41118281] Theory and Analysis of High-Sensitivity Acceleration Sensing Based on 2-D Phononic Crystals.
+It introduces a novel approach where ultrasound is utilized for the first time to sense acceleration through the PnCs structure. Acceleration causes a frequency shift in these peaks. Both numerical and experimental results demonstrate that this approach is suitable for…
+
+## [arxiv:2007.03874] Fine-grained Vibration Based Sensing Using a Smartphone
+Recognizing surfaces based on their vibration signatures is useful as it can enable tagging of different locations without requiring any additional hardware such as Near Field Communication (NFC) tags. However, previous vibration based surface recognition schemes either use custom hardware for creating and sensing vibration, which makes them difficult to adopt, or use inertial (IMU) sensors in commercial off-the-shelf (COTS) smartphones to sense movements produced due to vibrations, which makes them coarse-grained because of the low sampling rates of IMU sensors. The mainstream COTS smartphone
+
+## [pmcid:PMC10892134] Investigation of New Accelerometer Based on Capacitive Micromachined Ultrasonic Transducer (CMUT) with Ring-Perforation Membrane.
+Capacitive micromachined ultrasonic transducer (CMUT) has been widely studied due to its excellent resonance characteristics and array integration. This paper presents the first study of the CMUT electrostatic stiffness resonant accelerometer. To improve the sensitivity of the…
+
+## [arxiv:2603.28787] Smartphone-Based Identification of Unknown Liquids via Active Vibration Sensing
+Traditional liquid identification instruments are often unavailable to the general public. This paper shows the feasibility of identifying unknown liquids with commercial lightweight devices, such as a smartphone. The key insight is that different liquid molecules have different viscosity coefficients and therefore must overcome different energy barriers during relative motion. With this intuition in mind, we introduce a novel model that measures liquids' viscosity based on active vibration. However, building a robust system using built-in smartphone accelerometers is challenging. Practical is
+
+## [pmcid:PMC6679289] Extraction of Bridge Fundamental Frequencies Utilizing a Smartphone MEMS Accelerometer.
+Therefore, it cannot be directly used to track feeble vibrations such as structural vibrations.
+
+## [arxiv:2208.09764] GAIROSCOPE: Injecting Data from Air-Gapped Computers to Nearby Gyroscopes
+It is known that malware can leak data from isolated, air-gapped computers to nearby smartphones using ultrasonic waves. However, this covert channel requires access to the smartphone's microphone, which is highly protected in Android OS and iOS, and might be non-accessible, disabled, or blocked. In this paper we present `GAIROSCOPE,' an ultrasonic covert channel that doesn't require a microphone on the receiving side. Our malware generates ultrasonic tones in the resonance frequencies of the MEMS gyroscope. These inaudible frequencies produce tiny mechanical oscillations within the smartphone
+
+## [pmid:28332815] Detecting Subtle Vibrations Using Graphene-Based Cellular Elastomers.
+Ultralight graphene elastomer-based flexible sensors are developed to detect subtle vibrations within a broad frequency range. The same device can be employed as an accelerometer, tested within the experimental bandwidth of 20-300 Hz as well as a microphone, monitoring sound…

@@ -20,7 +20,16 @@ from .priors import (
     vib_algo_weights,
 )
 
-ALGO_ROTATE = ("hop", "am_gate", "shriek_chirp", "shriek_sweep", "burst")
+ALGO_ROTATE = (
+    "hop",
+    "am_gate",
+    "shriek_chirp",
+    "shriek_sweep",
+    "burst",
+    "cry_mirror",
+    "siren_mirror",
+    "death_metal_mirror",
+)
 
 UI_TO_WIRE = {
     "hop": "hop",
@@ -31,6 +40,13 @@ UI_TO_WIRE = {
     "shriek_sweep": "shriek_sweep",
     "burst": "burst",
     "infra_mod": "infra_mod",
+    "cry": "cry_mirror",
+    "cry_mirror": "cry_mirror",
+    "siren": "siren_mirror",
+    "siren_mirror": "siren_mirror",
+    "metal": "death_metal_mirror",
+    "metal_mirror": "death_metal_mirror",
+    "death_metal_mirror": "death_metal_mirror",
 }
 
 
@@ -41,22 +57,37 @@ def normalize_algo(algo: str | None) -> str:
 
 
 def is_sudden_freq_event(telemetry: dict[str, Any]) -> bool:
-    """True when phone flagged gemini autoroute / sudden rotate state."""
+    """True when phone flagged gemini autoroute / sudden rotate / sound burst."""
     if telemetry.get("holdManual"):
         return False
     if telemetry.get("suddenFreq") is True:
         return True
+    if telemetry.get("soundBurst") is True or telemetry.get("extremeActive") is True:
+        return True
     if telemetry.get("geminiAutorouteFlag"):
         return True
-    if telemetry.get("event") in ("suddenFreq", "sudden_freq", "spectrum_onset", "mic_onset"):
+    if telemetry.get("event") in (
+        "suddenFreq",
+        "sudden_freq",
+        "spectrum_onset",
+        "mic_onset",
+        "soundBurst",
+        "sound_burst",
+    ):
         return True
     state = str(telemetry.get("suddenState") or "").lower()
-    return state in ("rotate", "onset")
+    return state in ("rotate", "onset", "extreme", "burst")
 
 
-def _next_algo(current: str, vib_class: str | None, material_preset: str | None = None) -> str:
-    """Weighted vib→algo rotate (NS/seismo priors); falls back to preferred tuple."""
-    return next_algo_weighted(current, vib_class, material_preset)
+def _next_algo(
+    current: str,
+    vib_class: str | None,
+    material_preset: str | None = None,
+    *,
+    sound_burst: bool = False,
+) -> str:
+    """Weighted vib→algo rotate; shriek-biased when soundBurst/extremeActive."""
+    return next_algo_weighted(current, vib_class, material_preset, sound_burst=sound_burst)
 
 
 def author_sudden_freq_patch(telemetry: dict[str, Any]) -> tuple[bool, str, dict[str, Any]]:
@@ -76,7 +107,14 @@ def author_sudden_freq_patch(telemetry: dict[str, Any]) -> tuple[bool, str, dict
     node = str(telemetry.get("deviceId") or telemetry.get("nodeId") or "node1")
     material = telemetry.get("materialPreset")
     vib = telemetry.get("vibClass")
-    algo = _next_algo(str(telemetry.get("algo") or "hop"), vib, material)
+    sudden_state = str(telemetry.get("suddenState") or "").lower()
+    burst = bool(
+        telemetry.get("soundBurst")
+        or telemetry.get("extremeActive")
+        or telemetry.get("event") in ("soundBurst", "sound_burst")
+        or sudden_state in ("extreme", "burst")
+    )
+    algo = _next_algo(str(telemetry.get("algo") or "hop"), vib, material, sound_burst=burst)
     peak = telemetry.get("peakHz")
     pulse = float(telemetry.get("pulseMs") or 80)
     shriek = float(telemetry.get("shriekMs") or 50)
@@ -88,18 +126,28 @@ def author_sudden_freq_patch(telemetry: dict[str, Any]) -> tuple[bool, str, dict
     vol = min(vol, 100.0)
 
     lf_ok = lf_drive_capable(telemetry)
+    # Align TX band hint from bandBurst when LF capable
+    bb = str(telemetry.get("bandBurst") or "").lower()
+    if burst and bb in ("lf", "both") and lf_ok:
+        telemetry = dict(telemetry)
+        telemetry["band"] = "10-20"
+        telemetry["vibClass"] = telemetry.get("vibClass") or "infra_felt"
     band, fmin, fmax = band_for_telemetry(telemetry)
-    prior_keys = prior_keys_for_event(vib, lf_capable=lf_ok)
-    weights = vib_algo_weights(vib, material)
-    preferred = preferred_algos(vib, material)
+    prior_keys = prior_keys_for_event(vib, lf_capable=lf_ok, sound_burst=burst)
+    weights = vib_algo_weights(vib, material, sound_burst=burst)
+    preferred = preferred_algos(vib, material, sound_burst=burst)
 
+    trigger = "soundBurst" if burst else "suddenFreq"
     rationale = (
-        f"suddenFreq autorotate for {node}"
+        f"{trigger} autorotate for {node}"
         + (f" @ {round(float(peak))} Hz" if peak is not None else "")
-        + f"; vibClass={vib or 'none'}; band={band}; "
+        + f"; vibClass={vib or 'none'}; band={band}; bandBurst={bb or 'none'}; "
         + f"weights→{algo} among {list(preferred)}; "
         + "NS/linearized/seismo priors as constraints only"
     )
+    if burst:
+        md = telemetry.get("micDiff")
+        rationale += f"; micDiff={md}" if md is not None else "; micDiff path"
     if band == "10-20":
         rationale += "; LF 10–20 Hz gated (lfDriveCapable)"
 
@@ -121,7 +169,7 @@ def author_sudden_freq_patch(telemetry: dict[str, Any]) -> tuple[bool, str, dict
         "literature": cite_ids,
         "engineId": "iot-asp-autoroute",
         "createdAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "trigger": "suddenFreq",
+        "trigger": trigger,
         "nodeId": node,
         "priorNotes": prior_text(prior_keys),
         "lfDriveCapable": lf_ok,

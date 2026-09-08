@@ -1,0 +1,296 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/qucINtjpu6qk3OypFs53lzqit54</id>
+  <title>arXiv Query: search_query=all:ultrasonic AND (all:smartphone OR all:communication OR all:pulse)&amp;id_list=&amp;start=0&amp;max_results=12</title>
+  <updated>2026-09-07T23:10:59Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:ultrasonic+AND+(all:smartphone+OR+(all:communication+OR+all:pulse))&amp;start=0&amp;max_results=12&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>12</opensearch:itemsPerPage>
+  <opensearch:totalResults>186</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2609.02657v1</id>
+    <title>ARFT: A Synchronized Multimodal RF-Acoustic Dataset for Positioning in Distributed Environments</title>
+    <updated>2026-09-02T14:32:09Z</updated>
+    <link href="https://arxiv.org/abs/2609.02657v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.02657v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper documents the acoustic-radio fusion in Techtile (ARFT) dataset, a synchronized measurement campaign for distributed wireless sensing and positioning in the Techtile testbed. Ultrasonic and radio frequency (RF) signals are simultaneously transmitted and captured at multiple positions in a 2D spatial grid inside the Techtile testbed. Each acquisition cycle corresponds to one rover stop, one position sample, one acoustic recording and one RF snapshot. The RF modality is recorded as per-host pilot measurements and released as channel state information (CSI) tensors for 42 antennas mounted at the ceiling of the room. The acoustic chirp is recorded with 91 synchronized microphones and transmitted by a synchronized quasi omni-directional speaker. The campaign spans 5011 spatial position samples spanning a 5.57 m by 2.89 m area with complete RF and acoustic data. We detail how the measurements are recorded, quantify per-experiment coverage, describe the RF and acoustic data contents, and explain how the aligned modalities support RF-only, acoustic-only, and joint positioning workflows. Furthermore, a static acoustic positioning pipeline that performs anchor selection, pulse-compression ranging, and least squares (LS) localization is elaborated.</summary>
+    <category term="eess.SP" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="eess.AS" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-02T14:32:09Z</published>
+    <arxiv:primary_category term="eess.SP"/>
+    <author>
+      <name>Daan Delabie</name>
+    </author>
+    <author>
+      <name>Jarne Van Mulders</name>
+    </author>
+    <author>
+      <name>Bert Pyck</name>
+    </author>
+    <author>
+      <name>Gustav Nilsson Gisleskog</name>
+    </author>
+    <author>
+      <name>Gilles Callebaut</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.06563v1</id>
+    <title>Embodied Human-Robot Interaction via Acoustics: A MARL Approach with AcoustoBots for Spatial Data Physicalization</title>
+    <updated>2026-07-07T17:59:44Z</updated>
+    <link href="https://arxiv.org/abs/2607.06563v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.06563v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Traditional data physicalization is often static and disconnected from real environments, limiting its ability to convey embodied spatial dynamics and engage users. To address this limitation, we present AcoustoBots, a mobile acoustophoretic data-physicalization platform in which TurtleBot3 robots carry upward-facing 8 x 8 ultrasonic phased arrays. Each array levitates a particle whose height (1-10 cm) encodes a local urban scalar value, such as population density, noise, or traffic. A MARL (Multi-Agent Reinforcement Learning) policy based on the Multi-Agent Deep Deterministic Policy Gradient (MADDPG) algorithm, with centralized training and decentralized execution, selects collision-aware navigation actions, while a high-rate Gerchberg-Saxton-Phased Array of Transducers (GS-PAT) acoustic controller maintains trap stability and updates array phases to achieve the commanded height during motion. This creates a closed perception-display-action loop. We evaluate single-robot city-to-city traversal and dual-robot cooperative coverage on a 4 m x 3 m scaled UK map using PhaseSpace-based localization for repeatable multi-robot trials. Results show stable in-motion levitation and consistent, location-dependent height rendering, with task success rates of 90% and 80% for the single and dual-robot regimes, respectively, over 10 trials per regime, and low collision counts. These findings support acoustophoretic levitation as a simple, glanceable, robot-mediated communication cue for embodied human-robot interaction in spatial analytics.</summary>
+    <category term="cs.RO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-07T17:59:44Z</published>
+    <arxiv:comment>This paper has been accepted for publication in the Proceedings of the 2026 International Conference on Robotic System and Artificial Intelligence (RSAI 2026), 10-12 July, 2026, Tokyo, Japan</arxiv:comment>
+    <arxiv:primary_category term="cs.RO"/>
+    <author>
+      <name>Shiqi Liu</name>
+    </author>
+    <author>
+      <name>Narsimlu Kemsaram</name>
+    </author>
+    <author>
+      <name>Prateek Mittal</name>
+    </author>
+    <author>
+      <name>Pengyuan Wei</name>
+    </author>
+    <author>
+      <name>Sriram Subramanian</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.13057v2</id>
+    <title>Identifiability Limits in Ultrasonic Microstructure Characterisation: A Canonical and Stochastic Framework</title>
+    <updated>2026-06-29T01:42:49Z</updated>
+    <link href="https://arxiv.org/abs/2605.13057v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.13057v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Ultrasound for microstructure characterisation is increasingly studied and is often assessed through inversion performance. However, the framework is fundamentally constrained by the information content available in the measured response. Hence, this work examines identifiability directly by analysing the geometry of the forward operator in both a canonical pulse-echo model and a stochastic surrogate microstructure. For the canonical model, a closed-form sensitivity analysis reveals information limits arising from parameter coupling, dimensional restriction, and interface-driven saturation. For the surrogate microstructures represented by Gaussian random fields, the forward map from correlation length $D$ and texture-coherence parameter $T$ to the attenuation and velocity observables remains structurally full rank. However, the sensitivity geometry is strongly anisotropic, with uneven parameter influence across the observable space. When intrinsic microstructural variability is incorporated, practical identifiability is further reduced. A variance-weighted Fisher framework shows that recoverability is governed by the balance between sensitivity magnitude and stochastic variability, rather than by structural rank alone. Inversion results confirm this behaviour: single observables produce elongated and weakly constrained objective landscapes, whereas combined observables improve conditioning through complementary sensitivities. These results show that, within the feature-level framework considered here, identifiability limits are governed primarily by forward-map structure and intrinsic variability, with direct implications for observable selection and measurement design.</summary>
+    <category term="physics.app-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-13T06:28:39Z</published>
+    <arxiv:comment>22 pages, 11 figures, 6 tables</arxiv:comment>
+    <arxiv:primary_category term="physics.app-ph"/>
+    <arxiv:journal_ref>Ultrasonics, 168, 108208 (2026)</arxiv:journal_ref>
+    <author>
+      <name>Wei Yi Yeoh</name>
+    </author>
+    <arxiv:doi>10.1016/j.ultras.2026.108208</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1016/j.ultras.2026.108208" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.10745v1</id>
+    <title>How Time-Sensitive are IoBNT Networks? An Age of Information Perspective for In-Body Monitoring</title>
+    <updated>2026-05-11T15:47:15Z</updated>
+    <link href="https://arxiv.org/abs/2605.10745v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.10745v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This thesis develops a theoretical framework to evaluate the monitoring capability of IoBNT networks. We consider a scenario in which nanosensors passively flow in the bloodstream and detect biomarkers associated with potential diseases, reporting their detections to external gateways on the skin that host a monitoring device. The nanosensors thus realize an artificial point-to-point communication channel between the disease region and the monitor: some packets reach the destination directly, while others are lost through vessel paths that bypass the gateway. We evaluate the network's monitoring capability over this artificial channel using the \ac{AoI} concept, which jointly integrates sample generation (at the disease region), carrying (nanosensor travel through vessels), and delivery (nanosensor-to-gateway) as random events. These are modeled through (i) a Markov model that follows cardiovascular physiology and (ii) channel models of reported nanocommunication technologies. We compute the Markov transition probabilities using a cardiovascular simulator built as a low-complexity electric circuit model of the human vessels. For the nanosensor-to-gateway link, we model two well-known schemes: ultrasonic and terahertz channels. Integrating these components within the \ac{AoI} framework, we report information freshness via the average \ac{PAoI} metric. Under realistic physiological and communication assumptions, fresh information appears on the monitor within tens of seconds. The network is therefore suitable for monitoring tissue-level processes such as bacterial infections, while more adequate architectures are needed to monitor cellular-scale processes, which occur on timescales below tens of seconds.</summary>
+    <category term="eess.SP" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-11T15:47:15Z</published>
+    <arxiv:primary_category term="eess.SP"/>
+    <arxiv:journal_ref>Habilitation Thesis in Electrical Engineering, TU Berlin, Germany, 2026</arxiv:journal_ref>
+    <author>
+      <name>Jorge Torres Gómez</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.08246v1</id>
+    <title>Smart Railway Obstruction Detection System using IoT and Computer Vision</title>
+    <updated>2026-05-07T10:16:32Z</updated>
+    <link href="https://arxiv.org/abs/2605.08246v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.08246v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Railway track intrusions pose a critical safety challenge for Indian Railways, encompassing wildlife incursions and deliberate malicious obstructions. The December 2025 collision in Assam, in which seven elephants were killed by the Rajdhani Express, underscores the urgency of effective real-time detection. Existing solutions such as the optical fiber-based Gajraj system suffer from prohibitive costs (\$1000/km) and high false alarm rates, limiting deployment to only 20 of India's 101 elephant corridors. This paper proposes NETRA, a cost-effective, internet-independent intrusion detection system deployed on Raspberry Pi Zero W and Raspberry Pi 4 edge platforms. NETRA employs probabilistic sensor fusion integrating a PIR motion sensor and an HC-SR04 ultrasonic distance sensor with a tunable threshold (tau_c = 0.65), enabling event-driven camera activation that reduces unnecessary visual processing by 52%. Upon confirmed intrusion, edge-AI classification using MobileNet-SSD (Pi Zero) or YOLOv5 ONNX (Pi 4) identifies threats including humans, large animals, and track obstructions. Confirmed threats are transmitted via LoRa (868 MHz) to alert the locomotive driver within 2.4 seconds end-to-end. Experimental evaluation across 113 motion events demonstrated 95% detection accuracy with zero false alarms through probabilistic fusion, compared to 85% for binary methods. Raspberry Pi 4 with YOLOv5 achieved 83.5% elephant F1-score, a 5.6x improvement over Pi Zero's heuristic approach (14.8%). LoRa communication achieved 100% packet delivery across 1-2 km in field trials. NETRA reduces deployment cost by 75% (\$247/km vs \$1000/km for Gajraj) while providing unified detection of both wildlife and obstruction threats.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-07T10:16:32Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Pravin Kumar</name>
+    </author>
+    <author>
+      <name>Mritunjay Shall Peelam</name>
+    </author>
+    <author>
+      <name>Ramakant Kumar</name>
+    </author>
+    <author>
+      <name>Sanjay Kumar</name>
+    </author>
+    <author>
+      <name>Vinay Chamola</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.12437v1</id>
+    <title>Wavefront Shaping of Ultrasound Vortex through the Human Skull Enabled by Binary Acoustic Metasurfaces</title>
+    <updated>2026-01-18T14:49:19Z</updated>
+    <link href="https://arxiv.org/abs/2601.12437v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.12437v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Ultrasound vortices have rapidly expanded their applications to areas like particle trapping, contactless manipulation, acoustic communications. In ultrasonic imaging and therapy involving bone tissues, these vortex beams offer intriguing possibilities but transmitting them through bone (especially the skull) poses challenges. Traditional acoustic lenses were engineered to rectify skull-induced beam aberration, and their capacity was limited to generating only static ultrasound fields within the brain. To overcome this constraint, our study presents a novel method for transcranially steering focused ultrasound vortex using 3D printed binary acoustic metasurfaces (BAMs) with a thickness of 0.8 λ. We tackled the challenge of skull-induced phase aberration by computing the phase distribution via a time reversal technique, which concurrently enabled the generation of a steerable focused vortex inside an ex vivo human skull by adjusting the operating frequency. Both numerical and simulations experiments were conducted to validate the capabilities of BAMs. Furthermore, we explored the generation of higher-order topological charge acoustic vortices within the brain utilizing the BAM. This development paves the way for designing cost-effective particle-trapping systems, facilitating clot manipulation, and applying acoustic-radiation forces and torques within or across bone structures, thus presenting a new frontier for potential biomedical applications.</summary>
+    <category term="physics.med-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.app-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.bio-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-18T14:49:19Z</published>
+    <arxiv:primary_category term="physics.med-ph"/>
+    <author>
+      <name>Zhongtao Hu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.08394v1</id>
+    <title>Design and Development of a Low-Cost Scalable GSM-IoT Smart Pet Feeder with a Remote Mobile Application</title>
+    <updated>2026-01-13T09:59:52Z</updated>
+    <link href="https://arxiv.org/abs/2601.08394v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.08394v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Pet ownership is increasingly common in modern households, yet maintaining a consistent feeding schedule remains challenging for the owners particularly those who live in cities and have busy lifestyles. This paper presents the design, development, and validation of a low-cost, scalable GSM-IoT smart pet feeder that enables remote monitoring and control through cellular communication. The device combines with an Arduino microcontroller, a SIM800L GSM module for communication, an ultrasonic sensor for real-time food-level assessment, and a servo mechanism for accurate portion dispensing. A dedicated mobile application was developed using MIT App Inventor which allows owners to send feeding commands and receive real-time status updates. Experimental results demonstrate a 98\% SMS command success rate, consistent portion dispensing with $\pm 2.67$\% variance, and reliable autonomous operation. Its modular, energy-efficient design makes it easy to use in a wide range of households, including those with limited resources. This work pushes forward the field of accessible pet care technology by providing a practical, scalable, and completely internet-independent solution for personalized pet feeding. In doing so, it sets a new benchmark for low-cost, GSM-powered automation in smart pet products.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-13T09:59:52Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Md. Rakibul Hasan Nishat</name>
+    </author>
+    <author>
+      <name>S. M. Khalid Bin Zahid</name>
+    </author>
+    <author>
+      <name>Abdul Hasib</name>
+    </author>
+    <author>
+      <name>T. M. Mehrab Hasan</name>
+    </author>
+    <author>
+      <name>Mohammad Arman</name>
+    </author>
+    <author>
+      <name>A. S. M. Ahsanul Sarkar Akib</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2512.14933v1</id>
+    <title>Vector Flow Imaging in Layered Models With a High Speed of Sound Contrast Using Pulse-Echo Ultrasound and Photoacoustics</title>
+    <updated>2025-12-16T21:55:30Z</updated>
+    <link href="https://arxiv.org/abs/2512.14933v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2512.14933v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In this study, we develop vector flow imaging techniques for multi-layered models with a high wavespeed contrast using photoacoustic and ultrasonic imaging. We use refraction-corrected delay-and-sum image reconstruction (RC-DAS), which enforces Snell's law to accurately calculate time delays within each layer. We compare RC-DAS against conventional delay-and-sum for vector flow imaging in benchtop phantoms made of transparent polymethyl methacrylate (PMMA) in a water bath. We study the flow beneath a PMMA layer using two phantoms, where the PMMA layer has different shapes and thicknesses. We image a slow-moving suspension of carbon microspheres (~4 mm/s) using interleaved photoacoustic and multi-angle plane wave ultrasound acquisitions measured with a 7.6 MHz linear ultrasound array. Photoacoustic waves are generated by a 1064 nm wavelength nanosecond-pulsed laser at 50 Hz, and multi-angle plane wave ultrasound data are acquired at 100 Hz for eleven steering angles between $\pm$10$^\circ$. RC-DAS improves the flow speed accuracy, reducing the mean absolute error by 0.41-0.63 mm/s compared to the expected flow profile. The error in direction estimates improves when we use RC-DAS, with the interdecile range reducing by up to 17$^\circ$. This work emphasises the importance of refraction correction for accurate flow measurements in layered media with photoacoustics and ultrasonic imaging. While both imaging modalities can quantify flow in these multi-layered models, the modality best suited for a specific application will depend on the imaging target and flow dynamics. These techniques show promise for biomedical applications such as intraosseous and transcranial blood flow quantification, and in nondestructive testing to monitor fluid motion.</summary>
+    <category term="physics.med-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="eess.IV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-12-16T21:55:30Z</published>
+    <arxiv:comment>14 pages, 11 figures. Preprint</arxiv:comment>
+    <arxiv:primary_category term="physics.med-ph"/>
+    <author>
+      <name>Caitlin Smith</name>
+    </author>
+    <author>
+      <name>Guillaume Renaud</name>
+    </author>
+    <author>
+      <name>Kasper van Wijk</name>
+    </author>
+    <author>
+      <name>Jami Shepherd</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2512.08538v2</id>
+    <title>Laser-pumped drilling carbon nanotube vortex shock waves in optical fibers</title>
+    <updated>2026-03-13T13:21:35Z</updated>
+    <link href="https://arxiv.org/abs/2512.08538v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2512.08538v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We experimentally demonstrate laser-induced vortex shock waves formed by carbon nanotubes drilling optical fibers for the first time. Three samples of standard single-mode optical fibers (SMF) are sequentially inserted in a syringe loaded with a 1 mL solution of single-walled carbon nanotubes (CNT) and methanol, and a high-power laser is injected into the fibers for 5 (SMF 1), 10 (SMF 2), and 20 (SMF 3) minutes. The CNT solution thermally expands and generates vortex acoustic flows, which are confined in the syringe cavity, significantly increasing the velocity and impact of nanotubes at the fiber tip. The resulting shock waves achieve estimated hypersonic velocities (5742 m/s) and high pressures (6.7 GPa), overcoming the silica tensile strength and ablating structured vortices in the fibers. The material, geometry, and depth profile of the vortices are characterized, providing details of mixing carbon and silica layers, increasing radially from the fiber core center and in thickness to the cladding for longer laser periods (850 nm to 10 micron thickness). The cross-sections of the measured vortices are compared to analytical simulations, revealing unprecedented Fibonacci helices drilling holes in the fiber core with a 5 micron maximum depth, while depositing nanoscale CNT-silica layers following Fibonacci spirals. These achievements point out a new route for laser-controlled deposition of nanoparticles and fabrication of vortex devices on fiber tips, which is promising for all-fiber vortex spatial phase modulators in optical communications, fiber sensors, high-power pulsed fiber lasers, and biomedical ultrasonic neurotransmitters.</summary>
+    <category term="physics.optics" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-12-09T12:36:35Z</published>
+    <arxiv:primary_category term="physics.optics"/>
+    <arxiv:journal_ref>R. E. da Silva and M. A. R. Franco, "Laser-Pumped Drilling Carbon Nanotube Vortex Shock Waves in Optical Fibers," in IEEE Access, vol. 14, pp. 28320-28336, 2026</arxiv:journal_ref>
+    <author>
+      <name>Ricardo E. da Silva</name>
+    </author>
+    <author>
+      <name>Marcos A. R. Franco</name>
+    </author>
+    <arxiv:doi>10.1109/ACCESS.2026.3666181</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1109/ACCESS.2026.3666181" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.14986v2</id>
+    <title>DustNet: A Wireless Network of Ultrasonic Neural Implants</title>
+    <updated>2026-04-26T03:06:07Z</updated>
+    <link href="https://arxiv.org/abs/2511.14986v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.14986v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Spatially distributed peripheral nerve recordings can be used to reconstruct motor intention and improve natural control of prosthetics However, many existing clinical solutions rely on percutaneous wires to access peripheral nerves; these sites are prone to infection and motion-induced electrode degradation, preventing chronic use. To address the need for fully wireless neural recording systems, this paper presents DustNet: a spatially-distributed network of ultrasonically-powered neural recording implants capable of supporting up to 8 simultaneously recording nodes over a single ultrasound link. To enable high throughput multi-implant communication, DustNet implements a time-division multiple-access (TDMA) protocol with up to 16-level amplitude modulation of the ultrasound backscatter that achieves up to 4x higher data rates than traditional on-off keying methods. Each neural implant consists of a 0.7x0.7x0.7 mm$^3$ piezoceramic transducer, a 100 nF off-chip capacitor, and an IC mounted on a flexible PCB. The implant IC was fabricated in a 28nm CMOS process and occupies an area of 0.43 mm$^2$. System functionality was verified at 90mm depth in oil, achieving a maximum measured data rate of 200 kb/s at 2 MHz ultrasound carrier frequency, with each implant transmitting uplink data at 50 kb/s and dissipating just 7 $μ$W; the system is demonstrated to support up to 400 kb/s total data rate over the same link.</summary>
+    <category term="eess.SY" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-19T00:08:39Z</published>
+    <arxiv:primary_category term="eess.SY"/>
+    <author>
+      <name>Jade Pinkenburg</name>
+    </author>
+    <author>
+      <name>Changuk Lee</name>
+    </author>
+    <author>
+      <name>Mohammad Meraj Ghanbari</name>
+    </author>
+    <author>
+      <name>Cem Yalcin</name>
+    </author>
+    <author>
+      <name>Miguel Montalban</name>
+    </author>
+    <author>
+      <name>Rikky Muller</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.05703v1</id>
+    <title>Surface acoustic wave enabled all-optical determination of the interlayer elastic constants of van der Waals interface</title>
+    <updated>2025-11-07T20:44:42Z</updated>
+    <link href="https://arxiv.org/abs/2511.05703v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.05703v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Understanding the properties of two-dimensional materials interfaces with the substrate is necessary for device applications. Surface acoustic wave propagation through the layered material flake on a substrate could provide unique information on the transverse rigidity of the flake-to-substrate interaction. We generate ultrasonic waves by a focused femtosecond laser pulse at the surface of the model system -- fused silica with h-BN flake transferred above. Using an all-optical spatially resolved pump-probe interferometric technique, we measure the spatial dependencies of the surface vertical velocity profiles. Our measurements reveal the appearance of the surface acoustic wave dispersion in the hBN flake region compared to fused silica surface. Multilayer modeling allows us to gain access to longitudinal and shear elastic coupling constants $c^*_{33}$ and $c^*_{44}$ between hexagonal BN and substrate.</summary>
+    <category term="cond-mat.mtrl-sci" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cond-mat.mes-hall" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.app-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.optics" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-07T20:44:42Z</published>
+    <arxiv:comment>5 pages, 4 figures</arxiv:comment>
+    <arxiv:primary_category term="cond-mat.mtrl-sci"/>
+    <author>
+      <name>N. Yu. Frolov</name>
+    </author>
+    <author>
+      <name>A. Yu. Klokov</name>
+    </author>
+    <author>
+      <name>A. I. Sharkov</name>
+    </author>
+    <author>
+      <name>M. V. Pugachev</name>
+    </author>
+    <author>
+      <name>A. Yu. Kuntsevich</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.13023v2</id>
+    <title>Machine Learning-Based Ultrasonic Weld Characterization Using Hierarchical Wave Modeling and Diffusion-Driven Distribution Alignment</title>
+    <updated>2025-10-16T23:07:28Z</updated>
+    <link href="https://arxiv.org/abs/2510.13023v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.13023v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Automated ultrasonic weld inspection remains a significant challenge in the nondestructive evaluation (NDE) community to factors such as limited training data (due to the complexity of curating experimental specimens or high-fidelity simulations) and environmental volatility of many industrial settings (resulting in the corruption of on-the-fly measurements). Thus, an end-to-end machine learning (ML) workflow for acoustic weld inspection in realistic (i.e., industrial) settings has remained an elusive goal. This work addresses the challenges of data curation and signal corruption by proposing workflow consisting of a reduced-order modeling scheme, diffusion based distribution alignment, and U-Net-based segmentation and inversion. A reduced-order Helmholtz model based on Lamb wave theory is used to generate a comprehensive dataset over varying weld heterogeneity and crack defects. The relatively inexpensive low-order solutions provide a robust training dateset for inversion models which are refined through a transfer learning stage using a limited set of full 3D elastodynamic simulations. To handle out-of-distribution (OOD) real-world measurements with varying and unpredictable noise distributions, i.e., Laser Doppler Vibrometry scans, guided diffusion produces in-distribution representations of OOD experimental LDV scans which are subsequently processed by the inversion models. This integrated framework provides an end-to-end solution for automated weld inspection on real data.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.comp-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-14T22:38:57Z</published>
+    <arxiv:comment>26 pages, 6 page appendix</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Joshua R. Tempelman</name>
+    </author>
+    <author>
+      <name>Adam J. Wachtor</name>
+    </author>
+    <author>
+      <name>Eric B. Flynn</name>
+    </author>
+  </entry>
+</feed>

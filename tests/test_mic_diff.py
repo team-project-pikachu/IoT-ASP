@@ -22,6 +22,7 @@ sys.path.insert(0, str(PKG_DIR))
 
 from iot_asp_autoroute import clamps, priors  # noqa: E402
 from iot_asp_autoroute import mic_diff as md  # noqa: E402
+from iot_asp_autoroute import sudden_freq  # noqa: E402
 
 IOS_SAFARI_UA = (
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 "
@@ -461,3 +462,29 @@ def test_md17_negative_controls():
     # Unknown telemetry keys are ignored, never echoed.
     d = md.burst_decision_from_telemetry({"micDiff": 9, "bogusKey": "x", "vibClass": "physical"})
     assert d["extreme"] is True and "bogusKey" not in json.dumps(d)
+
+
+def test_sound_burst_makes_contour_mirrors_rankable():
+    regular = priors.preferred_algos("physical", top_n=8)
+    burst = priors.preferred_algos("physical", top_n=8, sound_burst=True)
+    mirrors = {"cry_mirror", "siren_mirror", "death_metal_mirror"}
+    assert mirrors.isdisjoint(regular)
+    assert mirrors <= set(burst)
+
+
+@pytest.mark.parametrize("state", ["extreme", "burst"])
+def test_sudden_state_uses_burst_routing(state: str):
+    ok, _, patch = sudden_freq.author_sudden_freq_patch(
+        {
+            "deviceId": "node1",
+            "suddenState": state,
+            "algo": "hop",
+            "vibClass": "physical",
+            "vol": 50,
+        }
+    )
+    assert ok is True
+    assert patch["trigger"] == "soundBurst"
+    assert patch["algo"] in priors.preferred_algos(
+        "physical", sound_burst=True
+    )

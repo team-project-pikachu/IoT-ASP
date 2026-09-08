@@ -1,9 +1,9 @@
 # Vercel deploy evidence — project `hop-ultrasonic` (team `1digital-design`)
 
 **Config item:** Vercel project `hop-ultrasonic` ↔ GitHub `team-project-pikachu/IoT-ASP`, driven by
-`.github/workflows/deploy.yml` (issue #27)  
-**Docs:** `docs/deploy.md`  
-**Date:** 2026-09-08 (UTC)  
+`.github/workflows/deploy.yml` (issue #27)
+**Docs:** `docs/deploy.md`
+**Date:** 2026-09-08 (UTC)
 **Status:** `secrets not set as of 2026-09-08 (issue #27)`
 
 ## What exists (2026-09-08)
@@ -16,7 +16,7 @@
 | Served content | `public/` static PWA; `vercel.json` `cleanUrls`, `trailingSlash: false`, security headers, manifest `Content-Type` |
 | Git integration | connected to `team-project-pikachu/IoT-ASP`, production branch `main`; automatic deploy on push to `main` **disabled by `vercel.json` `git.deploymentEnabled.main: false`** (PR previews for other branches unchanged) |
 | Deploy Hook | **name** `gh-actions-prod`, ref `main` — to be created by an owner (URL is a secret; not recorded) |
-| Webhooks (issue #37) | UI: `https://vercel.com/1digital-design/hop-ultrasonic/settings/webhooks` — create for `deployment.created` / `succeeded` / `error` / `canceled` / `promoted`; secret **name** `VERCEL_WEBHOOK_SECRET` (value never recorded); docs `docs/vercel-webhooks.md` |
+| Webhooks (issue #37) | UI: `https://vercel.com/1digital-design/hop-ultrasonic/settings/webhooks` — create for `deployment.created` / `succeeded` / `error` / `canceled` / `promoted` / `rollback`; secret **name** `VERCEL_WEBHOOK_SECRET` (value never recorded); receiver GitHub auth names `GITHUB_TOKEN` / `GH_APP_INSTALLATION_TOKEN` (Contents write; not Actions secrets); docs `docs/vercel-webhooks.md` |
 | Deployment Protection | unknown/default; if previews are protected, set `VERCEL_AUTOMATION_BYPASS_SECRET` |
 | Live smoke (read-only) | `bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` → exit 0 on 2026-09-08 |
 
@@ -57,3 +57,12 @@ Set them with the stdin recipe in `scripts/vercel_secrets_check.sh` / `docs/depl
 | `vercel.json` `git.deploymentEnabled.main == false`, headers preserved (DP-11) | **PASS** (local test) |
 | Production URL serves the smoke contract (Hold / Manual, `holdManual`, `schemaVersion 1`, headers) | **PASS** (2026-09-08, current Vercel-deployed build) |
 | Secrets + Deploy Hook + Environments | **PENDING** — `secrets not set as of 2026-09-08 (issue #27)` |
+
+## Prior manual production evidence
+
+Before Actions ownership was enabled, the contour-mirror plus
+burst/`micDiff` build was promoted manually to
+`https://hop-ultrasonic.vercel.app/` as deployment
+`dpl_7KFoJW72gnrnpvyTSV1LC6NGrJbK`. This is historical evidence only;
+the dev → test → production workflow above is authoritative once its
+named secrets and environments are configured.

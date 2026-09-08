@@ -43,12 +43,13 @@ concurrency:
 env:
   PROD_URL: ${{ vars.PROD_URL || 'https://hop-ultrasonic-1digital-design.vercel.app' }}
   TARGET: ${{ github.event.inputs.target || 'prod' }}
-  DEPLOY_REF: ${{ github.event.inputs.ref || github.event.workflow_run.head_sha || github.sha }}
+  # workflow_run must deploy exactly what CI tested; dispatch defaults explicitly to main.
+  DEPLOY_REF: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.inputs.ref || 'main' }}
 
 jobs:
   secrets_check:
     name: secrets present? (names only)
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     outputs:
       has_cli: ${{ steps.probe.outputs.has_cli }}
@@ -83,7 +84,7 @@ jobs:
 
   gates:
     name: gates (static + dry-run + pytest)
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -103,6 +104,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt -r services/autoroute-adk/requirements.txt
 
+      - name: Assert clamp and schema invariants
+        run: |
+          PYTHONPATH=services/autoroute-adk python - <<'PY'
+          from iot_asp_autoroute.clamps import CLAMPS, SCHEMA_VERSION, validate_patch
+          assert SCHEMA_VERSION == 1, SCHEMA_VERSION
+          assert CLAMPS["vol_hard_max"] == 100.0, CLAMPS
+          assert CLAMPS["vol_soft_max"] == 100.0, CLAMPS
+          ok, _, patch = validate_patch(
+              {"algo": "hop", "vol": 50, "fMin": 17000, "fMax": 23000}
+          )
+          assert ok and patch["vol"] == 50.0, patch
+          refused, message, _ = validate_patch(
+              {"algo": "hop", "vol": 101, "fMin": 17000, "fMax": 23000}
+          )
+          assert not refused and "hard max" in message, message
+          print("clamp and schema invariant gate OK")
+          PY
+
       - name: Static gates (Hold/Manual, no keys, schemaVersion, clamps)
         run: bash scripts/ci_static_gates.sh
 
@@ -115,7 +134,7 @@ jobs:
   deploy_dev:
     name: dev (Vercel preview)
     needs: [secrets_check, gates]
-    if: (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')) && needs.secrets_check.outputs.has_cli == 'true'
+    if: (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')) && needs.secrets_check.outputs.has_cli == 'true'
     runs-on: ubuntu-latest
     environment:
       name: dev
@@ -155,7 +174,7 @@ jobs:
   test:
     name: test (smoke against preview)
     needs: [deploy_dev]
-    if: (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')) && (github.event.inputs.target || 'prod') != 'dev' && needs.deploy_dev.outputs.preview_url != ''
+    if: (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')) && (github.event.inputs.target || 'prod') != 'dev' && needs.deploy_dev.outputs.preview_url != ''
     runs-on: ubuntu-latest
     environment:
       name: test
@@ -176,7 +195,7 @@ jobs:
     needs: [secrets_check, gates, test]
     if: >-
       !cancelled()
-      && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'))
+      && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
       && needs.secrets_check.outputs.target == 'prod'
       && needs.gates.result == 'success'
       && (needs.test.result == 'success' || (needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true'))

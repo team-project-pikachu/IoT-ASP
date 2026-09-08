@@ -37,6 +37,7 @@ jobs:
           EVENT_TYPE: ${{ github.event.client_payload.type || inputs.type }}
           DEPLOY_URL: ${{ github.event.client_payload.url || inputs.url }}
           EVENT_ID: ${{ github.event.client_payload.id || '' }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           {
@@ -47,7 +48,7 @@ jobs:
             echo "| type | \`${EVENT_TYPE:-unknown}\` |"
             echo "| url | ${DEPLOY_URL:-_(none)_} |"
             echo "| id | \`${EVENT_ID:-_(none)_}\` |"
-            echo "| source | \`repository_dispatch\` / \`workflow_dispatch\` |"
+            echo "| source | \`${EVENT_NAME}\` |"
             echo
             echo "HMAC verify happens **outside** Actions (receiver + \`VERCEL_WEBHOOK_SECRET\`)."
             echo "Docs: \`docs/vercel-webhooks.md\` · issue #37 · related #27."

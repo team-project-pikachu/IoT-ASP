@@ -1,0 +1,70 @@
+{
+  "rules": [
+    {
+      "alwaysApply": false,
+      "cursorType": "auto",
+      "description": "IoT-ASP algorithm packages, timestore quanta, SciPy anomaly, structured telemetry",
+      "globs": [
+        "docs/algorithms.md",
+        "docs/timestore.md",
+        "docs/autoroute.md",
+        "docs/api-contract.md",
+        "docs/colab-gemini-pipeline.md",
+        "public/**/*",
+        "services/autoroute-adk/**/*",
+        "packages/**/*",
+        "scripts/**"
+      ],
+      "output": ".claude/rules/asp-algo-telemetry.md",
+      "scope": "",
+      "sha256": "e1ed9f779ec3",
+      "slug": "asp-algo-telemetry",
+      "source": ".cursor/rules/asp-algo-telemetry.mdc",
+      "target": "rule"
+    },
+    {
+      "alwaysApply": true,
+      "cursorType": "always",
+      "description": "IoT-ASP backend decoupling, SEBoK V&V evidence, CI gates, Project 5 tracking",
+      "globs": [],
+      "output": "CLAUDE.md",
+      "scope": "",
+      "sha256": "b1a76b52e0f3",
+      "slug": "asp-backend-vv-ci",
+      "source": ".cursor/rules/asp-backend-vv-ci.mdc",
+      "target": "claude"
+    },
+    {
+      "alwaysApply": true,
+      "cursorType": "always",
+      "description": "IoT-ASP locked ops/fleet/control \u2014 SDD app, A2DP, loudness, Chrome iOS, night, power, privacy",
+      "globs": [],
+      "output": "CLAUDE.md",
+      "scope": "",
+      "sha256": "9c06f6b4db61",
+      "slug": "asp-ops-fleet-control",
+      "source": ".cursor/rules/asp-ops-fleet-control.mdc",
+      "target": "claude"
+    },
+    {
+      "alwaysApply": true,
+      "cursorType": "always",
+      "description": "ASP prior art \u2014 awesome-list, .gov, USPTO; fetch via Firecrawl; libs via Context7",
+      "globs": [
+        "packages/**/*",
+        "services/autoroute-adk/**/*",
+        "docs/**/*",
+        "public/index.html",
+        "reference/**"
+      ],
+      "output": "CLAUDE.md",
+      "scope": "",
+      "sha256": "79dd2af2b97c",
+      "slug": "asp-prior-art",
+      "source": ".cursor/rules/asp-prior-art.mdc",
+      "target": "claude"
+    }
+  ],
+  "tool": "scripts/mdc_convert.py",
+  "version": "1.0.0"
+}

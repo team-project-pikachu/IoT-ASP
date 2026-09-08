@@ -1,0 +1,7 @@
+path=/Users/machine/apps/IoT-ASP/.autoroute-dry/meta/patches/node1.json
+sha256=68632513a3f26775a6a83c1f5a299df0531729931e8d5cbcd96c3a01e49d9902
+schemaVersion=1
+engineId=iot-asp-autoroute
+vol=100.0
+algo=burst
+trigger=suddenFreq

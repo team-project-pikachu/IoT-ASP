@@ -1,9 +1,9 @@
 # Colab live GCS sensors evidence — #26 (`features_live`)
 
-**Config item:** `services/autoroute-adk/iot_asp_autoroute/features_live.py` + `notebooks/iot_asp_colab_etl.{ipynb,md}`  
-**Spec:** `docs/specs/26-colab-live-gcs-features.md` (FL-01 … FL-13)  
-**Date:** 2026-09-08 (UTC)  
-**Branch:** `claude/mdc-conversion-features-gu3yzk`  
+**Config item:** `services/autoroute-adk/iot_asp_autoroute/features_live.py` + `notebooks/iot_asp_colab_etl.{ipynb,md}`
+**Spec:** `docs/specs/26-colab-live-gcs-features.md` (FL-01 … FL-13)
+**Date:** 2026-09-08 (UTC)
+**Branch:** `claude/mdc-conversion-features-gu3yzk`
 **Secrets:** by name only — `GCP_SA_JSON`, `IOT_ASP_GCS_BUCKET`, `LIVE_GCS`, `GOOGLE_CLOUD_PROJECT`. No values in this file.
 
 ## Requirements
@@ -103,3 +103,13 @@ From Colab: open `notebooks/iot_asp_colab_etl.ipynb`, add `userdata` secrets **n
 |-----|--------|
 | CS-01 … CS-07 (offline path) | **PASS** (local, 2026-09-08) |
 | Live GCS write | **PENDING** — owner runs the notebook with `LIVE_GCS=1`; record the `gs://` object name (bucket redacted) here |
+
+## Frontend / ETL alignment
+
+The shared fixture covers accel axes, gyro angular velocity,
+`micDiff = micEnergy - 0.85 * outLevel`, LF/US energy, `bandBurst`,
+`soundBurst`, and `extremeActive`. Feature documents retain those
+values alongside `lastHopAgeMs`, `ctxResumes`, and `watchdogTrips`, so
+the browser and Colab paths use one `schemaVersion: 1` vocabulary.
+`shriekBias` remains a feature hint only: ADK owns clamping and patch
+writes, and Hold / Manual always wins.

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "algo": "infra_mod",
+  "band": "10-20",
+  "fMin": 10.0,
+  "fMax": 20.0,
+  "vol": 100.0,
+  "pulseMs": 100.0,
+  "shriekMs": 65.0,
+  "vibThreshold": 0.15,
+  "seedAction": "keep",
+  "rationale": "suddenFreq autorotate for node3 @ 18000 Hz; vibClass=infra_felt; band=10-20; weights\u2192infra_mod among ['infra_mod', 'am_gate', 'burst']; NS/linearized/seismo priors as constraints only; LF 10\u201320 Hz gated (lfDriveCapable)",
+  "priors": [
+    "sudden_freq",
+    "linearized_acoustic",
+    "navier_stokes_constraint",
+    "infra_felt"
+  ],
+  "priorWeights": {
+    "infra_mod": 0.63,
+    "am_gate": 0.42,
+    "burst": 0.35
+  },
+  "literature": [
+    "arxiv:2307.01775",
+    "arxiv:2509.17986",
+    "arxiv:2211.03647",
+    "doi:10.1121/1.5063819"
+  ],
+  "engineId": "iot-asp-autoroute",
+  "createdAt": "2026-09-08T00:20:18Z",
+  "trigger": "suddenFreq",
+  "nodeId": "node3",
+  "priorNotes": "- sudden_freq: Sudden frequency onset (\u0394f or energy spike in-band): autorotate noise params (algo cycle + dwell/pulse/shriek jitter) then author a clamped GCS patch for the node.\n- linearized_acoustic: From compressible Navier\u2013Stokes under small perturbations \u2192 linearized acoustic wave equation (1/c0^2)\u2202t\u00b2p' \u2212 \u2207\u00b2p' = S (Lighthill-type sources). Near-ultrasonic air path 17\u201323 kHz is weakly nonlinear at residential gain; band limits are hard constraints. Cite arXiv:2307.01775, arXiv:2509.17986.\n- navier_stokes_constraint: Do NOT claim full Navier\u2013Stokes / CFD on-device. Use linearized acoustics and coupling analogies as soft priors only (docs/physics.md).\n- infra_felt: Infrasound honesty: Safari/BT cannot claim true <20 Hz audio; use LF accel energy as felt proxy \u2192 infra_mod / higher pulse duty. Optional TX band 10\u201320 Hz only when lfDriveCapable. Cite PMID 33940893 / DOI 10.1121/10.0003509; Fletcher VHFS ethics DOI 10.1121/1.5063819.",
+  "lfDriveCapable": true,
+  "materialPreset": "chair"
+}

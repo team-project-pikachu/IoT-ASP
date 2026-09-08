@@ -24,7 +24,7 @@ Prefer these deployment events (API `type` strings):
 | Deployment Error | `deployment.error` | fail path / paging |
 | Deployment Cancelled | `deployment.canceled` | aborted deploys |
 | Deployment Promoted | `deployment.promoted` | promote to production |
-| Deployment Rollback | (UI: Deployment Rollback) | instant rollback accepted |
+| Deployment Rollback | `deployment.rollback` | instant rollback accepted |
 
 Scope the webhook to project **`hop-ultrasonic`** (team `1digital-design`) so other team projects do
 not fan into this repo. Prod URL for smoke context:
@@ -110,7 +110,9 @@ GitHub Actions **cannot** expose a public HTTPS endpoint for Vercel to POST to. 
    - on success, calls GitHub
      [`repository_dispatch`](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event)
      with `event_type: vercel-deployment` and a **redacted** `client_payload` (event `type`,
-     deployment URL / id from `payload` — no secrets).
+     deployment URL / id from `payload` — no secrets), authenticated with a **separate** GitHub
+     credential (`GITHUB_TOKEN` fine-grained PAT or `GH_APP_INSTALLATION_TOKEN` — Contents write
+     on this repo only; see receiver README). Never reuse `VERCEL_WEBHOOK_SECRET` for GitHub.
 2. Workflow [`.github/workflows/vercel-webhook.yml`](../.github/workflows/vercel-webhook.yml)
    listens for that dispatch and writes a job summary (extend later: issue comment, Slack, check run).
 
@@ -128,6 +130,8 @@ and GitHub.
 - [ ] Webhook created in Vercel UI for `hop-ultrasonic` with events above
 - [ ] Secret stored as `op://dev/VERCEL_WEBHOOK_SECRET/credential` (not in chat/issues)
 - [ ] `gh secret set VERCEL_WEBHOOK_SECRET` via stdin
+- [ ] Receiver GitHub auth: `GITHUB_TOKEN` or `GH_APP_INSTALLATION_TOKEN` (Contents write on this
+      repo only; separate from the Vercel webhook secret — see receiver README)
 - [ ] Public HTTPS endpoint URL configured (or deferred with temporary bin for signature dry-run)
 - [ ] Receiver verifies HMAC before any side effect
 - [ ] `repository_dispatch` `vercel-deployment` exercised once (Actions run URL recorded in

@@ -1,0 +1,598 @@
+{
+  "infrasound": {
+    "totalCount": 12,
+    "studies": [
+      {
+        "nctId": "NCT05765396",
+        "title": "SARS-CoV-2/COVID-19 Study of Next Generation Non-Invasive Passive Detection Technologies (Level42)",
+        "overallStatus": "COMPLETED",
+        "startDate": "2023-05-15",
+        "url": "https://clinicaltrials.gov/study/NCT05765396",
+        "brief": "The goal of this observational study is to evaluate new non-invasive passive surveillance technologies, Level 42 AI imPulse\u2122 Una and TOR devices for the detection of COVID-19, Flu, and/or RSV in asymptomatic and symptomatic individuals over age of 18 undergoing COVID-19, Flu, and/or RSV screening an"
+      },
+      {
+        "nctId": "NCT03132961",
+        "title": "Effects of Infrasound Exposure on Measures of Endolymphatic Hydrops",
+        "overallStatus": "TERMINATED",
+        "startDate": "2018-05-05",
+        "url": "https://clinicaltrials.gov/study/NCT03132961",
+        "brief": "Persons exposed to infrasound - frequencies below 20 Hz - describe a variety of troubling audiovestibular symptoms, but the underlying mechanisms are not understood. Recent animal studies, however, provide evidence that short-term exposure to low frequency sound induces transient endolymphatic hydro"
+      },
+      {
+        "nctId": "NCT03459183",
+        "title": "Effects of Infra- and Ultrasound on the Brain",
+        "overallStatus": "COMPLETED",
+        "startDate": "2018-05-31",
+        "url": "https://clinicaltrials.gov/study/NCT03459183",
+        "brief": "Findings in neuroscientific research show that the environment one lives in has measurable effects on brain morphology and functioning. Human exposure to airborne infra- and ultrasound has been constantly increasing during the last decades. For instance, the European Renewable Energy Directive, esta"
+      },
+      {
+        "nctId": "NCT04960280",
+        "title": "A Study to Evaluate a Computerized Stethoscope Called \u00a9Voqx to Diagnose Heart Disease",
+        "overallStatus": "COMPLETED",
+        "startDate": "2021-09-03",
+        "url": "https://clinicaltrials.gov/study/NCT04960280",
+        "brief": "The purpose of this study is to determine whether recording heart sounds with an acoustic stethoscope, combined with artificial intelligence (computer information), will show similar abnormalities to an echocardiogram or cardiac catheterization."
+      },
+      {
+        "nctId": "NCT05827250",
+        "title": "Vibroacoustic Study of Lung Development in Newborn Infants",
+        "overallStatus": "UNKNOWN",
+        "startDate": "2023-02-13",
+        "url": "https://clinicaltrials.gov/study/NCT05827250",
+        "brief": "Investigators hypothesize that premature newborns with poor cardiopulmonary performance have higher morbidities and poorer physical and cognitive developmental outcomes.\n\nInvestigators further hypothesize that audible sounds combined with novel inaudible vibrations above and below human perception i"
+      },
+      {
+        "nctId": "NCT04556149",
+        "title": "imPulse\u2122 Una Full-spectrum, Over Clothing E-stethoscope",
+        "overallStatus": "COMPLETED",
+        "startDate": "2020-10-01",
+        "url": "https://clinicaltrials.gov/study/NCT04556149",
+        "brief": "This study generates robust clinical data to train ML/AI algorithms of the Sponsor's imPulse\u2122 Una full-spectrum e-stethoscope for digital diagnostic feature synthesis of symptomatic SARS-CoV-2/COVID-19 biosignatures for rapid and accurate mass screening."
+      },
+      {
+        "nctId": "NCT04923958",
+        "title": "Rapid Research in Diagnostics Development for TB Network",
+        "overallStatus": "RECRUITING",
+        "startDate": "2021-04-14",
+        "url": "https://clinicaltrials.gov/study/NCT04923958",
+        "brief": "To reduce the burden of TB worldwide through more accurate, faster, simpler, and less expensive diagnosis of TB Every year, more than 3 million people with TB remain undiagnosed and 1 million die. Better diagnostics are essential to reducing the enormous burden of TB worldwide. The Rapid Research in"
+      },
+      {
+        "nctId": "NCT06372054",
+        "title": "TORNADO-Omics Techniques and Neural Networks for the Development of Predictive Risk Models",
+        "overallStatus": "RECRUITING",
+        "startDate": "2024-02-05",
+        "url": "https://clinicaltrials.gov/study/NCT06372054",
+        "brief": "The goal of this observational study is to define a personalized risk model in the super healthy and homogeneous population of Italian Air Force high-performance pilots. This peculiar cohort conducts dynamic activities in an extreme environment, compared to a population of military people not involv"
+      },
+      {
+        "nctId": "NCT06800976",
+        "title": "Study of Cognitive and Behavioural Biases in People With Idiopathic Environmental Intolerance (IEI) Versus Healthy Controls",
+        "overallStatus": "COMPLETED",
+        "startDate": "2025-02-24",
+        "url": "https://clinicaltrials.gov/study/NCT06800976",
+        "brief": "Symptoms that patients attribute to the environment when no environmental cause can be identified are known as \"idiopathic environmental intolerance\" (IEI). IEI is often associated with a major psychological and socio-professional impact. Specific diagnostic tools and evidence-based treatment progra"
+      },
+      {
+        "nctId": "NCT04941209",
+        "title": "imPulse\u2122 Una Infrasound-to-ultrasound E-stethoscope",
+        "overallStatus": "COMPLETED",
+        "startDate": "2021-06-11",
+        "url": "https://clinicaltrials.gov/study/NCT04941209",
+        "brief": "This study generates robust, uniform clinical data across emerging COVID-19 strains to train ML/AI algorithms of the Sponsor's imPulse\u2122 Una infrasound-to-ultrasound e-stethoscope for digital diagnostic feature synthesis of asymptomatic and symptomatic COVID-19 digital biosignatures for rapid and acc"
+      },
+      {
+        "nctId": "NCT05386654",
+        "title": "imPulse\u2122 Tor System Self-Directed Cuffless Blood Pressure Monitoring",
+        "overallStatus": "COMPLETED",
+        "startDate": "2022-05-16",
+        "url": "https://clinicaltrials.gov/study/NCT05386654",
+        "brief": "Self-measured, non-invasive accurate blood pressure monitoring continues to be a major challenge for automated vital sign measurement systems. The general notion is that with reliable, self-administered BP monitoring in the clinic and at home, health care providers will be able to diagnose hypertens"
+      },
+      {
+        "nctId": "NCT04636892",
+        "title": "Evaluating Infrasonic Hemodynography",
+        "overallStatus": "UNKNOWN",
+        "startDate": "2021-01-04",
+        "url": "https://clinicaltrials.gov/study/NCT04636892",
+        "brief": "This comparative diagnostic accuracy study will determine the accuracy of a noninvasive wearable infrasonic sensor to detect the mechanical, electrical, and hemodynamic function of the cardiovascular system."
+      }
+    ]
+  },
+  "ultrasound exposure": {
+    "totalCount": 1220,
+    "studies": [
+      {
+        "nctId": "NCT01953198",
+        "title": "High Altitude Medical Research Expedition Himlung 2013 - a Study of Human Adaption to Hypoxia",
+        "overallStatus": "COMPLETED",
+        "startDate": "2012-12",
+        "url": "https://clinicaltrials.gov/study/NCT01953198",
+        "brief": "The aim of the project \"High Altitude Medical Research Expedition Himlung 2013\" (HiReach2013) is to comprehensively investigate the cerebral, cardiovascular and pulmonary adaptation and the reactions of the human immune system during an ascent to extreme altitudes of over 7000 m. A total of 44 healt"
+      },
+      {
+        "nctId": "NCT07508514",
+        "title": "Early Temporal Dynamics of Optic Nerve Sheath Diameter After Therapy in GCA",
+        "overallStatus": "NOT_YET_RECRUITING",
+        "startDate": "2026-05-01",
+        "url": "https://clinicaltrials.gov/study/NCT07508514",
+        "brief": "Giant cell arteritis (GCA) is an inflammatory disease of large and medium arteries that can cause irreversible vision loss. Glucocorticoids (GCs) rapidly suppress inflammation, but diagnostic imaging tests such as temporal artery ultrasound or biopsy often become falsely negative within days of trea"
+      },
+      {
+        "nctId": "NCT00761878",
+        "title": "Evaluation of the PlasmaJet Neutral Argon Plasma System to Treat Skin Ageing",
+        "overallStatus": "COMPLETED",
+        "startDate": "2007-12",
+        "url": "https://clinicaltrials.gov/study/NCT00761878",
+        "brief": "The purpose of this study is to determine the comparative effects of the PlasmaJet neutral argon plasma system and the Rhytec Portrait PRS nitrogen plasma system in the treatment of aging facial skin"
+      },
+      {
+        "nctId": "NCT07470671",
+        "title": "An Analysis of Healthy Caucasian Knees",
+        "overallStatus": "RECRUITING",
+        "startDate": "2025-08-08",
+        "url": "https://clinicaltrials.gov/study/NCT07470671",
+        "brief": "In current literature, databases of healthy knee anatomy and function are confined to small sample sizes or singular imaging modalities. In this study, the investigator propose constructing a unique and large-scale database of healthy Caucasian knee anatomy and function by utilizing a combination of"
+      },
+      {
+        "nctId": "NCT03809338",
+        "title": "Ovarian Functions in Flight Attendants",
+        "overallStatus": "UNKNOWN",
+        "startDate": "2019-03-01",
+        "url": "https://clinicaltrials.gov/study/NCT03809338",
+        "brief": "The aim of this study was to evaluate the effects of night sleep disorder and sleeplessness, excessive hours spent on flight and UV radiation exposure over ovarian function in flight attendant women."
+      },
+      {
+        "nctId": "NCT00511433",
+        "title": "Effects on Ovarian Function of the Combined Oral Contraceptive NOMAC-E2 Compared to a COC Containing DRSP/EE (292003)(COMPLETED)(P05723)",
+        "overallStatus": "COMPLETED",
+        "startDate": "2006-10",
+        "url": "https://clinicaltrials.gov/study/NCT00511433",
+        "brief": "The primary purpose of this study is to evaluate the effects of the nomegestrol acetate-estradiol (NOMAC-E2) combined oral contraceptive (COC) on ovarian function."
+      },
+      {
+        "nctId": "NCT07613918",
+        "title": "Brain Blood Flow and Cerebral Autoregulation Monitoring in Critically Ill Children",
+        "overallStatus": "RECRUITING",
+        "startDate": "2026-08-03",
+        "url": "https://clinicaltrials.gov/study/NCT07613918",
+        "brief": "This study uses a non-invasive (external) ultrasound test called Transcranial Doppler (TCD) to measure how blood flows through the major arteries of the brain of children receiving care in the Pediatric Intensive Care Unit (PICU). TCD is already used for clinical reasons in many children, but it is "
+      },
+      {
+        "nctId": "NCT00340860",
+        "title": "The Norwegian Mother and Child Study - Environmental Specimen Collection",
+        "overallStatus": "COMPLETED",
+        "startDate": "2001-10-01",
+        "url": "https://clinicaltrials.gov/study/NCT00340860",
+        "brief": "The Norway Mother and Child study is a collaborative venture among health researchers in Norway funded by the Norwegian government. The study is being coordinated by the National Institute of Public Health (aka Folkehelsa) in Oslo and the Medical Birth Registry (MBR) in Bergen. NIEHS has the unique "
+      },
+      {
+        "nctId": "NCT05150080",
+        "title": "Early Identification and Evaluation of Cyclophosphamide Cardiotoxicity",
+        "overallStatus": "UNKNOWN",
+        "startDate": "2021-07-10",
+        "url": "https://clinicaltrials.gov/study/NCT05150080",
+        "brief": "Hematopoietic stem cell transplantation is an important method for the treatment of hematological diseases and cyclophosphamide is a commonly used chemotherapeutic agent for transplant pretreatment. The incidence of severe cardiovascular events after high-dose cyclophosphamide exposure ranges from 7"
+      },
+      {
+        "nctId": "NCT04318990",
+        "title": "DIstal vs Proximal Radial Artery Access for Cath",
+        "overallStatus": "COMPLETED",
+        "startDate": "2020-03-06",
+        "url": "https://clinicaltrials.gov/study/NCT04318990",
+        "brief": "This single-center, prospective, randomized study will evaluate distal radial artery (dRA) vs. proximal radial artery access (pRA) in regards to hand function and radial artery occlusion."
+      },
+      {
+        "nctId": "NCT04877847",
+        "title": "Multi-Center Trial Utilizing Low Frequency Ultrasound in the Prevention of Post-Contrast Acute Kidney Injury",
+        "overallStatus": "TERMINATED",
+        "startDate": "2021-09-24",
+        "url": "https://clinicaltrials.gov/study/NCT04877847",
+        "brief": "Multi-center randomized trial to assess the safety and performance of low-frequency therapeutic ultrasound for maintaining renal function after contrast exposure."
+      },
+      {
+        "nctId": "NCT07419126",
+        "title": "Ultrasound Assessment of Arterial Medial Calcification in Endurance Athletes: A Prevalence Study",
+        "overallStatus": "NOT_YET_RECRUITING",
+        "startDate": "2026-02",
+        "url": "https://clinicaltrials.gov/study/NCT07419126",
+        "brief": "Medial arterial calcification (MAC) is an under-recognized vascular condition that remains poorly characterized from an epidemiological perspective. In the general population, its estimated prevalence is approximately 2.5%, mainly based on ankle-brachial index measurements. In contrast, prevalence e"
+      },
+      {
+        "nctId": "NCT06285474",
+        "title": "Investigating LIFUP in Anhedonic Depression",
+        "overallStatus": "COMPLETED",
+        "startDate": "2022-10-27",
+        "url": "https://clinicaltrials.gov/study/NCT06285474",
+        "brief": "This study will observe changes in brain imaging, behavior, and symptom measures following intervention with low intensity focused ultrasound pulsation (LIFUP) targeting reward circuitry in individuals who are depressed and anhedonic."
+      },
+      {
+        "nctId": "NCT01451931",
+        "title": "Study of Tomography of Nephrolithiasis Evaluation",
+        "overallStatus": "COMPLETED",
+        "startDate": "2011-09",
+        "url": "https://clinicaltrials.gov/study/NCT01451931",
+        "brief": "This is a multi-center, randomized controlled trial of ultrasonography (ultrasound) compared to computed tomography (CT) for the initial emergency room evaluation of patients with suspected renal colic. The investigators will compare several measures of effectiveness including morbidity related to t"
+      },
+      {
+        "nctId": "NCT07020039",
+        "title": "Comparing PCCT With ICA and IVUS in Detecting Cardiac Allograft Vasculopathy",
+        "overallStatus": "NOT_YET_RECRUITING",
+        "startDate": "2025-09-01",
+        "url": "https://clinicaltrials.gov/study/NCT07020039",
+        "brief": "In traditional coronary artery disease, patients often experience symptoms such as angina. However, heart transplant patients lack nerve connections in the transplanted heart and therefore usually do not notice any symptoms. For this reason, routine examinations are performed using traditional coron"
+      },
+      {
+        "nctId": "NCT02857283",
+        "title": "Human Biological Responses to Low Level Ozone",
+        "overallStatus": "COMPLETED",
+        "startDate": "2017-04-22",
+        "url": "https://clinicaltrials.gov/study/NCT02857283",
+        "brief": "To investigate if low level ozone exposure will cause measurable inflammation in nasal cells."
+      },
+      {
+        "nctId": "NCT07036653",
+        "title": "Bone Enhanced Ultrasound (BEUS) Data Library Development Project",
+        "overallStatus": "NOT_YET_RECRUITING",
+        "startDate": "2025-09-01",
+        "url": "https://clinicaltrials.gov/study/NCT07036653",
+        "brief": "A common treatment for low back pain involves fluoroscopy-guided spinal facet joint injections and/or medial branch nerve blocks. Unfortunately, fluoroscopy requires expensive equipment and personnel and exposes patients and healthcare providers to ionizing radiation. Ultrasound offers a safer, lowe"
+      },
+      {
+        "nctId": "NCT04939051",
+        "title": "Obeticholic Acid for Prevention in Barrett's Esophagus",
+        "overallStatus": "RECRUITING",
+        "startDate": "2024-01-03",
+        "url": "https://clinicaltrials.gov/study/NCT04939051",
+        "brief": "This phase II trial studies the effect of obeticholic acid in treating patients with Barrett's esophagus. Bile acids present in duodenogastroesophageal reflux contribute to neoplastic progression in Barrett's esophagus. Obeticholic acid has shown anti-cholestatic, anti-inflammatory and anti-fibrotic"
+      },
+      {
+        "nctId": "NCT06026969",
+        "title": "Pregnancy and Early Neurodevelopmental Outcomes Following In Utero Lyme Disease Exposure",
+        "overallStatus": "RECRUITING",
+        "startDate": "2023-07-01",
+        "url": "https://clinicaltrials.gov/study/NCT06026969",
+        "brief": "The purpose of this pilot study is to assess the feasibility of longitudinal neurodevelopmental evaluation of fetuses and infants exposed to Lyme disease in utero. Participants with Lyme disease or Post-Treatment Lyme Disease Syndrome (PTLDS) will be recruited during pregnancy. Pregnancies will be m"
+      },
+      {
+        "nctId": "NCT01152541",
+        "title": "Corneal Collagen Crosslinking for Progressive Keratoconus and Ectasia Using Riboflavin/Dextran and Hypotonic Riboflavin",
+        "overallStatus": "UNKNOWN",
+        "startDate": "2010-06",
+        "url": "https://clinicaltrials.gov/study/NCT01152541",
+        "brief": "Corneal collagen crosslinking (CXL) has been proposed as an effective method of reducing progression of both keratoconus and corneal ectasia after surgery, as well as possibly decreasing the steepness of the cornea in these pathologies. During the CXL procedure, the central corneal thickness has bee"
+      }
+    ]
+  },
+  "ultrasonic vibration": {
+    "totalCount": 2429,
+    "studies": [
+      {
+        "nctId": "NCT05438563",
+        "title": "MRI-guided Transurethral Urethral Ultrasound Ablation for the Treatment of Low to Intermediate Grade Prostate Cancer",
+        "overallStatus": "RECRUITING",
+        "startDate": "2022-04-06",
+        "url": "https://clinicaltrials.gov/study/NCT05438563",
+        "brief": "This clinical trial tests whether the magnetic resonance imaging (MRI)-guided transurethral ultrasound ablation (TULSA) procedure is safe and effective in treating patients with low to intermediate grade prostate cancer. MRI-guided TULSA ablation is a minimally invasive procedure that uses an ultras"
+      },
+      {
+        "nctId": "NCT07222865",
+        "title": "tFUS Imaging & LIFU",
+        "overallStatus": "WITHDRAWN",
+        "startDate": "2026-01",
+        "url": "https://clinicaltrials.gov/study/NCT07222865",
+        "brief": "This study is investigating a new method of brain imaging - transcranial functional ultrasound (tFUS). We are comparing the imaging capabilities with functional magnetic resonance imaging (fMRI)."
+      },
+      {
+        "nctId": "NCT07792200",
+        "title": "Repeat Biliary Point of Care Ultrasound for Detecting Early Acute Cholecystitis",
+        "overallStatus": "RECRUITING",
+        "startDate": "2026-06-01",
+        "url": "https://clinicaltrials.gov/study/NCT07792200",
+        "brief": "The goal of this interventional, prospective study is to determine the clinical utility of a repeat point-of-care ultrasound of the gallbladder in adult emergency department patients with abdominal pain for which initial imaging is not diagnostic. The main question it aims to answer is: Does a repea"
+      },
+      {
+        "nctId": "NCT02977221",
+        "title": "Efficacy of Piezosurgey Corticotomy (a Minimally Invasive Surgical Technique) in Accelerating Orthodontic Alignment",
+        "overallStatus": "COMPLETED",
+        "startDate": "2016-03",
+        "url": "https://clinicaltrials.gov/study/NCT02977221",
+        "brief": "Applying flapless piezocision corticotomies on the alveolar bone and separating anterior mandibular teeth using a piezosurgery device (i.e. ultrasonic waves that perform very accurate incisions without any sutures following this procedure) may improve the speed of tooth alignment during orthodontic "
+      },
+      {
+        "nctId": "NCT01344447",
+        "title": "Gadobutrol Enhanced MRA of the Supra-aortic Vessels",
+        "overallStatus": "COMPLETED",
+        "startDate": "2011-05-12",
+        "url": "https://clinicaltrials.gov/study/NCT01344447",
+        "brief": "Subjects referred for a routine CTA (computed tomography angiography) or MRA (magnetic resonance angiography) will be invited to participate in the study and subjects will be involved in the study for between 2 and 12 days. Two to three visits to the study doctor will be required.\n\nThis study will c"
+      },
+      {
+        "nctId": "NCT00675714",
+        "title": "Assessment of the Treatment of Severely Burned With Anabolic Agents on Clinical Outcomes, Recovery and Rehabilitation",
+        "overallStatus": "TERMINATED",
+        "startDate": "2004-01",
+        "url": "https://clinicaltrials.gov/study/NCT00675714",
+        "brief": "The purpose of the program is to study and characterize the outcome of burn injury with particular attention to improving the rehabilitation of burn survivors, including children. Various agents are assessed for effectiveness on long term burn outcome, such as growth hormone, oxandrolone, propranolo"
+      },
+      {
+        "nctId": "NCT03555058",
+        "title": "The CURE - CD Trial",
+        "overallStatus": "COMPLETED",
+        "startDate": "2018-07-03",
+        "url": "https://clinicaltrials.gov/study/NCT03555058",
+        "brief": "A prospective randomized three-arms controlled trial of Crohn's Disease (CD) patients in remission of \\<24 months duration. Patients will undergo screening by Magnetic Resonance Enterography (MRE) and patency capsule, and (if agreeing by separate consent) a baseline colonoscopy. Patients in whom pat"
+      },
+      {
+        "nctId": "NCT06078358",
+        "title": "Resistance Exercise Training in Children.",
+        "overallStatus": "COMPLETED",
+        "startDate": "2021-08-02",
+        "url": "https://clinicaltrials.gov/study/NCT06078358",
+        "brief": "The purpose of this study is examine the effects of 8 weeks (3 days/week) of resistance exercise training in children 8 to 10 years of age on muscle strength, activation, and lipids of the vastus lateralis."
+      },
+      {
+        "nctId": "NCT05828082",
+        "title": "Testing the Effect of M1774 on Hard-to-Treat Refractory SPOP-mutant Prostate Cancer",
+        "overallStatus": "ACTIVE_NOT_RECRUITING",
+        "startDate": "2023-10-16",
+        "url": "https://clinicaltrials.gov/study/NCT05828082",
+        "brief": "This phase II trial tests how well M1774 works in treating patients with prostate cancer that does not respond to treatment (refractory) and that has a mutation in the gene responsible for making the speckle type BTB/POZ protein (SPOP). M1774 may stop the growth of tumor cells by blocking some of th"
+      },
+      {
+        "nctId": "NCT06065215",
+        "title": "Early-life MRI Biomarkers of Longer-term Respiratory Morbidity in Infants Born Extremely Preterm (EMBLEM)",
+        "overallStatus": "RECRUITING",
+        "startDate": "2024-03-30",
+        "url": "https://clinicaltrials.gov/study/NCT06065215",
+        "brief": "Bronchopulmonary dysplasia (BPD) is a common, major complication of premature birth, associated with developmental and health consequences that continue into adulthood. Prediction of who will have these problems is challenging using traditional definitions of disease. It is believed that underdevelo"
+      },
+      {
+        "nctId": "NCT05408260",
+        "title": "A Study to Compare the Effectiveness of Two Types of Ultrasound Technologies in Women Who Have Had Breast Cancer",
+        "overallStatus": "COMPLETED",
+        "startDate": "2022-11-18",
+        "url": "https://clinicaltrials.gov/study/NCT05408260",
+        "brief": "This clinical trial evaluates automated breast ultrasound (ABUS) and handheld ultrasound (HHUS) for the screening of women who have undergone breast reconstruction after breast cancer. Ultrasounds use high-frequency sound waves to create pictures of internal organs and tissues. ABUS has been found t"
+      },
+      {
+        "nctId": "NCT06261710",
+        "title": "Intrapartum Ultrasound in Labor: Sonography Only, Few Internal Examinations",
+        "overallStatus": "RECRUITING",
+        "startDate": "2024-02-27",
+        "url": "https://clinicaltrials.gov/study/NCT06261710",
+        "brief": "This is a prospective, randomized trial to determine whether the use of sonographic parameters during labor results in less intrapartum infection compared to traditional invasive examination. Other secondary outcomes include maternal satisfaction and overall birth outcomes."
+      },
+      {
+        "nctId": "NCT06347913",
+        "title": "Umblical Artery Systolic \\Diastolic Ratio and Amniotic Fluid Index in Prediction of Fetal Outcome in Term Pregnancy",
+        "overallStatus": "UNKNOWN",
+        "startDate": "2024-04",
+        "url": "https://clinicaltrials.gov/study/NCT06347913",
+        "brief": "Antepartum fetal surveillance is the cornerstone of management in pregnancy. \\[1\\] It is done primarily to reduce the incidence of adverse fetal outcomes. It minimizes morbidity by optimizing the timing of delivery. Fetus at risk of chronic hypoxia is identified and unnecessary interventions are avo"
+      },
+      {
+        "nctId": "NCT03176979",
+        "title": "Contrast Enhanced Spectral Mammography With Digital Breast Tomosynthesis For Patients With Newly Diagnosed Breast Cancer",
+        "overallStatus": "COMPLETED",
+        "startDate": "2017-04-21",
+        "url": "https://clinicaltrials.gov/study/NCT03176979",
+        "brief": "This pilot clinical trial studies how well contrast enhanced spectral mammography works with digital breast tomosynthesis in imaging patients with newly diagnosed breast cancer. Contrast enhanced spectral mammography uses a special dye that is injected into the veins before mammogram images are take"
+      },
+      {
+        "nctId": "NCT03332238",
+        "title": "Stromal Vascular Fraction Cell Therapy to Improve the Repair of Rotator Cuff Tears",
+        "overallStatus": "ACTIVE_NOT_RECRUITING",
+        "startDate": "2019-07-01",
+        "url": "https://clinicaltrials.gov/study/NCT03332238",
+        "brief": "Rotator cuff disease is one of the most prevalent musculoskeletal conditions across the world. Patients with chronic rotator cuff tears often have substantial muscle atrophy and fatty infiltration. Surgical repair of the tear does not reverse the atrophy, and many patients continue to experience wea"
+      },
+      {
+        "nctId": "NCT07679308",
+        "title": "Diagnostic Accuracy of Multiparametric Dynamic Contrast Enhanced Magnetic Resonance Imaging in Improving Detection of Ultrasound Non-mass Breast Lesions According to ACR BI-RADS v2025",
+        "overallStatus": "NOT_YET_RECRUITING",
+        "startDate": "2026-06",
+        "url": "https://clinicaltrials.gov/study/NCT07679308",
+        "brief": "this study aims To evaluate the diagnostic performance of Ultrasound (US) in correlation with Dynamic Magnetic Resonance Imaging (MRI) for the assessment, characterization, and evaluation of non-mass breast lesions.\n\nThe study will investigate whether DCE-MRI improves lesions detected by characteriz"
+      },
+      {
+        "nctId": "NCT01394042",
+        "title": "Prostate Cancer Imaging With Radioactive Tracer and Ultrasound Detector Compared to MRI and ProstaScint",
+        "overallStatus": "UNKNOWN",
+        "startDate": "2011-06",
+        "url": "https://clinicaltrials.gov/study/NCT01394042",
+        "brief": "This is a small study to determine if probe, similar to an ultrasound probe, can detect prostate cancer more specifically than other imaging studies in patients with a positive prostate cancer biopsy."
+      },
+      {
+        "nctId": "NCT05762679",
+        "title": "Quantifying Myofascial Dysfunction in Post-Stroke Pain",
+        "overallStatus": "COMPLETED",
+        "startDate": "2023-02-28",
+        "url": "https://clinicaltrials.gov/study/NCT05762679",
+        "brief": "The purpose of this study is to quantify the extent of GlycosAminoGlycan/Hyaluronic Acid (GAG/HA) accumulation using T1rho (T1\u03c1) MRI in the paretic versus non-paretic shoulder rotator muscles, and correlate the T1\u03c1 Magnetic Resonance Imaging (MRI) measurements with US echo texture measurements to de"
+      },
+      {
+        "nctId": "NCT05175417",
+        "title": "Visualization of Neural Targets With 3T MRI",
+        "overallStatus": "UNKNOWN",
+        "startDate": "2022-01-29",
+        "url": "https://clinicaltrials.gov/study/NCT05175417",
+        "brief": "Functional neurosurgery is dedicated to modulating aberrant neural circuits associated with a wide range of neurological conditions. Recently, technological advances in MRI have permitted marked improvements in the direct visualization of neural targets, which is necessary for the accurate targeting"
+      },
+      {
+        "nctId": "NCT05851196",
+        "title": "The Forgotten Role of Back Muscle Characteristics to Tailor Exercise Therapy for Recurrent Non-specific Low Back Pain",
+        "overallStatus": "RECRUITING",
+        "startDate": "2024-01-15",
+        "url": "https://clinicaltrials.gov/study/NCT05851196",
+        "brief": "Patients with non-specific low back pain will be compared to healthy, age- and sex-matched controls to determine the most discriminating back muscle characteristics and to delineate possible phenotypes of patients with non-specific low back pain showing impaired proprioceptive postural control. Addi"
+      }
+    ]
+  },
+  "low frequency noise": {
+    "totalCount": 238,
+    "studies": [
+      {
+        "nctId": "NCT07675551",
+        "title": "Peel Family Diabetes Prevention Program",
+        "overallStatus": "RECRUITING",
+        "startDate": "2026-05-20",
+        "url": "https://clinicaltrials.gov/study/NCT07675551",
+        "brief": "The goal of this Hybrid Type 2 effectiveness-implementation pilot randomized controlled trial is to assess the feasibility and preliminary effectiveness of a community-based wellness coaching intervention to prevent type 2 diabetes (T2D) among South Asian (SA) and Black African and Caribbean (BAC) c"
+      },
+      {
+        "nctId": "NCT06552806",
+        "title": "The Effect of a Multi-strain Probiotic on Acclimatization to High Altitude",
+        "overallStatus": "ACTIVE_NOT_RECRUITING",
+        "startDate": "2023-06-01",
+        "url": "https://clinicaltrials.gov/study/NCT06552806",
+        "brief": "The goal of this study is to learn if the probiotic SLAB51 (Sivomixx800\u00ae) works to enhance acclimatization to high altitude in humans. The main questions it aims to answer are:\n\nDoes SLAB51 improve oxygen saturation during high-altitude exposure? Researchers will compare SLAB51 to a placebo (a subst"
+      },
+      {
+        "nctId": "NCT07422740",
+        "title": "Intervention Study of Virtual Reality-Based Mindfulness-Based Cognitive Therapy (VR-MBCT) Combined With Adaptive tDCS Modulation for Post-Stroke Depression",
+        "overallStatus": "NOT_YET_RECRUITING",
+        "startDate": "2026-02-10",
+        "url": "https://clinicaltrials.gov/study/NCT07422740",
+        "brief": "This study investigates whether combining virtual reality mindfulness-based cognitive therapy (VR-MBCT) with transcranial direct current stimulation (tDCS) can effectively treat depression occurring after a stroke (post-stroke depression, PSD). The goal is to determine if this combined approach is m"
+      },
+      {
+        "nctId": "NCT06152640",
+        "title": "A New Neuroregulatory Technology for the Therapy of AN Based on the Pathological Neural Network of ACC",
+        "overallStatus": "UNKNOWN",
+        "startDate": "2024-04-30",
+        "url": "https://clinicaltrials.gov/study/NCT06152640",
+        "brief": "Hypothesis of \"AN-ACC pathological network\" suggests that ACC overactivation and abnormal functional connectivity with other brain regions is the neuropathological mechanism for the onset of AN. Currently, rare studies have been conducted on dTMS targeting ACC as an intervention in patients with AN."
+      },
+      {
+        "nctId": "NCT02977403",
+        "title": "Mobile Attention Retraining in Overweight Female Adolescents",
+        "overallStatus": "COMPLETED",
+        "startDate": "2017-02-10",
+        "url": "https://clinicaltrials.gov/study/NCT02977403",
+        "brief": "Background:\n\nPeople are constantly exposed to unhealthy foods. Some studies of adults show that training attention away from unhealthy foods might reduce overeating. Researchers want to see what happens in the brain when teens train their attention away from food through a program on a smartphone.\n\n"
+      },
+      {
+        "nctId": "NCT07027995",
+        "title": "Food and Fitness With Medicine (FFWM)",
+        "overallStatus": "RECRUITING",
+        "startDate": "2026-01-14",
+        "url": "https://clinicaltrials.gov/study/NCT07027995",
+        "brief": "Food and Fitness with Medicine (FFWM) is a 24-week randomized controlled trial (RCT) enrolling 200 post-menopausal women (PMW) with stage 2 cardio-kidney metabolic (CKM) syndrome and type-2 diabetes (T2D) within 6 weeks of initiating glucagon-like peptide-1 receptor agonist (GLP-1RAs) to: 1. Examine"
+      },
+      {
+        "nctId": "NCT00664300",
+        "title": "Facial Expression Recognition of Emotion and Categorization of Emotional Words in Gilles de la Tourette's Syndrome",
+        "overallStatus": "COMPLETED",
+        "startDate": "2007-08",
+        "url": "https://clinicaltrials.gov/study/NCT00664300",
+        "brief": "Gilles de la Tourette's syndrome is a childhood onset inherited neuropsychiatric disorder characterised by the presence of both multiple motor tics and one or more vocal tics (noises), with psychiatric and/or behaviour disorders (such as obsessive compulsive behaviour\u2026).\n\nThis disease is associated "
+      },
+      {
+        "nctId": "NCT07279441",
+        "title": "Cochlear Implants and Listening Effort: the Interaction of Cognitive and Sensory Constraints",
+        "overallStatus": "RECRUITING",
+        "startDate": "2025-01-02",
+        "url": "https://clinicaltrials.gov/study/NCT07279441",
+        "brief": "This study examines how cochlear implant users understand and comprehend speech in realistic communication situations. Through six experiments measuring listening effort via pupillometry and discourse comprehension, we will investigate how linguistic context, cognitive demands, and processing time a"
+      },
+      {
+        "nctId": "NCT06826261",
+        "title": "Digital Twins for Model-driven Non-invasive Electrical Brain Stimulation",
+        "overallStatus": "ACTIVE_NOT_RECRUITING",
+        "startDate": "2023-05-04",
+        "url": "https://clinicaltrials.gov/study/NCT06826261",
+        "brief": "The purpose of this study is to obtain preliminary data in advance of a larger clinical trial designed to test whether repeated, daily sessions of at-home transcranial alternating current stimulation (tACS) can lead to a clinically significant improvement in patients with AD.\n\nGiven the potentially "
+      },
+      {
+        "nctId": "NCT01274156",
+        "title": "Double Blind Placebo Controlled Study on the Effect of Extracorporal Shock Wave Therapy on Erectile Dysfunction",
+        "overallStatus": "COMPLETED",
+        "startDate": "2010-08",
+        "url": "https://clinicaltrials.gov/study/NCT01274156",
+        "brief": "This study aims to evaluate the effect of shockwave therapy on erectile dysfunction on patients responding to PDE5i therapy in a sham controlled randomized double blind manner."
+      },
+      {
+        "nctId": "NCT07730398",
+        "title": "Optimizing Noisy Galvanic Vestibular Stimulation Frequency Range for Enhancing Vestibular Perception and Manual Control Performance",
+        "overallStatus": "COMPLETED",
+        "startDate": "2024-02-19",
+        "url": "https://clinicaltrials.gov/study/NCT07730398",
+        "brief": "This randomized crossover interventional study evaluated the effects of different frequency ranges of noisy galvanic vestibular stimulation (nGVS) on vestibular perception, perceptual motion tracking, and manual control performance in healthy adults. Each participant completed three experimental con"
+      },
+      {
+        "nctId": "NCT07165899",
+        "title": "Effects of Exposure to a Single-electrode Electroencephalography-guided Binaural Beat Audio Track on Sustained Attention and Subjective Well-being Among Healthy Adults",
+        "overallStatus": "COMPLETED",
+        "startDate": "2024-08-16",
+        "url": "https://clinicaltrials.gov/study/NCT07165899",
+        "brief": "This study aims to explore the potential of binaural beats, adjusted in real-time via EEG feedback, to positively influence brain states related to relaxation, focus, and cognitive performance. The investigators are examining how these auditory techniques can improve memory, attention, and overall s"
+      },
+      {
+        "nctId": "NCT06942858",
+        "title": "Mechanisms of Deep Transcranial Magnetic Stimulation in Enhancing Cognitive-Behavioral Therapy for Anorexia Nervosa",
+        "overallStatus": "RECRUITING",
+        "startDate": "2025-04-30",
+        "url": "https://clinicaltrials.gov/study/NCT06942858",
+        "brief": "The goal of this clinical trial is to learn if dTMS targeting the ACC can be used to rapidly and effectively treat AN. A randomized controlled study design is adopted, in which patients with AN are divided into the CBT+dTMS treatment group and CBT+pseudostimulation group by 1:1 randomization, follow"
+      },
+      {
+        "nctId": "NCT07626749",
+        "title": "DDK Acoustic Analysis and Swallowing Indicators",
+        "overallStatus": "NOT_YET_RECRUITING",
+        "startDate": "2026-06-15",
+        "url": "https://clinicaltrials.gov/study/NCT07626749",
+        "brief": "This study examines whether simple speech tasks and a swallowing screening test can help identify swallowing risk in adults of different ages. Participants will complete basic questions, a swallowing self-assessment, a saliva swallowing test, and short voice recordings of rapid syllables. The study "
+      },
+      {
+        "nctId": "NCT07707843",
+        "title": "AI ANC Headphones in Rotational Atherectomy",
+        "overallStatus": "COMPLETED",
+        "startDate": "2026-01-09",
+        "url": "https://clinicaltrials.gov/study/NCT07707843",
+        "brief": "Background: Rotational atherectomy (RA) generates high-intensity drilling noise concentrated around 3000 Hz, creating a distinctive auditory stressor that may exacerbate perioperative anxiety and autonomic dysregulation in patients undergoing percutaneous coronary intervention. Despite growing evide"
+      },
+      {
+        "nctId": "NCT04752098",
+        "title": "A Study to Assess Metabolic Bone Disease of Prematurity Using an Acoustic Method",
+        "overallStatus": "COMPLETED",
+        "startDate": "2020-09-02",
+        "url": "https://clinicaltrials.gov/study/NCT04752098",
+        "brief": "The goal of this project is to develop a new noninvasive ultrasound based technique, called vibro-acoustic analysis (VAA), for evaluation of infant bone health with particular application in assessment of bone health in premature infants who are at risk for bone disease."
+      },
+      {
+        "nctId": "NCT05977348",
+        "title": "Increasing Food Literacy in Preschoolers to Reduce Obesity Risk",
+        "overallStatus": "RECRUITING",
+        "startDate": "2023-10-03",
+        "url": "https://clinicaltrials.gov/study/NCT05977348",
+        "brief": "The goal of this clinical trial is to examine the effects of a nutrition education program on preschool children's food literacy and food acceptance, and to examine the added influence of a healthy eating curriculum and parent education on children's food knowledge and healthful food choices. The pr"
+      },
+      {
+        "nctId": "NCT03379870",
+        "title": "Outcomes in Children With Pre-operative Residual Hearing",
+        "overallStatus": "COMPLETED",
+        "startDate": "2018-05-25",
+        "url": "https://clinicaltrials.gov/study/NCT03379870",
+        "brief": "Purpose: Routine clinical care and pilot study data has shown evidence of postoperative hearing preservation in pediatric cochlear implant (CI) recipients. The primary aim of this study is to investigate speech perception performance in pediatric CI recipients with functional pre-operative hearing.\n"
+      },
+      {
+        "nctId": "NCT06268340",
+        "title": "Hearing and Structure Preservation Via ECochG",
+        "overallStatus": "RECRUITING",
+        "startDate": "2024-05-15",
+        "url": "https://clinicaltrials.gov/study/NCT06268340",
+        "brief": "The goal of the study is to determine the benefit of using an ECochG-based corrective action guide during cochlear implant surgery compared to the traditional surgical approach without ECochG surveillance and guidance."
+      },
+      {
+        "nctId": "NCT03019133",
+        "title": "Trial to Evaluate the Effects of Sound Modulation on Critically Ill Patients",
+        "overallStatus": "COMPLETED",
+        "startDate": "2016-12",
+        "url": "https://clinicaltrials.gov/study/NCT03019133",
+        "brief": "The goal of the project is to determine the effects of noise masking and noise reduction on stress related physiological parameters in critically ill patients admitted to the intensive care unit."
+      }
+    ]
+  }
+}

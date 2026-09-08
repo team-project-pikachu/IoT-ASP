@@ -1,0 +1,2 @@
+
+# SciPy anomaly dry-run: n=60 anomalies=2 disturbance=True quantum=0.0005 g funcs=['scipy.signal.medfilt', 'scipy.stats.median_abs_deviation', 'scipy.signal.find_peaks']

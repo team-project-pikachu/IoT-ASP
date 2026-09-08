@@ -117,3 +117,160 @@ Edit the `.mdc` source, not the generated output; re-run the converter. Hand-wri
 markers is preserved.
 
 <!-- mdc:managed-section -->
+
+<!-- mdc:begin asp-backend-vv-ci source=.cursor/rules/asp-backend-vv-ci.mdc sha256=b1a76b52e0f3 -->
+### IoT-ASP backend decoupling, SEBoK V&V evidence, CI gates, Project 5 tracking
+
+# ASP backend / V&V / CI (locked)
+
+## Backend decoupled from Vercel
+
+- Static app (`public/`) only **polls/applies patches** and optionally **beacons telemetry**.
+- Never embed Gemini/Vertex keys, ADK agent code, or Vertex clients in frontend HTML/JS.
+- ADK stack (`services/autoroute-adk/`) deploys independently (Agent Engine / Cloud Run) — **ADK deploy without Vercel**.
+- Wire contract: `docs/api-contract.md` with **`schemaVersion`**. Prefer additive fields; bump `schemaVersion` only on breaking wire changes.
+- Clamps (vol ≤100 UI %, band freqs, algo whitelist, Hold refuse) enforced on **backend** before write; frontend applies defensively.
+
+## SEBoK V&V
+
+- Verification/validation evidence lives under **`.vv/`** (per-issue packages + matrix when present).
+- **Hold / Manual wins** over remote patches; include negative controls (bad patch rejected, Hold refuse, nonsense priors ignored).
+- Do not promote Project work to Done without fresh evidence for the exact revision under test.
+- Parser/dry-run demos alone are not promotion proof when the contract defines a semantic result.
+
+## CI + change control
+
+- GitHub Actions on **PRs linked to issues**.
+- **MVP non-breaking → ship continuously** (CI green on `main` → Actions Deploy preview then prod). **Breaking → Project 5 issue first** (no silent `schemaVersion` / clamp / C1–C6 breaks).
+- **Agents: commit incremental MVP slices** as each non-breaking slice finishes and local sim is green (`bash scripts/autoroute_dev.sh` + `bash scripts/ci_static_gates.sh`) — open/update an issue-linked PR; do **not** leave large uncommitted working trees.
+- Deploy workflow: `.github/workflows/deploy.yml` (requires `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID`; skips clearly if missing — see `docs/ci.md`). Never skip Hold/clamp/schema gates.
+- Outstanding locked work → issues on `team-project-pikachu/IoT-ASP` → [Project 5](https://github.com/orgs/team-project-pikachu/projects/5).
+
+## Account + privacy (docs / CI artifacts)
+
+- Public docs: org **`betty@bearresearch.io`** for GCP/Gemini/Chrome iOS context when an account must be named.
+- No secrets, `.env`, API keys, or street addresses in repo, CI logs, or `.vv/` narratives.
+
+## Agent must not
+
+- Couple frontend redeploy to ADK redeploy as a hard dependency.
+- Skip `.vv/` evidence or negative controls when claiming V&V pass.
+- Merge breaking API/contract changes without `schemaVersion` / issue linkage.
+<!-- mdc:end asp-backend-vv-ci -->
+
+<!-- mdc:begin asp-ops-fleet-control source=.cursor/rules/asp-ops-fleet-control.mdc sha256=9c06f6b4db61 -->
+### IoT-ASP locked ops/fleet/control — SDD app, A2DP, loudness, Chrome iOS, night, power, privacy
+
+# ASP ops / fleet / control (locked)
+
+Public scientific tooling. **No street PII** in public IoT-ASP. Prefer org account **`betty@bearresearch.io`** for Chrome iOS / GCP / Gemini in public docs (not personal Gmail).
+
+## Control surface (SDD via app)
+
+- The **public web app** is the software-defined driving surface (`discover → model → plan → execute`).
+- Humans + Gemini/ADK patches drive the acoustic plant; speaker hardware knobs alone are not the control plane.
+- **Hold / Manual wins** over remote `/patch.json`. Local Signal / sensors may stay armed.
+- Detail: `docs/sdd-app-control.md`, `docs/DESIGN_CONSTRAINTS.md` (C3).
+
+## Audio path (non-negotiable)
+
+| Rule | Detail |
+|------|--------|
+| TX | **Native iOS Bluetooth A2DP** only (Settings + Control Center). **Not** Web Bluetooth TX. |
+| Loudness | Max practical Web Audio (default / clamp **100%** UI). Utilize Soundcore **~12 W** dual drivers via OS A2DP. Be honest: BT absolute volume + speaker DSP still limit SPL. |
+| Autorotate | **Hardware-limited** — respect A2DP/AAC/SBC + BassUp/DSP roll-off; do not claim flat ultrasonic FR. |
+| Bands | Default **17–23 kHz**. Optional **10–20 Hz** only if IoT HW permits **and** user/capability gate (`lfDriveCapable` / arm); else skip/fallback. |
+
+## Chrome iOS + dedicated phone
+
+- On **Signal on / Arm sensors**: arm every available sensor (Web Audio unlock, mic, DeviceMotion, DeviceOrientation; Ambient Light if present). Document WebKit limits — do not invent Safari APIs.
+- Dedicated fleet phone: wake lock / keep awake when practical; Guided Access or Focus checklist; maximize CPU/RAM within WebKit; **Low Power Mode off**.
+- Detail: `docs/sensors-chrome-ios.md`, `docs/iphone-dedicated-mode.md`, `docs/iphone-bluetooth.md`.
+
+## Fleet power + night + connectivity
+
+- **Continuous 120 V AC** for study path (phones + speakers charging). No battery duty-cycle assumptions in autoroute gain/dwell.
+- Night window **22:00–07:00 America/New_York**: volume **0 → 100%** in **0.5** glides/jumps (schedule/courtesy only — not battery-save).
+- Connectivity: **Google Home Wi‑Fi now**; cellular later (track as Project issue). Tag power `ac120` in telemetry when known.
+
+## Parked / deferred
+
+- **AI Edge Portal**: optional later when installed/allowlisted — do not block MVP (`docs/ai-edge-portal.md`).
+- Outstanding locked work → GitHub issues on `team-project-pikachu/IoT-ASP` → [Project 5](https://github.com/orgs/team-project-pikachu/projects/5).
+
+## Agent must not
+
+- Add Web Bluetooth TX, site street addresses, or battery-save logic that contradicts C5.
+- Soften max-gain defaults to “neighbor-safe” without an explicit user election separate from Hold.
+<!-- mdc:end asp-ops-fleet-control -->
+
+<!-- mdc:begin asp-prior-art source=.cursor/rules/asp-prior-art.mdc sha256=79dd2af2b97c -->
+### ASP prior art — awesome-list, .gov, USPTO; fetch via Firecrawl; libs via Context7
+_globs: packages/**/*, services/autoroute-adk/**/*, docs/**/*, public/index.html, reference/**_
+
+# ASP prior art + Firecrawl + Context7 (IoT-ASP)
+
+Before inventing new Adaptive Signal Processing algorithm packages (timestore, SciPy anomaly, autoroute, hop/Soundcore path), **search priors** and **fetch with Firecrawl / Context7** — do not greenfield when an awesome-listed, government, or patent lineage already fits.
+
+Rule index for related locked decisions: [docs/rules-index.md](../../docs/rules-index.md).
+
+## 1. Awesome lists (`gh`)
+
+- In-repo hubs first: `docs/awesome-list-asp.md`, `docs/awesome-iot-asp.md`
+- Topic hub: https://github.com/topics/awesome-list
+- Related: `awesome`, `awesome-list`, `awesome-python`, acoustics/DSP domain lists
+- Prefer Firecrawl **developer-index** / search skills to inventory listed tools before greenfield
+- CLI:
+  - `gh search repos --topic awesome-list <keywords>`
+  - `gh search repos --topic awesome <keywords>`
+
+## 2. Government + open scientific sources
+
+Search and cite (no street-address PII):
+
+| Source | Use |
+|--------|-----|
+| NIST | Metrology, DSP, acoustics standards |
+| NASA NTRS | Acoustics / vibration / signal methods |
+| arXiv | Open scientific priors (cite DOI/arXiv id) |
+| .gov acoustics/DSP | Agency technical pages |
+| FCC | Spectrum / RF adjacency when relevant |
+
+## 3. USPTO prior art
+
+- Search patents/public applications for signal processing, ultrasonics, vibrometry, acoustic sensing.
+- Design **novel derivatives** that **cite priors**; **do not copy claims verbatim**.
+- Document lineage in `docs/` and/or `reference/`.
+
+## 4. Firecrawl (mandatory fetch path)
+
+Use **Firecrawl as a service** to retrieve awesome-list READMEs, .gov pages, USPTO/public patent pages, and related blogs — prefer workspace **CLI stable** over inventing scrapers:
+
+- Skills: `firecrawl-cli-stable`, `firecrawl-search`, scrape/map/crawl as appropriate
+- Prefer `scripts/*_stable.sh` / research-cli-kit **CLI before MCP** when the prefer-cli rule applies
+- Cache under project `.firecrawl/` when used
+- **Do not invent Firecrawl dollar costs** — report credits/tokens only when files provide them
+- Cite scraped URLs in docs
+
+## 5. Context7 (mandatory for library/SDK docs)
+
+When incorporating SciPy, Google ADK, Web Audio, or other libraries into the ASP base:
+
+1. `resolve-library-id` (CLI stable or MCP)
+2. `query-docs` scoped to one concept per call
+- Prefer Context7 over training-memory for API syntax
+- Workspace: `context7-cli-stable` / MCP `plugin-context7-context7` / `user-Context7`
+- Prefer CLI (`context7_stable.sh`) when research-cli-kit requires it
+
+## 6. Prefer incorporate → cite → file gaps
+
+1. Prefer incorporation over greenfield when a prior fits formal constraints (native BT A2DP, Hold/Manual, schemaVersion).
+2. Cite awesome / .gov / USPTO / Firecrawl URLs and Context7 library ids in `docs/` (see [docs/asp-prior-art.md](../../docs/asp-prior-art.md)).
+3. Outstanding gaps → GitHub issues on `team-project-pikachu/IoT-ASP` → [Project 5](https://github.com/orgs/team-project-pikachu/projects/5).
+
+## Out of scope
+
+- No secrets or site PII in public docs.
+- No verbatim patent claim text as product code.
+- Do not break C1 native Bluetooth / SDD app control constraints.
+<!-- mdc:end asp-prior-art -->
