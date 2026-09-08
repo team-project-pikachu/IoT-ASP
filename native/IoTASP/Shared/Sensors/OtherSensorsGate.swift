@@ -2,7 +2,7 @@ import Foundation
 
 /// Honest availability for non-CoreMotion phone sensors (#142).
 /// Ambient light is **not** a public continuous third-party API on modern iOS.
-public enum OtherSensorKind: String, CaseIterable, Sendable {
+public enum OtherSensorKind: String, CaseIterable, Sendable, Hashable {
     case ambientLight
     case barometerAltimeter
     case proximity

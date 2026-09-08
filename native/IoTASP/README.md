@@ -26,6 +26,8 @@ Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 |---------|--------------------------------|--------------|
 | Alarm state machine | Runs (unit-tested via SPM) | — |
 | Impulse simulate button | Runs | Real CoreMotion wiring: start in session when `motionArmed` |
+| App tabs (Hop / Nest / Glass / Systems) | SwiftUI `TabView` | Nest OAuth parked; Glass is burst demo not a classifier |
+| Arm sensors | Motion + 48 kHz mic + permission sequence | Backgrounding pauses sensing (#145) |
 | CoreMotion 1–100 Hz | Code present (`PhoneMotionLogger` + `CoreMotionSuite`) | Simulator: availability all-false; pedometer skipped; mag/altimeter optional |
 | AVRoutePicker / A2DP / AirPlay session | Runs on device | Needs full Xcode; CLT-only hosts cannot `xcodebuild` |
 | watchOS UI + impulse/Hold | Runs on Watch simulator/device | WCSession mirror best-effort |

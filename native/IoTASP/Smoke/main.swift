@@ -189,6 +189,13 @@ struct IoTASPSmoke {
         check("no lf mic", NativeAECHonesty.lfMic == false)
         check("alpha 0.85", NativeAECHonesty.alpha == 0.85)
 
+        // Native iOS app shell
+        check("four tabs", NativeAppShell.tabTitles == ["Hop", "Nest Alarm", "Glass Shatter", "Systems"])
+        check("arm implies mic", NativeAppShell.armSensorsImplies().contains("ultrasonic-mic"))
+        check("banner C1", NativeAppShell.constraintBanner.contains("A2DP"))
+        let paused = BackgroundSensingPolicy.onEnterBackground(txPlaying: false)
+        check("bg pauses", paused == .backgroundPaused)
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

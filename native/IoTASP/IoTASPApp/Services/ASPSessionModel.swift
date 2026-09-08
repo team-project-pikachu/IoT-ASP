@@ -44,6 +44,14 @@ final class ASPSessionModel: ObservableObject {
     private let lfProxy = LfAccelProxy()
     @Published var lastPhysicalEvent: String = "none"
     @Published var shakeCount: Int = 0
+    @Published var sensingState: SensingRunState = .foreground
+    @Published var productEvent: ProductEventClass = .none
+    @Published var telemetryURL: String = ""
+    @Published var patchURL: String = ""
+    @Published var lastHeartbeatOK = false
+    @Published var deviceId: String = "node1"
+    @Published var activeRouteLabel: String = "unknown"
+    var sensorsArmed: Bool { motionArmed || micArmed }
     #if canImport(CoreMotion)
     private var motion: PhoneMotionLogger?
     #endif
@@ -52,6 +60,7 @@ final class ASPSessionModel: ObservableObject {
     #endif
     private var ticker: AnyCancellable?
     private var pendingImpulse: ImpulseEvent?
+    private var heartbeatTicks = 0
 
     func bootstrap() {
         applySink()
@@ -65,8 +74,82 @@ final class ASPSessionModel: ObservableObject {
                 let event = self.pendingImpulse
                 self.pendingImpulse = nil
                 self.alarm.tick(now: now, impulseEvent: event, nightNY: Self.isNightNY())
+                self.refreshProductEvent(impulse: event)
+                self.heartbeatTicks += 1
+                if self.heartbeatTicks % 60 == 0 {
+                    self.emitHeartbeat()
+                }
                 self.objectWillChange.send()
             }
+    }
+
+    func armSensors() {
+        runPermissionSequence()
+        motionArmed = true
+        micArmed = true
+        sensingState = .foreground
+    }
+
+    func disarmSensors() {
+        motionArmed = false
+        micArmed = false
+    }
+
+    func handleScenePhaseActive(_ active: Bool) {
+        if active {
+            sensingState = .foreground
+            refreshRouteLabel()
+        } else {
+            let next = BackgroundSensingPolicy.onEnterBackground(txPlaying: false)
+            if next == .backgroundPaused {
+                disarmSensors()
+                sensingState = .backgroundPaused
+            }
+        }
+    }
+
+    func demoProductEvent(_ event: ProductEventClass) {
+        productEvent = event
+        ProductTabHooks.demoWithoutNestTokens(alarm: alarm, event: event)
+        objectWillChange.send()
+    }
+
+    func makeHeartbeat() -> NativeTelemetry {
+        TelemetryBridge.fromSession(
+            deviceId: deviceId,
+            sample: FullMotionSample(ax: lastAbsA, ay: 0, az: 0, gx: 0, gy: 0, gz: lastAbsOmega),
+            mic: micStatus,
+            vibClass: vibClass,
+            material: materialPreset,
+            alarm: alarm,
+            hold: alarm.holdManual
+        )
+    }
+
+    private func emitHeartbeat() {
+        let tel = makeHeartbeat()
+        lastHeartbeatOK = TelemetryBridge.requiredOK(tel)
+        guard TelemetryBridge.shouldPost(telemetryURL: telemetryURL),
+              let url = URL(string: telemetryURL) else { return }
+        guard let body = try? TelemetryBridge.encode(tel) else { return }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = body
+        URLSession.shared.dataTask(with: req).resume()
+    }
+
+    private func refreshProductEvent(impulse: ImpulseEvent?) {
+        let ac = AcousticVibEvent(rawValue: lastAcousticEvent) ?? .none
+        productEvent = ProductTabHooks.classify(acoustic: ac, impulse: impulse)
+    }
+
+    private func refreshRouteLabel() {
+        #if canImport(AVFoundation)
+        activeRouteLabel = ASPAudioSession.currentSinkLabel()
+        #else
+        activeRouteLabel = sink.rawValue
+        #endif
     }
 
     func arm() {
@@ -125,6 +208,7 @@ final class ASPSessionModel: ObservableObject {
         do {
             try ASPAudioSession.configureForFleetSink(sink, micArmed: micArmed)
             sessionError = nil
+            refreshRouteLabel()
         } catch {
             sessionError = error.localizedDescription
         }

@@ -12,6 +12,11 @@
 		A10000000000000000000011 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A10000000000000000000012 /* ASPSessionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASPSessionModel.swift; sourceTree = "<group>"; };
 		A10000000000000000000013 /* RoutePickerRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePickerRepresentable.swift; sourceTree = "<group>"; };
+		A10000000000000000000051 /* HopTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HopTabView.swift; sourceTree = "<group>"; };
+		A10000000000000000000052 /* NestAlarmTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NestAlarmTabView.swift; sourceTree = "<group>"; };
+		A10000000000000000000053 /* GlassShatterTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassShatterTabView.swift; sourceTree = "<group>"; };
+		A10000000000000000000054 /* SystemsCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemsCheckView.swift; sourceTree = "<group>"; };
+		A10000000000000000000055 /* NativeAppShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAppShell.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A10000000000000000000015 /* IoTASP.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTASP.entitlements; sourceTree = "<group>"; };
 		A10000000000000000000020 /* IoTASPWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTASPWatchApp.swift; sourceTree = "<group>"; };
@@ -39,7 +44,7 @@
 		A10000000000000000000047 /* BackgroundSensingPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundSensingPolicy.swift; sourceTree = "<group>"; };
 		A10000000000000000000048 /* SensorKitReaderMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorKitReaderMap.swift; sourceTree = "<group>"; };
 		A10000000000000000000049 /* ProductTabHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductTabHooks.swift; sourceTree = "<group>"; };
-		A2000000000000000000000D /* Product */ = {isa = PBXGroup; children = ( A10000000000000000000049 /* ProductTabHooks.swift */, ); path = Product; sourceTree = "<group>"; };
+		A2000000000000000000000D /* Product */ = {isa = PBXGroup; children = ( A10000000000000000000049 /* ProductTabHooks.swift */, A10000000000000000000055 /* NativeAppShell.swift */, ); path = Product; sourceTree = "<group>"; };
 		A2000000000000000000000C /* Wire */ = {isa = PBXGroup; children = ( A10000000000000000000045 /* TelemetryBridge.swift */, ); path = Wire; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -80,6 +85,10 @@
 			children = (
 				A10000000000000000000011 /* ContentView.swift */,
 				A10000000000000000000013 /* RoutePickerRepresentable.swift */,
+				A10000000000000000000051 /* HopTabView.swift */,
+				A10000000000000000000052 /* NestAlarmTabView.swift */,
+				A10000000000000000000053 /* GlassShatterTabView.swift */,
+				A10000000000000000000054 /* SystemsCheckView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -261,6 +270,11 @@
 				A80000000000000000000048 /* SensorKitReaderMap.swift in Sources */,
 				A80000000000000000000049 /* ProductTabHooks.swift in Sources */,
 				A80000000000000000000050 /* NativeAECHonesty.swift in Sources */,
+				A80000000000000000000051 /* HopTabView.swift in Sources */,
+				A80000000000000000000052 /* NestAlarmTabView.swift in Sources */,
+				A80000000000000000000053 /* GlassShatterTabView.swift in Sources */,
+				A80000000000000000000054 /* SystemsCheckView.swift in Sources */,
+				A80000000000000000000055 /* NativeAppShell.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,6 +302,7 @@
 				A80000000000000000000048 /* SensorKitReaderMap.swift in Sources */,
 				A80000000000000000000049 /* ProductTabHooks.swift in Sources */,
 				A80000000000000000000050 /* NativeAECHonesty.swift in Sources */,
+				A80000000000000000000055 /* NativeAppShell.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -299,6 +314,11 @@
 		A80000000000000000000011 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* ContentView.swift */; };
 		A80000000000000000000012 /* ASPSessionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* ASPSessionModel.swift */; };
 		A80000000000000000000013 /* RoutePickerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* RoutePickerRepresentable.swift */; };
+		A80000000000000000000051 /* HopTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000051 /* HopTabView.swift */; };
+		A80000000000000000000052 /* NestAlarmTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000052 /* NestAlarmTabView.swift */; };
+		A80000000000000000000053 /* GlassShatterTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000053 /* GlassShatterTabView.swift */; };
+		A80000000000000000000054 /* SystemsCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000054 /* SystemsCheckView.swift */; };
+		A80000000000000000000055 /* NativeAppShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000055 /* NativeAppShell.swift */; };
 		A80000000000000000000020 /* IoTASPWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* IoTASPWatchApp.swift */; };
 		A80000000000000000000021 /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000021 /* WatchContentView.swift */; };
 		A80000000000000000000022 /* WatchSessionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000022 /* WatchSessionModel.swift */; };
