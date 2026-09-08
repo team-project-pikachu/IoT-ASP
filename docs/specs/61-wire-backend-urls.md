@@ -1,51 +1,38 @@
-# #61 — Wire live backend URLs (3-phone fleet)
+# #61 — Wire live backend URLs for 3-phone fleet
 
 ## Status (2026-09-08)
 
-- **PWA:** `?patch=` / `?telemetry=` / `?pollMs=` + empty `BACKEND_*` constants already on `main` (PR #73 UI label).
-- **Ingest packaging:** `services/autoroute-adk/ingest_app.py` + `Dockerfile` + `scripts/deploy_ingest_cloudrun.sh`.
-- **Live service:** `https://iot-asp-ingest-eehtcwqbzq-uc.a.run.app` exists (image tag `:61`) but was **not** phone-ready:
-  1. IAM invoker = `betty@bearresearch.io` only → unauthenticated `sendBeacon` **403**.
-  2. `gcs_io.DRY_ROOT` used `parents[3]` → **500** on import inside `/app` container (fixed in this branch).
-
-## Goal
-
-Point the shipped blaster at a real ingest + patch surface so three phones beacon and hot-apply **without** embedding Vertex/ADK keys.
+| Layer | State |
+|-------|--------|
+| PWA constants | Baked non-secret Vercel `BACKEND_PATCH_URL` + `BACKEND_TELEMETRY_URL` (`/api/ingest`) |
+| Vercel ingest | `api/ingest.js` → GCS when `IOT_ASP_GCS_BUCKET` + `GCP_SA_JSON` set |
+| Cloud Run twin | `iot-asp-ingest` Ready; **not** phone-public (`allUsers` blocked by org policy) |
+| `gcs_io` container | `_default_dry_root()` survives `/app` shallow path (import 500 fixed) |
+| Field 3-phone | Template `.vv/61/field-note.md` → close with #62 |
 
 ## Chosen override path (acceptance #1)
 
-| Priority | Mechanism | Notes |
-|----------|-----------|--------|
-| 1 | Query `?telemetry=` + `?patch=` (+ optional `?pollMs=`) | Field fleet preferred — no Vercel redeploy |
-| 2 | `BACKEND_BASE_URL` / `BACKEND_PATCH_URL` / `BACKEND_TELEMETRY_URL` in `public/index.html` | Optional bake of **non-secret** HTTPS hosts after stable; keep empty until IAM + health green |
+1. **Default:** `BACKEND_*` absolute HTTPS on production Vercel (no secrets, no `?` in constants).
+2. **Override:** `?telemetry=` / `?patch=` / `?pollMs=` still win (query > constants).
+3. Contract: `docs/api-contract.md`. Hold/Manual: `.vv/hot-apply.md`.
 
-Contract: `docs/api-contract.md`. Hot-apply / Hold: `.vv/hot-apply.md`.
+## Why not Cloud Run as phone target
 
-## Deploy + verify (owner / integrator)
+`gcloud run services add-iam-policy-binding … --member=allUsers` → `FAILED_PRECONDITION`
+(`iam.allowedPolicyMemberDomains`). Safari `sendBeacon` cannot attach Cloud Run ID tokens, so
+phones use the public Vercel `/api/ingest` proxy.
 
-```bash
-# From IoT-ASP checkout (ADC + project bear-iot-asp-rec)
-bash scripts/deploy_ingest_cloudrun.sh
-# Expect TELEMETRY_URL=…/ingest PATCH_URL=…/patch.json and healthz HTTP 200
-# Script warns if allUsers run.invoker is missing.
+## Acceptance mapping
 
-# Phone URLs (example — use printed INGEST_URL):
-# https://hop-ultrasonic.vercel.app/?telemetry=https://iot-asp-ingest-….run.app/ingest&patch=https://iot-asp-ingest-….run.app/patch.json&pollMs=3000
-```
+| AC | How |
+|----|-----|
+| Document override path | This spec + `docs/adk-autoroute.md` + `.vv/61/WIRING.md` |
+| Beacon → GCS | `/api/ingest` after Vercel env set |
+| Patch ≤5 s + Hold freeze | Existing PWA poll/apply (unchanged) |
+| No secrets in payload | Existing redaction e2e + ingest scrub |
+| 3-phone field note | `.vv/61/field-note.md` (filled under #62) |
 
-Do **not** open a separate PR for this shard; fold into the combined M0 MVP PR with #62.
+## Sources
 
-## Field note (acceptance #5)
-
-Record in `.vv/61/field-note.md` (template below) or as an issue comment after 3-phone run:
-
-- 2× TX + optional node-3
-- Query URL used (redact any signed query strings if present)
-- Confirm Hold/Manual freezes apply; heartbeats land under `gs://…/meta/telemetry/<deviceId>/`
-
-## Out of scope
-
-- Service worker / offline cache of `index.html`
-- Native iOS ingest (#41)
-- Enrichment schema (#22)
-- Sonos / #62 field Playwright promotion (sibling shards)
+- https://github.com/team-project-pikachu/IoT-ASP/issues/61
+- `.vv/61/WIRING.md`

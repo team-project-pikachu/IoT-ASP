@@ -120,14 +120,18 @@ adk deploy cloud_run \
   services/autoroute-adk/iot_asp_autoroute
 ```
 
-Optional **ingest** service (telemetry POST + patch poll for phones — **#61**):
+Optional **ingest** service (telemetry for phones — **#61**):
+
+**Phone-public path (required under current org policy):** Vercel serverless
+`api/ingest.js` at `https://hop-ultrasonic-1digital-design.vercel.app/api/ingest`.
+Set project env names only: `IOT_ASP_GCS_BUCKET`, `GCP_SA_JSON` (1Password → Vercel; never git).
+
+**Authenticated Cloud Run twin** (ops / ADC; not phone-reachable without org-policy exception):
 
 ```bash
-# Cloud Run packaging: ingest_app.py + Dockerfile under services/autoroute-adk/
-# Set IOT_ASP_GCS_BUCKET + ADC/runtime SA. No keys in git.
-# Phones sendBeacon without Authorization → --allow-unauthenticated required.
+# Packaging: ingest_app.py + Dockerfile under services/autoroute-adk/
 bash scripts/deploy_ingest_cloudrun.sh
-# Prints TELEMETRY_URL=…/ingest and PATCH_URL=…/patch.json
+# Note: allUsers run.invoker is refused by iam.allowedPolicyMemberDomains on bear-iot-asp-rec.
 # Legacy CF-style stub remains as ingest_main.py (optional).
 ```
 
@@ -135,13 +139,18 @@ Requires ADC (`gcloud auth application-default login`) with quota project `bear-
 
 ## Frontend pointing at a new backend
 
-Without redeploying Vercel HTML (preferred for field trials — constants stay empty):
+Shipped defaults in `public/index.html` (non-secret HTTPS only):
+
+- `BACKEND_PATCH_URL` → `https://hop-ultrasonic-1digital-design.vercel.app/patch.json`
+- `BACKEND_TELEMETRY_URL` → `https://hop-ultrasonic-1digital-design.vercel.app/api/ingest`
+
+Field override without redeploy:
 
 ```text
-https://<vercel-app>/?telemetry=https://<ingest.run.app>/ingest&patch=https://<ingest.run.app>/patch.json&pollMs=3000
+https://<vercel-app>/?telemetry=https://hop-ultrasonic-1digital-design.vercel.app/api/ingest&patch=https://hop-ultrasonic-1digital-design.vercel.app/patch.json&pollMs=3000
 ```
 
-Or set `BACKEND_BASE_URL` (→ `/ingest` + `/patch.json`) / `BACKEND_TELEMETRY_URL` / `BACKEND_PATCH_URL` near the top of `public/index.html` and redeploy **Vercel only**. Prefer query overrides until Cloud Run IAM allows unauthenticated invoke + `/healthz` is green. Do **not** embed Vertex/ADK keys or signed-URL query strings in HTML.
+Do **not** embed Vertex/ADK keys or signed-URL query strings in HTML.
 
 ## Colab
 

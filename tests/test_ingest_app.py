@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+flask = pytest.importorskip("flask")
+
 ADK = Path(__file__).resolve().parents[1] / "services" / "autoroute-adk"
 if str(ADK) not in sys.path:
     sys.path.insert(0, str(ADK))
