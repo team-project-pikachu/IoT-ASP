@@ -24,3 +24,4 @@ Convention: [mvp-roadmap.md](mvp-roadmap.md) · Automation: [#65](https://github
 2026-09-08 | #51 | Alarm-system reactivity (armed→triggered→sustaining→cleared) | duplicate of #42
 2026-09-08 | #52 | iOS app + Apple Watch companion (Xcode targets) | duplicate of #41
 2026-09-08 | #53 | Anker Soundcore manufacturer specs (fleet A2DP nodes) | duplicate of #43
+2026-09-08 | #34 | mdc_convert: refuse overwrite of hand-written .claude/rules without GEN_MARK | ## Status / Outstanding (log-only — 2026-09-08)
