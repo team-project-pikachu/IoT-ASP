@@ -1,8 +1,8 @@
 # #85 — Google Nest Device Access: continuous observation → reactive sound-burst alarm
 
-Issue: https://github.com/team-project-pikachu/IoT-ASP/issues/85 (milestone **M8 — Nest cameras +
-Gemini sound-burst MVP**). Siblings: #84 camera discovery/traits · #86 audio/event path · #87 Gemini
-Enterprise detector · #88 reactive alarm escalation · #92 gcloud bootstrap · #93 OAuth consent ·
+Issue: https://github.com/team-project-pikachu/IoT-ASP/issues/85 (milestone **Google Home / Nest**,
+formerly M8 — Nest cameras + Gemini sound-burst MVP). Siblings: #84 camera discovery/traits ·
+#86 audio/event path · #87 Gemini Enterprise detector · #88 reactive alarm escalation · #92 gcloud bootstrap · #93 OAuth consent ·
 #94 camera device type · #96 event class · #101 PWA surface · #103 CameraSound → detector → alarm ·
 #3 continuous polling.
 
