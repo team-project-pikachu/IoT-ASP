@@ -17,7 +17,7 @@ Sonos OSS priors + Firecrawl scrape over model recall.
 # Awesome Swift / iOS / Sonos priors (Bear Labs)
 
 Installed in-repo from [skills-repo PR #1](https://github.com/team-project-pikachu/skills-repo/pull/1)
-(`plugins/bearlabs-core/skills/awesome-swift-ios/`). Marketplace remains optional:
+(`.cursor/skills/awesome-swift-ios/` and `.claude/skills/awesome-swift-ios/`). Marketplace remains optional:
 
 ```
 /plugin marketplace add team-project-pikachu/skills-repo
