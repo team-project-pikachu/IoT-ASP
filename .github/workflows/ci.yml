@@ -66,7 +66,25 @@ jobs:
         run: |
           PYTHONPATH=services/autoroute-adk python - <<'PY'
           from iot_asp_autoroute import clamps, sudden_freq, priors
+          from iot_asp_autoroute.agent import root_agent
           from iot_asp_autoroute.clamps import SCHEMA_VERSION, validate_patch
+          expected_tools = [
+              "read_telemetry",
+              "write_patch",
+              "list_safety_clamps",
+              "seismo_acoustic_priors",
+              "colab_handoff_note",
+              "ingest_telemetry",
+              "process_sudden_freq",
+              "fleet_log_summary",
+              "live_features",
+              "hw_limits_report",
+          ]
+          tool_names = [
+              getattr(tool, "name", None) or getattr(tool, "__name__", None)
+              for tool in root_agent.tools
+          ]
+          assert tool_names == expected_tools, tool_names
           assert SCHEMA_VERSION == 1
           ok, msg, out = validate_patch(
               {"schemaVersion": 1, "algo": "hop", "fMin": 17000, "fMax": 23000, "vol": 100}
