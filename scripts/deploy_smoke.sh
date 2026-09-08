@@ -32,7 +32,7 @@ ok()   { echo "ok: $*"; }
 
 scheme="${URL%%://*}"
 hostport="${URL#*://}"; hostport="${hostport%%/*}"
-host="${hostport%%:*}"
+if [[ "$hostport" == \[* ]]; then host="${hostport%%]*}]"; else host="${hostport%%:*}"; fi  # IPv6 [::1]:port safe
 if [[ -n "${BYPASS:-}" && "${scheme,,}" != "https" ]]; then
   case "$host" in
     127.0.0.1|localhost|\[::1\]) ;;  # loopback: offline tests only

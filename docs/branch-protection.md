@@ -34,7 +34,7 @@ without hard-coding the name) with `enforcement: "active"` and an **empty** bypa
 | `deletion` | Nobody can delete the branch (only bypass actors could, and there are none). |
 | `non_fast_forward` | No force-pushes / history rewrites; every update must be a fast-forward of the current tip. |
 | `pull_request` | Every change must arrive through a pull request. Parameters: `required_approving_review_count: 0` (no approval gate — see trade-off below); `dismiss_stale_reviews_on_push: true` (an approval, if any, is dropped when new commits change the diff); `require_code_owner_review: false` (no `CODEOWNERS` in this repo); `require_last_push_approval: false`; `required_review_thread_resolution: true` (all review conversations must be resolved before merge); `allowed_merge_methods: ["squash", "merge"]` (rebase-merge is disallowed so the merged tip is either a single squash commit or a real merge commit with the PR number in the subject). |
-| `required_status_checks` | The PR's head must be green on all listed contexts. `strict_required_status_checks_policy: true` = "require branches to be up to date": the checks must have run against a head that already contains the current `main` (auto-merge handles the "Update branch" step). `do_not_enforce_on_create: false` = the rule also applies when the branch is created via the API. |
+| `required_status_checks` | The PR's head must be green on all listed contexts. `strict_required_status_checks_policy: true` = "require branches to be up to date": the checks must have run against a head that already contains the current `main`. Auto-merge does **not** update the branch for you: when `main` moves, the PR shows *Update branch* and someone (or `gh pr update-branch`) must bring it up to date before the re-run can pass — only a merge queue removes that step. `do_not_enforce_on_create: false` = the rule also applies when the branch is created via the API. |
 
 Required contexts — these are the `name:` strings of the jobs in `.github/workflows/ci.yml`
 (`autoroute`, `static_gates`, `pr_issue_ref`, `tests`, `mdc_check`), which is exactly what GitHub reports as
@@ -49,8 +49,9 @@ the check name for a workflow job:
 | `mdc check` | `mdc_check` | `python3 scripts/mdc_convert.py --check` |
 
 `tests/test_ruleset_json.py` asserts the context set equals the job-name set parsed from `ci.yml` with
-PyYAML, so renaming a job without updating the JSON (or vice versa) fails CI — a required context that no
-job produces would otherwise leave PRs permanently un-mergeable.
+PyYAML **minus an explicit non-required allowlist** (currently `{"e2e smoke"}`, informative only), so renaming
+a job without updating the JSON (or vice versa) fails CI — a required context that no job produces would
+otherwise leave PRs permanently un-mergeable, and a new job must be either required or allowlisted.
 
 ### Trade-off: `required_approving_review_count: 0`
 
@@ -74,8 +75,8 @@ request*, never for direct pushes or deletions:
 
 (`RepositoryRole` base-role ids per the `integrations/terraform-provider-github` ruleset docs: `2` maintain,
 `4` write, `5` admin. `bypass_mode: "always"` would also allow bypassing direct pushes and deletions and is
-**not** recommended; `exempt` skips the audit entry as well.) Note the UI export of a ruleset omits
-the bypass list, so keep the JSON in git as the source of truth.
+**not** recommended; `exempt` skips the audit entry as well.) Keep the JSON in git as the source of truth
+and, after any UI edit, re-export and diff it — verify in particular that `bypass_actors` still matches.
 
 ## How to apply
 
@@ -139,8 +140,9 @@ names, script `bash -n` + `DRY_RUN=1`, this doc's sections).
 - **Auto-merge**: once `allow_auto_merge` is on, a PR can be armed with `gh pr merge --auto --squash <n>`
   (or the button). GitHub then merges it automatically the moment all five required checks are green and
   every review thread is resolved — no human approval needed because the count is `0`. With
-  `strict_required_status_checks_policy: true`, auto-merge also updates the branch from `main` and waits
-  for the re-run when `main` moved.
+  `strict_required_status_checks_policy: true`, an out-of-date head is not mergeable: auto-merge waits, and
+  the branch must be updated (*Update branch*, `gh pr update-branch`, or a merge queue) so the checks re-run
+  on a head that contains the current `main`.
 - **`PR must reference an issue`** is a required context and only runs on `pull_request` events; that is
   consistent because under this ruleset every change to `main` *is* a PR. Pushes to `main` (merges) still
   run the other four jobs on the merge commit, which is what `deploy.yml` listens for.
@@ -174,8 +176,8 @@ GitHub Free for organizations**, and in public and private repositories on GitHu
 GitHub Enterprise Cloud. `team-project-pikachu/IoT-ASP` is **public**, so no plan change is needed. (If the
 repo were ever made private on a Free org plan, the ruleset would stop being enforced until the plan
 changed — another reason to keep the repo public.) Push rulesets and organization-level rulesets are
-Team/Enterprise features and are not used here. Likewise the **Evaluate** enforcement status is
-Enterprise-only: the non-Enterprise *About rulesets* / *Creating rulesets for a repository* pages list only
+Team/Enterprise features and are not used here.
+Likewise the **Evaluate** enforcement status is Enterprise-only: the non-Enterprise *About rulesets* / *Creating rulesets for a repository* pages list only
 **Active** and **Disabled**, and the REST docs mark `evaluate` as exclusive to GitHub Enterprise. The
 only non-enforcing state available here is **Disabled**.
 
@@ -184,7 +186,7 @@ only non-enforcing state available here is **Disabled**.
 | ID | Check | Where |
 |----|-------|-------|
 | RS-01 | `main-protection.json` parses; keys `name`, `target`, `enforcement`, `bypass_actors`, `conditions`, `rules`; `name == "main-protection"`, `target == "branch"`, `enforcement == "active"`, `conditions.ref_name.include == ["~DEFAULT_BRANCH"]`, `exclude == []`, `bypass_actors == []`; no server-assigned keys (`id`, `source`, `_links`, …) so the file imports cleanly | `tests/test_ruleset_json.py::test_json_loads_and_required_keys`, `::test_enforcement_active`, `::test_targets_default_branch_only`, `::test_no_bypass_actors_by_default` |
-| RS-02 | Rule types == `{deletion, non_fast_forward, pull_request, required_status_checks}`; `pull_request` parameters exactly as in the table above; `required_status_checks` has `strict_required_status_checks_policy: true`, `do_not_enforce_on_create: false`; contexts are unique and **equal** the set of `jobs.*.name` parsed from `ci.yml` with PyYAML; `pr_issue_ref` is `if: github.event_name == 'pull_request'` | `::test_rule_types`, `::test_pull_request_parameters`, `::test_required_status_checks_parameters`, `::test_contexts_match_ci_job_names_exactly`, `::test_pr_issue_ref_job_is_pr_only` |
+| RS-02 | Rule types == `{deletion, non_fast_forward, pull_request, required_status_checks}`; `pull_request` parameters exactly as in the table above; `required_status_checks` has `strict_required_status_checks_policy: true`, `do_not_enforce_on_create: false`; contexts are unique and **equal** the set of `jobs.*.name` parsed from `ci.yml` with PyYAML minus the non-required allowlist (`e2e smoke`); `pr_issue_ref` is `if: github.event_name == 'pull_request'` | `::test_rule_types`, `::test_pull_request_parameters`, `::test_required_status_checks_parameters`, `::test_contexts_match_ci_job_names_exactly`, `::test_pr_issue_ref_job_is_pr_only` |
 | RS-03 | `scripts/gh_protect_main.sh`: bash shebang, `set -euo pipefail`, `REPO` default `team-project-pikachu/IoT-ASP`, `gh auth status`, PUT-or-POST with `--input`, PATCH `allow_auto_merge=true` + `delete_branch_on_merge=true`, prints `OK gh_protect_main`; `bash -n` passes; `DRY_RUN=1` exits 0 offline without `gh`; no token-shaped strings in script or doc | `::test_script_syntax_and_conventions`, `::test_script_dry_run_offline`, `::test_script_no_secret_values` |
 | RS-04 | This doc has the sections Why / What each rule does / How to apply / How to verify / Auto-merge and the Cursor flow / Plan availability / Acceptance / Sources, the UI import URL, `gh ruleset check main`, the `RepositoryRole` bypass recipe and the Context7 source id; the emergency path says **Disabled** (never recommends the Enterprise-only `evaluate` status — every mention of `evaluate` carries the Enterprise caveat) | `::test_docs_sections`, `::test_docs_emergency_path_uses_disabled_not_evaluate` |
 | RS-05 | Live (owner, once): `gh api repos/team-project-pikachu/IoT-ASP/rulesets` shows `main-protection` with `enforcement: active`; a direct push to `main` is refused with `GH013`; `allow_auto_merge` and `delete_branch_on_merge` are `true` | manual — record in `.vv/ci/` (integrator) |
@@ -208,7 +210,7 @@ and `scripts/autoroute_dev.sh` are unaffected (no `public/` or backend change).
   https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository ;
   https://docs.github.com/enterprise-cloud@latest/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository
 - GitHub docs — *Managing rulesets for a repository → Importing a ruleset* (New ruleset ▸ Import a ruleset ▸
-  JSON file ▸ Create; exported JSON excludes the bypass list)
+  JSON file ▸ Create)
   https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/managing-rulesets-for-a-repository
 - GitHub docs — *Available rules for rulesets* (require a pull request before merging; dismiss stale approvals;
   require conversation resolution; allowed merge methods; require status checks / up-to-date branches)

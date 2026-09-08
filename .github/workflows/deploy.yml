@@ -246,7 +246,7 @@ jobs:
           resp=$(curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_PROD")
           printf '%s' "$resp" | python3 -c 'import json,sys; j=json.load(sys.stdin)["job"]; print("deploy hook job", j["id"], j["state"])'
 
-      - name: Poll production until it serves THIS checkout and passes smoke (≤ 5 min)
+      - name: Poll production until it serves THIS checkout and passes smoke (≈ 5–6 min)
         if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true' && github.event_name == 'workflow_dispatch'
         env:
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
@@ -265,7 +265,7 @@ jobs:
             echo "poll $i/10: not this checkout yet (or smoke failing), sleeping 30 s"
             sleep 30
           done
-          echo "::error::production did not serve this checkout within 5 min after the deploy hook — check the Vercel build for main; nothing is marked shipped"
+          echo "::error::production did not serve this checkout within ~6 min after the deploy hook — check the Vercel build for main; nothing is marked shipped"
           exit 1
 
       # ── Final smoke (both paths) ──────────────────────────────────────────
