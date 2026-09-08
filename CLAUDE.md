@@ -5,7 +5,7 @@ Soundcore 2 over **iOS native Bluetooth A2DP**, with a decoupled GCP/ADK "autoro
 that authors clamped parameter patches from telemetry. Public scientific tooling; **no site PII**.
 
 Live app: https://hop-ultrasonic-1digital-design.vercel.app/ (source mirror: `public/`).
-Board: https://github.com/orgs/team-project-pikachu/projects/5 — issues `#1`–`#27`, milestones M0–M5.
+Board: https://github.com/orgs/team-project-pikachu/projects/5 — milestones by OS/product (see `docs/roadmap.md`); labels `area:drivers|sdk|adk|agentic`.
 
 ## Layout
 

@@ -2,6 +2,8 @@
 
 NASA SEBoK-style verification & validation for Project 5 **Todo** issues (#12, #16, #17, research #9, design #13).
 
+**Testing plan:** [TESTING_PLAN.md](../TESTING_PLAN.md) · **UAT:** [UAT.md](../UAT.md) · **PRD:** [PRD.md](../PRD.md)
+
 **Matrix:** [`.vv/matrix.md`](../../.vv/matrix.md)  
 **Evidence roots:** `.vv/{9,12,13,16,17}/`  
 **Constraints:** [DESIGN_CONSTRAINTS.md](../DESIGN_CONSTRAINTS.md) · [api-contract.md](../api-contract.md) · [power-fleet.md](../power-fleet.md)  
