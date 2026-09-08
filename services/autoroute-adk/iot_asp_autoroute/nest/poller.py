@@ -73,8 +73,9 @@ Hard guards
   ``iot_asp_autoroute.features_live.assert_not_patch_path`` (lazily, because that module
   pulls numpy/scipy through ``colab_etl``) and falls back to a byte-identical stdlib
   re-implementation in a bare environment.
-* Every payload handed to the sink passes :func:`assert_telemetry_only`, which refuses
-  ``mapping.FORBIDDEN_KEYS`` — the patch fields plus ``holdManual`` / ``suddenFreq``.
+* Every payload handed to the sink passes :func:`assert_telemetry_only`, which accepts
+  only ``mapping.WIRE_KEYS`` — so patch fields and ``holdManual`` / ``suddenFreq``
+  are refused by construction, not by enumeration.
 * Under ``holdManual`` the poller keeps **observing** (SDM reads and Pub/Sub pulls are
   read-only and safe) but still authors nothing: patch authorship lives in
   ``sudden_freq`` / ``tools.write_patch``, which already refuse under Hold.
@@ -92,7 +93,7 @@ import random
 import re
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Iterable, Mapping
+from typing import Any, Callable, Final, Iterable, Mapping
 
 from .. import gcs_io
 from . import constants, mapping
@@ -201,16 +202,46 @@ def assert_not_patch_path(object_name: str) -> None:
         raise PatchWriteRefused(str(exc)) from None
 
 
+#: Patch-authoring and control keys the poller may never emit. a8942cf replaced
+#: ``mapping.FORBIDDEN_KEYS`` with the Nest-fragment allowlist ``mapping.WIRE_KEYS``,
+#: which does not cover this scope (see :func:`assert_telemetry_only`), so the denylist
+#: lives here — in the module that enforces it — rather than being reintroduced upstream.
+FORBIDDEN_TELEMETRY_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "holdManual",
+        "suddenFreq",
+        "vol",
+        "algo",
+        "fMin",
+        "fMax",
+        "pulseMs",
+        "shriekMs",
+        "vibThreshold",
+        "seedAction",
+        "rationale",
+        "engineId",
+        "priors",
+        "trigger",
+        "nodeId",
+    }
+)
+
+
 def assert_telemetry_only(payload: Mapping[str, Any]) -> None:
     """Refuse a payload carrying any patch-authoring or control key.
 
-    ``mapping.FORBIDDEN_KEYS`` is the shared list (patch fields plus ``holdManual`` /
-    ``suddenFreq`` / ``algo``). A Nest observation is evidence, never a decision: it may
-    not smuggle a patch field into the ingest path, and it may not assert or clear Hold.
+    Scope note: ``mapping.assert_wire_safe`` is an allowlist over ``mapping.WIRE_KEYS``,
+    but that list covers the **Nest fragment only** (``nestEvent``, ``nestDeviceRef``, …).
+    A telemetry heartbeat legitimately also carries ``deviceId``, ``ts``, ``micEnergy``,
+    ``soundBurst`` and friends, so the allowlist cannot be applied at this scope without
+    refusing valid rows. The two guards are complementary, not redundant: the allowlist
+    constrains what Nest may contribute, this denylist constrains what the poller may
+    ever emit. A Nest observation is evidence, never a decision: it may not smuggle a
+    patch field into the ingest path, and it may not assert or clear Hold.
     """
     if not isinstance(payload, Mapping):
         raise PatchWriteRefused("refuse: telemetry payload must be a mapping")
-    bad = sorted(k for k in payload if k in mapping.FORBIDDEN_KEYS)
+    bad = sorted(k for k in payload if k in FORBIDDEN_TELEMETRY_KEYS)
     if bad:
         raise PatchWriteRefused(
             f"refuse: nest.poller emits telemetry only, never patch/control keys {bad}"
@@ -676,7 +707,7 @@ class NestPoller:
             result["events"] += 1
             device_id = getattr(event, "device_id", "") or ""
             known = self._devices.get(device_id)
-            telemetry = mapping.event_to_telemetry(
+            telemetry = mapping.event_to_wire(
                 event,
                 node_id=self._node_id,
                 now=float(self._wall_clock()),

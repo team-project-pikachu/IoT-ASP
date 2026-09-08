@@ -24,7 +24,7 @@ import json
 from collections.abc import Mapping
 from typing import Any, Final
 
-from ...clamps import SCHEMA_VERSION
+from ..clamps import SCHEMA_VERSION
 from . import constants
 from .events import NestEvent, REDACTED, parse_event
 

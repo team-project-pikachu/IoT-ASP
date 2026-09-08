@@ -783,7 +783,7 @@ def test_np21_no_emitted_row_is_ever_patch_shaped():
     for row in sink.rows:
         assert row["schemaVersion"] == 1
         assert row["deviceId"] == NODE
-        assert not (set(row) & mapping.FORBIDDEN_KEYS), row
+        assert not (set(row) & poller.FORBIDDEN_TELEMETRY_KEYS), row
         assert "previewUrl" not in json.dumps(row), "a recording URI reached the wire"
 
 
@@ -922,36 +922,41 @@ def test_np28_nest_dev_script_runs_offline(tmp_path):
     assert not (tmp_path / "dry" / "meta" / "patches").exists()
 
 
-# NP-21 regression: FORBIDDEN_KEYS is live, despite a static analyser saying otherwise
+# NP-21 regression: the telemetry denylist is live, despite a static analyser saying otherwise
 def test_np21_forbidden_keys_is_used_not_dead_code():
-    """`mapping.FORBIDDEN_KEYS` looks unused *within mapping.py* and is not.
+    """`poller.FORBIDDEN_TELEMETRY_KEYS` is consulted by the guard, not dead code.
 
-    A code-quality bot on PR #107 reported "Unused global variable: 'FORBIDDEN_KEYS'"
-    against mapping.py:76. It only analysed that module in isolation and missed the
-    cross-module use in `poller.assert_telemetry_only`. Acting on that report would have
-    deleted the constant and silently disabled the guard that stops a patch or control
-    key reaching the telemetry wire — a safety regression that no other test would catch,
-    because the guard would still *exist* and just never match anything.
+    History: a code-quality bot on PR #107 reported "Unused global variable:
+    'FORBIDDEN_KEYS'" against mapping.py:76. It analysed that module in isolation and
+    missed the cross-module use in `poller.assert_telemetry_only`. Acting on the report
+    would have deleted the constant and silently disabled the guard that stops a patch
+    or control key reaching the telemetry wire — the guard would still *exist* and just
+    never match anything, so no other test would have caught it.
 
-    This test pins the relationship so the next cleanup has to confront it.
+    a8942cf later rewrote mapping.py around the Nest-fragment allowlist
+    `mapping.WIRE_KEYS` and dropped the constant. That allowlist does not cover this
+    scope: a telemetry heartbeat legitimately carries `deviceId`, `ts`, `micEnergy`,
+    `soundBurst`, so applying it here would refuse valid rows. The denylist therefore
+    now lives in `poller`, the module that enforces it, and this test pins the
+    relationship so the next cleanup has to confront it rather than trust an analyser.
     """
-    from iot_asp_autoroute.nest import mapping as _mapping
-
-    assert _mapping.FORBIDDEN_KEYS, "FORBIDDEN_KEYS must not be emptied"
+    assert poller.FORBIDDEN_TELEMETRY_KEYS, "FORBIDDEN_TELEMETRY_KEYS must not be emptied"
     # The guard must actually consult it: emptying the set must make the guard permissive.
-    real = _mapping.FORBIDDEN_KEYS
+    real = poller.FORBIDDEN_TELEMETRY_KEYS
     try:
-        _mapping.FORBIDDEN_KEYS = frozenset()
+        poller.FORBIDDEN_TELEMETRY_KEYS = frozenset()
         poller.assert_telemetry_only({"deviceId": NODE, "vol": 100})  # now permitted
     finally:
-        _mapping.FORBIDDEN_KEYS = real
+        poller.FORBIDDEN_TELEMETRY_KEYS = real
     # ...and restoring it must make the guard refuse again.
     with pytest.raises(PatchWriteRefused):
         poller.assert_telemetry_only({"deviceId": NODE, "vol": 100})
+    # A legitimate heartbeat is still accepted — the guard is a denylist, not an allowlist.
+    poller.assert_telemetry_only({"deviceId": NODE, "ts": "2026-01-01T00:00:00Z"})
     # Every patch-authoring key the wire contract defines is covered.
     for key in ("vol", "algo", "fMin", "fMax", "pulseMs", "shriekMs", "vibThreshold",
                 "seedAction", "priors", "holdManual", "suddenFreq"):
-        assert key in real, f"{key} must stay in FORBIDDEN_KEYS"
+        assert key in real, f"{key} must stay in FORBIDDEN_TELEMETRY_KEYS"
 
 
 # NP-25 the default schedule reserves the per-camera budget for commands
