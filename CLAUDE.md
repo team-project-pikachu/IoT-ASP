@@ -180,7 +180,7 @@ Public scientific tooling. **No street PII** in public IoT-ASP. Prefer org accou
 | TX | **Native iOS Bluetooth A2DP** only (Settings + Control Center). **Not** Web Bluetooth TX. |
 | Loudness | Max practical Web Audio (default / clamp **100%** UI). Utilize Soundcore **~12 W** dual drivers via OS A2DP. Be honest: BT absolute volume + speaker DSP still limit SPL. |
 | Autorotate | **Hardware-limited** — respect A2DP/AAC/SBC + BassUp/DSP roll-off; do not claim flat ultrasonic FR. |
-| Bands | Public TX **17–23 kHz only** (10–20 Hz UI removed). Sink: Sonos Beam Gen 2 via OS audio; Night Sound/Speech/Loudness OFF for clean max. |
+| Bands | Default **17–23 kHz**. Optional **10–20 Hz** only if IoT HW permits **and** user/capability gate (`lfDriveCapable` / arm); else skip/fallback. |
 
 ## Chrome iOS + dedicated phone
 
