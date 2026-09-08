@@ -125,6 +125,24 @@ Compact JSON heartbeat. Required fields marked ★.
 | `vol` | | number | **UI percent 0–100** (matches slider max); legacy linear ≤1 accepted by ingest/author |
 | `holdManual` | | bool | If true, backend must refuse patches |
 | `vibClass` | | string | `none` \| `physical` \| `acoustic` \| `infra_felt` |
+| `band` | | string | `17-23k` (default) \| `10-20` (LF, only with `lfDriveCapable`) — #22 |
+| `power` | | string | `ac120` (fleet is continuous 120 V AC) — #22 |
+| `nightNY` | | bool | Local hour in America/New_York ∈ [22, 07) — #22 |
+| `lfArmed` / `lfDriveCapable` | | bool | LF 10–20 Hz TX arm + hardware capability; web fleet defaults `false` — #22/#25 |
+| `lastHopAgeMs` / `ctxResumes` / `watchdogTrips` | | number | Watchdog health counters — #3 |
+| `logSeq` / `logTail` | | number / array | Structured monitor-log sequence + last 3 records (`{seq, ts, level, event, msg, fields}`, no PII) — #22 |
+| `ax` `ay` `az` / `accelAxes` | | number / [3] | Linear acceleration axes (g) when available — #26 |
+| `gx` `gy` `gz` / `gyroAxes` | | number / [3] | Rotation-rate axes (deg/s) when available — #26 |
+| `outLevel` | | number | Output bus level (dB) used for `micDiff` — #25/#26 |
+| `micDiff` | | number | `micEnergy − 0.85·outLevel` (best-effort AEC; browser cannot do full AEC) — #25 |
+| `bandBurst` | | string | `lf` \| `us` \| `both` burst classification — #25/#26 |
+| `soundBurst` / `extremeActive` | | bool | Environmental burst detected / sustained extreme shriek mode — #25 |
+| `lfEnergy` / `usEnergy` | | number | LF (<20 Hz proxy) and US (>17 kHz) band energy (dB) — #25 |
+
+Backend enrichment (`fleet_log.enrich_telemetry`) fills `band`, `power`, `nightNY`, `lfArmed`,
+`lfDriveCapable` when the phone omits them, and derives `lfGate = lfArmed ∧ lfDriveCapable ∧ vibClass == infra_felt`.
+Structured records land in `meta/logs/<deviceId>/<YYYY-MM-DD>.jsonl`; sensor feature records
+(`features_live.run_live`) land in `meta/features/<deviceId>/<ts>.json` and are never authoritative.
 
 Additive sensor/burst fields are **optional** on the wire (`schemaVersion` stays `1`). Colab ETL + ADK project them when present; consumers ignore unknown keys.
 
@@ -169,6 +187,7 @@ Additive sensor/burst fields are **optional** on the wire (`schemaVersion` stays
 | `literature` | | string[] | Optional cite IDs (arXiv/DOI/PMID) from priors bundle |
 | `engineId` | | string | Default `iot-asp-autoroute` |
 | `trigger` | | string | e.g. `suddenFreq` |
+| `burstBias` | | object | `{"micDiffDb": number \| null, "shriekMsBias": 15}` — present only when an environmental burst (`soundBurst` / `extremeActive` / `micDiff` > 6 dB, never under `holdManual`) biased `algo` → `shriek_chirp`; phones ignore unknown keys — #25 |
 
 **Write:** `gs://<private-bucket>/meta/patches/<deviceId>.json`  
 **Offline mock:** `public/patch.json` on Vercel (no Gemini).

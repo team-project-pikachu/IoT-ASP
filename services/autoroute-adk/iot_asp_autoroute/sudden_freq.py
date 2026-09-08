@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .clamps import ALLOWED_ALGOS, SCHEMA_VERSION, normalize_vol_ui_percent, validate_patch
+from .mic_diff import apply_burst_bias, burst_decision_from_telemetry
 from .priors import (
     band_for_telemetry,
     citations_brief,
@@ -106,10 +107,12 @@ def author_sudden_freq_patch(telemetry: dict[str, Any]) -> tuple[bool, str, dict
     node = str(telemetry.get("deviceId") or telemetry.get("nodeId") or "node1")
     material = telemetry.get("materialPreset")
     vib = telemetry.get("vibClass")
+    sudden_state = str(telemetry.get("suddenState") or "").lower()
     burst = bool(
         telemetry.get("soundBurst")
         or telemetry.get("extremeActive")
         or telemetry.get("event") in ("soundBurst", "sound_burst")
+        or sudden_state in ("extreme", "burst")
     )
     algo = _next_algo(str(telemetry.get("algo") or "hop"), vib, material, sound_burst=burst)
     peak = telemetry.get("peakHz")
@@ -173,5 +176,10 @@ def author_sudden_freq_patch(telemetry: dict[str, Any]) -> tuple[bool, str, dict
     }
     if material:
         patch["materialPreset"] = material
+    # #25 burst → shriek_chirp bias. holdManual already refused above, so this never fires under Hold / Manual;
+    # shriekMs stays inside CLAMPS["shriekMs"] and validate_patch remains mandatory.
+    burst = burst_decision_from_telemetry(telemetry)
+    if burst.get("extreme"):
+        patch = apply_burst_bias(patch, burst)
     ok, msg, clamped = validate_patch(patch)
     return ok, msg, clamped

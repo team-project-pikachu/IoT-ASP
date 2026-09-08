@@ -61,3 +61,20 @@ Docs: [algorithms.md](../docs/algorithms.md) § Environmental sound burst.
 | **Inspect** | https://vercel.com/1digital-design/hop-ultrasonic/HQvRWp1PjkeTcafQJpXpkd6TQU2e |
 | **Project 5 HW issue** | https://github.com/team-project-pikachu/IoT-ASP/issues/25 |
 | **Sim** | `autoroute_dev.sh` DRY-RUN OK; burst author `trigger=soundBurst`; Hold refuse OK; `node --check` OK |
+
+## Backend HW-limit verification (#25)
+
+The frontend path is paired with
+`services/autoroute-adk/iot_asp_autoroute/mic_diff.py`. It uses
+`MIC_DIFF_ALPHA == 0.85`, passes through mic energy when `outLevel` is
+absent, calibrates alpha by least squares through the origin (clamped
+to `[0, 2]`), and refuses burst decisions while Hold / Manual is active.
+`apply_burst_bias` selects `shriek_chirp`, clamps `shriekMs` to
+`[20, 120]`, and passes the authoritative patch validator. Capability
+reporting explicitly distinguishes output-bus subtraction from full
+AEC and keeps LF mic/TX hardware limitations visible.
+
+```bash
+python3 -m pytest tests/test_mic_diff.py tests/test_public_html.py -q
+PYTHONPATH=services/autoroute-adk python3 -m iot_asp_autoroute.mic_diff --demo
+```

@@ -54,7 +54,7 @@ Derived (not on the wire as-is): `priorHint`, `derived.sensors` (accel/gyro/micD
 |---------|-------------------|---------------|
 | Accelerometer | `absA` / `a`, optional `ax,ay,az` | `accelMagG`, axes-present flag; SciPy vib anomaly on \|a\| series |
 | Gyroscope | `absOmega` / `omega`, optional `gx,gy,gz` | `gyroMagRadS`; gyroBurst heuristic |
-| Mic / spectrum | `micEnergy`, `outLevel`, `micDiff`, `bandEnergyLf`, `bandEnergyUs` | `micDiff = micEnergy − α·outLevel` (α=1) when not precomputed; quantized 0.1 |
+| Mic / spectrum | `micEnergy`, `outLevel`, `micDiff`, `bandEnergyLf`, `bandEnergyUs` | `micDiff = micEnergy − α·outLevel` (α=0.85) when not precomputed; quantized 0.1 |
 | Burst flags | `soundBurst`, `extremeActive`, `bandBurst` | `shriekBiasEligible` → patch stub prefers shriek/burst |
 
 Offline synthetic fixture: `sample_vib_gyro_sound_fixture()` in `colab_etl.py` (notebook cell **2b**).

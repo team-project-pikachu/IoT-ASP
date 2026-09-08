@@ -61,6 +61,13 @@ SOUND_BURST_ALGO_BIAS: dict[str, float] = {
     "infra_mod": 0.55,
 }
 
+# Burst-only baseline makes contour mirrors eligible before their bias is applied.
+SOUND_BURST_MIRROR_BASELINE: dict[str, float] = {
+    "cry_mirror": 0.30,
+    "siren_mirror": 0.30,
+    "death_metal_mirror": 0.30,
+}
+
 # Real IDs only — mirrored from reference/LITERATURE.md § NS / seismo-acoustic.
 CITATIONS: list[dict[str, str]] = [
     {
@@ -191,6 +198,8 @@ def vib_algo_weights(
     if bias != 1.0:
         weights = {a: w * bias for a, w in weights.items()}
     if sound_burst:
+        for algo, baseline in SOUND_BURST_MIRROR_BASELINE.items():
+            weights.setdefault(algo, baseline * bias)
         weights = {
             a: w * SOUND_BURST_ALGO_BIAS.get(a, 1.0) for a, w in weights.items()
         }

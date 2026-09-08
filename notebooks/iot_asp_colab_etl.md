@@ -1,75 +1,92 @@
-# IoT-ASP Colab ETL (public — no site PII)
+# IoT-ASP Colab live GCS — sensor features (#26)
 
-Open in Google Colab after cloning this repo. Secrets via **userdata names only**.  
-See `docs/colab-gemini-pipeline.md`. Shared SciPy path: `iot_asp_autoroute.vib_anomaly` (1 Hz, 0.0005 g).
+Public notebook — **no site PII**. Secrets via Colab `userdata` **names** only
+(`GCP_SA_JSON`, `IOT_ASP_GCS_BUCKET`, `LIVE_GCS`); values are never printed.
 
-Accel / gyro / mic-spectrum (incl. `micDiff`, band energy &lt;20 Hz / &gt;17 kHz, `soundBurst` / `extremeActive`) are projected by `iot_asp_autoroute.colab_etl`.
+Pipeline: `meta/telemetry/<node>/` (objects + `.jsonl`) → `iot_asp_autoroute.features_live`
+(shared `colab_etl` + SciPy `vib_anomaly`, accel / gyro / `micDiff` / `bandBurst` sensors) →
+`meta/features/<node>/<ts>.json` → Gemini Enterprise (`iot-asp-autoroute`) / ADK agent.
+See `docs/specs/26-colab-live-gcs-features.md` and `docs/colab-gemini-pipeline.md`.
 
 ```python
-# @title Offline bootstrap + shared ADK imports
-from __future__ import annotations
-import json, os, sys
-from pathlib import Path
+# @title Secrets by NAME only (Colab userdata) — never paste values into git/chat
+import os, tempfile
 
-CANDIDATES = [Path.cwd(), Path.cwd().parent, Path("/content/IoT-ASP"), Path("/content")]
-ROOT = None
-for base in CANDIDATES:
-    adk = base / "services" / "autoroute-adk"
-    if (adk / "iot_asp_autoroute" / "vib_anomaly.py").is_file():
-        ROOT = base
-        sys.path.insert(0, str(adk))
-        break
-assert ROOT, "clone IoT-ASP so services/autoroute-adk is importable"
+try:
+    from google.colab import userdata  # type: ignore
+except ImportError:  # not on Colab → env only
+    userdata = None
 
-from iot_asp_autoroute.colab_etl import (
-    TELEMETRY_FEATURE_COLUMNS,
-    extract_features,
-    offline_dry_run,
-    sample_telemetry_fixture,
-    sample_vib_gyro_sound_fixture,
-    suggest_patch_stub,
-)
-from iot_asp_autoroute.vib_anomaly import VIB_QUANTUM, synthetic_demo_series
 
-PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT", "bear-iot-asp-rec")
-ENGINE_ID = os.environ.get("IOT_ASP_GEMINI_ENGINE_ID", "iot-asp-autoroute")
-LIVE_GCS = os.environ.get("LIVE_GCS", "0") == "1"
+def _secret(getter):
+    try:
+        return getter() if userdata is not None else None
+    except Exception:  # SecretNotFoundError / NotebookAccessError → treat as unset
+        return None
 
-# @title Feature extract + SciPy anomaly (shared with ADK)
-tel = sample_telemetry_fixture("node1")
-series = synthetic_demo_series(60)
-features = extract_features(tel, vib_series=series, engine_id=ENGINE_ID)
-print("cols", sorted(features["telemetry"].keys()), "quantum", VIB_QUANTUM)
-print("anomaly", features["anomaly"]["disturbance"], features["anomaly"]["functions"])
 
-# @title Synthetic vib + gyro + sound (offline)
-sensor_tel = sample_vib_gyro_sound_fixture("node1")
-sensor_feat = extract_features(sensor_tel, vib_series=series, engine_id=ENGINE_ID)
-sensor_sug = suggest_patch_stub(sensor_tel, engine_id=ENGINE_ID)
-print("sensors", sensor_feat["derived"]["sensors"])
-print("shriekBias", sensor_sug.get("shriekBiasEligible"), (sensor_sug.get("suggestion") or {}).get("algo"))
-assert sensor_sug["ok"] and sensor_sug["shriekBiasEligible"]
-assert (sensor_sug.get("suggestion") or {}).get("algo") in (
-    "shriek_chirp", "shriek_sweep", "burst", "infra_mod",
-    "cry_mirror", "siren_mirror", "death_metal_mirror",
-)
+NODE = os.environ.get("IOT_ASP_NODE", "node1")
+LIMIT = int(os.environ.get("IOT_ASP_LIMIT", "200"))
 
-# @title Patch suggestion stub (ADK still clamps + writes patches)
-sug = suggest_patch_stub(tel, engine_id=ENGINE_ID)
-hold = suggest_patch_stub({**tel, "holdManual": True}, engine_id=ENGINE_ID)
-assert sug["ok"] and hold["refused"]
-assert offline_dry_run()["ok"]
+bucket = _secret(lambda: userdata.get("IOT_ASP_GCS_BUCKET"))
+live_flag = _secret(lambda: userdata.get("LIVE_GCS"))
+sa_json = _secret(lambda: userdata.get("GCP_SA_JSON"))
 
-# @title Live GCS (Colab userdata only — set LIVE_GCS=1)
-# from google.colab import userdata
-# sa_json = userdata.get("GCP_SA_JSON")  # never download to Studio
-# bucket = userdata.get("IOT_ASP_GCS_BUCKET")
-# → read meta/telemetry/ → write meta/features/ only (never meta/patches/)
-print("LIVE_GCS", LIVE_GCS, "feature_col_count", len(TELEMETRY_FEATURE_COLUMNS))
+if bucket:
+    os.environ["IOT_ASP_GCS_BUCKET"] = bucket
+os.environ["LIVE_GCS"] = "1" if (str(live_flag or os.environ.get("LIVE_GCS", "0")) == "1" and bucket) else "0"
+LIVE = os.environ["LIVE_GCS"] == "1"
+# gcs_io reads these at import: dry-run mirror unless LIVE
+os.environ["IOT_ASP_AUTOROUTE_DRY_RUN"] = "0" if LIVE else "1"
+os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "bear-iot-asp-rec")
+
+if sa_json and LIVE:
+    _fd, _path = tempfile.mkstemp(prefix="iot-asp-sa-", suffix=".json")
+    with os.fdopen(_fd, "w") as fh:
+        fh.write(sa_json)
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = _path  # path only, value never printed
+del sa_json
+
+print("bucket set:", bool(bucket), "| live:", int(LIVE), "| node:", NODE, "| limit:", LIMIT)
 ```
 
-Offline CI:
+```python
+# @title Install the shared module from the repo (or point sys.path at a checkout)
+import os, subprocess, sys
 
-```bash
-python3 scripts/colab_etl_dry_run.py
+REPO_DIR = os.environ.get("IOT_ASP_REPO_DIR", "/content/IoT-ASP")
+if not os.path.isdir(REPO_DIR):
+    subprocess.run(["git", "clone", "--depth", "1", "https://github.com/team-project-pikachu/IoT-ASP.git", REPO_DIR], check=True)
+
+PKG_ROOT = os.path.join(REPO_DIR, "services/autoroute-adk")
+if PKG_ROOT not in sys.path:
+    sys.path.insert(0, PKG_ROOT)
+# Runtime deps only (numpy/scipy ship with Colab; google-cloud-storage for LIVE writes)
+subprocess.run([sys.executable, "-m", "pip", "install", "-q", "numpy>=1.26,<3", "scipy>=1.14,<1.18", "google-cloud-storage>=2.14,<4"], check=False)
+print("pkg root on sys.path:", PKG_ROOT in sys.path)
 ```
+
+```python
+# @title Telemetry → sensor features (shared module; SciPy vib anomaly is authoritative)
+from iot_asp_autoroute import features_live
+
+if not LIVE:
+    # Offline / dry-run: seed 12 synthetic heartbeats into the local mirror so the run is self-contained
+    features_live._seed_demo(NODE)
+
+res = features_live.run_live(NODE, LIMIT, live=os.environ.get("LIVE_GCS") == "1")
+```
+
+This notebook writes **only** `meta/features/<node>/<ts>.json` and never writes `meta/patches/`
+(`features_live.assert_not_patch_path` raises before every write). The ADK worker
+(`tools.write_patch`) clamps and writes patches; Hold / Manual still wins there. `shriekBias` is a
+feature hint, not a patch. Features are never authoritative.
+
+```python
+# @title Result URIs (file:// in dry-run, gs:// when LIVE)
+print("uri:", res.get("uri"))
+print("object:", res.get("object"), "| sourceCount:", res.get("sourceCount"), "| live:", res.get("live"), "| ok:", res.get("ok"))
+print("featureKeys:", res.get("featureKeys"))
+```
+
+Generated in lockstep with `iot_asp_colab_etl.ipynb` (tests/test_features_live.py FL-12 checks the two stay in sync).

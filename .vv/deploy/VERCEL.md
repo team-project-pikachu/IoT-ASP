@@ -1,62 +1,66 @@
-# Vercel deploy evidence — integrate-deploy-board
+# Vercel deploy evidence — project `hop-ultrasonic` (team `1digital-design`)
 
-| Field | Value |
-|-------|--------|
-| **UTC (final prod)** | `2026-09-08T00:41:39Z` |
-| **Repo (source)** | `/Users/machine/apps/IoT-ASP` → `public/` + `vercel.json` |
-| **Deploy root** | `/Users/machine/apps/hop-ultrasonic` (linked project `hop-ultrasonic`) |
-| **Sim** | `bash scripts/autoroute_dev.sh` → **DRY-RUN OK**; mirror whitelist `cry_mirror`/`siren_mirror`/`death_metal_mirror` validate_patch OK; extracted `node --check` exit 0; micDiff/Hold markers intact |
-| **Tree shipped** | Extreme micDiff burst lane + **contour-mirrors** (`cry_mirror`, `siren_mirror`, `death_metal_mirror`) in extreme rotation + UI |
-| **GCP org note** | Prefer `betty@bearresearch.io` for GCP/Gemini Enterprise (see `docs/gcp-recordings.md`) — not used for Vercel CLI |
+**Config item:** Vercel project `hop-ultrasonic` ↔ GitHub `team-project-pikachu/IoT-ASP`, driven by
+`.github/workflows/deploy.yml` (issue #27)
+**Docs:** `docs/deploy.md`
+**Date:** 2026-09-08 (UTC)
+**Status:** `secrets not set as of 2026-09-08 (issue #27)`
 
-## Environments (dev → test → prod)
+## What exists (2026-09-08)
 
-| Stage | URL | HTTP | Notes |
-|-------|-----|------|-------|
-| **dev** (preview) | https://hop-ultrasonic-jsxmvabu2-1digital-design.vercel.app/ | **200** | Pre–hot-apply-complete preview |
-| **test** (preview) | https://hop-ultrasonic-iqtm1wkr8-1digital-design.vercel.app/ | **200** | Pre–hot-apply-complete preview |
-| **prod** (alias) | https://hop-ultrasonic.vercel.app/ | **200** | Live; hot-apply HTML + `patch.json` **no-store** |
+| Item | Value / state |
+|------|---------------|
+| Team | `1digital-design` |
+| Project | `hop-ultrasonic` — settings: `https://vercel.com/1digital-design/hop-ultrasonic/settings/git` |
+| Production URL | `https://hop-ultrasonic-1digital-design.vercel.app` (repo variable `PROD_URL` may override) |
+| Served content | `public/` static PWA; `vercel.json` `cleanUrls`, `trailingSlash: false`, security headers, manifest `Content-Type` |
+| Git integration | connected to `team-project-pikachu/IoT-ASP`, production branch `main`; automatic deploy on push to `main` **disabled by `vercel.json` `git.deploymentEnabled.main: false`** (PR previews for other branches unchanged) |
+| Deploy Hook | **name** `gh-actions-prod`, ref `main` — to be created by an owner (URL is a secret; not recorded) |
+| Deployment Protection | unknown/default; if previews are protected, set `VERCEL_AUTOMATION_BYPASS_SECRET` |
+| Live smoke (read-only) | `bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` → exit 0 on 2026-09-08 |
 
-### Production deployment (contour-mirrors + burst)
+## Required GitHub Actions secret NAMES
 
-| Field | Value |
-|-------|--------|
-| **Immutable** | https://hop-ultrasonic-6niq6mmby-1digital-design.vercel.app |
-| **Inspect** | https://vercel.com/1digital-design/hop-ultrasonic/DwDa1FWWR1gvhUWR6D89JHjxJ84G |
-| **Alias** | https://hop-ultrasonic.vercel.app/ — HTTP **200**; HTML contains `cry_mirror` / `siren_mirror` / `death_metal_mirror` + `micDiffLf` / `holdManual` |
+| Name | Source | Status 2026-09-08 |
+|------|--------|-------------------|
+| `VERCEL_TOKEN` | vercel.com/account/settings/tokens, scoped to team `1digital-design` → 1Password `op://dev/VERCEL_TOKEN/credential` | not set |
+| `VERCEL_ORG_ID` | `vercel link` → `.vercel/project.json` `orgId` — `<team_… placeholder>` (id not invented) | not set |
+| `VERCEL_PROJECT_ID` | `vercel link` → `.vercel/project.json` `projectId` — `<prj_… placeholder>` (id not invented) | not set |
+| `VERCEL_DEPLOY_HOOK_PROD` | Deploy Hook `gh-actions-prod` URL | not set |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel → Deployment Protection → Protection Bypass for Automation (optional) | not set |
 
-## Hot-apply redeploy notes
+Set them with the stdin recipe in `scripts/vercel_secrets_check.sh` / `docs/deploy.md` §c, or
+`scripts/op_secrets_to_gh.sh` (integrator-owned).
 
-1. Earlier integrate `--prod` shipped F1 + partial hot-apply markers; **hot-apply lane DONE** evidence is `.vv/hot-apply.md`.
-2. Final redeploy (this file’s UTC) synced IoT-ASP `public/` + `vercel.json` → hop-ultrasonic and promoted production.
-3. `vercel.json`: catch-all no longer overrides `/patch.json` Cache-Control (specific `/patch.json` rule last; non-patch Cache-Control via negative-lookahead source). Edge alias briefly served stale headers (`age`/HIT) then settled on **no-store**.
-4. Client still cache-busts with `_cb=` + `cache: "no-store"` regardless of CDN.
+## GitHub Environments to create
 
-## Project 5 board
+| Environment | Protection |
+|-------------|------------|
+| `dev` | none |
+| `test` | none |
+| `production` | optional required reviewers (≤ 6, one approval suffices); optional branch rule `main` |
 
-| Issue | Status |
-|-------|--------|
-| #9 | **Done** (research closeout) |
-| #12 | **Done** |
-| #13 | **Done** (design closeout) |
-| #16 | **Done** |
-| #17 | **Done** |
+## Procedure (owner, one time)
 
-Backlog (#14/#15/#18/#19) and leftovers (#20–#23) left unchanged.
+1. `docs/deploy.md` §b — connect repo, production branch `main`, create Deploy Hook `gh-actions-prod`.
+2. `docs/deploy.md` §c — team-scoped token → 1Password `dev` → `gh secret set` the four names.
+3. `docs/deploy.md` §d — create the three GitHub Environments.
+4. `gh workflow run "Deploy — dev → test → prod" --repo team-project-pikachu/IoT-ASP -f target=dev`, then
+   `-f target=prod`; paste run URLs + job results (no secrets) into `.vv/ci/continuous-ship.md`.
 
-## Notes
+## Pass/fail
 
-- IoT-ASP has no separate `.vercel` link; public surface is the `hop-ultrasonic` Vercel project.
-- Prior preview URLs remain valid historical evidence; **prod alias is the live surface**.
-- **Continuous ship (Actions):** `.github/workflows/deploy.yml` — after green CI push to `main`, preview then prod when `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` are set. See `docs/ci.md` and `.vv/ci/continuous-ship.md`.
+| Item | Status |
+|------|--------|
+| `vercel.json` `git.deploymentEnabled.main == false`, headers preserved (DP-11) | **PASS** (local test) |
+| Production URL serves the smoke contract (Hold / Manual, `holdManual`, `schemaVersion 1`, headers) | **PASS** (2026-09-08, current Vercel-deployed build) |
+| Secrets + Deploy Hook + Environments | **PENDING** — `secrets not set as of 2026-09-08 (issue #27)` |
 
+## Prior manual production evidence
 
-## Burst→shriek / micDiff (follow-on)
-
-| Field | Value |
-|-------|--------|
-| **UTC** | `2026-09-08T00:37:52Z` |
-| **Evidence** | `.vv/burst-shriek.md` |
-| **Prod** | https://hop-ultrasonic.vercel.app/ |
-| **Immutable** | https://hop-ultrasonic-1v9i9gmot-1digital-design.vercel.app |
-| **Issue** | #25 (HW AEC/LF leftovers → Project 5) |
+Before Actions ownership was enabled, the contour-mirror plus
+burst/`micDiff` build was promoted manually to
+`https://hop-ultrasonic.vercel.app/` as deployment
+`dpl_7KFoJW72gnrnpvyTSV1LC6NGrJbK`. This is historical evidence only;
+the dev → test → production workflow above is authoritative once its
+named secrets and environments are configured.

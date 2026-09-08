@@ -1,97 +1,88 @@
-# Continuous ship evidence — GitHub Actions → Vercel
+# Continuous-ship evidence — Deploy: dev → test → prod (issue #27)
 
-**UTC:** `2026-09-08T00:42:00Z` (Studio re-check)  
-**Repo:** `team-project-pikachu/IoT-ASP`  
-**Config:** `.github/workflows/deploy.yml` + `.github/workflows/ci.yml`  
-**Docs:** `docs/ci.md`  
-**Rule:** `.cursor/rules/asp-backend-vv-ci.mdc` (MVP non-breaking → continuous ship; breaking → Project 5 first)
+**Config item:** `.github/workflows/deploy.yml` + `vercel.json` (`git.deploymentEnabled.main: false`) +
+`scripts/deploy_smoke.sh` + `scripts/vercel_secrets_check.sh` + `tests/test_deploy_workflow.py`
+**Docs:** `docs/deploy.md`, `docs/specs/27-continuous-ship-dev-test-prod.md`
+**Date:** 2026-09-08 (UTC)
+**Status:** `secrets not set as of 2026-09-08 (issue #27)` — no live Actions deploy run exists yet;
+`deploy.yml` only fires from the default branch after merge, and the deploy jobs skip until the secrets below
+are set. Everything offline is green (see Observed).
+
+## What exists
+
+| Item | Where |
+|------|-------|
+| Workflow `Deploy — dev → test → prod`; triggers `workflow_run` of `CI — no breaking changes` (main, success) + `workflow_dispatch` (`target` dev/test/prod, `ref`) | `.github/workflows/deploy.yml` |
+| Jobs `secrets_check` → `gates` → `deploy_dev` (env `dev`) → `test` (env `test`) → `deploy_prod` (env `production`) | `.github/workflows/deploy.yml` |
+| Vercel CLI pinned `vercel@59`; `vercel pull --yes --environment=…`, `vercel build`, `vercel deploy --prebuilt [--prod]` | `.github/workflows/deploy.yml` |
+| Deploy-hook fallback (`curl -fsS -X POST`, prints job id + state only, polls ≤ 5 min via smoke) | `.github/workflows/deploy.yml` `deploy_prod` |
+| Vercel Git auto-deploy for `main` disabled; all original headers preserved | `vercel.json` |
+| Remote smoke: 200, `Hold / Manual` + `holdManual`, `Permissions-Policy` ∋ microphone, `patch.json` `schemaVersion == 1`, manifest `Content-Type` | `scripts/deploy_smoke.sh` |
+| Local secret-name pre-flight + 1Password / `gh secret set` recipe | `scripts/vercel_secrets_check.sh` |
+
+## Required secret NAMES (values never recorded here)
+
+| Name | Purpose | Set? |
+|------|---------|------|
+| `VERCEL_TOKEN` | Vercel CLI auth (team-scoped token) | no (2026-09-08) |
+| `VERCEL_ORG_ID` | `.vercel/project.json` `orgId` (`<team_… placeholder>`) | no (2026-09-08) |
+| `VERCEL_PROJECT_ID` | `.vercel/project.json` `projectId` (`<prj_… placeholder>`) | no (2026-09-08) |
+| `VERCEL_DEPLOY_HOOK_PROD` | Deploy Hook `gh-actions-prod` URL (fallback path) | no (2026-09-08) |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | optional; preview Deployment Protection bypass | no (2026-09-08) |
+| repo variable `PROD_URL` | optional; defaults to `https://hop-ultrasonic-1digital-design.vercel.app` | not set (default used) |
 
 ## Requirements
 
-| ID | Requirement | Status |
-|----|-------------|--------|
-| CS-01 | Deploy via **GitHub Actions** (not CLI-only) | **PASS** — `deploy.yml` present |
-| CS-02 | Trigger after CI success on `main` (`workflow_run`) | **PASS** — filters success + `push` + `main` |
-| CS-03 | Re-run `autoroute_dev` + static gates before deploy | **PASS** — `gates` job; never skip |
-| CS-04 | Preview/test then production | **PASS** — `vercel deploy` then `vercel deploy --prod` |
-| CS-05 | Secrets `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` | **BLOCKED** — none on repo; no deploy token in 1Password |
-| CS-06 | PR path = CI only | **PASS** — deploy only on push→main CI success |
-| CS-07 | Manual `vercel --prod` retained when secrets absent | **PASS** — `docs/ci.md` |
+| ID | Requirement |
+|----|-------------|
+| DP-01 … DP-13 | Acceptance table in `docs/specs/27-continuous-ship-dev-test-prod.md` (workflow parse/name, triggers, permissions + concurrency, job graph, environments, success guard, CLI flags, secrets hygiene, `secrets_check` contract, smoke script offline behaviour, `vercel.json`, docs + evidence, dispatch semantics) |
 
-## Secret status (verified 2026-09-08)
-
-```text
-gh secret list -R team-project-pikachu/IoT-ASP
-# (empty — no VERCEL_* secrets)
-```
-
-| Secret | Present on GitHub? |
-|--------|--------------------|
-| `VERCEL_TOKEN` | **No** |
-| `VERCEL_ORG_ID` | **No** |
-| `VERCEL_PROJECT_ID` | **No** |
-
-**Auto-deploy: NOT LIVE** until all three secrets are set. Workflow runs gates then skips Vercel with a notice.
-
-### 1Password lookup (this pass)
-
-| Source | Result |
-|--------|--------|
-| Vault name `dev` | **Does not exist** as an `op` vault |
-| 1Password Environment **`dev`** | Present; **no** `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` (has `BLOB_READ_WRITE_TOKEN` only — Blob RW, not Actions deploy) |
-| Vault **Development** | Item `Vercel Blob — tb3` → Blob RW token only |
-| Vault **self** | Item `Vercel` → LOGIN (account/OTP); **no** API/deploy token field |
-| Cowork-CLI-Keys / Keystore / Private / Shared | No Vercel deploy-token items |
-| `~/.config/op/fleet.env` | No `VERCEL_*` keys |
-
-**Do not invent tokens.** Create a Vercel token in the dashboard (or `vercel tokens`), store it in Environment `dev` as `VERCEL_TOKEN`, then `gh secret set`.
-
-### Resolved IDs (non-secret; ready to set once token exists)
-
-From Studio `hop-ultrasonic/.vercel/project.json` and `vercel project ls --scope 1digital-design` (CLI user `1digitaldesign`, team **1digital-design**):
-
-| Field | Value |
-|-------|--------|
-| `VERCEL_ORG_ID` | `team_FMcobi2jOg60hmmaZMenbAnp` |
-| `VERCEL_PROJECT_ID` | `prj_6LqmrGuRMiy1V5sZ7wVchuUv7Ekg` |
-| projectName | `hop-ultrasonic` |
-| prod alias | https://hop-ultrasonic.vercel.app/ |
-
-IoT-ASP has no separate `.vercel` link; continuous ship targets the **hop-ultrasonic** project.
-
-## Operator next steps (least privilege)
-
-1. **Create** a Vercel deploy token (Account Settings → Tokens, or `vercel tokens add`) scoped to team `1digital-design` / project `hop-ultrasonic`. Prefer a dedicated Actions token (not session cookie).
-2. **Store** in 1Password Environment `dev` as concealed `VERCEL_TOKEN` (optional: also store `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` for operators).
-3. **Set GitHub secrets** (values never paste into issues/chat):
+## Procedure
 
 ```bash
-# Token from 1Password — do not echo
-op read 'op://…/VERCEL_TOKEN' | gh secret set VERCEL_TOKEN -R team-project-pikachu/IoT-ASP
-
-printf '%s' 'team_FMcobi2jOg60hmmaZMenbAnp' \
-  | gh secret set VERCEL_ORG_ID -R team-project-pikachu/IoT-ASP
-
-printf '%s' 'prj_6LqmrGuRMiy1V5sZ7wVchuUv7Ekg' \
-  | gh secret set VERCEL_PROJECT_ID -R team-project-pikachu/IoT-ASP
-
-gh secret list -R team-project-pikachu/IoT-ASP   # expect three VERCEL_* names only
+python3 -m pytest tests/test_deploy_workflow.py -q
+bash -n scripts/deploy_smoke.sh scripts/vercel_secrets_check.sh
+bash scripts/deploy_smoke.sh                                   # usage → exit 2
+SMOKE_RETRIES=1 SMOKE_SLEEP_S=0 bash scripts/deploy_smoke.sh http://127.0.0.1:9   # closed port → FAIL, exit 1
+bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app    # network
+bash scripts/vercel_secrets_check.sh                           # names only
+bash scripts/ci_static_gates.sh
+bash scripts/autoroute_dev.sh
+python3 -m pytest tests -q
 ```
 
-4. Push or re-run green CI on `main` → Deploy workflow should preview then `--prod`.
-5. Until then: manual promote via hop-ultrasonic CLI remains valid (see `.vv/deploy/VERCEL.md`).
-
-## Local gate evidence (pre-ship)
+## Observed (local, 2026-09-08, Python 3.11 / PyYAML 6.0.1)
 
 | Check | Result |
 |-------|--------|
-| `bash scripts/ci_static_gates.sh` | exit 0 (prior pass) |
-| `bash scripts/autoroute_dev.sh` | exit 0 — `DRY-RUN OK` (prior pass) |
+| `python3 -m pytest tests/test_deploy_workflow.py -q` | exit 0 — 14 passed (DP-01 … DP-13 + secrets-check script) |
+| `bash -n` both scripts | exit 0 |
+| `bash scripts/deploy_smoke.sh` (no args) | exit 2 — `usage: scripts/deploy_smoke.sh <url> …` |
+| `SMOKE_RETRIES=1 SMOKE_SLEEP_S=0 bash scripts/deploy_smoke.sh http://127.0.0.1:9` | exit 1 — `retry 1/1 … HTTP 000`, `FAIL: GET http://127.0.0.1:9 -> HTTP 000 (expected 200)` |
+| `bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` | exit 0 — `ok:` ×5, `OK deploy_smoke https://hop-ultrasonic-1digital-design.vercel.app` (currently served build already satisfies the smoke contract) |
+| `bash scripts/vercel_secrets_check.sh` (clean shell) | exit 1 — `VERCEL_TOKEN: MISSING`, `VERCEL_ORG_ID: MISSING`, `VERCEL_PROJECT_ID: MISSING`, recipe printed, no values |
+| same with the three names exported to dummy values | exit 0 — `OK vercel_secrets_check`; dummy values not echoed |
+| `yaml.safe_load(deploy.yml)` job order | `secrets_check, gates, deploy_dev, test, deploy_prod` |
+| `bash scripts/ci_static_gates.sh` | exit 0 — `OK ci_static_gates` |
+| `bash scripts/autoroute_dev.sh` | exit 0 — dry-run OK |
 
-## Prod URL (current alias)
+## Remote Actions
 
-**https://hop-ultrasonic.vercel.app/** — see `.vv/deploy/VERCEL.md` for last manual promote.
+| Run | SHA | Result |
+|-----|-----|--------|
+| — | — | none yet: `secrets not set as of 2026-09-08 (issue #27)`; first `workflow_run` fires after merge to `main`. Expected until then: `secrets_check` prints `::notice title=Vercel secrets::missing: VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_DEPLOY_HOOK_PROD — see docs/deploy.md and issue #27`, `gates` green, `deploy_dev` / `test` / `deploy_prod` skipped. |
 
-## Tracking
+## Pass/fail
 
-Project 5: https://github.com/team-project-pikachu/IoT-ASP/issues/27 — **Set Vercel Actions secrets for continuous MVP ship**
+| Req | Status |
+|-----|--------|
+| DP-01 … DP-13 (offline) | **PASS** (local) |
+| Live dev → test → prod run | **PENDING** — blocked on secrets (owner action, `docs/deploy.md` §b–d) |
+
+## Trigger-SHA invariant
+
+Every checkout in `gates`, `deploy_dev`, `test`, and `deploy_prod` uses
+the run-level `DEPLOY_REF`. A `workflow_run` computes it from
+`github.event.workflow_run.head_sha`, so all gates and deployments use
+the exact commit CI tested. A manual dispatch uses its requested `ref`,
+or `main` when that input is empty.

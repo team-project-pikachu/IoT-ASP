@@ -394,6 +394,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <div>lf <b id="telLf">na</b></div>
       <div>power <b id="telPower">ac120</b></div>
       <div>net <b id="telNet">wifi</b></div>
+      <div>hop age <b id="telHopAge">—</b></div>
+      <div>ctx resumes <b id="telResumes">0</b></div>
+      <div>watchdog <b id="telWatchdog">0</b></div>
+    </div>
+    <div class="tapbar" style="margin-top:10px">
+      <button type="button" class="tap" id="copyLogBtn">Copy log JSON</button>
+      <button type="button" class="tap" id="reseedBtn">Reseed</button>
     </div>
     <div class="mon-log" id="monLog" aria-live="polite"></div>
   </section>
@@ -544,7 +551,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
   let pulseMs=120, shriekMs=55;
-  let deviceId="", seed=0;
+  let deviceId="", seed=0, seedSource="entropy";
   try {
     deviceId = localStorage.getItem("hop.deviceId") || "";
     if (!deviceId) {
@@ -552,11 +559,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       localStorage.setItem("hop.deviceId", deviceId);
     }
     const ss = localStorage.getItem("hop.seed");
-    seed = ss ? (+ss || 0) : (Math.floor(Math.random() * 1e9) + 1);
-    if (!ss) localStorage.setItem("hop.seed", String(seed));
+    const stored = ss ? Math.floor(+ss || 0) : 0;
+    seedSource = stored > 0 ? "stored" : "entropy";
+    seed = stored > 0 ? stored : entropySeed();
+    if (seedSource === "entropy") localStorage.setItem("hop.seed", String(seed));
   } catch (_) {
     deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
-    seed = Math.floor(Math.random() * 1e9) + 1;
+    seed = entropySeed();
+    seedSource = "entropy";
   }
   const qs = new URLSearchParams(location.search);
   function joinBackend(base, path){
@@ -572,9 +582,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     || BACKEND_TELEMETRY_URL
     || (BACKEND_BASE_URL ? joinBackend(BACKEND_BASE_URL, BACKEND_TELEMETRY_PATH) : "");
   const POLL_MS = Math.max(2000, Math.min(5000, +(qs.get("pollMs") || BACKEND_POLL_MS_DEFAULT)));
-  const VOL_PATCH_MAX = 100, VOL_STEP = 0.5;
+  const VOL_PATCH_MAX = 12, VOL_STEP = 0.5;
   const BAND_US_LO = 17000, BAND_US_HI = 23000, BAND_LF_LO = 10, BAND_LF_HI = 20;
-  let BAND_ABS_LO = BAND_US_LO, BAND_ABS_HI = BAND_US_HI;
+  let BAND_ABS_LO = 17000, BAND_ABS_HI = 23000;
   // Hardware-limited preferred TX band (BT A2DP + Soundcore DSP roll-off) for ultrasonic
   const HW_PREF_FMAX = 20500, HW_PREF_FMIN = 17000;
   const NIGHT_TZ = "America/New_York";
@@ -606,7 +616,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const dwellLo  = () => Math.min(+dMin.value,+dMax.value);
   const dwellHi  = () => Math.max(+dMin.value,+dMax.value);
   const level    = () => +vol.value/100;
-  const pickFreq  = () => bandLow() + rand()*(bandHigh()-bandLow());
+  function MIN_HOP_DELTA_HZ(){ return Math.max(200, 0.05 * (bandHigh() - bandLow())); }
+  const pickFreq  = () => {
+    const lo = bandLow(), hi = bandHigh(), d = MIN_HOP_DELTA_HZ();
+    let f = lo + rand()*(hi-lo);
+    for (let i = 0; i < 8 && Math.abs(f - lastTarget) < d && (hi - lo) > 2*d; i++) {
+      f = lo + rand()*(hi-lo);
+    }
+    return f;
+  };
   const pickDwell = () => dwellLo() + rand()*(dwellHi()-dwellLo());
 
   // ══ carrier schedulers (hop / pulse / shriek) ══════════════════════════
@@ -1033,7 +1051,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     shriekMs = Math.max(20, Math.min(120, 40 + Math.floor(rand() * 80)));
     burstVolNudge();
     if (rand() < 0.35) {
-      seed = Math.floor(Math.random() * 1e9) + 1;
+      seed = entropySeed();
+      seedSource = "entropy";
       rng = mulberry32(seed >>> 0);
       try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
     }
@@ -1209,7 +1228,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (!txActive) toneGain.gain.exponentialRampToValueAtTime(Math.max(level(),0.0002), ctx.currentTime+0.02);
 
     running = true; hopCount = 0;
-    nextHopAt = ctx.currentTime + 0.05;
+    lastHopAt = performance.now();
+    nextHopAt = ctx.currentTime + 0.05 + rand() * 0.5;
     pending.length = 0; history.length = 0;
     history.push({ t:performance.now(), f:lastTarget });
 
@@ -1568,6 +1588,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         while (pending.length && pending[0].t <= ctx.currentTime){
           const hop = pending.shift();
           history.push({ t:performance.now(), f:hop.f });
+          lastHopAt = performance.now();
           targetEl.textContent = nf(hop.f);
           holdEl.textContent = hop.d.toFixed(1) + " s";
           hopsEl.textContent = ++hopCount;
@@ -1925,16 +1946,149 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   } catch(_){ setSuddenAuto(true); }
 
   // ══ telemetry beacon + param patch poll ═══════════════════════════════
-  function monLog(msg){
+  // ══ structured monitor log (#22) ══════════════════════════════════════
+  // Structured, bounded, device-metrics-only monitor log.
+  const LOG_MAX = 200;
+  const records = [];
+  let logSeq = 0;
+  const LOG_LEVELS = { debug: 1, info: 1, warn: 1, error: 1 };
+  function monLog(msg, event, fields, level){
+    const rec = {
+      seq: ++logSeq,
+      ts: new Date().toISOString(),
+      level: LOG_LEVELS[level] ? level : "info",
+      event: event ? String(event).slice(0, 32) : "log",
+      msg: String(msg).slice(0, 240),
+      fields: fields && typeof fields === "object" ? fields : {}
+    };
+    records.push(rec);
+    while (records.length > LOG_MAX) records.shift();
     if (!monLogEl) return;
-    const t = new Date().toISOString().slice(11, 19);
-    const safe = String(msg).replace(/[<>&]/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;" }[c]));
+    const t = rec.ts.slice(11, 19);
+    const safe = rec.msg.replace(/[<>&]/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;" }[c]));
     const line = document.createElement("div");
     line.className = "line";
     line.innerHTML = "<span class='hi'>" + t + "</span> " + safe;
     monLogEl.prepend(line);
     while (monLogEl.children.length > 40) monLogEl.removeChild(monLogEl.lastChild);
   }
+
+  function copyLogJson(){
+    const json = JSON.stringify(records);
+    const done = () => monLog("log copied", "ui", { n: records.length }, "info");
+    const fallback = () => {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = json; ta.readOnly = true;
+        ta.style.position = "fixed"; ta.style.opacity = "0"; ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0, json.length);
+        try { document.execCommand("copy"); } catch (_) {}
+        document.body.removeChild(ta);
+      } catch (_) {}
+      done();
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+        navigator.clipboard.writeText(json).then(done, fallback);
+      } else fallback();
+    } catch (_) { fallback(); }
+  }
+  const copyLogBtn = $("copyLogBtn");
+  if (copyLogBtn) copyLogBtn.addEventListener("click", copyLogJson);
+
+  // ══ telemetry enrichment (#22) ════════════════════════════════════════
+  function nightNYNow(){
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/New_York", hour: "numeric", hour12: false
+      }).formatToParts(new Date());
+      const h = parseInt((parts.find(p => p.type === "hour") || {}).value, 10) % 24;
+      return Number.isFinite(h) && (h >= 22 || h < 7);
+    } catch (_) { return false; }
+  }
+  function bandTag(){ return (+fMin.value <= 100) ? "10-20" : "17-23k"; }
+
+  // ══ watchdog (#3) ═════════════════════════════════════════════════════
+  // Resume suspended audio and repair a stalled scheduler without duplicating oscillators.
+  var lastHopAt = 0, ctxResumes = 0, watchdogTrips = 0;
+  function lastHopAgeMs(){ return running && lastHopAt > 0 ? Math.round(performance.now() - lastHopAt) : null; }
+  function stallLimitMs(){ return dwellHi() * 1.5 * 1000 + 1000; }
+  function watchdogTick(){
+    if (!running || !ctx) return;
+    if (ctx.state !== "running") {
+      ctxResumes++;
+      monLog("ctx " + ctx.state + " → resume()", "watchdog", { state: ctx.state, ctxResumes }, "warn");
+      try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (_) {}
+      updateTelUI();
+      return;
+    }
+    const age = lastHopAgeMs();
+    if (age != null && age > stallLimitMs() && osc) {
+      watchdogTrips++;
+      pending.length = 0;
+      nextHopAt = ctx.currentTime + 0.05;
+      try {
+        osc.frequency.cancelScheduledValues(ctx.currentTime);
+        if (toneGain) toneGain.gain.cancelScheduledValues(ctx.currentTime);
+      } catch (_) {}
+      schedule();
+      lastHopAt = performance.now();
+      monLog("watchdog reschedule", "watchdog", {
+        ageMs: age, limitMs: Math.round(stallLimitMs()), watchdogTrips, algo: algoWireName()
+      }, "warn");
+    }
+    updateTelUI();
+  }
+  setInterval(watchdogTick, 1000);
+
+  // ══ max-entropy seeds (#2) ════════════════════════════════════════════
+  function xmur3(str){
+    let h = 1779033703 ^ str.length;
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = h << 13 | h >>> 19;
+    }
+    return function(){
+      h = Math.imul(h ^ h >>> 16, 2246822507);
+      h = Math.imul(h ^ h >>> 13, 3266489909);
+      return (h ^= h >>> 16) >>> 0;
+    };
+  }
+  function fnv1a32(str){
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i) & 0xff; h = Math.imul(h, 0x01000193); }
+    return h >>> 0;
+  }
+  function entropySeed(){
+    let cr = [0, 0, 0, 0];
+    try { const u = new Uint32Array(4); crypto.getRandomValues(u); cr = Array.from(u); }
+    catch (_) { cr = cr.map(() => Math.floor(Math.random() * 4294967296)); }
+    const parts = [
+      cr.join(","), String(Date.now()), String(Math.floor(performance.now() * 1000)),
+      String(fnv1a32(deviceId || "")),
+      String((typeof screen !== "undefined" && screen && screen.width) || 0) + "x" +
+        String((typeof screen !== "undefined" && screen && screen.height) || 0)
+    ];
+    return (xmur3(parts.join("|"))() % 2147483646) + 1;
+  }
+  function reseed(reason){
+    seed = entropySeed(); seedSource = "entropy";
+    rng = mulberry32(seed >>> 0);
+    try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
+    monLog("seed reseeded → " + seed, "reseed", { seed, reason: reason || "ui" }, "info");
+    if (running && ctx && osc) { pending.length = 0; nextHopAt = ctx.currentTime + 0.05; schedule(); }
+    updateTelUI();
+  }
+  const reseedBtn = $("reseedBtn");
+  if (reseedBtn) reseedBtn.addEventListener("click", () => reseed("ui"));
+
+  // ══ debug hook (#1) ═══════════════════════════════════════════════════
+  window.__hop = Object.freeze({
+    telemetryPayload: () => telemetryPayload(),
+    getLog: () => records.slice(),
+    getState: () => ({ running, holdManual, algo, seed, seedSource })
+  });
 
   function updateTelUI(){
     if (telDevice) telDevice.textContent = deviceId;
@@ -1962,6 +2116,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (telEx) telEx.textContent = extremeActive ? "ON" : "off";
     const telBb = $("telBandBurst");
     if (telBb) telBb.textContent = bandBurst || "—";
+    const age = lastHopAgeMs(), hopAgeEl = $("telHopAge");
+    const resumesEl = $("telResumes"), wdEl = $("telWatchdog");
+    if (hopAgeEl) hopAgeEl.textContent = age == null ? "—" : age + " ms";
+    if (resumesEl) resumesEl.textContent = String(ctxResumes || 0);
+    if (wdEl) wdEl.textContent = String(watchdogTrips || 0);
     if (geminiFlagLive) geminiFlagLive.textContent = geminiAutorouteFlag ? "pending" : "—";
     if (patchUrlLabel) patchUrlLabel.textContent = PATCH_URL;
     if (patchStatusEl) patchStatusEl.textContent = patchStatus;
@@ -2023,6 +2182,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       nightNY: !!nightActive,
       nightTargetVol: nightTargetVol,
       hwBand: bandMode === "lf" ? "10-20" : (HW_PREF_FMIN + "-" + HW_PREF_FMAX),
+      lastHopAgeMs: lastHopAgeMs(),
+      ctxResumes: ctxResumes || 0,
+      watchdogTrips: watchdogTrips || 0,
+      logSeq,
+      logTail: records.slice(-3),
       net: netKind(),
       route: hwCaps.route || "a2dp"
     };
@@ -2102,12 +2266,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       vibSens.value = Math.max(1, Math.min(40, Math.round(p.vibThreshold * 10)));
       vibSensOut.textContent = vibSens.value;
     }
-    if (p.seedAction === "reseed") {
-      seed = Math.floor(Math.random() * 1e9) + 1;
-      rng = mulberry32(seed >>> 0);
-      try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
-      monLog("seed reseeded → " + seed);
-    }
+    if (p.seedAction === "reseed") reseed("patch");
     // Hot-apply in-session — never location.reload. Reschedule only when algo/timing changes.
     const nextAlgo = p.algo ? normalizeAlgo(p.algo) : null;
     if (nextAlgo && nextAlgo !== algo) setAlgo(nextAlgo, false);
@@ -2250,6 +2409,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     lines.push(row("Algorithm", "ok", algo + (vibAuto ? " · vib auto (" + vibClass + ")" : " · manual")));
     lines.push(row("Hop RNG", "ok", "per-device seed " + seed + " — incoherent"));
     lines.push(row("Telemetry", "ok", "deviceId " + deviceId));
+    lines.push(row("Watchdog", watchdogTrips === 0 ? "ok" : "bad",
+      "1 s tick · stall > " + Math.round(stallLimitMs()) + " ms · trips " + watchdogTrips +
+      " · ctx resumes " + ctxResumes));
     lines.push(row("Patch hold", holdManual ? "bad" : "ok", holdManual ? "manual" : "polling " + PATCH_URL));
     lines.push(row("Soundcore 2", "na", "12W · BT 5.0 · BassUp/DSP — expect near-ultrasonic roll-off"));
     lines.push(row("Power fleet", "ok", "continuous 120 V AC (C5) — not battery-limited"));

@@ -25,4 +25,4 @@ Issue:
 
 ## Test plan
 
-- [ ] CI green on this PR (`autoroute`, `static_gates`, `pr_issue_ref`)
+- [ ] CI green on this PR (`autoroute dry-run + clamps`, `HTML Hold + secrets + patch.json`, `PR must reference an issue`, `tests`, `mdc check`)

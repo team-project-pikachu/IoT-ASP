@@ -12,9 +12,16 @@ __pycache__/
 venv/
 .adk/
 .autoroute-dry/
+.vercel/
+.github/secrets.op.env
+.pytest_cache/
+tests/e2e/node_modules/
+tests/e2e/test-results/
+tests/e2e/playwright-report/
 study/
 .swarm/
 .autoroute-dry/
 *.webm
 *.wav
 recordings/
+tests/e2e/.server.log

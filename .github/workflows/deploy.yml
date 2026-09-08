@@ -1,135 +1,283 @@
-# Continuous non-breaking MVP ship → Vercel (preview/test then prod).
-# PR path: CI only. Merge/push to main → CI green → this workflow.
-name: Deploy — continuous MVP ship
+# Continuous ship: GitHub Actions owns every deploy of public/ (issue #27, docs/deploy.md).
+#
+#   CI — no breaking changes (main, success)
+#     └─► secrets_check ─┐
+#         gates ─────────┴─► deploy_dev (env dev) ─► test (env test) ─► deploy_prod (env production)
+#
+# Secrets are referenced by NAME only (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID,
+# VERCEL_DEPLOY_HOOK_PROD, VERCEL_AUTOMATION_BYPASS_SECRET). Missing secrets skip the deploy
+# jobs with a ::notice; they never fail the run. Vercel's Git auto-deploy for main is disabled in
+# vercel.json (git.deploymentEnabled.main: false) so one commit == one Actions-gated deploy.
+#
+# NOTE: `env` context is not available in job-level `if:` / `environment:` (GitHub Actions context
+# availability), so run-level values travel as job outputs of secrets_check (target) or as
+# `vars.PROD_URL || <default>` expressions.
+
+name: Deploy — dev → test → prod
 
 on:
   workflow_run:
     workflows: ["CI — no breaking changes"]
     types: [completed]
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Stop after"
+        type: choice
+        options: [dev, test, prod]
+        default: prod
+      ref:
+        description: "Git ref to deploy (default: main)"
+        type: string
+        required: false
+
+permissions:
+  contents: read
+  deployments: write
 
 concurrency:
   group: deploy-main
   cancel-in-progress: false
 
-permissions:
-  contents: read
+env:
+  PROD_URL: ${{ vars.PROD_URL || 'https://hop-ultrasonic-1digital-design.vercel.app' }}
+  TARGET: ${{ github.event.inputs.target || 'prod' }}
+  # workflow_run must deploy exactly what CI tested; dispatch defaults explicitly to main.
+  DEPLOY_REF: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.inputs.ref || 'main' }}
 
 jobs:
-  # Re-run Hold/clamp/schema gates on the exact CI SHA (never skip).
+  secrets_check:
+    name: secrets present? (names only)
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    outputs:
+      has_cli: ${{ steps.probe.outputs.has_cli }}
+      has_hook: ${{ steps.probe.outputs.has_hook }}
+      target: ${{ github.event.inputs.target || 'prod' }}
+    steps:
+      - name: Probe Vercel secrets (presence only — values are never printed)
+        id: probe
+        env:
+          VT: ${{ secrets.VERCEL_TOKEN }}
+          VO: ${{ secrets.VERCEL_ORG_ID }}
+          VP: ${{ secrets.VERCEL_PROJECT_ID }}
+          HP: ${{ secrets.VERCEL_DEPLOY_HOOK_PROD }}
+        run: |
+          set -u
+          has_cli=false
+          has_hook=false
+          missing=""
+          if [ -n "$VT" ] && [ -n "$VO" ] && [ -n "$VP" ]; then has_cli=true; fi
+          if [ -n "$HP" ]; then has_hook=true; fi
+          [ -n "$VT" ] || missing="$missing VERCEL_TOKEN"
+          [ -n "$VO" ] || missing="$missing VERCEL_ORG_ID"
+          [ -n "$VP" ] || missing="$missing VERCEL_PROJECT_ID"
+          [ -n "$HP" ] || missing="$missing VERCEL_DEPLOY_HOOK_PROD"
+          echo "has_cli=$has_cli" >> "$GITHUB_OUTPUT"
+          echo "has_hook=$has_hook" >> "$GITHUB_OUTPUT"
+          echo "has_cli=$has_cli has_hook=$has_hook"
+          if [ -n "$missing" ]; then
+            echo "::notice title=Vercel secrets::missing:${missing} — see docs/deploy.md and issue #27"
+          fi
+          exit 0
+
   gates:
-    name: autoroute + static gates
-    if: >-
-      github.event.workflow_run.conclusion == 'success'
-      && github.event.workflow_run.event == 'push'
-      && github.event.workflow_run.head_branch == 'main'
+    name: gates (static + dry-run + pytest)
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: refs/heads/main
+          ref: ${{ env.DEPLOY_REF }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: services/autoroute-adk/requirements.txt
+          cache-dependency-path: |
+            requirements-dev.txt
+            services/autoroute-adk/requirements.txt
 
-      - name: Install autoroute package deps
+      - name: Install test + autoroute deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r services/autoroute-adk/requirements.txt
+          pip install -r requirements-dev.txt -r services/autoroute-adk/requirements.txt
 
-      - name: Assert vol_hard_max=100 (drift gate)
+      - name: Assert clamp and schema invariants
         run: |
           PYTHONPATH=services/autoroute-adk python - <<'PY'
           from iot_asp_autoroute.clamps import CLAMPS, SCHEMA_VERSION, validate_patch
           assert SCHEMA_VERSION == 1, SCHEMA_VERSION
           assert CLAMPS["vol_hard_max"] == 100.0, CLAMPS
           assert CLAMPS["vol_soft_max"] == 100.0, CLAMPS
-          ok50, _, c50 = validate_patch({"algo": "hop", "vol": 50, "fMin": 17000, "fMax": 23000})
-          assert ok50 and c50["vol"] == 50.0, c50
-          ok_lin, _, c_lin = validate_patch({"algo": "hop", "vol": 0.5, "fMin": 17000, "fMax": 23000})
-          assert ok_lin and c_lin["vol"] == 50.0, c_lin
-          ok_hi, msg_hi, _ = validate_patch({"algo": "hop", "vol": 101, "fMin": 17000, "fMax": 23000})
-          assert not ok_hi and "hard max" in msg_hi, msg_hi
-          print("vol_hard_max drift gate OK")
+          ok, _, patch = validate_patch(
+              {"algo": "hop", "vol": 50, "fMin": 17000, "fMax": 23000}
+          )
+          assert ok and patch["vol"] == 50.0, patch
+          refused, message, _ = validate_patch(
+              {"algo": "hop", "vol": 101, "fMin": 17000, "fMax": 23000}
+          )
+          assert not refused and "hard max" in message, message
+          print("clamp and schema invariant gate OK")
           PY
 
-      - name: Run scripts/autoroute_dev.sh
-        run: bash scripts/autoroute_dev.sh
-
-      - name: Static gates (Hold/Manual, no keys, schemaVersion)
+      - name: Static gates (Hold/Manual, no keys, schemaVersion, clamps)
         run: bash scripts/ci_static_gates.sh
 
-  deploy:
-    name: Vercel preview then prod
-    needs: [gates]
-    if: >-
-      github.event.workflow_run.conclusion == 'success'
-      && github.event.workflow_run.event == 'push'
-      && github.event.workflow_run.head_branch == 'main'
+      - name: Autoroute dry-run
+        run: bash scripts/autoroute_dev.sh
+
+      - name: pytest
+        run: python3 -m pytest tests -q
+
+  deploy_dev:
+    name: dev (Vercel preview)
+    needs: [secrets_check, gates]
+    if: (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')) && needs.secrets_check.outputs.has_cli == 'true'
     runs-on: ubuntu-latest
+    environment:
+      name: dev
+      url: ${{ steps.deploy.outputs.preview_url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    outputs:
+      preview_url: ${{ steps.deploy.outputs.preview_url }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ env.DEPLOY_REF }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: 20
 
-      - name: Check Vercel GitHub secrets
-        id: vercel_secrets
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Install Vercel CLI (pinned major)
+        run: npm i -g vercel@59
+
+      - name: Pull preview project settings
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build (preview)
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy prebuilt preview
+        id: deploy
         run: |
           set -euo pipefail
-          missing=()
-          [ -n "${VERCEL_TOKEN:-}" ] || missing+=("VERCEL_TOKEN")
-          [ -n "${VERCEL_ORG_ID:-}" ] || missing+=("VERCEL_ORG_ID")
-          [ -n "${VERCEL_PROJECT_ID:-}" ] || missing+=("VERCEL_PROJECT_ID")
-          if [ "${#missing[@]}" -gt 0 ]; then
-            echo "::notice::Auto-deploy skipped — missing GitHub secrets: ${missing[*]}. See docs/ci.md (Continuous ship). Manual path: vercel --prod from hop-ultrasonic (or linked project)."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "ready=true" >> "$GITHUB_OUTPUT"
-          echo "Vercel secrets present — proceeding with preview then prod."
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "preview_url=$url" >> "$GITHUB_OUTPUT"
+          echo "dev preview: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "dev preview: $url"
 
-      - name: Deploy Vercel preview (test)
-        if: steps.vercel_secrets.outputs.ready == 'true'
-        id: preview
+  test:
+    name: test (smoke against preview)
+    needs: [deploy_dev]
+    if: (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')) && (github.event.inputs.target || 'prod') != 'dev' && needs.deploy_dev.outputs.preview_url != ''
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+      url: ${{ needs.deploy_dev.outputs.preview_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_REF }}
+
+      - name: Smoke test preview URL
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PREVIEW_URL: ${{ needs.deploy_dev.outputs.preview_url }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: bash scripts/deploy_smoke.sh "$PREVIEW_URL"
+
+  deploy_prod:
+    name: production (CLI or deploy hook)
+    needs: [secrets_check, gates, test]
+    if: >-
+      !cancelled()
+      && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
+      && needs.secrets_check.outputs.target == 'prod'
+      && needs.gates.result == 'success'
+      && (needs.test.result == 'success' || (needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true'))
+      && (needs.secrets_check.outputs.has_cli == 'true' || needs.secrets_check.outputs.has_hook == 'true')
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PROD_URL || 'https://hop-ultrasonic-1digital-design.vercel.app' }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_REF }}
+
+      - uses: actions/setup-node@v4
+        if: needs.secrets_check.outputs.has_cli == 'true'
+        with:
+          node-version: 20
+
+      - name: Install Vercel CLI (pinned major)
+        if: needs.secrets_check.outputs.has_cli == 'true'
+        run: npm i -g vercel@59
+
+      # ── CLI path (authoritative) ──────────────────────────────────────────
+      - name: Pull production project settings
+        if: needs.secrets_check.outputs.has_cli == 'true'
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build (production)
+        if: needs.secrets_check.outputs.has_cli == 'true'
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy prebuilt to production
+        id: deploy
+        if: needs.secrets_check.outputs.has_cli == 'true'
         run: |
           set -euo pipefail
-          # Pin CLI (matches local Studio pin family); do not use @latest.
-          PREVIEW_URL="$(npx --yes vercel@48.4.1 deploy --yes --token="$VERCEL_TOKEN")"
-          echo "preview_url=${PREVIEW_URL}" >> "$GITHUB_OUTPUT"
-          echo "Preview/test URL: ${PREVIEW_URL}"
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "prod_url=$url" >> "$GITHUB_OUTPUT"
+          echo "prod deployment: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "prod deployment: $url"
 
-      - name: Deploy Vercel production
-        if: steps.vercel_secrets.outputs.ready == 'true'
-        id: prod
+      # ── Deploy Hook fallback (only when the CLI secrets are absent) ────────
+      - name: Warn when a non-main ref cannot be honoured by the deploy hook
+        if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true' && github.event.inputs.ref != '' && github.event.inputs.ref != 'main'
+        run: echo "::warning title=Deploy hook::the gh-actions-prod hook always builds ref main on Vercel; dispatch ref input is ignored on the hook path"
+
+      - name: Trigger Vercel Deploy Hook gh-actions-prod
+        if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true'
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_DEPLOY_HOOK_PROD: ${{ secrets.VERCEL_DEPLOY_HOOK_PROD }}
         run: |
           set -euo pipefail
-          PROD_URL="$(npx --yes vercel@48.4.1 deploy --prod --yes --token="$VERCEL_TOKEN")"
-          echo "prod_url=${PROD_URL}" >> "$GITHUB_OUTPUT"
-          echo "Production URL: ${PROD_URL}"
-          echo "Alias (stable): https://hop-ultrasonic.vercel.app/"
+          resp=$(curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_PROD")
+          printf '%s' "$resp" | python3 -c 'import json,sys; j=json.load(sys.stdin)["job"]; print("deploy hook job", j["id"], j["state"])'
 
-      - name: Skip summary
-        if: steps.vercel_secrets.outputs.ready != 'true'
+      - name: Poll production until the smoke test passes (≤ 5 min)
+        if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true'
+        env:
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
-          echo "Deploy job completed without Vercel promote (secrets not configured)."
-          echo "Required repository secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID"
-          echo "Documented in docs/ci.md — manual: vercel --prod"
+          set -uo pipefail
+          # Give the Vercel-side build a head start, then poll 10 × 30 s.
+          sleep 30
+          for i in $(seq 1 10); do
+            if SMOKE_RETRIES=1 SMOKE_SLEEP_S=0 bash scripts/deploy_smoke.sh "$PROD_URL"; then
+              echo "poll $i/10: production smoke OK"
+              exit 0
+            fi
+            echo "poll $i/10: not ready yet, sleeping 30 s"
+            sleep 30
+          done
+          echo "::error::production smoke did not pass within 5 min after deploy hook"
+          exit 1
+
+      # ── Final smoke (both paths) ──────────────────────────────────────────
+      - name: Final smoke test against production
+        env:
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          set -euo pipefail
+          bash scripts/deploy_smoke.sh "$PROD_URL"
+          echo "prod: $PROD_URL" >> "$GITHUB_STEP_SUMMARY"
