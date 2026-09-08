@@ -16,8 +16,11 @@ except ImportError as e:  # pragma: no cover
 
 from .tools import (
     colab_handoff_note,
+    fleet_log_summary,
+    hw_limits_report,
     ingest_telemetry,
     list_safety_clamps,
+    live_features,
     process_sudden_freq,
     read_telemetry,
     seismo_acoustic_priors,
@@ -43,6 +46,8 @@ Goals:
 - Respect Hold/Manual: if holdManual is true, do not write patches.
 - No street addresses or personal data in rationale.
 - Pair with Gemini Enterprise engine id iot-asp-autoroute and Colab ETL features when present.
+- fleet_log_summary gives the day's structured log aggregate; live_features projects sensor features
+  (never patches); hw_limits_report explains what the web fleet cannot do (full AEC, LF mic/TX).
 """
 
 root_agent = LlmAgent(
@@ -58,5 +63,8 @@ root_agent = LlmAgent(
         colab_handoff_note,
         ingest_telemetry,
         process_sudden_freq,
+        fleet_log_summary,
+        live_features,
+        hw_limits_report,
     ],
 )

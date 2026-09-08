@@ -47,15 +47,31 @@ Tracked as GitHub milestones M0–M5 (seeds, monitoring, vib rotation, RLHF ±, 
 - Knowledge base: `reference/knowledge-base/` + `bash scripts/kb_refresh.sh`
 - Private study: local `study/` (gitignored)
 
+## Developer workflow
+
+- **Project memory:** `CLAUDE.md` (invariants, commands) + path-scoped `.claude/rules/*.md`. Cursor rules in `.cursor/rules/*.mdc` convert deterministically with `python3 scripts/mdc_convert.py` (mapping table in `CLAUDE.md`; CI runs `--check`).
+- **Feature specs:** `docs/specs/` — one per Project 5 issue; index in `docs/specs/README.md` and `SPEC.md`.
+- **Local gates:** `make all` = `scripts/ci_static_gates.sh` + `scripts/autoroute_dev.sh` + `pytest tests` + `mdc_convert.py --check` (`pip install -r requirements-dev.txt` first).
+- **CI:** `.github/workflows/ci.yml` (jobs `autoroute`, `static_gates`, `tests`, `mdc check`, `pr_issue_ref`). PRs must reference an issue.
+- **Ship:** `.github/workflows/deploy.yml` — gates → **dev** (Vercel preview) → **test** (smoke) → **prod**; secrets by name only (`docs/deploy.md`, issue #27). Vercel's own Git auto-deploy is disabled in `vercel.json` so Actions owns deploys.
+- **Main protection:** `.github/rulesets/main-protection.json` (import at Settings → Rules or `make protect-main`; `docs/branch-protection.md`).
+
 ## Layout
 
 ```
 public/                 # shipped static web blaster (PWA)
-docs/                   # gemini, ADK, autoroute, physics, Colab
-services/autoroute-adk/ # Google ADK Python agent
+docs/                   # gemini, ADK, autoroute, physics, Colab, deploy, branch protection
+docs/specs/             # feature specs per Project 5 issue
+services/autoroute-adk/ # Google ADK Python agent (+ fleet_log, features_live, mic_diff)
+tests/                  # pytest + tests/e2e (Playwright smoke)
+scripts/                # gates, dry-run, mdc_convert, deploy smoke, gh_protect_main
 notebooks/              # Colab ETL stub
 reference/knowledge-base/  # Context7 refreshable KB
 reference/knowledge/    # Firecrawl ingest (incl. ADK)
+.claude/                # Claude Code rules (path-scoped) + converted skills/manifest
+.github/                # ci.yml, deploy.yml, rulesets/, PR template
+CLAUDE.md               # project memory (Cursor .mdc converted blocks live here)
 SPEC.md
+Makefile
 vercel.json
 ```
