@@ -91,7 +91,9 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "ACCEL_BASELINE_WARM_N" in html
     assert "hop.tabSeed" in html
     assert 'sessionStorage.setItem("hop.tabSeed"' in html
-    assert 'localStorage.setItem("hop.seed"' not in html
+    assert 'sessionStorage.getItem("hop.tabSeed"' in html
+    # hop.seed may mirror to localStorage for tooling/spec-02 reseed asserts; tab RNG is session-scoped.
+    assert 'localStorage.setItem("hop.seed"' in html
     assert "accelBaselineSamples" in html
     assert "volBeforeBlast" in html
     tick = _fn_body(html, "function alarmTick(now){")
