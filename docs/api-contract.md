@@ -10,7 +10,7 @@
 3. No site PII (addresses, names, speech) in telemetry or public artifacts.
 4. Phone TX audio is **iOS native A2DP only** (not Web Bluetooth). See [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md).
 5. Fleet power assumption: **continuous 120 V AC** (**C5**) — patches must not encode battery-save duty cycles.
-6. Optional LF TX: telemetry `band` is `10-20` or `17-23k` (**C6**).
+6. Public TX band: telemetry `band` is **`17-23k`** (**C6**; `10-20` UI removed; patches with `10-20` are clamped to US).
 
 ## Endpoints (frontend view)
 

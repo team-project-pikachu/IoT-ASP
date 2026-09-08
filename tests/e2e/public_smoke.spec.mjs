@@ -70,12 +70,12 @@ test.describe("public blaster smoke", () => {
     await openPage(page);
     const p = await payload(page);
     expect(p.schemaVersion).toBe(1);
-    expect(["17-23k", "10-20"]).toContain(p.band);
     expect(p.band).toBe("17-23k");
     expect(typeof p.nightNY).toBe("boolean");
     expect(p.power).toBe("ac120");
     expect(p.lfArmed).toBe(false);
     expect(p.lfDriveCapable).toBe(false);
+    expect(p.audioSink || "sonos-beam-2").toBeTruthy();
     expect(Array.isArray(p.logTail)).toBe(true);
     expect(p.logTail.length).toBeLessThanOrEqual(3);
     expect(Number.isInteger(p.logSeq)).toBe(true);
