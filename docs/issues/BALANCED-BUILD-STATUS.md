@@ -1,7 +1,7 @@
 # Balanced build status — open issues
 
 **Election:** 2 = Balanced (stub-first iterate).
-**Branch:** `chore/balanced-issue-stubs`
+**Branch tip:** `feat/balanced-mvp-roadmap-docs` (rebased onto `main`)
 **Date:** 2026-09-08
 
 | Issue | Classification | Title | Key paths |
@@ -40,20 +40,31 @@
 | #51 | duplicate | dup of #45 | see #45 |
 | #52 | duplicate | dup of #41 | see #41 |
 | #53 | duplicate | dup of #43 | see #43 |
+| #60 | stub | ADK Cloud Run deploy | `docs/issues/ISSUE-60-*` |
+| #61 | qs+UI | Backend URL wiring | `?patch=` / `?telemetry=` + `telemetryUrlLabel` |
+| #62 | checklist | Field acceptance + e2e | `docs/issues/ISSUE-62-*`, `tests/e2e/` |
+| #63 | stub | Main protection apply | ruleset JSON + script |
+| #64 | stub | SEBoK V&V pass | `.vv/matrix.md` |
+| #65 | closed tracker | closed-log automation | see #68 |
+| #68 | docs+workflow | Closed-issue log | `docs/mvp-closed-log.md` + Action |
+| #69 | docs | MVP roadmap | `docs/mvp-roadmap.md` + README |
 
 ## Summary
 - **Implemented / docs shipped:** #1 (already), #22 (extended), #26 dry-run (live pending), #27 docs, #34 GEN_MARK, #43 Soundcore docs.
 - **Working stubs:** #11 static fleet cards, #41 native Xcode/SPM stub, #42/#44/#45 impulse+alarm web, #39 Sonos ADR + shell.
+- **PR6 (this branch):** MVP roadmap/closed-log (#68/#69), #61 telemetry label, #60–#64 stubs, #62 checklist.
 - **Parked ADR-only:** #2–#8, #10, #14, #15, #18, #19, #24, #25 (+ duplicates #46–#53).
-- **Blocked on owner secrets:** #27 (VERCEL_*), #26 live GCS (`GCP_SA_JSON` / `IOT_ASP_GCS_BUCKET` / `LIVE_GCS`).
-
-## Overlap with open PRs
-- PR #35 — same #34 GEN_MARK guard (landed here too for Balanced PR).
-- PR #40 — Sonos #39 docs (this branch includes `docs/sonos-beam.md` + shell stub).
-- PR #36 — ADK vendor (orthogonal; not forced here).
-
+- **Blocked on owner secrets:** #27 (VERCEL_*), #26 live GCS (`GCP_SA_JSON` / `IOT_ASP_GCS_BUCKET` / `LIVE_GCS`), #60/#61 live URLs, #63 apply, #64 pass rows.
 
 ## Stacked PRs
 
 See [STACKED-PRS.md](STACKED-PRS.md).
 
+## Overlap with open PRs
+- PR #35 — same #34 GEN_MARK guard (landed here too for Balanced PR).
+- PR #40 — Sonos #39 docs (this branch includes `docs/sonos-beam.md` + shell stub).
+- PR #36 — ADK vendor (orthogonal; not forced here).
+- PR #74 / #79 — parallel MVP closed-log / study-package tracks (coordinate on merge).
+
+## Stacked PRs
+See [STACKED-PRS.md](STACKED-PRS.md).
