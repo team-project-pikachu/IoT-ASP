@@ -441,3 +441,27 @@ def test_nest_mock_is_schema_version_1_and_carries_no_pii() -> None:
     # Google's docs placeholders only — never a real resource name, preview URL or address.
     for forbidden in ("previewUrl", "enterprises/", "structures/", "home.google.com", "@gmail.com"):
         assert forbidden not in blob, forbidden
+
+
+def test_nest_url_override_cannot_be_pointed_off_origin(html: str) -> None:
+    """CodeQL client-side request forgery (alert 26): `?nest=` is attacker-controllable.
+
+    A crafted link must not be able to make a victim's page fetch an arbitrary URL. The
+    guard resolves the value against location.href and requires (a) the SAME origin and
+    (b) a plain `*.json` path. Same-origin alone stops the forgery; the path shape stops
+    a junk value issuing a pointless request and stops a crafted override reaching an
+    unrelated same-origin endpoint (`/../../etc/passwd` normalises to `/etc/passwd`).
+
+    `?patch=` is deliberately NOT restricted this way: docs/api-contract.md documents it
+    as accepting an absolute live-backend URL. The Nest status object is always written
+    beside patch.json on our own origin, so the restriction costs nothing there.
+    """
+    assert "function sameOriginPath(candidate, fallback){" in html
+    guard = _fn_body(html, "function sameOriginPath(candidate, fallback){")
+    assert "new URL(" in guard
+    assert "u.origin !== location.origin" in guard, "must compare origins"
+    assert ".json$" in guard, "must constrain the resolved path shape"
+    assert "return fallback" in guard
+    # the override is routed through the guard, never used raw
+    assert 'const NEST_URL = sameOriginPath(qs.get("nest"), BACKEND_NEST_PATH);' in html
+    assert 'qs.get("nest") ||' not in html, "raw ?nest= must not reach fetch()"

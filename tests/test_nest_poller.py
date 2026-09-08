@@ -397,7 +397,7 @@ def test_np05_plan_is_pure():
 # NP-06 step() executes AT MOST ONE API call — checked every single step
 def test_np06_step_makes_at_most_one_call():
     limiter = SdmRateLimiter(rng=random.Random(2))
-    np, client, clock, _s = build(limiter=limiter, puller=FakePuller(load_envelopes(), repeat=True))
+    np, client, clock, _s = build(per_camera_get=True, limiter=limiter, puller=FakePuller(load_envelopes(), repeat=True))
     seen_kinds: set[str] = set()
     for _ in range(400):
         before = client.calls
@@ -449,7 +449,7 @@ def simulate(hours: float = 2.5, *, seed: int = 85, **kwargs: Any):
 
 # NP-08 over a long run the emitted call log never violates the documented quotas
 def test_np08_long_run_never_exceeds_documented_quotas():
-    np, client, clock, _sink, summary, _lim = simulate(hours=2.5)
+    np, client, clock, _sink, summary, _lim = simulate(hours=2.5, per_camera_get=True)
     assert clock.t >= 2.5 * 3600.0
     assert client.calls > 100, "the run must actually be continuous, not idle"
 
@@ -471,7 +471,7 @@ def test_np08_long_run_never_exceeds_documented_quotas():
 
 # NP-09 continuous, not bursty: every stream keeps running for the whole horizon
 def test_np09_run_is_continuous_not_bursty():
-    _np, client, clock, _sink, _summary, _lim = simulate(hours=2.5)
+    _np, client, clock, _sink, _summary, _lim = simulate(hours=2.5, per_camera_get=True)
     horizon = clock.t
     for times in (
         client.times(constants.METHOD_DEVICES_LIST),
@@ -495,7 +495,7 @@ def test_np09_run_is_continuous_not_bursty():
 
 # NP-10 the stagger really separates N cameras (they never come due together)
 def test_np10_cameras_are_phase_staggered():
-    np, client, clock, _s = build()
+    np, client, clock, _s = build(per_camera_get=True, )
     np.step(0.0)  # devices.list discovers three cameras at the same instant
     scheduled = sorted(np._next_device_at.values())  # noqa: SLF001 - white-box on purpose
     assert len(scheduled) == len(CAMERA_IDS)
@@ -839,7 +839,7 @@ def test_np23_state_record_is_written_without_a_raw_device_id(dry_root):
 # NP-24 PII: no raw SDM device id in a step result or in health()
 def test_np24_no_raw_device_id_escapes():
     limiter = SdmRateLimiter(rng=random.Random(6))
-    np, _c, clock, _s = build(limiter=limiter, puller=FakePuller(load_envelopes()))
+    np, _c, clock, _s = build(per_camera_get=True, limiter=limiter, puller=FakePuller(load_envelopes()))
     results = []
     for _ in range(60):
         results.append(np.step(clock.t))
@@ -952,3 +952,30 @@ def test_np21_forbidden_keys_is_used_not_dead_code():
     for key in ("vol", "algo", "fMin", "fMax", "pulseMs", "shriekMs", "vibThreshold",
                 "seedAction", "priors", "holdManual", "suddenFreq"):
         assert key in real, f"{key} must stay in FORBIDDEN_KEYS"
+
+
+# NP-25 the default schedule reserves the per-camera budget for commands
+def test_np25_default_reserves_command_headroom():
+    """A camera's instance budget is shared between devices.get and executeCommand.
+
+    The bucket's pacing floor is the documented 100 QPH camera cap = 36.0 s, while an
+    event image must be fetched inside constants.EVENT_IMAGE_TTL_S = 30.0 s. So one
+    liveness `get` blocks a CameraEventImage.GenerateImage for LONGER than the image
+    exists. Spending the budget on liveness therefore breaks the reactive path that is
+    the whole point of #103 — and it buys nothing, because devices.list runs 3x more
+    often and already carries connectivity.
+
+    Default must be: no per-camera gets, budget reserved for commands.
+    """
+    np, _c, _k, _s = build()
+    assert np.health()["perCameraGet"] is False
+    assert np.health()["commandHeadroomReserved"] is True
+    # the arithmetic that makes this necessary, from the frozen constants
+    assert constants.DEFAULT_CAMERA_CADENCE_S == 36.0
+    assert constants.EVENT_IMAGE_TTL_S == 30.0
+    assert constants.DEFAULT_CAMERA_CADENCE_S > constants.EVENT_IMAGE_TTL_S, (
+        "if this ever inverts, per-camera polling stops being self-defeating"
+    )
+    # opt-in still works for callers that want liveness polling
+    np2, _c2, _k2, _s2 = build(per_camera_get=True)
+    assert np2.health()["perCameraGet"] is True

@@ -308,6 +308,7 @@ class NestPoller:
         limiter: Any | None = None,
         list_cadence_s: float | None = None,
         camera_cadence_s: float | None = None,
+        per_camera_get: bool = False,
         events_cadence_s: float = MIN_EVENTS_CADENCE_S,
         clock: Callable[[], float] = time.monotonic,
         rng: random.Random | None = None,
@@ -346,6 +347,7 @@ class NestPoller:
             "list_cadence_s",
             f"devices.list is {constants.METHOD_QUOTAS[constants.METHOD_DEVICES_LIST][0]} QPM",
         )
+        self._per_camera_get = bool(per_camera_get)
         self._camera_cadence_s = _validate_cadence(
             camera_cadence_s,
             constants.DEFAULT_CAMERA_CADENCE_S,
@@ -465,7 +467,19 @@ class NestPoller:
             )
         )
 
-        for index, device_id in enumerate(self._device_order):
+        # Per-camera devices.get is OPT-IN and off by default. It shares the
+        # `device:<id>` quota bucket with devices.executeCommand, and the bucket's
+        # pacing floor is the 100 QPH camera cap = 36.0 s. So one liveness get blocks
+        # every command against that camera for 36 s — longer than the 30 s
+        # constants.EVENT_IMAGE_TTL_S window in which a CameraEventImage.GenerateImage
+        # snapshot must be fetched. Measured over a simulated hour with one camera at
+        # the default cadence: 96% of commands throttled, 16% past the TTL. Raising the
+        # cadence only halves it — the 36 s floor still exceeds the 30 s TTL — so the
+        # fix is to not spend the budget at all.
+        #
+        # Nothing is lost: devices.list runs at 12.0 s (3x more often) and returns full
+        # device objects, and _register reads connectivity straight off that result.
+        for index, device_id in enumerate(self._device_order if self._per_camera_get else ()):
             scheduled = self._next_device_at.get(device_id)
             if scheduled is None:
                 continue
@@ -872,6 +886,8 @@ class NestPoller:
             "holdManual": self._hold_manual,
             "listCadenceS": self._list_cadence_s,
             "cameraCadenceS": self._camera_cadence_s,
+            "perCameraGet": self._per_camera_get,
+            "commandHeadroomReserved": not self._per_camera_get,
             "effectiveCameraCadenceS": self.effective_camera_cadence_s(),
             "eventsCadenceS": self._events_cadence_s,
             "jitterFrac": self._jitter_frac,

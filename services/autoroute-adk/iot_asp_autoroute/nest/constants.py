@@ -2,7 +2,9 @@
 
 Every identifier and every number in this module is copied from a Google
 developer-documentation page that was fetched for the #85 build, not from model
-recall. Sources are named per block; the full digest with fetch dates lives in
+recall — with exactly one labelled exception, ``DEVICE_QUOTAS[TYPE_DISPLAY]``, which
+is a deliberate conservative choice and is marked as such at its definition. Sources
+are named per block; the full digest with fetch dates lives in
 ``reference/knowledge/nest-device-access/`` and the spec is
 ``docs/specs/85-nest-google-home-integration.md``.
 
@@ -178,12 +180,27 @@ METHOD_QUOTAS: Final[dict[str, tuple[int, int | None]]] = {
 }
 
 # Per device instance, per project, per user.
+#
+# The limits page tabulates exactly three device types — THERMOSTAT, CAMERA, DOORBELL —
+# and states: "If a device type is not listed below, it does not have device instance
+# level rate limits."
+#
+# DISPLAY is therefore NOT a documented row. The value below is an UNVERIFIED,
+# deliberately conservative extrapolation from CAMERA: a Nest Hub Max exposes the camera
+# traits, and pacing a device more strictly than the vendor requires can only cost
+# freshness, never a RESOURCE_EXHAUSTED. Do not cite it as documented, and re-check the
+# page before relaxing it.
 DEVICE_QUOTAS: Final[dict[str, tuple[int, int | None]]] = {
     TYPE_CAMERA: (30, 100),
     TYPE_DOORBELL: (30, 100),
-    TYPE_DISPLAY: (30, 100),
+    TYPE_DISPLAY: (30, 100),  # UNVERIFIED — see note above
     TYPE_THERMOSTAT: (5, 100),
 }
+
+#: Device types whose instance quota is quoted verbatim from the limits page.
+DOCUMENTED_DEVICE_QUOTAS: Final[frozenset[str]] = frozenset(
+    {TYPE_CAMERA, TYPE_DOORBELL, TYPE_THERMOSTAT}
+)
 
 # "Each trait command is limited to 5 QPM per project, per user, per device."
 TRAIT_COMMAND_QPM: Final[int] = 5

@@ -113,6 +113,7 @@ names or Google Home structure URLs in tracked files; drift in the documented qu
 |------|----------|
 | SDM is functionally frozen; newer Nest hardware appears only in the mobile-only Home APIs | SDM is the only headless REST + Pub/Sub path; adapter seam kept behind event ingest |
 | Quotas are the **sandbox** table; a launched project may differ | Constants gate fails loudly on drift rather than pacing wrong silently |
+| `DEVICE_QUOTAS[TYPE_DISPLAY]` is **not documented** — the limits page tabulates only THERMOSTAT, CAMERA and DOORBELL, and says an unlisted type has no instance limit | Kept as a conservative extrapolation from CAMERA and labelled UNVERIFIED in `constants.py`; over-pacing costs freshness, never `RESOURCE_EXHAUSTED` |
 | `group:sdm-publisher@googlegroups.com` mis-entered as `serviceAccount:` | Fails **silently** with zero events; bootstrap reads the IAM policy back as evidence |
 | Refresh token revoked after 6 months idle | Poller performs the required first `devices.list` on startup |
 | Latency floor | Vendor delivery (~1–3 s) + the phone's 2–5 s patch poll dominate; not ours to shorten |

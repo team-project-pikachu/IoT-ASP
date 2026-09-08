@@ -643,7 +643,29 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     || BACKEND_TELEMETRY_URL
     || (BACKEND_BASE_URL ? joinBackend(BACKEND_BASE_URL, BACKEND_TELEMETRY_PATH) : "");
   const POLL_MS = Math.max(2000, Math.min(5000, +(qs.get("pollMs") || BACKEND_POLL_MS_DEFAULT)));
-  const NEST_URL = qs.get("nest") || BACKEND_NEST_PATH;
+  // CodeQL client-side request forgery: `?nest=` is attacker-controllable via a crafted
+  // link, so it must not be able to point the page's fetch at an arbitrary host. Unlike
+  // `?patch=`, which is DOCUMENTED as accepting an absolute live-backend URL
+  // (docs/api-contract.md), the Nest status object is always same-origin — the backend
+  // writes it beside patch.json — so same-origin is a real restriction that costs nothing.
+  // new URL() also gives an opaque ("null") origin for javascript:/data:, so those fail
+  // the comparison too.
+  function sameOriginPath(candidate, fallback){
+    if (!candidate) return fallback;
+    try {
+      const u = new URL(String(candidate), location.href);
+      if (u.origin !== location.origin) return fallback;
+      // Same-origin is what stops the forgery, but a junk value like "::::" still
+      // resolves same-origin to "/::::" and would issue a pointless request. Require a
+      // plain path so a malformed override falls back instead of guessing.
+      // Tight shape: a plain same-origin *.json path. Blocks junk like "::::" and stops a
+      // crafted override reaching an unrelated same-origin endpoint ("/../../etc/passwd"
+      // normalises to "/etc/passwd" and would otherwise be fetched).
+      if (!/^\/[A-Za-z0-9._~\-/]*\.json$/.test(u.pathname)) return fallback;
+      return u.pathname + u.search;
+    } catch (e) { return fallback; }
+  }
+  const NEST_URL = sameOriginPath(qs.get("nest"), BACKEND_NEST_PATH);
   const NEST_POLL_MS = Math.max(5000, Math.min(60000, +(qs.get("nestMs") || 15000)));
   const VOL_PATCH_MAX = 100, VOL_STEP = 0.5;
   const BAND_US_LO = 17000, BAND_US_HI = 23000, BAND_LF_LO = 10, BAND_LF_HI = 20;
