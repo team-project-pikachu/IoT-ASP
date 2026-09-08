@@ -261,6 +261,31 @@ test.describe("public blaster smoke", () => {
     await expect(page.locator("#fleetPanel")).toBeAttached();
     await expect(page.locator("#fleetBackendStrip")).toBeAttached();
     await expect(page.locator("#simImpulseBtn")).toBeAttached();
+    // Before any rotation sample, optional gyro keys must be omitted (not numeric zeros)
+    const before = await payload(page);
+    expect(before.gx).toBeUndefined();
+    expect(before.gy).toBeUndefined();
+    expect(before.gz).toBeUndefined();
+    expect(before.absOmega).toBeUndefined();
+    // DeviceMotionEvent.rotationRate is deg/s; frontend must convert to rad/s
+    await page.evaluate(() => {
+      const ev = new DeviceMotionEvent("devicemotion", {
+        acceleration: { x: 0.01, y: 0, z: 0, interval: 0 },
+        accelerationIncludingGravity: { x: 0.01, y: 0, z: 9.8, interval: 0 },
+        rotationRate: { alpha: 57.2957795, beta: 0, gamma: 0 }, // ~1 rad/s
+        interval: 16
+      });
+      window.dispatchEvent(ev);
+    });
+    await page.waitForFunction(() => {
+      const p = window.__hop.telemetryPayload();
+      return typeof p.gx === "number" && typeof p.absOmega === "number";
+    }, null, { timeout: 5000 });
+    const pGyro = await payload(page);
+    expect(pGyro.gx).toBeCloseTo(1, 1);
+    expect(pGyro.gy).toBeCloseTo(0, 5);
+    expect(pGyro.gz).toBeCloseTo(0, 5);
+    expect(pGyro.absOmega).toBeGreaterThan(0.05);
     await page.click("#simImpulseBtn");
     await page.waitForFunction(() => {
       const p = window.__hop.telemetryPayload();
@@ -268,10 +293,8 @@ test.describe("public blaster smoke", () => {
     }, null, { timeout: 5000 });
     const p = await payload(page);
     expect(typeof p.gx).toBe("number");
-    expect(typeof p.gy).toBe("number");
-    expect(typeof p.gz).toBe("number");
-    expect(typeof p.absOmega).toBe("number");
     expect(p.schemaVersion).toBe(1);
+    expect(typeof p.ts).toBe("string");
     await expect(page.locator("#fleetBackendStrip")).toContainText("telemetry");
     expect(errors).toEqual([]);
   });

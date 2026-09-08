@@ -587,7 +587,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let lastImpulseAt=0, alarmQuietSince=0, accelBaseline=0.05;
   const IMPULSE_ACCEL_DELTA = 0.45;
   let ax=0, ay=0, az=0;
-  let gx=0, gy=0, gz=0, absOmega=0;
+  let gx=0, gy=0, gz=0, absOmega=0, gyroSampled=false;
+  const DEG_TO_RAD = Math.PI / 180;
   let accelMag=0, lfMag=0, acousticEnergy=-120;
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
@@ -1274,11 +1275,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       accelBaseline = emaA;
       if (dA >= IMPULSE_ACCEL_DELTA) noteImpulse(true, false);
     }
-    // api-contract optional gyro axes (rad/s when available; else stay 0)
+    // DeviceMotionEvent.rotationRate is deg/s — convert to rad/s for contract/ETL (#26)
     const rr = e.rotationRate;
-    if (rr) {
-      gx = rr.alpha || 0; gy = rr.beta || 0; gz = rr.gamma || 0;
+    if (rr && (rr.alpha != null || rr.beta != null || rr.gamma != null)) {
+      gx = (rr.alpha || 0) * DEG_TO_RAD;
+      gy = (rr.beta || 0) * DEG_TO_RAD;
+      gz = (rr.gamma || 0) * DEG_TO_RAD;
       absOmega = 0.85 * absOmega + 0.15 * Math.hypot(gx, gy, gz);
+      gyroSampled = true;
     }
     // crude LF proxy: low-pass of magnitude deltas
     const g = e.accelerationIncludingGravity;
@@ -2283,7 +2287,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState, impulse, volBlast, deviceId }),
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState, impulse, volBlast, deviceId, instanceId }),
     getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
 
@@ -2339,7 +2343,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   function telemetryPayload(){
     const suddenFreq = !!(geminiAutorouteFlag || suddenState === "rotate" || suddenState === "onset" || soundBurst);
-    return {
+    const payload = {
       schemaVersion: SCHEMA_VERSION,
       deviceId,
       ts: new Date().toISOString(),
@@ -2365,9 +2369,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       absA: accelMag,
       a: accelMag,
       ax, ay, az,
-      absOmega,
-      omega: absOmega,
-      gx, gy, gz,
       micEnergy: Math.round((isFinite(acousticEnergy) ? acousticEnergy : -120) * 10) / 10,
       outLevel: Math.round((isFinite(outLevel) ? outLevel : -120) * 10) / 10,
       micDiff: Math.round((isFinite(micDiff) ? micDiff : -120) * 10) / 10,
@@ -2400,6 +2401,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       volBlast: !!volBlast,
       alarmState
     };
+    if (gyroSampled) {
+      payload.absOmega = absOmega;
+      payload.omega = absOmega;
+      payload.gx = gx;
+      payload.gy = gy;
+      payload.gz = gz;
+    }
+    return payload;
   }
 
   const fleetPeers = {};

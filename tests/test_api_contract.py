@@ -25,6 +25,7 @@ CONTRACT = (ROOT / "docs" / "api-contract.md").read_text(encoding="utf-8")
 STAR_FIELDS = (
     "schemaVersion",
     "deviceId",
+    "ts",
     "algo",
     "suddenFreq",
 )
@@ -82,3 +83,12 @@ def test_backend_url_constants_empty_by_default() -> None:
 
 def test_no_navigator_bluetooth_tx() -> None:
     assert "navigator.bluetooth" not in HTML
+
+
+def test_gyro_rad_conversion_and_omit_until_sampled() -> None:
+    assert "DEG_TO_RAD" in HTML
+    assert "gyroSampled" in HTML
+    assert "payload.gx = gx" in HTML
+    assert "if (gyroSampled)" in HTML
+    # raw deg/s must not be assigned without conversion
+    assert "gx = (rr.alpha || 0) * DEG_TO_RAD" in HTML

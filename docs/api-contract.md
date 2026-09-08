@@ -132,7 +132,7 @@ Compact JSON heartbeat. Required fields marked ★.
 | `lastHopAgeMs` / `ctxResumes` / `watchdogTrips` | | number | Watchdog health counters — #3 |
 | `logSeq` / `logTail` | | number / array | Structured monitor-log sequence + last 3 records (`{seq, ts, level, event, msg, fields}`, no PII) — #22 |
 | `ax` `ay` `az` / `accelAxes` | | number / [3] | Linear acceleration axes (g) when available — #26 |
-| `gx` `gy` `gz` / `gyroAxes` | | number / [3] | Rotation-rate axes (deg/s) when available — #26 |
+| `gx` `gy` `gz` / `gyroAxes` | | number / [3] | Rotation-rate axes (rad/s; frontend converts DeviceMotion deg/s) when a sample exists — #26 |
 | `outLevel` | | number | Output bus level (dB) used for `micDiff` — #25/#26 |
 | `micDiff` | | number | `micEnergy − 0.85·outLevel` (best-effort AEC; browser cannot do full AEC) — #25 |
 | `bandBurst` | | string | `lf` \| `us` \| `both` burst classification — #25/#26 |

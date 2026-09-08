@@ -1,14 +1,62 @@
 # #64 — Software-only verify evidence (Balanced PR7)
 
-**Date:** 2026-09-08  
+**Date (UTC):** 2026-09-08T05:00:38Z
+**Revision:** `4fe5f64` (feat/balanced-api-contract-vv tip at evidence capture)
 **Honesty:** marks **CI-verifiable** procedures only. Does **not** claim matrix `pass` for field lab / HW rows.
 
-## Commands (local / Actions `tests` job)
+## Observed command results
 
-```bash
-python -m pytest tests/test_api_contract.py tests/test_fleet_log.py tests/test_public_html.py tests/test_ruleset_json.py -q
-bash scripts/ci_static_gates.sh
-bash scripts/autoroute_dev.sh
+### `python3 -m pytest tests/test_api_contract.py tests/test_fleet_log.py tests/test_public_html.py tests/test_ruleset_json.py -q`
+
+- **exit_code:** `0` → PASS
+
+```
+........................................................................ [ 48%]
+........................................................................ [ 96%]
+......                                                                   [100%]
+150 passed in 0.84s
+```
+
+### `bash scripts/ci_static_gates.sh`
+
+- **exit_code:** `0` → PASS
+
+```
+no API key patterns in public/index.html OK
+patch.json schemaVersion=1 OK
+clamps SCHEMA_VERSION=1 vol_hard_max=100.0 OK
+OK ci_static_gates
+```
+
+### `bash scripts/autoroute_dev.sh`
+
+- **exit_code:** `0` → PASS
+
+```
+ell/pulse/shriek jitter) then author a clamped GCS patch for the node.\n- linearized_acoustic: From compressible Navier\u2013Stokes under small perturbations \u2192 linearized acoustic wave equation (1/c0^2)\u2202t\u00b2p' \u2212 \u2207\u00b2p' = S (Lighthill-type sources). Near-ultrasonic air path 17\u201323 kHz is weakly nonlinear at residential gain; band limits are hard constraints. Cite arXiv:2307.01775, arXiv:2509.17986.\n- navier_stokes_constraint: Do NOT claim full Navier\u2013Stokes / CFD on-device. Use linearized acoustics and coupling analogies as soft priors only (docs/physics.md).\n- structure_borne: Structure-borne / seismo-acoustic coupling: chair/floor frames transmit broadband vibration; prefer pulse/shriek/burst over continuous hop when vibClass=physical. Cite arXiv:2211.03647 (seismo-acoustic nuisance) + seated WBV human\u2013seat PMIDs (e.g. 27780424).",
+  "priorWeights": {
+    "am_gate": 0.25,
+    "burst": 0.4,
+    "shriek_chirp": 0.35
+  },
+  "priors": [
+    "sudden_freq",
+    "linearized_acoustic",
+    "navier_stokes_constraint",
+    "structure_borne"
+  ],
+  "pulseMs": 90.0,
+  "rationale": "suddenFreq autorotate for node1 @ 19500 Hz; vibClass=physical; band=17-23k; bandBurst=none; weights\u2192burst among ['burst', 'shriek_chirp', 'am_gate']; NS/linearized/seismo priors as constraints only",
+  "schemaVersion": 1,
+  "seedAction": "keep",
+  "shriekMs": 55.0,
+  "trigger": "suddenFreq",
+  "vibThreshold": 0.15,
+  "vol": 100.0
+}
+
+DRY-RUN OK
+OK fleet_log jsonl
 ```
 
 ## Mapped rows (status → `in_progress`, not `pass`)
@@ -18,9 +66,10 @@ bash scripts/autoroute_dev.sh
 | C1-BT | `navigator.bluetooth` absent in `public/index.html` | `tests/test_api_contract.py`, `test_public_html.py` |
 | C4-VOL | `vol_hard_max==100` + HTML vol path | CI autoroute job + `ci_static_gates.sh` |
 | C5-120V | telemetry `power: "ac120"` | `test_public_html` / e2e payload |
-| SCH1 | `schemaVersion: 1` patch+telemetry | `test_api_contract`, `test_public_html` |
+| SCH1 | `schemaVersion: 1` + required `ts` | `test_api_contract`, `test_public_html` |
 | HOLD1 | Hold/Manual freezes remote apply | e2e Hold test + static gates |
 | I12-R2 | beacon fields + no keys in HTML | `test_api_contract`, static gates |
+| GYRO1 | `rotationRate` deg→rad; omit axes until sampled | `test_api_contract`, e2e DeviceMotion dispatch |
 
 ## Still owner / lab gated
 
