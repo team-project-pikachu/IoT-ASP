@@ -32,6 +32,11 @@ final class ASPSessionModel: ObservableObject {
     private let physicalVib = PhysicalVibChannel()
     private let acousticVib = AcousticVibChannel()
     @Published var lastAcousticEvent: String = "none"
+    @Published var materialPreset: MaterialPreset = .table {
+        didSet { arming = VibArming.defaults(for: materialPreset) }
+    }
+    @Published var arming: VibArming = VibArming.defaults(for: .table)
+    @Published var vibClass: String = "none"
     @Published var lastPhysicalEvent: String = "none"
     @Published var shakeCount: Int = 0
     #if canImport(CoreMotion)
@@ -145,8 +150,13 @@ final class ASPSessionModel: ObservableObject {
             cap.onMeter = { [weak self] energy, diff in
                 guard let self else { return }
                 self.micStatus = cap.status
-                let ev = self.acousticVib.observe(energyDb: energy, micDiffDb: diff, armed: true)
+                let ev = self.acousticVib.observe(energyDb: energy, micDiffDb: diff, armed: self.arming.acoustic)
                 self.lastAcousticEvent = ev.rawValue
+                self.vibClass = VibChannelPolicy.classify(
+                    physical: PhysicalVibEvent(rawValue: self.lastPhysicalEvent) ?? .none,
+                    acoustic: ev,
+                    arming: self.arming
+                )
                 if ev == .acousticBurst {
                     self.pendingImpulse = ImpulseEvent(fromAccel: false, fromMicDiff: true, riseMs: 40)
                 }
@@ -166,9 +176,14 @@ final class ASPSessionModel: ObservableObject {
         lastAbsA = sample.absA
         lastAbsOmega = sample.absOmega
         intenseVib = detector.intenseVibProxy(absA: sample.absA, lfEnergyProxy: sample.absA)
-        let phys = physicalVib.observe(absA: sample.absA, armed: true)
+        let phys = physicalVib.observe(absA: sample.absA, armed: arming.physical)
         lastPhysicalEvent = phys.rawValue
         shakeCount = physicalVib.shakeCount
+        vibClass = VibChannelPolicy.classify(
+            physical: phys,
+            acoustic: AcousticVibEvent(rawValue: lastAcousticEvent) ?? .none,
+            arming: arming
+        )
         if phys == .shakeHop || phys == .shakeReseed {
             pendingImpulse = ImpulseEvent(fromAccel: true, fromMicDiff: false, riseMs: 40)
         }

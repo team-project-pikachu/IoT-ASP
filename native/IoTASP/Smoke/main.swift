@@ -115,6 +115,15 @@ struct IoTASPSmoke {
         check("micDiff preferred", ac.observe(energyDb: -20, micDiffDb: -80) != .acousticBurst)
         check("disarmed acoustic", ac.observe(energyDb: 0, armed: false) == .none)
 
+        // #6 material policy
+        check("table physical only", VibArming.defaults(for: .table) == VibArming(physical: true, acoustic: false))
+        check("chair physical only", VibArming.defaults(for: .chair).acoustic == false)
+        check("speaker both", VibArming.defaults(for: .speaker) == VibArming(physical: true, acoustic: true))
+        check("handheld acoustic", VibArming.defaults(for: .handheld) == VibArming(physical: false, acoustic: true))
+        let cls = VibChannelPolicy.classify(physical: .physical, acoustic: .acousticBurst, arming: VibArming(physical: false, acoustic: true))
+        check("disarm physical", cls == "acoustic")
+        check("unknown preset", VibChannelPolicy.unknownPresetFallsBack("granite") == .handheld)
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

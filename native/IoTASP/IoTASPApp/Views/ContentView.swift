@@ -30,6 +30,18 @@ struct ContentView: View {
                     Button("Simulate impulse") { session.simulateImpulse() }
                 }
 
+                Section("Material / channels") {
+                    Picker("materialPreset", selection: $session.materialPreset) {
+                        Text("table").tag(MaterialPreset.table)
+                        Text("speaker").tag(MaterialPreset.speaker)
+                        Text("handheld").tag(MaterialPreset.handheld)
+                        Text("chair").tag(MaterialPreset.chair)
+                    }
+                    LabeledContent("arm physical", value: session.arming.physical ? "yes" : "no")
+                    LabeledContent("arm acoustic", value: session.arming.acoustic ? "yes" : "no")
+                    LabeledContent("vibClass", value: session.vibClass)
+                }
+
                 Section("Sensors") {
                     Toggle("Arm CoreMotion 1–100 Hz", isOn: $session.motionArmed)
                     LabeledContent("|a| (g)", value: String(format: "%.3f", session.lastAbsA))
