@@ -168,6 +168,11 @@ struct IoTASPSmoke {
         check("bg pause", BackgroundSensingPolicy.onEnterBackground(txPlaying: true) == .backgroundPaused)
         check("no silent audio lie", BackgroundSensingPolicy.rejectedBackgroundModes.contains(where: { $0.contains("always-on") }))
 
+        // #143 SensorKit map
+        check("SK entitlement name", SensorKitReaderMap.entitlement.contains("sensorkit.reader.allow"))
+        check("all require grant", SensorKitReaderMap.specs.allSatisfy(\.requiresAppleGrant))
+        check("skip when not entitled", SensorKitReaderMap.start(entitled: false).contains("CoreMotion"))
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

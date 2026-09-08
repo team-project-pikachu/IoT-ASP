@@ -21,12 +21,11 @@ public enum SensorKitGate {
         false
     }
 
-    public static func startReadersIfEntitled() {
+    public static func startReadersIfEntitled() -> String {
         #if canImport(SensorKit) && ASP_SENSORKIT_ENTITLED
-        // Stub: SRSensorReader for accelerometer / rotationRate when approved.
-        // See docs/sensorkit-watch.md
+        return SensorKitReaderMap.start(entitled: true)
         #else
-        // No-op: CoreMotion path is primary for fleet phones.
+        return SensorKitReaderMap.start(entitled: false)
         #endif
     }
 }

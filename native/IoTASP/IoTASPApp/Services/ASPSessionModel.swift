@@ -55,7 +55,7 @@ final class ASPSessionModel: ObservableObject {
 
     func bootstrap() {
         applySink()
-        SensorKitGate.startReadersIfEntitled()
+        _ = SensorKitGate.startReadersIfEntitled()
         runPermissionSequence()
         arm()
         ticker = Timer.publish(every: 0.05, on: .main, in: .common)
