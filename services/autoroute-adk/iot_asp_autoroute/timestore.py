@@ -16,31 +16,6 @@ from typing import Any
 
 def _load_timestore() -> Any:
     """Load the SciPy-backed vendored subpackage only when a stamp/prior is requested."""
-    # #region agent log
-    try:
-        import json
-        import time
-        from pathlib import Path
-
-        _dbg = Path("/Users/machine/apps/.cursor/debug-e6b87a.log")
-        with _dbg.open("a", encoding="utf-8") as _f:
-            _f.write(
-                json.dumps(
-                    {
-                        "sessionId": "e6b87a",
-                        "runId": "post-fix",
-                        "hypothesisId": "A",
-                        "location": "timestore.py:_load_timestore",
-                        "message": "lazy relative import of algo_timestore",
-                        "data": {"module": "iot_asp_autoroute.algo_timestore"},
-                        "timestamp": int(time.time() * 1000),
-                    }
-                )
-                + "\n"
-            )
-    except OSError:
-        pass
-    # #endregion
     from . import algo_timestore
 
     return algo_timestore
