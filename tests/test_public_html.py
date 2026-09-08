@@ -88,6 +88,8 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "noteImpulse(true, false)" in html
     assert "enterExtremeFromBurst(" in _fn_body(html, "function noteImpulse(fromAccel, fromMic){")
     assert "accelBaselineReady" in html
+    assert "ACCEL_BASELINE_WARM_N" in html
+    assert "hop.tabSeed" in html
     assert "volBeforeBlast" in html
     assert "burstHot" in _fn_body(html, "function alarmTick(now){")
     assert "r.fleet" in _fn_body(html, "function copyFleetLogJsonl(){")
@@ -233,9 +235,11 @@ def test_min_hop_delta_and_stagger(html: str) -> None:
 
 def test_reseed(html: str) -> None:
     assert html.count("function reseed(") == 1
-    for lit in ('"stored"', '"entropy"', 'reseed("ui")', 'reseed("patch")', "seedSource"):
+    for lit in ('"entropy"', 'reseed("ui")', 'reseed("patch")', "seedSource"):
         assert lit in html, lit
-    assert 'localStorage.setItem("hop.seed", String(seed))' in html
+    # Per-tab seed lives in sessionStorage so same-origin peers can diverge
+    assert 'sessionStorage.setItem("hop.tabSeed", String(seed))' in html
+    assert '"session"' in html or '"stored"' in html
 
 
 # ── spec 03: watchdog ────────────────────────────────────────────────────────
@@ -347,7 +351,9 @@ def test_impulse_alarm_and_fleet_stub(html: str) -> None:
     assert "clearAlarm(" in html and "IMPULSE_ACCEL_DELTA" in html
     assert "setInterval(function(){ alarmTick(performance.now()); }, 200)" in html
     assert 'alarmState = "cleared";' in html
-    assert 'alarmState = "armed";' not in _fn_body(html, "function alarmTick(now){")
+    # Quiet expiry clears first; armed only after CLEARED_LATCH_MS
+    assert "CLEARED_LATCH_MS" in html
+    assert 'alarmState = "armed";' in _fn_body(html, "function alarmTick(now){")
     assert "if (impulse) {" in _fn_body(html, "function beaconTelemetry(){")
     assert "d.instanceId === instanceId" in html
     assert "fleetPeers[d.instanceId] = d" in html

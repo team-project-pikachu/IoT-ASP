@@ -582,13 +582,19 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const BURST_ONSET_DB = 9, BURST_RELEASE_DB = 5, BURST_EMA = 0.08;
   const BURST_JITTER_MS = 450, BURST_QUIET_MS = 2500, OUT_ALPHA = 0.85;
   let alarmState="armed", impulse=false, volBlast=false;
-  let lastImpulseAt=0, alarmQuietSince=0, accelBaseline=0, accelBaselineReady=false, volBeforeBlast=null;
+  let lastImpulseAt=0, alarmQuietSince=0, clearedAt=0, volBeforeBlast=null;
+  let accelBaseline=0, accelBaselineReady=false, accelBaselineSamples=0;
   const IMPULSE_ACCEL_DELTA = 0.45;
+  // Warm gravity/linear baseline across several samples before impulse→blast (no stationary false fire).
+  const ACCEL_BASELINE_WARM_N = 12;
+  const CLEARED_LATCH_MS = 1500;
   let ax=0, ay=0, az=0;
   let accelMag=0, lfMag=0, acousticEnergy=-120;
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
   let pulseMs=120, shriekMs=55;
+  // deviceId: persisted localStorage for telemetry. instanceId + seed: per-tab sessionStorage
+  // so same-origin peer compare does not collide on shared seed / BroadcastChannel identity.
   let deviceId="", instanceId="", seed=0, seedSource="entropy";
   try {
     deviceId = localStorage.getItem("hop.deviceId") || "";
@@ -596,16 +602,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
       localStorage.setItem("hop.deviceId", deviceId);
     }
-    const ss = localStorage.getItem("hop.seed");
-    const stored = ss ? Math.floor(+ss || 0) : 0;
-    seedSource = stored > 0 ? "stored" : "entropy";
-    seed = stored > 0 ? stored : entropySeed();
-    if (seedSource === "entropy") localStorage.setItem("hop.seed", String(seed));
     instanceId = sessionStorage.getItem("hop.instanceId") || "";
     if (!instanceId) {
       instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
       sessionStorage.setItem("hop.instanceId", instanceId);
     }
+    const ss = sessionStorage.getItem("hop.tabSeed");
+    const stored = ss ? Math.floor(+ss || 0) : 0;
+    seedSource = stored > 0 ? "session" : "entropy";
+    seed = stored > 0 ? stored : entropySeed();
+    if (!stored) sessionStorage.setItem("hop.tabSeed", String(seed));
   } catch (_) {
     deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
     instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
@@ -1098,7 +1104,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       seed = entropySeed();
       seedSource = "entropy";
       rng = mulberry32(seed >>> 0);
-      try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
+      try { sessionStorage.setItem("hop.tabSeed", String(seed)); } catch (_) {}
     }
     lastSuddenAt = now;
     flagGeminiAutoroute(
@@ -1217,6 +1223,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     alarmQuietSince = 0;
     lastImpulseAt = 0;
     alarmState = "cleared";
+    clearedAt = performance.now();
     if (typeof monLog === "function" && reason) monLog("alarm cleared · " + reason);
   }
 
@@ -1239,11 +1246,19 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function alarmTick(now){
+    const t = now || performance.now();
     if (holdManual) {
       if (volBlast || impulse || alarmState === "triggered" || alarmState === "sustaining") clearAlarm("Hold");
       return;
     }
-    const t = now || performance.now();
+    // Defined cleared latch, then return to armed (do not jump armed immediately on quiet).
+    if (alarmState === "cleared") {
+      if (clearedAt && (t - clearedAt) >= CLEARED_LATCH_MS) {
+        alarmState = "armed";
+        clearedAt = 0;
+      }
+      return;
+    }
     if (alarmState !== "triggered" && alarmState !== "sustaining") return;
     // Sustain while impulse latch, continuous soundBurst, or recent burst energy is hot
     const burstHot = !!soundBurst || (lastBurstAt > 0 && (t - lastBurstAt) < BURST_QUIET_MS);
@@ -1273,7 +1288,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   window.addEventListener("devicemotion", e => {
-    // Prefer linear acceleration; gravity-inclusive only after baseline is warm
+    // Prefer linear acceleration; if only gravity-inclusive is available, warm a multi-sample
+    // baseline before any impulse→blast path (stationary ~9.8 must not false-trigger).
     const linear = e.acceleration;
     const a = (linear && (linear.x != null || linear.y != null || linear.z != null))
       ? linear : e.accelerationIncludingGravity;
@@ -1282,8 +1298,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const mag = Math.hypot(ax, ay, az);
     accelMag = 0.85 * accelMag + 0.15 * mag;
     if (!accelBaselineReady) {
-      accelBaseline = mag;
-      accelBaselineReady = true;
+      if (accelBaselineSamples === 0) accelBaseline = mag;
+      else accelBaseline = 0.9 * accelBaseline + 0.1 * mag;
+      accelBaselineSamples++;
+      if (accelBaselineSamples >= ACCEL_BASELINE_WARM_N) accelBaselineReady = true;
     } else {
       const dA = mag - accelBaseline;
       accelBaseline = 0.9 * accelBaseline + 0.1 * mag;
@@ -2293,7 +2311,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function reseed(reason){
     seed = entropySeed(); seedSource = "entropy";
     rng = mulberry32(seed >>> 0);
-    try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
+    try { sessionStorage.setItem("hop.tabSeed", String(seed)); } catch (_) {}
     monLog("seed reseeded → " + seed, "reseed", { seed, reason: reason || "ui" }, "info");
     if (running && ctx && osc) { pending.length = 0; nextHopAt = ctx.currentTime + 0.05; schedule(); }
     updateTelUI();
