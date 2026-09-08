@@ -558,7 +558,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let alarmState = "armed"; // armed | triggered | sustaining | cleared | off
   let impulse = false, volBlast = false;
   let lastImpulseAt = 0, alarmClearedAt = 0;
-  let prevMicDiffSample = -120, accelRawPrev = 0, accelEma = 0;
+  let prevMicDiffSample = -120, accelEma = 0;
   let accelMag=0, lfMag=0, acousticEnergy=-120;
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
@@ -1031,6 +1031,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (typeof updateTelUI === "function") updateTelUI();
   }
 
+  /** Effective alarm for UI / telemetry / debug — Hold clears; suddenAuto-off → off. */
+  function effectiveAlarmState(){
+    if (holdManual) return "cleared";
+    if (!suddenAuto) return "off";
+    return alarmState;
+  }
+
   function blastVolJump(reason){
     // Jump to cap in VOL_STEP quanta (alarm, not soft nudge).
     if (holdManual) return false;
@@ -1303,7 +1310,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const mag = Math.hypot(a.x || 0, a.y || 0, a.z || 0);
     const accelRise = mag - (accelEma || mag);
     accelEma = accelEma ? (0.88 * accelEma + 0.12 * mag) : mag;
-    accelRawPrev = mag;
     accelMag = 0.85 * accelMag + 0.15 * mag;
     // crude LF proxy: low-pass of magnitude deltas
     const g = e.accelerationIncludingGravity;
@@ -2266,7 +2272,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState, impulse, volBlast }),
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast }),
     getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
 
@@ -2295,7 +2301,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const telEx = $("telExtreme");
     if (telEx) telEx.textContent = extremeActive ? "ON" : "off";
     const telAlarm = $("telAlarm");
-    if (telAlarm) telAlarm.textContent = holdManual ? "cleared" : (suddenAuto ? alarmState : "off");
+    if (telAlarm) telAlarm.textContent = effectiveAlarmState();
     const telImpulse = $("telImpulse");
     if (telImpulse) telImpulse.textContent = impulse ? "ON" : "off";
     const telVolBlast = $("telVolBlast");
@@ -2334,7 +2340,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       extremeActive: !!extremeActive,
       impulse: !!impulse,
       volBlast: !!volBlast,
-      alarmState: holdManual ? "cleared" : (suddenAuto ? alarmState : "off"),
+      alarmState: effectiveAlarmState(),
       bandBurst: bandBurst || "none",
       soundBurstMeta: {
         energyDelta: burstEnergyDelta,
