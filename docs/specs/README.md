@@ -32,7 +32,8 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research, see `docs/iphone-bluetooth.md`
 § Future native shell and the edge spec), #12 #13 #16 #17 (tracking / parent items referenced from
-`docs/ci.md` and spec 26).
+`docs/ci.md` and spec 26), #37 (Vercel webhooks for hop-ultrasonic — docs + verify stub in
+`docs/vercel-webhooks.md`, complementary to #27).
 
 Owner surface legend: **frontend** = `public/` (Vercel), **backend** = `services/autoroute-adk/` (GCP,
 independent deploy), **infra** = `.github/`, `scripts/`, `vercel.json`, edge hardware, **docs** = `docs/`,

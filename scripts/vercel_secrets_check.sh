@@ -6,7 +6,7 @@
 set -euo pipefail
 
 REQUIRED=(VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID)
-OPTIONAL=(VERCEL_DEPLOY_HOOK_PROD VERCEL_AUTOMATION_BYPASS_SECRET)
+OPTIONAL=(VERCEL_DEPLOY_HOOK_PROD VERCEL_AUTOMATION_BYPASS_SECRET VERCEL_WEBHOOK_SECRET)
 
 missing=0
 echo "# required (Vercel CLI path)"
@@ -18,7 +18,7 @@ for name in "${REQUIRED[@]}"; do
     missing=$((missing + 1))
   fi
 done
-echo "# optional (deploy-hook fallback / preview protection bypass)"
+echo "# optional (deploy-hook fallback / preview protection bypass / webhooks #37)"
 for name in "${OPTIONAL[@]}"; do
   if [[ -n "${!name:+x}" ]]; then
     echo "${name}: set"
@@ -35,16 +35,19 @@ op read "op://dev/VERCEL_TOKEN/credential"
 op read "op://dev/VERCEL_ORG_ID/credential"
 op read "op://dev/VERCEL_PROJECT_ID/credential"
 op read "op://dev/VERCEL_DEPLOY_HOOK_PROD/credential"
+op read "op://dev/VERCEL_WEBHOOK_SECRET/credential"
 
 # GitHub Actions secrets — the value is piped on stdin, never placed on the command line or echoed
 op read "op://dev/VERCEL_TOKEN/credential"            | gh secret set VERCEL_TOKEN --repo team-project-pikachu/IoT-ASP
 op read "op://dev/VERCEL_ORG_ID/credential"           | gh secret set VERCEL_ORG_ID --repo team-project-pikachu/IoT-ASP
 op read "op://dev/VERCEL_PROJECT_ID/credential"       | gh secret set VERCEL_PROJECT_ID --repo team-project-pikachu/IoT-ASP
 op read "op://dev/VERCEL_DEPLOY_HOOK_PROD/credential" | gh secret set VERCEL_DEPLOY_HOOK_PROD --repo team-project-pikachu/IoT-ASP
+op read "op://dev/VERCEL_WEBHOOK_SECRET/credential"   | gh secret set VERCEL_WEBHOOK_SECRET --repo team-project-pikachu/IoT-ASP
 
 # Automated alternative (written by the integrator): op inject → gh secret set -f
 #   bash scripts/op_secrets_to_gh.sh
 # Org/project ids: run \`vercel link\` in the repo and read .vercel/project.json (orgId, projectId) — gitignored.
+# Webhooks (issue #37): docs/vercel-webhooks.md — HMAC verify via scripts/vercel_webhook_verify.py
 EOF
 
 if (( missing > 0 )); then

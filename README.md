@@ -54,6 +54,7 @@ Tracked as GitHub milestones M0–M5 (seeds, monitoring, vib rotation, RLHF ±, 
 - **Local gates:** `make all` = `scripts/ci_static_gates.sh` + `scripts/autoroute_dev.sh` + `pytest tests` + `mdc_convert.py --check` (`pip install -r requirements-dev.txt` first).
 - **CI:** `.github/workflows/ci.yml` (jobs `autoroute`, `static_gates`, `tests`, `mdc check`, `pr_issue_ref`). PRs must reference an issue.
 - **Ship:** `.github/workflows/deploy.yml` — gates → **dev** (Vercel preview) → **test** (smoke) → **prod**; secrets by name only (`docs/deploy.md`, issue #27). Vercel's own Git auto-deploy is disabled in `vercel.json` so Actions owns deploys.
+- **Deploy notifications:** Vercel webhooks → HMAC verify → optional `repository_dispatch` (`docs/vercel-webhooks.md`, issue #37).
 - **Main protection:** `.github/rulesets/main-protection.json` (import at Settings → Rules or `make protect-main`; `docs/branch-protection.md`).
 
 ## Layout

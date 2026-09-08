@@ -16,6 +16,12 @@ protection). Values live in 1Password Environment `dev` and GitHub Actions secre
 or issues. **Status: secrets not set as of 2026-09-08 (issue #27)** — until an owner sets them every run
 stops after `gates` with a `::notice` naming the missing secrets.
 
+**Deploy notifications (webhooks)** are separate from Deploy Hooks: Vercel POSTs
+`deployment.created` / `succeeded` / `error` / … to your HTTPS endpoint. Secret name
+`VERCEL_WEBHOOK_SECRET` (`op://dev/VERCEL_WEBHOOK_SECRET/credential`). Setup + HMAC verify:
+[vercel-webhooks.md](vercel-webhooks.md) (issue #37). UI:
+<https://vercel.com/1digital-design/hop-ultrasonic/settings/webhooks>.
+
 ## (a) Architecture
 
 ```text
