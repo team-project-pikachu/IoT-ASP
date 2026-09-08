@@ -1,77 +1,67 @@
-# Vercel webhook receiver stub (HMAC verify → optional repository_dispatch)
+# Vercel webhook receiver — HMAC verify → GitHub notify
 
-Not a hosted service in this repo. Use this sketch when standing up a public HTTPS
-endpoint for `hop-ultrasonic` webhooks.
+stdlib Python receiver for **hop-ultrasonic** deploy webhooks. Verifies
+`x-vercel-signature`, then fires `repository_dispatch` `vercel-deployment` so
+[`.github/workflows/vercel-webhook.yml`](../../.github/workflows/vercel-webhook.yml)
+writes a job summary (the “notify”).
 
-Docs: [`docs/vercel-webhooks.md`](../../docs/vercel-webhooks.md) · Issue #37
+Docs: [`docs/vercel-webhooks.md`](../../docs/vercel-webhooks.md) · Issue #37 · related #27
 
 ## Contract
 
-1. Env **name** `VERCEL_WEBHOOK_SECRET` (value from `op://dev/VERCEL_WEBHOOK_SECRET/credential`
-   or GitHub Actions secret of the same name). Authenticates **Vercel → receiver** only.
-   Never invent or commit the value.
-2. Env **name** for GitHub auth when firing `repository_dispatch` (pick one; names only):
-   | Secret name | Source | Least privilege |
-   |-------------|--------|-----------------|
-   | `GITHUB_TOKEN` | Fine-grained PAT or classic PAT on the receiver host | Contents: **Read and write** on `team-project-pikachu/IoT-ASP` only (required for [`repository_dispatch`](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event)); no other repos |
-   | `GH_APP_INSTALLATION_TOKEN` | Short-lived GitHub App installation token | Same Contents write on this repo; prefer App over long-lived PAT |
-   Store via 1Password references such as `op://dev/GITHUB_DISPATCH_TOKEN/credential` (or your App
-   private-key item) and inject at deploy time — never commit values. Do **not** reuse
-   `VERCEL_WEBHOOK_SECRET` for GitHub; do **not** put either secret in `client_payload`.
-3. On `POST /`:
-   - Read **raw** body bytes.
-   - Compute HMAC-SHA1 hex; compare to `x-vercel-signature` with constant-time compare.
-   - On mismatch → HTTP 403; do not log the secret.
-   - On match → parse JSON; read `type` / deployment URL from `payload`; optionally fire
-     GitHub `repository_dispatch` `event_type=vercel-deployment` with the GitHub token above
-     (see `.github/workflows/vercel-webhook.yml`).
-4. Local signature check without a server:
-   `python3 scripts/vercel_webhook_verify.py --body-file … --signature …`
+| Env **name** | Required | Role |
+|--------------|----------|------|
+| `VERCEL_WEBHOOK_SECRET` | yes | HMAC secret from Vercel webhook create dialog → `op://dev/VERCEL_WEBHOOK_SECRET/credential` |
+| `GITHUB_TOKEN` **or** `GH_APP_INSTALLATION_TOKEN` | for live notify | Contents **Read and write** on `team-project-pikachu/IoT-ASP` only (`repository_dispatch`) |
+| `WEBHOOK_DRY_RUN=1` | optional | Verify + redact payload; **do not** call GitHub |
+| `GITHUB_REPO` | optional | default `team-project-pikachu/IoT-ASP` |
+| `WEBHOOK_BIND` / `WEBHOOK_PORT` | optional | default `127.0.0.1:8080` |
 
-## Minimal stdlib sketch (illustrative)
+Never invent, echo, or commit secret **values**. Do not reuse `VERCEL_WEBHOOK_SECRET` as the GitHub token. Do not put secrets in `client_payload`.
 
-```python
-# sketch only — host elsewhere; wire secrets from the environment (names only)
-import hashlib, hmac, json, os, urllib.request
-from http.server import BaseHTTPRequestHandler, HTTPServer
+## Run locally (dry-run)
 
-SECRET = os.environ["VERCEL_WEBHOOK_SECRET"]  # fail closed if unset
-# PAT or App installation token — Contents write on this repo only
-GH_TOKEN = os.environ.get("GITHUB_TOKEN") or os.environ["GH_APP_INSTALLATION_TOKEN"]
-
-class H(BaseHTTPRequestHandler):
-    def do_POST(self):
-        n = int(self.headers.get("Content-Length", "0"))
-        raw = self.rfile.read(n)
-        sig = self.headers.get("x-vercel-signature", "")
-        expect = hmac.new(SECRET.encode(), raw, hashlib.sha1).hexdigest()
-        if not hmac.compare_digest(expect, sig):
-            self.send_response(403); self.end_headers(); return
-        event = json.loads(raw)
-        # side effects: repository_dispatch with redacted client_payload only
-        payload = json.dumps({
-            "event_type": "vercel-deployment",
-            "client_payload": {
-                "type": event.get("type"),
-                "url": (event.get("payload") or {}).get("url") or "",
-                "id": event.get("id") or "",
-            },
-        }).encode()
-        req = urllib.request.Request(
-            "https://api.github.com/repos/team-project-pikachu/IoT-ASP/dispatches",
-            data=payload,
-            headers={
-                "Authorization": f"Bearer {GH_TOKEN}",
-                "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28",
-            },
-            method="POST",
-        )
-        urllib.request.urlopen(req)  # production: handle errors; never log tokens
-        self.send_response(200); self.end_headers(); self.wfile.write(b'{"ok":true}')
-
-# HTTPServer(("0.0.0.0", 8080), H).serve_forever()  # terminate TLS at the edge
+```bash
+cd services/vercel-webhook-receiver
+export VERCEL_WEBHOOK_SECRET   # from: op read "op://dev/VERCEL_WEBHOOK_SECRET/credential"
+export WEBHOOK_DRY_RUN=1
+python3 server.py --bind 127.0.0.1 --port 8080
+# POST http://127.0.0.1:8080/ with raw body + x-vercel-signature
 ```
 
-Prefer a managed HTTPS front (Cloud Run / Worker / separate Vercel project) over exposing
-plain HTTP. Pair with the Actions workflow named **Vercel webhook notify**.
+One-shot against a captured POST (no server):
+
+```bash
+python3 notify_once.py --body-file /tmp/vercel-event.json --signature "$SIG"
+# live:
+# export GITHUB_TOKEN=…   # Contents write on this repo only
+# python3 notify_once.py --body-file /tmp/vercel-event.json --signature "$SIG" --live
+```
+
+Signature-only check (existing stub):
+
+```bash
+python3 ../../scripts/vercel_webhook_verify.py --body-file /tmp/vercel-event.json --signature "$SIG"
+```
+
+## Host (public HTTPS)
+
+Terminate TLS at the edge (Cloud Run, Cloudflare, Caddy, or a separate Vercel project). Point the
+Vercel webhook URL at `https://<host>/vercel-webhook` (aliases: `/`, `/webhook`).
+
+Vercel UI: <https://vercel.com/1digital-design/hop-ultrasonic/settings/webhooks>
+
+## Files
+
+| Path | Role |
+|------|------|
+| `handler.py` | verify + redact + `repository_dispatch` |
+| `server.py` / `__main__.py` | Threading HTTP server |
+| `notify_once.py` | one-shot CLI |
+| `README.md` | this file |
+
+## Tests
+
+```bash
+python3 -m pytest tests/test_vercel_webhook_receiver.py tests/test_vercel_webhook.py -q
+```
