@@ -67,6 +67,14 @@ Living matrix. Evidence packages land under `.vv/<issue>/`. Do not mark Project 
 | I13-R1 | Registry interface + seat ladder (subscription-first) | Design doc review checklist | No production non-Gemini calls this wave | `.vv/13/` | stub |
 | I13-R2 | Impl parked; future issue if needed | Design-only evidence | — | `.vv/13/` | stub |
 
+## M8 glass shatter / Nest (docs acceptance)
+
+| Req ID | Statement | Issue(s) | Verify | Validate | Evidence | Status |
+|--------|-----------|----------|--------|----------|----------|--------|
+| M8-PM | Platform × hardware × SDM matrix documented | #100 | Spec + checklist present | Live cells named with owning issues | `.vv/100/` | in_progress |
+| M8-GP | Privacy / consent checklist public-safe | #99 | Spec forbids URLs/secrets on wire | Owner ticks consent before live link | `.vv/99/` | stub |
+| M8-GS | Offline simulate→classify→escalate E2E | #98 | `pytest tests/test_glass_shatter_e2e.py` | Lab checklist optional | `.vv/98/` | stub |
+
 ## Backlog cross-links (not executed this wave)
 
 | Issue | Note |
@@ -75,6 +83,7 @@ Living matrix. Evidence packages land under `.vv/<issue>/`. Do not mark Project 
 | #15 | Apple Home / HomeKit / Matter |
 | #18 | Node-3 infrasound HW |
 | #19 | Notion hub |
+| #93 | OAuth consent — parked (agents document only; no browser login) |
 
 ## Known drift (blockers for later verify lanes)
 
