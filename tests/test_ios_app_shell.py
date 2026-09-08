@@ -45,6 +45,11 @@ def test_scene_phase_wired():
     assert "handleScenePhaseActive" in app
 
 
+def test_launch_screen_key():
+    plist = (ROOT / "native/IoTASP/IoTASPApp/Info.plist").read_text(encoding="utf-8")
+    assert "UILaunchScreen" in plist
+
+
 def test_no_nest_tokens():
     nest = (ROOT / "native/IoTASP/IoTASPApp/Views/NestAlarmTabView.swift").read_text(encoding="utf-8")
     assert "parked" in nest.lower()

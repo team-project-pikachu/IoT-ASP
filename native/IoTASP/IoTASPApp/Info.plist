@@ -22,6 +22,8 @@
 	<string>IoT-ASP logs accelerometer and gyroscope for 1–100 Hz vibration science (intense 10–20 Hz band).</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>IoT-ASP meters the microphone for micDiff impulse detection and 17–23 kHz hop-band energy. Audio stays on-device.</string>
+	<key>UILaunchScreen</key>
+	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
