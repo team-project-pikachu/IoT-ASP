@@ -226,6 +226,9 @@ jobs:
         run: |
           test -f native/IoTASPHome/Package.swift
           test -f native/IoTASPHome/Sources/HomeNestAlarm/AcousticEventClass.swift
+          test -f native/IoTASPHome/Sources/HomeNestAlarm/GlassShatterPipeline.swift
+          test -f native/IoTASPHome/Sources/HomeNestAlarm/HomeAutomationNotify.swift
+          test -f native/IoTASPHome/Sources/HomeNestAlarmUI/HomeNestRootView.swift
           test -f scripts/home_ios_build.sh
           test -f services/gemini-burst-detect/detect.py
       - uses: actions/setup-python@v5

@@ -1,18 +1,21 @@
-# IoTASPHome — Acoustic event class model (M8 / #96)
+# IoTASPHome — Google Home / Nest + glass shatter (M8)
 
-Shared `AcousticEventClass` + stub detector (`sound_burst` | `glass_shatter` | `unknown`).
+Second first-class native feature alongside [`../IoTASP`](../IoTASP) (ASP ultrasonic / hop).
 
 | Path | Role |
 |------|------|
-| `Sources/HomeNestAlarm/AcousticEventClass.swift` | Wire enum + features + `AcousticDetectResult` (`eventClass`, `escalateDb`) |
-| `Sources/HomeNestAlarm/BurstDetectClient.swift` | Offline stub thresholds (`onsetDb`, `glassRiseMsMax`) |
-| `services/gemini-burst-detect/detect.py` | Python twin — same camelCase JSON keys |
+| `Sources/HomeNestAlarm/` | Event classes (#96), escalating alarm, Home SDK facade, Nest camera stubs, **GlassShatterPipeline** + Automation/notify TODO (#97) |
+| `Sources/HomeNestAlarmUI/` | SwiftUI tabs: ASP Ultrasonic · **HomeNestAlarm** · **Glass Shatter** |
+| `Package.swift` | SPM — builds without proprietary GoogleHomeSDK |
 
-Home app wiring / Glass Shatter tab / Automation notify TODOs: issue **#97**.
+## Features
+
+1. **HomeNestAlarm** — Nest camera discovery stub + sound-burst → reactive louder alarm (`alarmState` / `volBlast`).
+2. **Glass Shatter** — event-triggered `glass_shatter` → snapshot stub → `HomeAutomationNotifyClient` TODO → hotter escalate.
+3. Sibling ASP ultrasonic remains in `native/IoTASP`.
 
 ```bash
 make home-ios-build
-python3 -m pytest tests/test_gemini_burst_detect.py -q
 ```
 
-No secrets. Live Gemini / GoogleHomeSDK are owner-gated.
+OAuth / Nest premium: owner-gated (`bettyctai@gmail.com`). No secrets in git.

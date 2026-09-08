@@ -5,7 +5,7 @@ Balanced stub-first landing for issues **#41 / #48 / #52** (native) and **#39** 
 | Path | Role |
 |------|------|
 | [`IoTASP/`](IoTASP/) | Multi-target sketch: iPhone + Watch + shared alarm/impulse/fleet (Swift Package + `.xcodeproj`) |
-| [`IoTASPHome/`](IoTASPHome/) | **M8:** shared `AcousticEventClass` + stub detector (`make home-ios-build`); Home UI wiring in #97 |
+| [`IoTASPHome/`](IoTASPHome/) | **M8:** HomeNestAlarm + Glass Shatter tabs (`make home-ios-build`); event class #96 + wiring #97 |
 | [`ios-sonos-shell/`](ios-sonos-shell/) | Minimal `AVRoutePickerView` AirPlay shell for Beam Gen 2 research |
 
 ## Honesty

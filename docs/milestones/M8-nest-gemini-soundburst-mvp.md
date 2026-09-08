@@ -18,3 +18,7 @@ Python stub JSON keys match Swift `AcousticDetectResult`.
 | [#97](https://github.com/team-project-pikachu/IoT-ASP/issues/97) | Home app Glass Shatter tab + Automation/notify TODO |
 
 Hold / Manual clears blast escalation. No secrets in git.
+
+## Home wiring (#97)
+
+Glass Shatter tab → `GlassShatterPipeline` → `TodoHomeAutomationNotifyClient` (pending) + louder `EscalatingAlarmController`.
