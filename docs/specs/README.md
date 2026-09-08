@@ -44,6 +44,14 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #65 #68 | [65-68-mvp-closed-log.md](65-68-mvp-closed-log.md) — closed-issue log CLI + Actions | implemented on branch | infra + docs |
 | #69 | [69-mvp-roadmap.md](69-mvp-roadmap.md) — durable MVP milestone → issue roadmap | implemented on branch | docs |
 
+## M8 Nest / glass shatter (docs wave)
+
+| Issue(s) | Spec | Status | Owner surface |
+|----------|------|--------|---------------|
+| #98 | [98-glass-shatter-e2e.md](98-glass-shatter-e2e.md) — glass shatter E2E acceptance | offline pytest + checklist; lab/notify pending | docs + backend |
+
+Checklist: [`docs/issues/ISSUE-98-glass-shatter-e2e.md`](../issues/ISSUE-98-glass-shatter-e2e.md) · tests: `tests/test_glass_shatter_e2e.py`.
+
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
 tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items referenced from
 `docs/ci.md` and spec 26).
