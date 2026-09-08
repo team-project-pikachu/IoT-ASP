@@ -6,6 +6,7 @@ Curated index for the public Adaptive Signal Processing hop fleet.
 
 - Blaster PWA (Vercel): see repo README
 - Source: `public/index.html`
+- **Product roadmap (canonical):** [roadmap.md](roadmap.md) — OS/product milestones + `area:*` labels
 
 ## Awesome-list / prior art first (ASP)
 

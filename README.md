@@ -36,11 +36,9 @@ Docs ingest: `reference/knowledge/INGEST.md`.
 
 ## Roadmap
 
-Canonical map: [`docs/mvp-roadmap.md`](docs/mvp-roadmap.md) (M0–M7 → GitHub issues, parked vs ship).  
-Closed-issue audit trail: [`docs/mvp-closed-log.md`](docs/mvp-closed-log.md).  
-Balanced stub board: [`docs/issues/BALANCED-BUILD-STATUS.md`](docs/issues/BALANCED-BUILD-STATUS.md).
-
-Tracked as GitHub milestones / Project 5. Parked features are issues labeled `parked`.
+Canonical plan: [`docs/roadmap.md`](docs/roadmap.md) — milestones by **OS/product** (iOS, macOS, Nest, Sonos, Platform/ADK); categories via `area:drivers` / `area:sdk` / `area:adk` / `area:agentic`.  
+Legacy pointer: [`docs/mvp-roadmap.md`](docs/mvp-roadmap.md). Closed-issue log: [`docs/mvp-closed-log.md`](docs/mvp-closed-log.md).  
+Board: [Project 5](https://github.com/orgs/team-project-pikachu/projects/5). Parked features keep label `parked`.
 
 ## Control plane
 
