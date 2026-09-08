@@ -62,7 +62,7 @@ NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog",
            "telImpulse", "telVolBlast", "telAlarm", "fleetLocal",
            "telemetryUrlLabel", "patchUrlLabel")
 NEW_IDS = ("copyLogBtn", "copyFleetLogBtn", "reseedBtn", "simImpulseBtn", "fleetSeedCompare",
-           "telHopAge", "telResumes", "telWatchdog",
+           "telHopAge", "telResumes", "telWatchdog", "telSnr", "fleetHealth",
            "telImpulse", "telVolBlast", "telAlarm", "fleetLocal")
 OLD_IDS = ("telDevice", "telSeed", "telAlgo", "telPeak", "telAccel", "telMic", "telVib", "telHold",
            "telSudden", "monLog", "sysList", "sysBtn", "vol", "fMin", "fMax", "holdPatchBtn", "power")
@@ -75,7 +75,7 @@ def test_ids_present_once(html: str, el_id: str) -> None:
 
 # ── 3. telemetryPayload keys ─────────────────────────────────────────────────
 PAYLOAD_TOKENS = ("band", "power", "nightNY", "lfArmed", "lfDriveCapable", "lastHopAgeMs",
-                  "ctxResumes", "watchdogTrips", "logSeq", "logTail", "holdManual",
+                  "ctxResumes", "watchdogTrips", "micSnr", "logSeq", "logTail", "holdManual",
                   "schemaVersion: SCHEMA_VERSION", "impulse", "volBlast", "alarmState")
 
 
@@ -295,7 +295,7 @@ def test_watchdog_cells_in_mon_grid(html: str) -> None:
     i = html.index('<div class="mon-grid">')
     j = html.index("</div>\n    <", i)
     grid = html[i:j]
-    for el_id in ("telHopAge", "telResumes", "telWatchdog", "telSudden"):
+    for el_id in ("telHopAge", "telResumes", "telWatchdog", "telSudden", "telSnr"):
         assert f'id="{el_id}"' in grid, el_id
 
 
@@ -392,3 +392,12 @@ def test_impulse_alarm_and_fleet_stub(html: str) -> None:
     assert "d.instanceId === instanceId" in html
     assert "fleetPeers[d.instanceId] = d" in html
     assert "deviceId, instanceId, seed" in html
+    assert 'id="fleetHealth"' in html
+    assert "const FLEET_STALE_MS = 8000;" in html
+    assert "const FLEET_EXPECT = 3;" in html
+    pub = _fn_body(html, "function publishFleetHeartbeat(){")
+    for tok in ("lastHopAgeMs:", "ctxResumes:", "watchdogTrips:", "running:", "micSnr:"):
+        assert tok in pub, tok
+    paint = _fn_body(html, "function paintFleetCards(){")
+    for tok in ("Fleet pulse", "STALE", "all phones on", "FLEET_STALE_MS", "healthBits"):
+        assert tok in paint, tok
