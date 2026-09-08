@@ -5,7 +5,7 @@ Board: [Project 5](https://github.com/orgs/team-project-pikachu/projects/5)
 
 ## Status
 
-Docs research **landed on this branch**. Official Anker/Soundcore sources only.
+Docs research **landed on this branch**. Prefer official Anker/Soundcore pages and Anker support PDFs; ManualsLib is cited only as a **third-party HTML mirror** of the A3105 owner's manual when the PDF is awkward to deep-link.
 No hardware re-measure. No wire-field changes. Does not block public hop redeploy.
 
 ## Goal
@@ -26,7 +26,7 @@ Already here:
 - Root [`SPEC.md`](../../SPEC.md) — marketing-page scrape (2026-09-07) marked FR/codecs **Not listed**
 - [`docs/DESIGN_CONSTRAINTS.md`](../DESIGN_CONSTRAINTS.md) **C1 / C4 / C6**
 - [`docs/iphone-bluetooth.md`](../iphone-bluetooth.md) — AAC/SBC typical; BT volume vs Web Audio 100%
-- [`docs/native-xcode.md`](../native-xcode.md) — #9 parked shell; no Soundcore spec link yet
+- [`docs/native-xcode.md`](../native-xcode.md) — #9 parked shell; links this Soundcore FR honesty note
 - [`reference/knowledge/acoustics-materials/soundcore-2-portable-bluetooth-speaker.md`](../../reference/knowledge/acoustics-materials/soundcore-2-portable-bluetooth-speaker.md)
 - Node 3 is a **different path** (Sonos Beam / AirPlay, [#39](https://github.com/team-project-pikachu/IoT-ASP/issues/39))
 
@@ -96,7 +96,7 @@ None. Canonical telemetry stays [`docs/api-contract.md`](../api-contract.md). Op
 
 - [Anker Canada — Soundcore 2](https://www.anker.com/ca/products/soundcore-2) (marketing; 12 W, BassUp, IPX7, 5,200 mAh, comparison table BT 5.0; no FR/codecs)
 - [soundcore.com — Soundcore 2](https://www.soundcore.com/products/soundcore-2) (12 W peak, dual neodymium + DSP, BassUp, IPX7; some copy BT 6.0; no FR/codecs)
-- A3105 owner's manual spec table (Anker): frequency response **70 Hz – 20 kHz**, audio output **12W+**, driver 1.5" × 2 full-range, BT V5.0 (older print) — [ManualsLib p.7](https://www.manualslib.com/manual/2149752/Anker-Soundcore-2.html?page=7)
+- A3105 owner's manual spec table (Anker): frequency response **70 Hz – 20 kHz**, audio output **12W+**, driver 1.5" × 2 full-range, BT V5.0 (older print) — primary: [Anker support PDF 000021515](https://salesforce-knowledge-download.s3.us-west-2.amazonaws.com/000021515/en_US/000021515.pdf) (same FR band); tertiary HTML mirror: [ManualsLib p.7](https://www.manualslib.com/manual/2149752/Anker-Soundcore-2.html?page=7)
 - Newer Anker support PDF spec tables: same FR **70 Hz – 20 kHz**, BT **V6.0**, 12W+, IPX7 — e.g. [support PDF 000021515](https://salesforce-knowledge-download.s3.us-west-2.amazonaws.com/000021515/en_US/000021515.pdf)
 - [Anker Japan A3105](https://www.ankerjapan.com/products/a3105) — 12 W, IPX7, Bluetooth 6.0 listing
 - Constraints: [`docs/DESIGN_CONSTRAINTS.md`](../DESIGN_CONSTRAINTS.md) C1/C4/C6

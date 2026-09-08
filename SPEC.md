@@ -16,7 +16,7 @@ Issue spec: [`docs/specs/43-soundcore-2-a2dp.md`](docs/specs/43-soundcore-2-a2dp
 | Bass | BassUp + patented spiral bass port (low-end emphasis) | Marketing page |
 | Water resistance | **IPX7** | Marketing page + manual |
 | Battery | **5,200 mAh**, up to **24 hours** playtime | Marketing page |
-| Bluetooth | Marketing comparison table **5.0**; newer official manuals / JP store / 2026 support PDFs **V6.0** | Confirm on the unit |
+| Bluetooth | Marketing comparison table **5.0**; newer official manuals / JP store / 2026 support PDFs **V6.0** | Anker CA comparison table + A3105 manuals / support PDFs / JP store (confirm revision on the unit) |
 | Frequency response | **Not listed** on the product page (2026-09-07 scrape) | Marketing page |
 | Frequency response (manual) | **70 Hz – 20 kHz** | A3105 owner's-manual spec table |
 | Codecs | **Not listed** (typical iOS A2DP path: AAC with SBC fallback — inference, not a manufacturer claim) | Not on page or manual |

@@ -29,8 +29,7 @@ REQUIRED_SECTIONS = (
 
 
 def test_sc01_spec_fr_from_manual():
-    assert "70 Hz" in SPEC and "20 kHz" in SPEC
-    assert "70 Hz" in SPEC or "70 Hz – 20 kHz" in SPEC
+    assert "70 Hz – 20 kHz" in SPEC or "70 Hz - 20 kHz" in SPEC
     assert "A3105" in SPEC or "owner" in SPEC.lower()
 
 
