@@ -110,7 +110,7 @@ test.describe("public blaster smoke", () => {
     expect(s2.seed).not.toBe(s1.seed);
     expect(Number.isInteger(s2.seed) && s2.seed > 0).toBe(true);
     expect(s2.seedSource).toBe("entropy");
-    expect(await page.evaluate(() => localStorage.getItem("hop.seed"))).toBe(String(s2.seed));
+    expect(await page.evaluate(() => sessionStorage.getItem("hop.tabSeed"))).toBe(String(s2.seed));
     const recs = await log(page);
     const r = recs.find(x => x.event === "reseed");
     expect(r).toBeTruthy();
@@ -297,6 +297,48 @@ test.describe("public blaster smoke", () => {
     expect(typeof p.ts).toBe("string");
     await expect(page.locator("#fleetBackendStrip")).toContainText("telemetry");
     expect(errors).toEqual([]);
+  });
+
+
+  test("peer ages past stale threshold (#11 #62)", async ({ browser }) => {
+    const context = await browser.newContext();
+    const pageA = await context.newPage();
+    const pageB = await context.newPage();
+    await pageA.goto("/");
+    await pageB.goto("/");
+    await pageA.waitForFunction(() => !!window.__hop);
+    await pageB.waitForFunction(() => !!window.__hop);
+    await pageA.waitForFunction(() => {
+      const t = document.getElementById("fleetSeedCompare")?.textContent || "";
+      return /peers=/.test(t) || /incoherent OK/.test(t);
+    }, null, { timeout: 8000 });
+    // Freeze peer heartbeat age by rewriting peer ts far in the past
+    await pageA.evaluate(() => {
+      const peers = Object.keys(window.__hop.getState?.() || {});
+      // paintFleetCards reads fleetPeers closed over in page; mutate via BC message with old ts
+      const ch = new BroadcastChannel("iot-asp-fleet");
+      const st = window.__hop.getState();
+      ch.postMessage({
+        deviceId: "peer-stale-test",
+        instanceId: "tab-stale-peer",
+        seed: 4242,
+        seedSource: "entropy",
+        algo: "hop",
+        alarmState: "armed",
+        impulse: false,
+        volBlast: false,
+        holdManual: false,
+        ts: Date.now() - 20000
+      });
+      ch.close();
+    });
+    await pageA.waitForFunction(() => {
+      const meta = document.getElementById("fleetPeer2Meta")?.textContent || "";
+      return /STALE/.test(meta);
+    }, null, { timeout: 5000 });
+    const cardClass = await pageA.evaluate(() => document.getElementById("fleetPeer2")?.className || "");
+    expect(cardClass).toContain("stale");
+    await context.close();
   });
 
   test("systems check escapes a reflected ?patch= value (no XSS)", async ({ page }) => {

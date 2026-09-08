@@ -235,9 +235,11 @@ def test_min_hop_delta_and_stagger(html: str) -> None:
 
 def test_reseed(html: str) -> None:
     assert html.count("function reseed(") == 1
-    for lit in ('"stored"', '"entropy"', 'reseed("ui")', 'reseed("patch")', "seedSource"):
+    for lit in ('"entropy"', 'reseed("ui")', 'reseed("patch")', "seedSource"):
         assert lit in html, lit
-    assert 'localStorage.setItem("hop.seed", String(seed))' in html
+    assert 'sessionStorage.setItem("hop.tabSeed", String(seed))' in html
+    assert '"session"' in html or '"stored"' in html
+    assert 'localStorage.setItem("hop.seed"' not in html
 
 
 # ── spec 03: watchdog ────────────────────────────────────────────────────────

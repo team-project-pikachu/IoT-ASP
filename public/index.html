@@ -600,16 +600,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
       localStorage.setItem("hop.deviceId", deviceId);
     }
-    const ss = localStorage.getItem("hop.seed");
-    const stored = ss ? Math.floor(+ss || 0) : 0;
-    seedSource = stored > 0 ? "stored" : "entropy";
-    seed = stored > 0 ? stored : entropySeed();
-    if (seedSource === "entropy") localStorage.setItem("hop.seed", String(seed));
     instanceId = sessionStorage.getItem("hop.instanceId") || "";
     if (!instanceId) {
       instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
       sessionStorage.setItem("hop.instanceId", instanceId);
     }
+    const ss = sessionStorage.getItem("hop.tabSeed");
+    const stored = ss ? Math.floor(+ss || 0) : 0;
+    seedSource = stored > 0 ? "session" : "entropy";
+    seed = stored > 0 ? stored : entropySeed();
+    if (!stored) sessionStorage.setItem("hop.tabSeed", String(seed));
   } catch (_) {
     deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
     instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
@@ -1102,7 +1102,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       seed = entropySeed();
       seedSource = "entropy";
       rng = mulberry32(seed >>> 0);
-      try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
+      try { sessionStorage.setItem("hop.tabSeed", String(seed)); } catch (_) {}
     }
     lastSuddenAt = now;
     flagGeminiAutoroute(
@@ -2275,7 +2275,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function reseed(reason){
     seed = entropySeed(); seedSource = "entropy";
     rng = mulberry32(seed >>> 0);
-    try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
+    try { sessionStorage.setItem("hop.tabSeed", String(seed)); } catch (_) {}
     monLog("seed reseeded → " + seed, "reseed", { seed, reason: reason || "ui" }, "info");
     if (running && ctx && osc) { pending.length = 0; nextHopAt = ctx.currentTime + 0.05; schedule(); }
     updateTelUI();
