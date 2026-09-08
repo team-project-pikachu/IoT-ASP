@@ -1,10 +1,10 @@
 {
   "name": "HOP Ultrasonic",
   "short_name": "HOP",
-  "description": "Near-ultrasonic hopping tone and FSK link",
+  "description": "Near-ultrasonic 17–23 kHz hop tooling for Mac Studio, desktop, and phones (Sonos Beam Gen 2)",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#141519",
   "theme_color": "#141519",
   "icons": [

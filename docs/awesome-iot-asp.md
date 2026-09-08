@@ -27,7 +27,7 @@ Caches under `.context7/` (see [asp-prior-art.md](asp-prior-art.md)).
 
 ## Design constraints (formal)
 
-- [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) — **C1** native A2DP · **C2** Pi USB-C (#14) · **C3** SDD · **C4** max gain · **C5** 120 V AC · **C6** LF 10–20 Hz gated
+- [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) — **C1** OS audio (not Web BT) · **C2** Pi USB-C (#14) · **C3** SDD · **C4** max gain · **C5** 120 V AC · **C6** 17–23 kHz only (LF UI removed)
 - [power-fleet.md](power-fleet.md) — continuous **120 V AC**
 - [SEBoK V&V](vv/README.md) · [`.vv/matrix.md`](../.vv/matrix.md) — Req IDs → issues #12/#16/#17/#9/#13
 - [iphone-dedicated-mode.md](iphone-dedicated-mode.md)
