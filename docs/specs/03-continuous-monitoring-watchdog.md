@@ -6,8 +6,9 @@ telemetry keys defined there).
 
 ## Status
 
-**Spec — implementing in this branch.** The app keeps the Web Audio graph alive with an audio-clock scheduler, but
-nothing recovers when iOS suspends/interrupts the `AudioContext` (phone call, Siri, route change, Control Center) or
+**Implemented on branch `claude/mdc-conversion-features-gu3yzk`** (static + e2e green, see *Acceptance tests*).
+Before this branch the app kept the Web Audio graph alive with an audio-clock scheduler, but
+nothing recovered when iOS suspends/interrupts the `AudioContext` (phone call, Siri, route change, Control Center) or
 when the scheduler stalls; the Monitor panel shows `ctx` state but no hop age or recovery counters. This spec adds a
 1 s **watchdog** (`// ══ watchdog (#3) ══`): auto-resume of a non-running context, hop-age tracking, a stalled-scheduler
 reschedule, three Monitor cells, and the `lastHopAgeMs` / `ctxResumes` / `watchdogTrips` heartbeat counters.
@@ -19,9 +20,39 @@ and resumes it, (b) notices a scheduler that has not produced a hop for longer t
 reschedules from *now*, (c) counts both recoveries, shows them in the Monitor grid and in the heartbeat, and
 (d) writes a structured log record for every trip so the fleet log (#22) can aggregate stalls per node/night.
 
+## Prior art
+
+- **Here:** the audio-clock scheduler (`pending[]`, `schedule()`, `LOOKAHEAD`/`TICK_MS`), the reschedule-from-now idiom
+  in `setAlgo()`/`applyPatch()`, and `unlockAudio()`'s gesture-path `resume()` — the watchdog reuses all three instead of
+  adding a second scheduler. `ctxStateLabel` already displayed `ctx.state` (display only).
+- **Owner's Mac clone:** unknown; the block only adds one line to `frame()` and one to `start()`.
+- **Backend:** `fleet_log` (#22) already treats unknown telemetry keys additively, so `lastHopAgeMs`/`ctxResumes`/
+  `watchdogTrips` need no backend change.
+- **OSS / platform:** Web Audio `AudioContext.resume()` promise + `state` (MDN); the common "keep the AudioContext
+  alive on iOS" pattern is a periodic `state !== "running" → resume()` poll — adopted as-is. A `Worker`-based timer to
+  dodge background throttling is documented as a follow-up, not adopted (M2 scope, no evidence it survives iOS
+  lock-screen suspension either).
+
 ## Shipped on `main`
 
-Verified by reading `public/index.html` (`origin/main` @ `0625e91`; exact lines):
+**Implemented on this branch** (`public/index.html` line numbers after the change):
+
+| What | Where |
+|------|-------|
+| Monitor cells `telHopAge` / `telResumes` / `telWatchdog` after `telSudden` (`<!-- ══ watchdog cells (#3) ══ -->`) | `public/index.html:367-370` |
+| `start()`: `lastHopAt = performance.now()` baseline | `public/index.html:846` |
+| `frame()`: `lastHopAt = performance.now()` after each `pending.shift()` | `public/index.html:1198` |
+| `// ══ watchdog (#3) ══`: `var lastHopAt, ctxResumes, watchdogTrips, lastWatchdogAt` (`:1390`), `lastHopAgeMs()` (`:1391`), `stallLimitMs()` (`:1392`), `watchdogTick()` (`:1393-1418`), `setInterval(watchdogTick, 1000)` (`:1419`) | `public/index.html:1387-1419` |
+| `updateTelUI()` fills the three cells (`—` when not running) | `public/index.html:1489-1492` |
+| `telemetryPayload()`: `lastHopAgeMs`, `ctxResumes`, `watchdogTrips` | `public/index.html:1528-1530` |
+| Systems check `Watchdog` row after `Patch hold` | `public/index.html:1720` |
+| Log records `event: "watchdog"`, `level: "warn"` via structured `monLog` (spec 01) | `public/index.html:1398`, `:1414` |
+
+Shipped deviations from the text below: counters are `var` (boot order — `setAlgo()` from `localStorage` (`:1317`) calls
+`updateTelUI()` before the block runs; a `let` would throw in its TDZ), and `watchdogTick()` also calls `updateTelUI()`
+in the resume branch so `telResumes` updates on the same tick.
+
+Baseline verified by reading `public/index.html` (`origin/main` @ `0625e91`, before this branch; lines of that revision):
 
 | What | Where |
 |------|-------|
@@ -123,6 +154,15 @@ limitMs, watchdogTrips, algo}` — numbers and enum strings only. Backend (`flee
 - C1: no Bluetooth API involvement; route recovery is the OS's job, the watchdog only revives the Web Audio clock.
 
 ## Acceptance tests
+
+**Result on this branch (2026-09-08 UTC):** static tests 1-8 are `test_watchdog`, `test_watchdog_cells_in_mon_grid`,
+`test_telemetry_payload_tokens`, `test_no_web_bluetooth` in `tests/test_public_html.py` (`44 passed`, exit 0).
+Browser tests 9-12 are the e2e tests `telemetryPayload carries schemaVersion 1 + #22 / #3 fields` (9) and
+`Signal on: watchdog tracks hop age or resumes a suspended ctx; Signal off resets` (10-12); `bash tests/e2e/run.sh`
+→ `7 passed`, exit 0. **Headless-audio caveat observed:** Playwright's Chromium 141 (`chromium-1194`) reported
+`audioContextState: "running"` 1.5 s after *Signal on* (hop age 52 ms, `ctxResumes 0`, `watchdogTrips 0`), so the
+"running" branch ran, including the 4.5 s no-false-trips wait at `dMin = dMax = 1 s`; the `suspended` branch
+(`ctxResumes ≥ 1` within 3 s) remains in the spec for sinks without audio.
 
 Static (`tests/test_public_html.py`, alongside spec 01/02 checks):
 

@@ -25,9 +25,51 @@ Bluetooth A2DP** to its own Soundcore 2 (C1). Optional third role: chair-mounted
 3. Make the phone testable without hardware: a deterministic static test (`tests/test_public_html.py`) and a Playwright
    smoke (`tests/e2e/`) that drive the real single-file app in headless Chromium.
 
+## Prior art
+
+- **Here:** the live single-file PWA (`public/index.html`, one IIFE, `monLog` DOM log, `telemetryPayload()`,
+  `clampPatch()`/`applyPatch()`, Hold / Manual) — everything in this spec extends it additively; nothing is rewritten.
+  `scripts/ci_static_gates.sh` already greps the literals and key regexes; `tests/test_public_html.py` and
+  `tests/e2e/` were referenced by `.claude/rules/public-frontend.md` but absent — they are created here.
+- **Owner's Mac clone** (`/Users/machine/apps/IoT-ASP`, usually ahead on `public/index.html`): unknown deltas; the
+  delimited-block layout and the "exactly one `telemetryPayload`" test exist so the merge stays mechanical.
+- **Org repos:** none provide a browser smoke for `public/`; `.github/workflows/ci.yml` has no Node job (hence the
+  optional `e2e` integration request).
+- **OSS reused:** `@playwright/test` (headless Chromium, `pageerror`, `baseURL`) instead of a hand-rolled CDP driver;
+  Python `http.server` for static serving (stdlib, no npm at repo root); `html.parser` for the structural gate.
+  Not adopted: a bundler/test framework inside `public/` (rule: dependency-free single file).
+
 ## Shipped on `main`
 
-Verified by reading `public/index.html` on this checkout (`origin/main` @ `0625e91`; line numbers exact):
+**Implemented on this branch** (`claude/mdc-conversion-features-gu3yzk`, on top of `dc971c0`) — line numbers of
+`public/index.html` after the change:
+
+| What | Where |
+|------|-------|
+| Monitor grid cells `telHopAge` / `telResumes` / `telWatchdog` (`<!-- ══ watchdog cells (#3) ══ -->`) | `public/index.html:367-370` |
+| `Copy log JSON` (`copyLogBtn`) + `Reseed` (`reseedBtn`) tapbar (`<!-- ══ monitor log controls (#22 / #2) ══ -->`) | `public/index.html:372-376` |
+| Seed init: `seedSource`, `entropySeed()` when no stored seed > 0 | `public/index.html:503-519` |
+| `pickFreq` with `MIN_HOP_DELTA_HZ()` retry loop | `public/index.html:554-561` |
+| `start()`: `lastHopAt` baseline + `rand() * 0.5` stagger | `public/index.html:846-847` |
+| `frame()`: `lastHopAt = performance.now()` on each pending shift | `public/index.html:1198` |
+| `// ══ structured monitor log (#22) ══` — `LOG_MAX = 200`, `records`, `logSeq`, `monLog(msg, event, fields, level)`, `copyLogJson()` | `public/index.html:1326-1374` |
+| `// ══ telemetry enrichment (#22) ══` — `nightNYNow()`, `bandTag()` | `public/index.html:1376-1385` |
+| `// ══ watchdog (#3) ══` — state, `lastHopAgeMs()`, `stallLimitMs()`, `watchdogTick()`, `setInterval(watchdogTick, 1000)` | `public/index.html:1387-1419` |
+| `// ══ max-entropy seeds (#2) ══` — `xmur3`, `fnv1a32`, `entropySeed`, `MIN_HOP_DELTA_HZ`, `reseed`, `reseedBtn` | `public/index.html:1421-1463` |
+| `// ══ debug hook (#1) ══` — `window.__hop` (frozen) | `public/index.html:1465-1470` |
+| `updateTelUI()` fills the three watchdog cells | `public/index.html:1473-1493` (tail `:1489-1492`) |
+| `telemetryPayload()` — keys after `holdManual`: `band … logTail` | `public/index.html:1495-1534` |
+| Remote `seedAction: "reseed"` → `reseed("patch")` | `public/index.html:1583` |
+| Systems check: `Hop RNG` row shows `(stored|entropy)` + min Δ; new `Watchdog` row | `public/index.html:1717`, `:1720` |
+| `public/README.txt` — live URL + three-phone fleet, no PII | `public/README.txt:3-5` |
+| `tests/test_public_html.py` (44 cases, stdlib) · `tests/e2e/{package.json,run.sh,public_smoke.spec.mjs,.gitignore}` (7 Playwright tests) | see *Acceptance tests* |
+
+Unchanged: `SCHEMA_VERSION = 1` (`:444`), `VOL_PATCH_MAX = 12, BAND_ABS_LO = 17000, BAND_ABS_HI = 23000` (`:534`),
+`clampPatch()` (`:1549`), `applyPatch`/`pollPatch` Hold short-circuits (`:1564-1565`, `:1598-1599`), slider `max="60"`
+(`:344`), every pre-existing element id, no `navigator.bluetooth`. Size after change: 80 885 bytes (< 120 000 guard).
+
+Baseline verified by reading `public/index.html` on `origin/main` @ `0625e91` **before** this branch (line numbers of
+that revision):
 
 | What | Where |
 |------|-------|
@@ -58,6 +100,28 @@ All code edits are **additive** and live in delimited blocks placed immediately 
 `public/index.html:1303`, in this order: `// ══ structured monitor log (#22) ══`, `// ══ telemetry enrichment (#22) ══`,
 `// ══ watchdog (#3) ══` (spec 03), `// ══ max-entropy seeds (#2) ══` (spec 02), `// ══ debug hook (#1) ══`.
 Existing ids, literals and clamps are untouched.
+
+**As shipped — deviations from the text below (all deliberate, tests assert the shipped form):**
+
+- The five blocks sit between the banner (`:1324`) and `updateTelUI()` (`:1473`), i.e. *before* the first `monLog`
+  call, so the `const records` ring buffer is initialised before any log line is written.
+- Watchdog counters are declared with `var` (`:1390`), not `let`: `setAlgo()` from `localStorage` (`:1317`) calls
+  `updateTelUI()` during boot (`:1317`), before the block executes, and a `let` would throw a TDZ `ReferenceError`.
+  `updateTelUI()`/`telemetryPayload()` read them as `ctxResumes || 0`.
+- `MIN_HOP_DELTA_HZ` is a hoisted `function` declaration (`:1453`), not a `const` arrow, for the same boot-order reason
+  (`pickFreq` at `:556` is defined above the block). The literal `Math.max(200, 0.05 * (bandHigh() - bandLow()))`
+  is unchanged.
+- `band` comes from a tiny helper `bandTag()` (`:1385`) so the rule `+fMin.value <= 100` lives in one place.
+- `monLog` truncates `event` to 32 chars and coerces unknown `level`s to `"info"` via a `LOG_LEVELS` map (`:1331`).
+- The two buttons live in a `<div class="tapbar">` between the grid and `#monLog` (`:372-376`), with HTML comment
+  banners (`<!-- ══ … (#N) ══ -->`) mirroring the script banners.
+- `window.__hop.telemetryPayload` is an arrow wrapper (`() => telemetryPayload()`), keeping the hook a pure read.
+- Stored seed rule: a stored value is used only when it parses to an integer `> 0`; otherwise a fresh
+  `entropySeed()` is generated, persisted, and `seedSource = "entropy"` (`:511-514`).
+- HTML *copy* still says "two phones" / "2 nodes" (`:226`, `:235`, `:387`, `:1714`). Not changed here (copy, not logic;
+  additive-block rule) — **owner decision**: align to the three-phone fleet in the same PR that closes #1 if desired.
+- `npm i` generates `tests/e2e/package-lock.json` (not in this work item's owned set). It should be committed so
+  `npm ci` is reproducible (see *E. Tests*).
 
 ### A. Structured monitor log (`// ══ structured monitor log (#22) ══`)
 
@@ -189,6 +253,13 @@ No patch fields change. `seedSource` is UI/debug only and **not** on the wire.
 
 ## Acceptance tests
 
+**Result on this branch (2026-09-08 UTC):** `python3 -m pytest tests/test_public_html.py -q` → `44 passed`, exit 0
+(covers 1-12 below plus spec 02 tests 1-7 and spec 03 tests 1-8). `bash scripts/ci_static_gates.sh` → `OK ci_static_gates`,
+exit 0. `bash tests/e2e/run.sh` → `7 passed (10.7s)`, `OK e2e`, exit 0 — `npm i` resolved `@playwright/test@1.56.1`
+from the registry (no proxy issue; `registry.npmjs.org` is on the no-proxy list), Chromium from `/opt/pw-browsers`.
+Headless Chromium reported `audioContextState: "running"` after *Signal on* (hop age 52 ms, `ctxResumes 0`,
+`watchdogTrips 0`), so the e2e ran the "running" branch of spec 03 test 10-11 including the no-false-trips wait.
+
 `python3 -m pytest tests/test_public_html.py -q` (stdlib only, no network, reads `public/index.html` and
 `public/README.txt` from the repo root resolved relative to the test file):
 
@@ -242,6 +313,15 @@ external network):
 Exit code of `bash tests/e2e/run.sh` is reported in the implementation notes; if `npm ci`/`npm i` cannot reach the
 registry through the proxy, the failure text is reported verbatim and the static tests remain the blocking gate.
 
+Shipped e2e layout (`tests/e2e/public_smoke.spec.mjs`, 7 tests in one `test.describe("public blaster smoke")`):
+`loads, ids exist, no page errors` (13-14) · `Hold / Manual toggles holdManual` (15) · `telemetryPayload carries
+schemaVersion 1 + #22 / #3 fields` (16 + spec 03 test 9) · `seed is a positive entropy-mixed integer, persisted,
+reseedable` (17-18 + spec 02 tests 8-10, 12) · `two independent contexts get different seeds` (spec 02 test 11) ·
+`Copy log JSON does not throw; structured records well-formed` (19) · `Signal on: watchdog tracks hop age or resumes a
+suspended ctx; Signal off resets` (spec 03 tests 10-12). `run.sh` accepts `E2E_PORT` (default 8765) and forwards extra
+arguments to `npx playwright test`. No `playwright.config` file: `@playwright/test` defaults (cwd `testDir`,
+`**/*.spec.mjs`, headless) plus `test.use({ baseURL })` in the spec.
+
 ## CI gate
 
 - `static_gates` job (`scripts/ci_static_gates.sh`) — unchanged and must stay green: literals, key regexes,
@@ -275,7 +355,13 @@ registry through the proxy, the failure text is reported verbatim and the static
 
 - Context7 `/microsoft/playwright` — `PLAYWRIGHT_BROWSERS_PATH` overrides the browser cache location for install
   *and* test runs (`docs/src/browsers.md`); `webServer` plugin options (`command`, `url`, `cwd`, `env`).
-- `npm view @playwright/test version` → `1.63.0` (published 2026-09-04T22:44Z); `npm pack playwright-core@1.63.0`
+- Context7 `/microsoft/playwright` (`docs/src/test-configuration-js.md`, `class-testoptions.md`) — `defineConfig`
+  `testDir`/`use.baseURL`/`headless` defaults; re-queried 2026-09-08 during implementation.
+- Context7 `/mdn/content` — `Intl.DateTimeFormat` `formatToParts()` returns typed parts (`hour` part) and
+  `hour12: false` gives 24-hour output for `en-US`; `getRandomValues()` fills a `Uint32Array` and is the only
+  `Crypto` member usable from an insecure context; `Clipboard.writeText()` example with try/catch (re-queried 2026-09-08).
+- `npm view @playwright/test version` → `1.63.0` (registry `time.modified` 2026-09-07T05:26Z, re-checked 2026-09-08;
+  first seen published 2026-09-04T22:44Z); `npm pack playwright-core@1.63.0`
   → `browsers.json` chromium revision `1243` (153.0.8010.12); local `/opt/node22/lib/node_modules/playwright`
   (`1.56.1`) `browsers.json` chromium revision `1194` (141.0.7390.37) = `/opt/pw-browsers/chromium-1194`.
 - Context7 `/mdn/content` — `Intl.DateTimeFormat` `hour12: false` example, `formatToParts()` `hour` part,

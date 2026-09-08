@@ -24,3 +24,4 @@ study/
 *.webm
 *.wav
 recordings/
+tests/e2e/.server.log

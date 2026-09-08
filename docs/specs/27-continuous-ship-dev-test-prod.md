@@ -7,8 +7,11 @@ Owned files: `.github/workflows/deploy.yml`, `vercel.json`, `docs/deploy.md`, `s
 
 ## Status
 
-**Spec written 2026-09-08 — code not yet on `main`.** Everything that can run offline (workflow structure
-test, `vercel.json` header preservation, smoke-script argument handling) is a CI gate. The live path is
+**Implemented 2026-09-08 on branch `claude/mdc-conversion-features-gu3yzk` (not yet merged to `main`).**
+All owned files exist; `python3 -m pytest tests/test_deploy_workflow.py -q` → 14 passed (DP-01 … DP-13);
+`bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` → exit 0 against the
+currently served build. Everything that can run offline (workflow structure test, `vercel.json` header
+preservation, smoke-script argument handling) is a CI gate. The live path is
 gated behind GitHub Actions secrets that are **not set as of 2026-09-08** (`VERCEL_TOKEN`,
 `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, optional `VERCEL_DEPLOY_HOOK_PROD`,
 `VERCEL_AUTOMATION_BYPASS_SECRET`); until an owner sets them, `deploy.yml` runs `gates` and prints a
@@ -43,7 +46,9 @@ Deploy — dev → test → prod  (deploy.yml, concurrency group deploy-main)
 
 ## Shipped on `main`
 
-Verified by reading the code at branch head `0625e91` (`git log --oneline -3`):
+Verified by reading the code at branch head `0625e91` (`git log --oneline -3`); re-checked at `4e4f5db`,
+where `ci.yml` gained `tests` (pytest, `requirements-dev.txt`) and `mdc_check` jobs (`ci.yml:96-127`) — the
+`deploy.yml` `gates` job still re-runs pytest on `DEPLOY_REF` so a deploy never trusts a stale CI result:
 
 | What | Where |
 |------|-------|
@@ -63,9 +68,25 @@ Verified by reading the code at branch head `0625e91` (`git log --oneline -3`):
 | Prod URL default `https://hop-ultrasonic-1digital-design.vercel.app` | `CLAUDE.md:7`, `README.md:7` |
 | Rule text already describing `deploy.yml` (gates → dev → test → prod, secret names, `::notice`, pinned CLI major) | `.claude/rules/ci-and-workflows.md:11-13` |
 
-Not on `main`: no `.github/workflows/deploy.yml`, no `docs/deploy.md`, no `scripts/deploy_smoke.sh`,
-no `scripts/vercel_secrets_check.sh`, no `tests/test_deploy_workflow.py` (`tests/` holds only
-`test_mdc_convert.py`), no `.vv/deploy/`, and `vercel.json` has no `git` block.
+Not on `main` (delivered on the feature branch, 2026-09-08): `.github/workflows/deploy.yml`,
+`docs/deploy.md`, `scripts/deploy_smoke.sh`, `scripts/vercel_secrets_check.sh`,
+`tests/test_deploy_workflow.py`, `.vv/ci/continuous-ship.md`, `.vv/deploy/VERCEL.md`, and the
+`vercel.json` `git` block (`vercel.json:4`).
+
+### Implementation deviations from the first draft of this spec (binding as written here)
+
+1. **`env` context is unavailable in `jobs.<job_id>.if` and `jobs.<job_id>.environment`** (GitHub docs
+   *Contexts → Context availability*; actionlint `docs/checks.md`). Therefore: the dispatch target is read
+   as `(github.event.inputs.target || 'prod')` in `test.if`, exported as `secrets_check` job output
+   `target` (`${{ github.event.inputs.target || 'prod' }}`) and read as
+   `needs.secrets_check.outputs.target == 'prod'` in `deploy_prod.if`; `deploy_prod.environment.url` is
+   `${{ vars.PROD_URL || 'https://hop-ultrasonic-1digital-design.vercel.app' }}`. The top-level `env`
+   (`PROD_URL`, `TARGET`, `DEPLOY_REF`) is still defined and used inside steps (`$PROD_URL`, checkout `ref`).
+2. `test.if` additionally requires `needs.deploy_dev.outputs.preview_url != ''` (never smoke an empty URL).
+3. Hook path: the poll sleeps 30 s once before the 10 × 30 s loop (a hook build cannot finish instantly,
+   and the prod URL already serves a passing build — see Risks).
+4. `secrets_check` keeps its single `probe` step (env keys exactly `VT VO VP HP`); `target` is a job-level
+   `outputs` expression, not a step.
 
 ## Remaining scope
 
@@ -103,10 +124,10 @@ Run-level guard, applied to **every** job via `if:` (jobs, not the workflow, car
 | `secrets_check` | — | — | — | One step, `id: probe`, `env: { VT: ${{ secrets.VERCEL_TOKEN }}, VO: ${{ secrets.VERCEL_ORG_ID }}, VP: ${{ secrets.VERCEL_PROJECT_ID }}, HP: ${{ secrets.VERCEL_DEPLOY_HOOK_PROD }} }`. Bash: `has_cli=true` iff `-n "$VT" && -n "$VO" && -n "$VP"`, `has_hook=true` iff `-n "$HP"`; writes `has_cli=<bool>` and `has_hook=<bool>` to `$GITHUB_OUTPUT`; builds a `missing` list of **names** (`VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_DEPLOY_HOOK_PROD`) and prints `::notice title=Vercel secrets::missing: <names> — see docs/deploy.md and issue #27` when non-empty; always `exit 0`. Job `outputs: { has_cli: …, has_hook: … }`. Never `echo` a value. |
 | `gates` | — | — | — | checkout · `actions/setup-python@v5` `3.12` (pip cache on `requirements-dev.txt` + `services/autoroute-adk/requirements.txt`) · `pip install -r requirements-dev.txt -r services/autoroute-adk/requirements.txt` · `bash scripts/ci_static_gates.sh` · `bash scripts/autoroute_dev.sh` · `python3 -m pytest tests -q` |
 | `deploy_dev` | `[secrets_check, gates]` | `needs.secrets_check.outputs.has_cli == 'true'` | `name: dev`, `url: ${{ steps.deploy.outputs.preview_url }}` | checkout · `actions/setup-node@v4` `node-version: 20` · `npm i -g vercel@59` · env `VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}`, `VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}` on the job · `vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}` · `vercel build --token=${{ secrets.VERCEL_TOKEN }}` · step `id: deploy`: `url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})`; `echo "preview_url=$url" >> "$GITHUB_OUTPUT"`; `echo "dev preview: $url" >> "$GITHUB_STEP_SUMMARY"`. Job `outputs.preview_url`. |
-| `test` | `[deploy_dev]` | `env.TARGET != 'dev'` (i.e. `test` or `prod`) | `name: test`, `url: ${{ needs.deploy_dev.outputs.preview_url }}` | checkout · `bash scripts/deploy_smoke.sh "${{ needs.deploy_dev.outputs.preview_url }}"` with `env: { BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }} }` (empty when unset; the script only sends `x-vercel-protection-bypass` when non-empty) |
-| `deploy_prod` | `[secrets_check, gates, test]` | `!cancelled() && env.TARGET == 'prod' && needs.gates.result == 'success' && (needs.test.result == 'success' \|\| (needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true')) && (needs.secrets_check.outputs.has_cli == 'true' \|\| needs.secrets_check.outputs.has_hook == 'true')` | `name: production`, `url: ${{ env.PROD_URL }}` | checkout · setup-node 20 · `npm i -g vercel@59` · **CLI path** (`if: needs.secrets_check.outputs.has_cli == 'true'`): `vercel pull --yes --environment=production --token=…` · `vercel build --prod --token=…` · `url=$(vercel deploy --prebuilt --prod --token=…)`; `echo "prod_url=$url" >> $GITHUB_OUTPUT`; summary line · **Hook path** (`if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true'`): `env: { VERCEL_DEPLOY_HOOK_PROD: ${{ secrets.VERCEL_DEPLOY_HOOK_PROD }} }`; `resp=$(curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_PROD")`; `python3 -c 'import json,sys; j=json.load(sys.stdin)["job"]; print("deploy hook job", j["id"], j["state"])'` (prints **only** id + state; expects `{"job":{"id":…,"state":"PENDING",…}}`); then poll: up to **10 × 30 s (5 min)** running `bash scripts/deploy_smoke.sh "$PROD_URL"` until it exits 0 (`SMOKE_RETRIES=1` per attempt so the outer loop controls timing) · **Final smoke** (both paths): `bash scripts/deploy_smoke.sh "$PROD_URL"` with `BYPASS` env · append `prod: $PROD_URL` to `$GITHUB_STEP_SUMMARY`. |
+| `test` | `[deploy_dev]` | `(github.event.inputs.target \|\| 'prod') != 'dev'` (i.e. `test` or `prod`) `&& needs.deploy_dev.outputs.preview_url != ''` | `name: test`, `url: ${{ needs.deploy_dev.outputs.preview_url }}` | checkout · `bash scripts/deploy_smoke.sh "${{ needs.deploy_dev.outputs.preview_url }}"` with `env: { BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }} }` (empty when unset; the script only sends `x-vercel-protection-bypass` when non-empty) |
+| `deploy_prod` | `[secrets_check, gates, test]` | `!cancelled() && needs.secrets_check.outputs.target == 'prod' && needs.gates.result == 'success' && (needs.test.result == 'success' \|\| (needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true')) && (needs.secrets_check.outputs.has_cli == 'true' \|\| needs.secrets_check.outputs.has_hook == 'true')` | `name: production`, `url: ${{ vars.PROD_URL \|\| 'https://hop-ultrasonic-1digital-design.vercel.app' }}` | checkout · setup-node 20 · `npm i -g vercel@59` (CLI path only) · **CLI path** (`if: needs.secrets_check.outputs.has_cli == 'true'`): `vercel pull --yes --environment=production --token=…` · `vercel build --prod --token=…` · `url=$(vercel deploy --prebuilt --prod --token=…)`; `echo "prod_url=$url" >> $GITHUB_OUTPUT`; summary line · **Hook path** (`if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true'`): `env: { VERCEL_DEPLOY_HOOK_PROD: ${{ secrets.VERCEL_DEPLOY_HOOK_PROD }} }`; `resp=$(curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_PROD")`; `python3 -c 'import json,sys; j=json.load(sys.stdin)["job"]; print("deploy hook job", j["id"], j["state"])'` (prints **only** id + state; expects `{"job":{"id":…,"state":"PENDING",…}}`); then poll: up to **10 × 30 s (5 min)** running `bash scripts/deploy_smoke.sh "$PROD_URL"` until it exits 0 (`SMOKE_RETRIES=1` per attempt so the outer loop controls timing) · **Final smoke** (both paths): `bash scripts/deploy_smoke.sh "$PROD_URL"` with `BYPASS` env · append `prod: $PROD_URL` to `$GITHUB_STEP_SUMMARY`. |
 
-Dispatch semantics (`env.TARGET`): `dev` → `secrets_check`, `gates`, `deploy_dev` only (`test` and
+Dispatch semantics (`github.event.inputs.target || 'prod'`, also exposed as `secrets_check` output `target`): `dev` → `secrets_check`, `gates`, `deploy_dev` only (`test` and
 `deploy_prod` skip); `test` → through `test`; `prod` (default, and every `workflow_run`) → all five.
 `deploy_prod` **must** list `secrets_check` and `gates` in `needs` because a job may only read
 `needs.<job>.outputs` of jobs it depends on; `needs.test` is the ordering edge the brief requires.
@@ -247,15 +268,16 @@ None. `schemaVersion: 1` unchanged; the smoke test only *reads* `public/patch.js
 | DP-02 | Triggers | `on.workflow_run.workflows == ["CI — no breaking changes"]` (equals line 1 of `ci.yml` read at test time), `types == ["completed"]`, `branches == ["main"]`; `on.workflow_dispatch.inputs.target.type == "choice"`, `options == ["dev","test","prod"]`, `default == "prod"`; `inputs.ref` present, not required |
 | DP-03 | Permissions + concurrency | `permissions == {"contents":"read","deployments":"write"}`; `concurrency.group == "deploy-main"`; `concurrency["cancel-in-progress"] is False` |
 | DP-04 | Job graph | jobs keys ⊇ `{secrets_check, gates, deploy_dev, test, deploy_prod}`; `set(deploy_dev.needs) == {"secrets_check","gates"}`; `test.needs == ["deploy_dev"]`; `"test" in deploy_prod.needs and "secrets_check" in deploy_prod.needs and "gates" in deploy_prod.needs`; `secrets_check` and `gates` have no `needs` |
-| DP-05 | Environments | `deploy_dev.environment.name == "dev"`, `test.environment.name == "test"`, `deploy_prod.environment.name == "production"` and its `url` contains `PROD_URL` |
+| DP-05 | Environments | `deploy_dev.environment.name == "dev"`, `test.environment.name == "test"`, `deploy_prod.environment.name == "production"` and its `url` contains `PROD_URL` (as `vars.PROD_URL`) and the default host |
 | DP-06 | Success guard | every job's `if` string contains `workflow_run.conclusion == 'success'` and `head_branch == 'main'`; `deploy_dev.if` contains `has_cli == 'true'`; `deploy_prod.if` contains `has_hook` and `!cancelled()` |
 | DP-07 | CLI flags | concatenated `run:` text of `deploy_dev` contains `vercel pull --yes --environment=preview`, `vercel build`, `vercel deploy --prebuilt` and **not** `--prod`; `deploy_prod` contains `--environment=production`, `vercel build --prod`, `vercel deploy --prebuilt --prod`, `curl -fsS -X POST`, `scripts/deploy_smoke.sh`; `--prod` appears in no other job; both deploy jobs contain `npm i -g vercel@59` (regex `vercel@\d+`) |
 | DP-08 | Secrets hygiene | raw file: every occurrence of `secrets.` matches `\$\{\{\s*secrets\.[A-Z_]+\s*\}\}`; set of names == `{VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID, VERCEL_DEPLOY_HOOK_PROD, VERCEL_AUTOMATION_BYPASS_SECRET}`; regex `AIza[0-9A-Za-z_-]{20,}\|vercel_[A-Za-z0-9]{10,}\|sk-[A-Za-z0-9]{20,}` has no match in `deploy.yml`, `vercel.json`, `docs/deploy.md`, both scripts, both `.vv` files; no `echo` line references `$VT`, `$VO`, `$VP`, `$HP`, `$VERCEL_TOKEN`, or `$VERCEL_DEPLOY_HOOK_PROD` |
-| DP-09 | secrets_check contract | its single step's `env` keys == `{VT, VO, VP, HP}` mapped to the three CLI secrets + hook; `run` writes `has_cli=` and `has_hook=` to `$GITHUB_OUTPUT`, contains `::notice`, `docs/deploy.md`, `issue #27`; job `outputs` has `has_cli`, `has_hook`; no `exit 1` in the step |
+| DP-09 | secrets_check contract | its single step's `env` keys == `{VT, VO, VP, HP}` mapped to the three CLI secrets + hook; `run` writes `has_cli=` and `has_hook=` to `$GITHUB_OUTPUT`, contains `::notice`, `docs/deploy.md`, `issue #27`; job `outputs` has `has_cli`, `has_hook`, and `target == "${{ github.event.inputs.target \|\| 'prod' }}"`; no `exit 1` in the step |
 | DP-10 | Smoke script | `subprocess.run(["bash","scripts/deploy_smoke.sh"])` → returncode 2, stderr contains `usage:`; with `SMOKE_RETRIES=1 SMOKE_SLEEP_S=0` against `http://127.0.0.1:9` → non-zero, output contains `FAIL:`; file text contains `Hold / Manual`, `holdManual`, `schemaVersion`, `Permissions-Policy`, `microphone`, `application/manifest+json`, `x-vercel-protection-bypass`, `OK deploy_smoke`; `bash -n` passes for both scripts |
 | DP-11 | vercel.json | `cfg["git"]["deploymentEnabled"]["main"] is False`; `"github" not in cfg`; `cfg["cleanUrls"] is True`, `cfg["trailingSlash"] is False`; `cfg["headers"]` contains a `/(.*)` rule whose header keys == `{Permissions-Policy, Referrer-Policy, X-Content-Type-Options, Cache-Control}` with the exact original values (`microphone=(self), autoplay=(self), accelerometer=(self), gyroscope=(self)`, `strict-origin-when-cross-origin`, `nosniff`, `public, max-age=0, must-revalidate`) and a `/manifest.webmanifest` rule with `Content-Type: application/manifest+json` |
 | DP-12 | Docs + evidence | `docs/deploy.md` contains `vercel.com/1digital-design/hop-ultrasonic/settings/git`, `gh-actions-prod`, `VERCEL_DEPLOY_HOOK_PROD`, `gh secret set`, `vercel rollback`, `vercel promote`, `## Sources`; `.vv/ci/continuous-ship.md` and `.vv/deploy/VERCEL.md` contain `secrets not set as of 2026-09-08 (issue #27)`; `scripts/vercel_secrets_check.sh` contains `op://dev/` and `gh secret set VERCEL_TOKEN --repo team-project-pikachu/IoT-ASP` |
-| DP-13 | Dispatch semantics | `test.if` contains `TARGET != 'dev'`; `deploy_prod.if` contains `TARGET == 'prod'`; top-level `env.TARGET` expression contains `inputs.target` and `'prod'` fallback; `env.DEPLOY_REF` contains `workflow_run.head_sha` |
+| DP-13 | Dispatch semantics | `test.if` contains `target \|\| 'prod') != 'dev'`; `deploy_prod.if` contains `outputs.target == 'prod'` and the hook-only clause `needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true'`; top-level `env.TARGET` contains `inputs.target` and `'prod'` fallback; `env.DEPLOY_REF` contains `workflow_run.head_sha`; `env.PROD_URL` contains `vars.PROD_URL`; every checkout in `gates`/`deploy_dev`/`test`/`deploy_prod` uses `ref: ${{ env.DEPLOY_REF }}` |
+| DP-10b | Secrets-check script | `bash scripts/vercel_secrets_check.sh` in a clean env → exit 1, stdout has `VERCEL_TOKEN: MISSING`; with the three names exported to dummy values → exit 0, `OK vercel_secrets_check`, and the dummy values never appear in stdout/stderr |
 
 ## CI gate
 
@@ -320,6 +342,11 @@ None. `schemaVersion: 1` unchanged; the smoke test only *reads* `public/patch.js
 - GitHub docs — *Workflow syntax → `on.workflow_dispatch.inputs`*
   https://docs.github.com/enterprise-cloud@latest/actions/reference/workflows-and-actions/workflow-syntax
   (`type: choice`, `options`, `default`; `github.event.inputs` empty for other events).
+- GitHub docs — *Contexts → Context availability*
+  https://docs.github.com/actions/reference/workflows-and-actions/contexts and actionlint
+  `docs/checks.md` *Availability of contexts and special functions*
+  https://github.com/rhysd/actionlint/blob/main/docs/checks.md (`env` not available in
+  `jobs.<job_id>.if` / `jobs.<job_id>.environment`).
 - GitHub docs — *Managing environments for deployment*
   https://docs.github.com/actions/deployment/targeting-different-environments/using-environments-for-deployment
   (required reviewers, up to 6, one approval suffices; environment `name`/`url`).

@@ -5,11 +5,12 @@ Parent work item: [01-m0-public-blaster.md](01-m0-public-blaster.md) (shared own
 
 ## Status
 
-**Spec — implementing in this branch.** The phone already has a per-device seed persisted in `localStorage` and a
-`mulberry32` PRNG, but the seed is `Math.random()`-derived, there is no minimum hop delta, no start stagger, no
-*Reseed* control, and the seed source is invisible. This spec adds an entropy-mixed seed (`entropySeed()`), a
-minimum hop delta in `pickFreq`, a start stagger, a *Reseed* button, and a `seedSource` indicator — all additive,
-all inside `// ══ max-entropy seeds (#2) ══`.
+**Implemented on branch `claude/mdc-conversion-features-gu3yzk`** (static + e2e green, see *Acceptance tests*).
+Before this branch the phone had a per-device seed persisted in `localStorage` and a `mulberry32` PRNG, but the seed
+was `Math.random()`-derived, there was no minimum hop delta, no start stagger, no *Reseed* control, and the seed
+source was invisible. This spec adds an entropy-mixed seed (`entropySeed()`), a minimum hop delta in `pickFreq`, a
+start stagger, a *Reseed* button, and a `seedSource` indicator — all additive, all inside
+`// ══ max-entropy seeds (#2) ══` plus three one-line edits listed below.
 
 ## Goal
 
@@ -19,9 +20,35 @@ even identical devices with identical clocks diverge; hop selection enforces a s
 staggered so fleet phones do not all switch on the same audio-clock tick. Every seed is visible and re-rollable from
 the UI, persisted, and reported in telemetry (`seed`, already on the wire).
 
+## Prior art
+
+- **Here:** `mulberry32` + per-device `localStorage` seed already in `public/index.html` (kept; only the seed *source*
+  changes). Backend `seedAction: keep | reseed` in `docs/api-contract.md` / `clamps.py` (unchanged semantics).
+- **Owner's Mac clone:** may carry UI tweaks around the seed row; the block is self-contained and the seed-init edit is
+  four lines to minimise conflict.
+- **OSS reused (not vendored — a few lines each, dependency-free rule):** bryc's `xmur3` string hash and the
+  "hash a string to seed mulberry32" pattern (PRNGs.md), FNV-1a 32-bit (IETF draft parameters), Web Crypto
+  `getRandomValues`. Considered and rejected: `sfc32` (issue #2 mentions it — no benefit over the existing
+  `mulberry32` for this use, and a second PRNG is forbidden by the static test), `crypto.randomUUID()` (secure
+  context only; `getRandomValues` works on `http://127.0.0.1` for the e2e), UA-string mixing (PII rule).
+
 ## Shipped on `main`
 
-Verified by reading `public/index.html` (`origin/main` @ `0625e91`; exact lines):
+**Implemented on this branch** (`public/index.html` line numbers after the change):
+
+| What | Where |
+|------|-------|
+| `let deviceId="", seed=0, seedSource="entropy"`; stored seed used only if it parses to an integer > 0, else `entropySeed()` + persist | `public/index.html:503-519` |
+| `pickFreq` with `MIN_HOP_DELTA_HZ()` guard, ≤ 8 retries, skipped when band < 2·Δ | `public/index.html:554-561` |
+| `start()`: `nextHopAt = ctx.currentTime + 0.05 + rand() * 0.5` | `public/index.html:847` |
+| `// ══ max-entropy seeds (#2) ══`: `xmur3` (`:1423`), `fnv1a32` (`:1435`), `entropySeed` (`:1440`), `MIN_HOP_DELTA_HZ` (`:1453`, hoisted `function`), `reseed(reason)` (`:1454`), `reseedBtn` click → `reseed("ui")` (`:1462-1463`) | `public/index.html:1421-1463` |
+| Remote `seedAction: "reseed"` → `reseed("patch")` (4 lines → 1) | `public/index.html:1583` |
+| Systems check `Hop RNG` row: `per-device seed <seed> (<seedSource>) — min Δ <n> Hz — incoherent` | `public/index.html:1717` |
+| `Reseed` button markup (`id="reseedBtn"`) in the Monitor tapbar | `public/index.html:375` |
+| `window.__hop.getState()` exposes `seed`, `seedSource` (spec 01) | `public/index.html:1470` |
+| `Math.floor(Math.random() * 1e9)` — **0 occurrences** remain | static test `test_entropy_seed` |
+
+Baseline verified by reading `public/index.html` (`origin/main` @ `0625e91`, before this branch; lines of that revision):
 
 | What | Where |
 |------|-------|
@@ -84,7 +111,9 @@ editing those lines where possible; where a line must change, the change is the 
    - `#reseedBtn` click → `reseed("ui")`.
    - The remote path at `:1409-1414` is edited to call `reseed("patch")` (4 lines → 1), so remote and UI reseed
      share one implementation and the remote reseed now also reschedules.
-4. **Minimum hop delta:** `const MIN_HOP_DELTA_HZ = () => Math.max(200, 0.05 * (bandHigh() - bandLow()));`
+4. **Minimum hop delta:** `function MIN_HOP_DELTA_HZ(){ return Math.max(200, 0.05 * (bandHigh() - bandLow())); }`
+   — shipped as a hoisted function declaration rather than a `const` arrow because `pickFreq` is defined ~900 lines
+   above the block and `schedule()` can run before the block executes (a `const` would be in its TDZ).
    `pickFreq` at `:542` is replaced by
    ```js
    const pickFreq = () => {
@@ -125,6 +154,11 @@ now also reschedules. `seedSource` is **not** on the wire (UI/debug only).
   URL, no geolocation. The log record for reseed carries `{seed, reason}` only.
 
 ## Acceptance tests
+
+**Result on this branch (2026-09-08 UTC):** static tests 1-7 are `test_entropy_seed`, `test_min_hop_delta_and_stagger`,
+`test_reseed` in `tests/test_public_html.py` (`44 passed`, exit 0). Browser tests 8-12 are covered by the e2e tests
+`seed is a positive entropy-mixed integer, persisted, reseedable` and `two independent contexts get different seeds`
+(`bash tests/e2e/run.sh` → `7 passed`, exit 0).
 
 Static (`tests/test_public_html.py`, in addition to spec 01's checks):
 
