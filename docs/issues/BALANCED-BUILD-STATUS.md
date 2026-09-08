@@ -8,7 +8,7 @@
 |------:|----------------|-------|-----------|
 | #1 | implemented | M0 public Vercel hop blaster | `public/`, `vercel.json`, `docs/specs/01-m0-public-blaster.md` |
 | #2 | parked stub | Max-entropy seeds | `docs/specs/02-max-entropy-seeds.md` + `docs/issues/ISSUE-02-*` |
-| #3 | parked stub | Continuous polling & monitoring | `docs/specs/03-continuous-monitoring-watchdog.md` + `docs/issues/ISSUE-03-*` |
+| #3 | implemented | Continuous polling & monitoring | `docs/specs/03-continuous-monitoring-watchdog.md` + `docs/issues/ISSUE-03-*` |
 | #4 | parked stub | Physical vib (DeviceMotion) | `docs/specs/04-06-vibration-channels.md` + `docs/issues/ISSUE-04-*` |
 | #5 | parked stub | Acoustic vib (mic energy) | `docs/specs/04-06-vibration-channels.md` + `docs/issues/ISSUE-05-*` |
 | #6 | parked stub | Material-dependent channel selection | `docs/specs/04-06-vibration-channels.md` + `docs/issues/ISSUE-06-*` |

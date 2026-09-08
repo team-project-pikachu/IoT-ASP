@@ -16,7 +16,7 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 |----------|------|--------|---------------|
 | #1 | [01-m0-public-blaster.md](01-m0-public-blaster.md) — M0 public Vercel hop blaster + telemetry fields + M0 polish | shipped (live app) + polish implemented on branch | frontend |
 | #2 | [02-max-entropy-seeds.md](02-max-entropy-seeds.md) — max-entropy seeds, min hop delta, start stagger, Reseed | implemented on branch | frontend |
-| #3 | [03-continuous-monitoring-watchdog.md](03-continuous-monitoring-watchdog.md) — continuous polling / monitoring watchdog | implemented on branch | frontend |
+| #3 | [03-continuous-monitoring-watchdog.md](03-continuous-monitoring-watchdog.md) — continuous polling / monitoring watchdog | implemented on `main` + fleet heartbeat PR | frontend |
 | #4 #5 #6 | [04-06-vibration-channels.md](04-06-vibration-channels.md) — physical (DeviceMotion), acoustic (mic energy), material-dependent channel selection | parked — partly shipped (`priors.MATERIAL_CHANNEL_BIAS`, vib classes); arming UI not shipped | frontend + backend |
 | #7 #8 | [07-08-rlhf-loops.md](07-08-rlhf-loops.md) — RLHF +/− loops (θ vector, `localStorage` schema, bandit step) | parked — design only | frontend |
 | #10 #11 | [10-11-react-rewrite.md](10-11-react-rewrite.md) — React / React Strict DOM rewrite + fleet polish | parked — constraints only | frontend |

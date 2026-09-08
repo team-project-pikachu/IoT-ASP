@@ -281,6 +281,12 @@ test.describe("public blaster smoke", () => {
       const t = document.getElementById("fleetSeedCompare")?.textContent || "";
       return /incoherent OK/.test(t) || /peers=/.test(t);
     }, null, { timeout: 8000 });
+    await pageA.waitForFunction(() => {
+      const h = document.getElementById("fleetHealth")?.textContent || "";
+      return /Fleet pulse/.test(h) && /live/.test(h);
+    }, null, { timeout: 5000 });
+    const health = await pageA.locator("#fleetHealth").textContent();
+    expect(health).toMatch(/2\/3 live|3\/3 live|all phones on/);
     await pageA.click("#simImpulseBtn");
     await pageA.waitForFunction(() => {
       const p = window.__hop.telemetryPayload();

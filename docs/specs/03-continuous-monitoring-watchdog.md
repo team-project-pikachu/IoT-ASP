@@ -6,15 +6,11 @@ telemetry keys defined there).
 
 ## Status
 
-**Implemented on branch `claude/mdc-conversion-features-gu3yzk`** (static + e2e green, see *Acceptance tests*).
-**Review round (2026-09-08):** a confirmed false trip — the stall limit read the *live* `dwellHi()` while the hop in
-flight kept the dwell committed at schedule time, so dragging the dwell sliders down mid-dwell counted as a stall,
-cancelled automation and cut the dwell short. Fixed: the watchdog now judges the **committed schedule** (below).
-Before this branch the app kept the Web Audio graph alive with an audio-clock scheduler, but
-nothing recovered when iOS suspends/interrupts the `AudioContext` (phone call, Siri, route change, Control Center) or
-when the scheduler stalls; the Monitor panel shows `ctx` state but no hop age or recovery counters. This spec adds a
-1 s **watchdog** (`// ══ watchdog (#3) ══`): auto-resume of a non-running context, hop-age tracking, a stalled-scheduler
-reschedule, three Monitor cells, and the `lastHopAgeMs` / `ctxResumes` / `watchdogTrips` heartbeat counters.
+**Implemented on `main`** (watchdog via #29/#33) **+ fleet heartbeat polish** (`feat/3-fleet-heartbeat-monitor`).
+Per-device 1 s watchdog, AudioContext auto-resume, Monitor hop/resume/trip cells, and additive telemetry counters
+are acceptance-green. Residual M2 close: fleet pulse strip (`#fleetHealth`) flags STALE peers when BroadcastChannel
+heartbeats stop (> `FLEET_STALE_MS`), snaps carry watchdog fields, and Monitor shows live `#telSnr` / `micSnr`.
+**Review round (2026-09-08):** stall limit uses the **committed schedule** (`committedDwellS`), not live `dwellHi()`.
 
 ## Goal
 
@@ -155,8 +151,9 @@ Block `// ══ watchdog (#3) ══` placed after the telemetry-enrichment blo
 8. **Systems check** row appended after `Patch hold` (`:1550`):
    `row("Watchdog", watchdogTrips === 0 ? "ok" : "bad", "1 s tick · stall > " + Math.round(stallLimitMs()) + " ms · trips " + watchdogTrips + " · ctx resumes " + ctxResumes)`.
 
-Not in scope (issue text, parked for M2 follow-ups): optional mic SNR row, osc/gain node health beyond the
-`osc` null-check, a background `Worker` timer to survive iOS timer throttling (see Risks).
+Monitor SNR row (`#telSnr` / `micSnr`) and fleet 3-phone heartbeat view shipped with the M2 close PR.
+Still parked follow-ups: osc/gain node health beyond the `osc` null-check; a background `Worker` timer to survive
+iOS timer throttling (see Risks); cross-origin / native multi-phone heartbeats without same-origin tabs (#10).
 
 ## Wire fields
 
@@ -167,6 +164,7 @@ Additive under `schemaVersion: 1`; rows already in `docs/api-contract.md:84` (wo
 | `lastHopAgeMs` | number \| null | ms since the last hop left `pending`; `null` when not running | health |
 | `ctxResumes` | number | count of `ctx.resume()` attempts by the watchdog since page load | health |
 | `watchdogTrips` | number | count of stalled-scheduler reschedules since page load | health |
+| `micSnr` | number \| null | US-band peak−floor SNR (dB); null until mic/loop decode | monitor |
 
 Log records (`logTail` / `getLog()`): `event: "watchdog"`, `level: "warn"`, `fields` ⊂ `{state, ctxResumes, reason,
 ageMs, overdueMs, limitMs, watchdogTrips, algo}` — numbers and enum strings only (`reason ∈ {hopOverdue,

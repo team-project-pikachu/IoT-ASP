@@ -136,6 +136,7 @@ Compact JSON heartbeat. Required fields marked ★.
 | `nightNY` | | bool | Local hour in America/New_York ∈ [22, 07) — #22 |
 | `lfArmed` / `lfDriveCapable` | | bool | LF 10–20 Hz TX arm + hardware capability; web fleet defaults `false` — #22/#25 |
 | `lastHopAgeMs` / `ctxResumes` / `watchdogTrips` | | number | Watchdog health counters — #3 |
+| `micSnr` | | number \| null | Live US-band peak−floor SNR (dB) mirrored in Monitor `#telSnr` — #3 |
 | `logSeq` / `logTail` | | number / array | Structured monitor-log sequence + last 3 records (`{seq, ts, level, event, msg, fields}`, no PII) — #22 |
 | `ax` `ay` `az` / `accelAxes` | | number / [3] | Linear acceleration axes (g) when available — #26 |
 | `gx` `gy` `gz` / `gyroAxes` | | number / [3] | Rotation-rate axes (deg/s) when available — #26 |
