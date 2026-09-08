@@ -1,7 +1,7 @@
 # Balanced build status — open issues
 
 **Election:** 2 = Balanced (stub-first iterate).
-**Branch:** `chore/balanced-issue-stubs`
+**Branch tip:** `feat/balanced-ops-secrets-adk` (rebased onto `main`)
 **Date:** 2026-09-08
 
 | Issue | Classification | Title | Key paths |
@@ -23,6 +23,10 @@
 | #22 | implemented+wired | Structured fleet logs | `services/autoroute-adk/iot_asp_autoroute/fleet_log.py`, `tests/test_fleet_log.py`, `docs/specs/22-structured-fleet-logs.md` |
 | #24 | parked stub | google-adk / google-genai 2.x | `docs/specs/24-adk-2x-migration.md` + `docs/issues/ISSUE-24-*` |
 | #25 | parked stub | HW-limited LF/AEC micDiff | `docs/specs/25-hw-limited-lf-aec-micdiff.md` + `docs/issues/ISSUE-25-*` |
+| #26 | stubbed-live | Colab live GCS features | `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `notebooks/iot_asp_colab_etl.md`, `scripts/colab_live_gcs.sh` |
+| #27 | docs+inventory | Vercel Actions secrets | ORG/PROJECT set; **TOKEN missing**; `gh_secrets_names_check.sh` |
+| #34 | implemented | mdc_convert GEN_MARK guard | `scripts/mdc_convert.py`, `tests/test_mdc_convert.py`, `docs/mdc-conversion.md` |
+| #39 | parked stub | Sonos Beam Gen 2 sink | `docs/specs/39-sonos-beam-sink.md` + `docs/issues/ISSUE-39-*` |
 | #26 | fixture+dry-run | Colab live GCS features | `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `notebooks/iot_asp_colab_etl.md`, `scripts/colab_live_gcs.sh` |
 | #27 | docs+name-check | Vercel Actions secrets | `docs/deploy.md`, `.vv/deploy/VERCEL.md`, `scripts/vercel_secrets_check.sh` |
 | #34 | implemented+wt-guard | mdc_convert GEN_MARK guard | `scripts/mdc_convert.py`, `tests/test_mdc_convert.py`, `docs/mdc-conversion.md` |
@@ -40,20 +44,21 @@
 | #51 | duplicate | dup of #45 | see #45 |
 | #52 | duplicate | dup of #41 | see #41 |
 | #53 | duplicate | dup of #43 | see #43 |
+| #60 | dry-check | ADK Cloud Run deploy | `scripts/adk_deploy_dry_check.sh` (no live deploy) |
+| #63 | status script | Main protection apply | `scripts/gh_protect_main_status.sh` (report-only) |
 
 ## Summary
-- **Implemented / docs shipped:** #1 (already), #22 (extended), #26 dry-run (live pending), #27 docs, #34 GEN_MARK, #43 Soundcore docs.
+- **Implemented / docs shipped:** #1 (already), #22 (extended), #26 dry-run (live pending), #27 docs+inventory, #34 GEN_MARK, #43 Soundcore docs.
 - **Working stubs:** #11 static fleet cards, #41 native Xcode/SPM stub, #42/#44/#45 impulse+alarm web, #39 Sonos ADR + shell.
+- **PR8 (this branch):** #27 Actions inventory (ORG/PROJECT yes, TOKEN no), #63 ruleset status script, #60 ADK layout dry-check.
 - **Parked ADR-only:** #2–#8, #10, #14, #15, #18, #19, #24, #25 (+ duplicates #46–#53).
-- **Blocked on owner secrets:** #27 (VERCEL_*), #26 live GCS (`GCP_SA_JSON` / `IOT_ASP_GCS_BUCKET` / `LIVE_GCS`).
+- **Blocked on owner secrets:** #27 (`VERCEL_TOKEN`), #26 live GCS (`GCP_SA_JSON` / `IOT_ASP_GCS_BUCKET` / `LIVE_GCS`).
 
 ## Overlap with open PRs
 - PR #35 — same #34 GEN_MARK guard (landed here too for Balanced PR).
 - PR #40 — Sonos #39 docs (this branch includes `docs/sonos-beam.md` + shell stub).
 - PR #36 — ADK vendor (orthogonal; not forced here).
-
+- PR #73 — MVP roadmap/closed-log stubs for #60–#69 (coordinate on merge).
 
 ## Stacked PRs
-
 See [STACKED-PRS.md](STACKED-PRS.md).
-
