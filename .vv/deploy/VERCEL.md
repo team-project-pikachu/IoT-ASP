@@ -15,7 +15,8 @@
 | Production URL | `https://hop-ultrasonic-1digital-design.vercel.app` (repo variable `PROD_URL` may override) |
 | Served content | `public/` static PWA; `vercel.json` `cleanUrls`, `trailingSlash: false`, security headers, manifest `Content-Type` |
 | Git integration | connected to `team-project-pikachu/IoT-ASP`, production branch `main`; automatic deploy on push to `main` **disabled by `vercel.json` `git.deploymentEnabled.main: false`** (PR previews for other branches unchanged) |
-| Deploy Hook | **name** `gh-actions-prod`, ref `main` — to be created by an owner (URL is a secret; not recorded) |
+| Deploy Hook | **name** `gh-actions-prod`, ref `main` — to be created by an owner (URL is a secret; not recorded). Used only on `workflow_dispatch target=prod`; the poll succeeds only once prod serves the dispatched checkout (ETag == md5 of `public/` files) |
+| Static ETag scheme | `ETag == md5(file content)` observed 2026-09-08 on `/patch.json` and `/manifest.webmanifest` (basis of the build-identity check; md5 or sha1 accepted) |
 | Deployment Protection | unknown/default; if previews are protected, set `VERCEL_AUTOMATION_BYPASS_SECRET` |
 | Live smoke (read-only) | `bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` → exit 0 on 2026-09-08 |
 

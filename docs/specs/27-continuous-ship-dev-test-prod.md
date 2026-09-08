@@ -8,7 +8,7 @@ Owned files: `.github/workflows/deploy.yml`, `vercel.json`, `docs/deploy.md`, `s
 ## Status
 
 **Implemented 2026-09-08 on branch `claude/mdc-conversion-features-gu3yzk` (not yet merged to `main`).**
-All owned files exist; `python3 -m pytest tests/test_deploy_workflow.py -q` → 14 passed (DP-01 … DP-13);
+All owned files exist; `python3 -m pytest tests/test_deploy_workflow.py -q` → 18 passed (DP-01 … DP-17 + DP-10b);
 `bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` → exit 0 against the
 currently served build. Everything that can run offline (workflow structure test, `vercel.json` header
 preservation, smoke-script argument handling) is a CI gate. The live path is
@@ -248,8 +248,19 @@ None. `schemaVersion: 1` unchanged; the smoke test only *reads* `public/patch.js
 - **One deploy per commit**: `vercel.json` `git.deploymentEnabled.main: false` + concurrency
   `deploy-main` (no cancel-in-progress, so a prod deploy is never killed mid-flight).
 - **Prod only after test**: `deploy_prod` requires `needs.gates.result == 'success'` and
-  `needs.test.result == 'success'` on the CLI path; the hook-only path (no CLI secrets → `deploy_dev`/`test`
-  skipped) still requires green `gates` and runs the smoke against prod after the hook.
+  `needs.test.result == 'success'` on the CLI path. The hook-only path (no CLI secrets → `deploy_dev`/`test`
+  skipped) is **`workflow_dispatch`-only** (`github.event_name == 'workflow_dispatch'` in the skipped-test
+  clause): an automatic `workflow_run` never ships without a dev → test stage; `secrets_check` prints
+  `::notice title=Deploy hook only::…` instead.
+- **Build identity, not just "passes smoke"**: `scripts/deploy_smoke.sh` with `SMOKE_PUBLIC_DIR=public`
+  requires the served `ETag` of `/`, `/patch.json`, `/manifest.webmanifest` to equal the md5 (or sha1) of the
+  local files — Vercel's static `ETag == md5(content)` (observed 2026-09-08). Used by `test` (preview), the hook
+  poll (keeps polling until prod == this checkout; fails after 5 min with nothing marked shipped) and the final
+  production smoke on both paths. A passing *old* build is never success.
+- **No header leakage**: the smoke never follows redirects (`--max-redirs 0`, no `-L`; curl forwards custom
+  `-H` headers to cross-host redirect targets) and refuses to send `BYPASS` over plaintext `http://` to a
+  non-loopback host. Absent headers produce the `FAIL: … header missing` diagnostic (`header_value` tolerates a
+  non-matching `grep` under `pipefail`).
 - **`--prod` appears only in `deploy_prod`**; `--prebuilt` and `--yes` are mandatory (no interactive
   prompts, no double build — Vercel KB).
 - **Frontend invariants hold remotely**: smoke asserts `Hold / Manual`, `holdManual`, `schemaVersion == 1`,
@@ -277,6 +288,10 @@ None. `schemaVersion: 1` unchanged; the smoke test only *reads* `public/patch.js
 | DP-11 | vercel.json | `cfg["git"]["deploymentEnabled"]["main"] is False`; `"github" not in cfg`; `cfg["cleanUrls"] is True`, `cfg["trailingSlash"] is False`; `cfg["headers"]` contains a `/(.*)` rule whose header keys == `{Permissions-Policy, Referrer-Policy, X-Content-Type-Options, Cache-Control}` with the exact original values (`microphone=(self), autoplay=(self), accelerometer=(self), gyroscope=(self)`, `strict-origin-when-cross-origin`, `nosniff`, `public, max-age=0, must-revalidate`) and a `/manifest.webmanifest` rule with `Content-Type: application/manifest+json` |
 | DP-12 | Docs + evidence | `docs/deploy.md` contains `vercel.com/1digital-design/hop-ultrasonic/settings/git`, `gh-actions-prod`, `VERCEL_DEPLOY_HOOK_PROD`, `gh secret set`, `vercel rollback`, `vercel promote`, `## Sources`; `.vv/ci/continuous-ship.md` and `.vv/deploy/VERCEL.md` contain `secrets not set as of 2026-09-08 (issue #27)`; `scripts/vercel_secrets_check.sh` contains `op://dev/` and `gh secret set VERCEL_TOKEN --repo team-project-pikachu/IoT-ASP` |
 | DP-13 | Dispatch semantics | `test.if` contains `target \|\| 'prod') != 'dev'`; `deploy_prod.if` contains `outputs.target == 'prod'` and the hook-only clause `needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true'`; top-level `env.TARGET` contains `inputs.target` and `'prod'` fallback; `env.DEPLOY_REF` contains `workflow_run.head_sha`; `env.PROD_URL` contains `vars.PROD_URL`; every checkout in `gates`/`deploy_dev`/`test`/`deploy_prod` uses `ref: ${{ env.DEPLOY_REF }}` |
+| DP-14 | Missing-header diagnostic | loopback server (ETag = md5, no `Permissions-Policy`) → exit 1, stderr contains `FAIL: Permissions-Policy header missing 'microphone'` after `ok: Hold / Manual + holdManual present`; same server with the header → exit 0, `OK deploy_smoke <url>` |
+| DP-15 | Redirects + bypass secret | loopback A 302 → loopback B with `BYPASS=<canary>`: exit 1, stderr has `HTTP 302: redirect to … not followed` and `FAIL: GET <A> -> HTTP 302 (expected 200)`; B receives **zero** requests; canary appears in no output; A received the `x-vercel-protection-bypass` header; script text has `--max-redirs 0` and no `-L`/`--location`; `BYPASS=<canary> … http://10.255.255.1` → exit 1 `refusing to send the protection-bypass secret over plaintext`, no request attempted |
+| DP-16 | Build identity | loopback server serving files F with `ETag = md5`: `SMOKE_PUBLIC_DIR=<dir with F>` → exit 0, stdout `ok: build identity`; `<dir with a modified index.html>` → exit 1, stderr `served build is not this checkout`, `build identity mismatch`, `FAIL: GET <url> -> HTTP 200 but build identity mismatch (expected 200)`; non-directory → exit 1 `is not a directory`; without `SMOKE_PUBLIC_DIR` → exit 0 |
+| DP-17 | Hook path dispatch-only + identity wired | `deploy_prod.if` contains `needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true' && github.event_name == 'workflow_dispatch'`; every `deploy_prod` step whose `if` contains `has_hook == 'true'` also contains `github.event_name == 'workflow_dispatch'`; the hook poll step, the final smoke step and the `test` smoke step set `env.SMOKE_PUBLIC_DIR == "public"`; the poll `run` says `serves this checkout`; `secrets_check` `run` tests `[ "$GITHUB_EVENT_NAME" = "workflow_run" ]` and prints `::notice title=Deploy hook only::` mentioning `workflow_dispatch target=prod` |
 | DP-10b | Secrets-check script | `bash scripts/vercel_secrets_check.sh` in a clean env → exit 1, stdout has `VERCEL_TOKEN: MISSING`; with the three names exported to dummy values → exit 0, `OK vercel_secrets_check`, and the dummy values never appear in stdout/stderr |
 
 ## CI gate
@@ -296,9 +311,11 @@ None. `schemaVersion: 1` unchanged; the smoke test only *reads* `public/patch.js
   branch are inert until merged; test with `workflow_dispatch` `target=dev` after merge.
 - **Vercel Deployment Protection**: if preview protection is enabled for the team, the `test` job fails
   with 401 unless `VERCEL_AUTOMATION_BYPASS_SECRET` is set (header `x-vercel-protection-bypass`).
-- **Hook path cannot prove freshness**: the deploy-hook job id is not queryable without a token, so the
-  poll only proves the prod URL serves a passing build, not that it is the *new* build. The CLI path is
-  authoritative; the hook path is a fallback and is documented as such.
+- **Hook path freshness** (adversarial review, 2026-09-08): the deploy-hook job id is not queryable without a
+  token and the previous prod build already passes smoke, so "smoke passes" was a false-green signal. Fixed:
+  the hook path is `workflow_dispatch`-only and its poll requires served `ETag == md5(local file)` for the
+  three smoke paths (`SMOKE_PUBLIC_DIR=public`). If Vercel ever changes its static ETag scheme the check fails
+  loudly (md5 and sha1 both tried) — use the CLI path, which deploys exactly the Actions checkout.
 - **Hook fires a Vercel-side build of `main`** (Git integration), not the Actions checkout — so with a
   dispatch `ref` other than `main`, the hook path deploys `main` anyway; the workflow prints a `::warning`
   in that case.
@@ -326,6 +343,12 @@ None. `schemaVersion: 1` unchanged; the smoke test only *reads* `public/patch.js
   (`npm install --global vercel@latest`, preview vs production `vercel pull --yes --environment=…`).
 - Vercel docs — *Git Configuration* https://vercel.com/docs/project-configuration/git-configuration
   (`git.deploymentEnabled` branch map / globs / `false`).
+- Build identity (observed 2026-09-08): `curl -sS -D - -o /dev/null https://hop-ultrasonic-1digital-design.vercel.app/patch.json`
+  → `etag: "5e3a…835f"` == `md5sum public/patch.json` (also `/manifest.webmanifest`); related Vercel changelog
+  https://vercel.com/changelog/optimized-cdn-caching-and-deploying-of-immutable-static-assets.
+- curl manual `--location` / `--location-trusted` / `--max-redirs` https://curl.se/docs/manpage.html — only
+  `Authorization`/`Cookie` are withheld on cross-origin redirects; custom `-H` headers are forwarded
+  (summary: https://proxidize.com/blog/curl-send-headers/).
 - Vercel docs — *Creating & Triggering Deploy Hooks* https://vercel.com/docs/deploy-hooks
   (`curl -X POST <hook>` → `{"job":{"id":…,"state":"PENDING","createdAt":…}}`).
 - GitHub discussion vercel/vercel #8619 https://github.com/vercel/vercel/discussions/8619

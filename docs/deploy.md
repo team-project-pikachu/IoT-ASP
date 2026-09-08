@@ -32,8 +32,9 @@ Deploy — dev → test → prod  (deploy.yml, concurrency group deploy-main, ca
    ├─ test ─────────── env test: scripts/deploy_smoke.sh <preview_url>   [x-vercel-protection-bypass when BYPASS set]
    └─ deploy_prod ──── env production:
                         CLI  : vercel pull --yes --environment=production → vercel build --prod → vercel deploy --prebuilt --prod
-                        hook : curl -fsS -X POST $VERCEL_DEPLOY_HOOK_PROD → {job:{id,state:PENDING}} → poll ≤ 5 min
-                        then : scripts/deploy_smoke.sh $PROD_URL
+                        hook : (workflow_dispatch only) curl -fsS -X POST $VERCEL_DEPLOY_HOOK_PROD → {job:{id,state:PENDING}}
+                               → poll ≤ 5 min until prod serves THIS checkout (ETag == md5 of public/ files)
+                        then : SMOKE_PUBLIC_DIR=public scripts/deploy_smoke.sh $PROD_URL   (smoke + build identity)
 ```
 
 | Trigger | When | `target` | Ref deployed |
@@ -48,15 +49,30 @@ Job gating (every job also carries the run-level success guard):
 | `secrets_check`, `gates` | always |
 | `deploy_dev` | `has_cli == true` |
 | `test` | `deploy_dev` succeeded and `target != dev` |
-| `deploy_prod` | `target == prod`, `gates` green, and (`test` green **or** `test` skipped only because the CLI secrets are absent) and (`has_cli` **or** `has_hook`) |
+| `deploy_prod` | `target == prod`, `gates` green, and (`test` green **or** — **`workflow_dispatch` only** — `test` skipped because the CLI secrets are absent) and (`has_cli` **or** `has_hook`) |
+
+An automatic (`workflow_run`) ship therefore always goes dev → test → prod and needs the CLI secrets. With
+only the hook secret set, `workflow_run` stops after `gates` with `::notice title=Deploy hook only::…`; a human
+ships by dispatching `target=prod`.
 
 The prod URL is repo variable `PROD_URL` (Settings → Secrets and variables → Actions → Variables), defaulting
 to `https://hop-ultrasonic-1digital-design.vercel.app`. It is public config, not a secret.
 
-Why the hook path is a fallback, not the default: a Deploy Hook makes Vercel build `main` from its own Git
-checkout, so (1) the dispatch `ref` input is ignored (the workflow prints a `::warning`), and (2) without a
-token the job id cannot be queried, so the poll only proves the prod URL serves a **passing** build, not
-that it is the **new** build. The CLI path deploys exactly the Actions checkout and prints its URL.
+Why the hook path is a dispatch-only fallback, not the default: a Deploy Hook makes Vercel build `main` from
+its own Git checkout, so (1) there is no preview, hence no dev → test stage, (2) the dispatch `ref` input is
+ignored (the workflow prints a `::warning`), and (3) without a token the job id cannot be queried. The poll
+therefore does **not** accept "the prod URL passes smoke" — the previous build already does — it accepts only
+"the prod URL serves exactly this checkout": `scripts/deploy_smoke.sh` with `SMOKE_PUBLIC_DIR=public` compares
+the served `ETag` of `/`, `/patch.json` and `/manifest.webmanifest` with the md5 (or sha1) of the local files
+(Vercel serves static files with `ETag == md5(content)`; observed 2026-09-08, see Sources) and keeps polling
+until they match, failing after 5 min with nothing marked shipped. The same identity check runs in `test`
+(preview must be this checkout) and in the final production smoke on both paths. The CLI path additionally
+deploys exactly the Actions checkout and prints its URL.
+
+`scripts/deploy_smoke.sh` never follows redirects (`--max-redirs 0`, no `-L`): curl forwards custom `-H`
+headers — unlike `Authorization`/`Cookie` — to every redirect target including other hosts, so following a
+redirect could leak `VERCEL_AUTOMATION_BYPASS_SECRET` off-host. A 3xx is a failure that prints the `Location`
+it refused. The bypass secret is also refused over plaintext `http://` (loopback excepted, for offline tests).
 
 ## (b) One-time Vercel setup
 
@@ -160,6 +176,7 @@ Local pre-flight before opening a PR that touches this pipeline:
 python3 -m pytest tests/test_deploy_workflow.py -q
 bash -n scripts/deploy_smoke.sh scripts/vercel_secrets_check.sh
 bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app   # needs network
+SMOKE_PUBLIC_DIR=public bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app   # + build identity: passes only when prod == this checkout
 bash scripts/vercel_secrets_check.sh
 ```
 
@@ -182,6 +199,17 @@ bash scripts/vercel_secrets_check.sh
 - GitHub discussion vercel/vercel #8619 <https://github.com/vercel/vercel/discussions/8619>
   (`github.enabled: false` stops Deploy Hooks from working).
 - npm registry <https://registry.npmjs.org/vercel/latest> queried 2026-09-08 → `59.11.7`, `engines.node >= 18`.
+- Build identity — observed 2026-09-08 with `curl -sS -D - -o /dev/null https://hop-ultrasonic-1digital-design.vercel.app/patch.json`
+  and `md5sum public/patch.json`: Vercel's static `etag` (`"5e3a…835f"`) equals the md5 of the file content
+  (same for `/manifest.webmanifest`; `/` differed only because the deployed build predates the checkout).
+  `scripts/deploy_smoke.sh` accepts md5 **or** sha1 and fails loudly if the scheme ever changes. Related:
+  Vercel changelog *Optimized CDN caching and deploying of immutable static assets*
+  <https://vercel.com/changelog/optimized-cdn-caching-and-deploying-of-immutable-static-assets> (static files are
+  content-addressed across deployments).
+- curl redirect semantics — curl withholds only `Authorization`/`Cookie` on cross-origin redirects (`--location-trusted`
+  re-enables them); user-supplied `-H` headers are sent to every redirect target: curl manual `--location`,
+  `--location-trusted`, `--max-redirs` <https://curl.se/docs/manpage.html>; summary in
+  <https://proxidize.com/blog/curl-send-headers/>. Hence `--max-redirs 0` and no `-L` in `scripts/deploy_smoke.sh`.
 - GitHub docs — *Events that trigger workflows → `workflow_run`*
   <https://docs.github.com/actions/using-workflows/events-that-trigger-workflows> (default-branch workflow
   file, `conclusion`, `branches:` filter, `head_branch`, `head_sha`).

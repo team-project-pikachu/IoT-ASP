@@ -15,7 +15,8 @@ are set. Everything offline is green (see Observed).
 | Workflow `Deploy — dev → test → prod`; triggers `workflow_run` of `CI — no breaking changes` (main, success) + `workflow_dispatch` (`target` dev/test/prod, `ref`) | `.github/workflows/deploy.yml` |
 | Jobs `secrets_check` → `gates` → `deploy_dev` (env `dev`) → `test` (env `test`) → `deploy_prod` (env `production`) | `.github/workflows/deploy.yml` |
 | Vercel CLI pinned `vercel@59`; `vercel pull --yes --environment=…`, `vercel build`, `vercel deploy --prebuilt [--prod]` | `.github/workflows/deploy.yml` |
-| Deploy-hook fallback (`curl -fsS -X POST`, prints job id + state only, polls ≤ 5 min via smoke) | `.github/workflows/deploy.yml` `deploy_prod` |
+| Deploy-hook fallback (**`workflow_dispatch` only**; `curl -fsS -X POST`, prints job id + state only, polls ≤ 5 min until prod serves this checkout — `SMOKE_PUBLIC_DIR=public` build identity) | `.github/workflows/deploy.yml` `deploy_prod` |
+| Build identity: served `ETag == md5/sha1(local file)` for `/`, `/patch.json`, `/manifest.webmanifest` (`SMOKE_PUBLIC_DIR`); no redirects (`--max-redirs 0`); bypass secret only over https/loopback | `scripts/deploy_smoke.sh` |
 | Vercel Git auto-deploy for `main` disabled; all original headers preserved | `vercel.json` |
 | Remote smoke: 200, `Hold / Manual` + `holdManual`, `Permissions-Policy` ∋ microphone, `patch.json` `schemaVersion == 1`, manifest `Content-Type` | `scripts/deploy_smoke.sh` |
 | Local secret-name pre-flight + 1Password / `gh secret set` recipe | `scripts/vercel_secrets_check.sh` |
@@ -36,6 +37,7 @@ are set. Everything offline is green (see Observed).
 | ID | Requirement |
 |----|-------------|
 | DP-01 … DP-13 | Acceptance table in `docs/specs/27-continuous-ship-dev-test-prod.md` (workflow parse/name, triggers, permissions + concurrency, job graph, environments, success guard, CLI flags, secrets hygiene, `secrets_check` contract, smoke script offline behaviour, `vercel.json`, docs + evidence, dispatch semantics) |
+| DP-14 … DP-17 | Adversarial-review regressions (2026-09-08): missing-header diagnostic under `pipefail`; redirect never followed / bypass secret never forwarded off-host or over plaintext; build identity via ETag; hook path dispatch-only with identity-checked poll |
 
 ## Procedure
 
@@ -45,6 +47,7 @@ bash -n scripts/deploy_smoke.sh scripts/vercel_secrets_check.sh
 bash scripts/deploy_smoke.sh                                   # usage → exit 2
 SMOKE_RETRIES=1 SMOKE_SLEEP_S=0 bash scripts/deploy_smoke.sh http://127.0.0.1:9   # closed port → FAIL, exit 1
 bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app    # network
+SMOKE_RETRIES=1 SMOKE_SLEEP_S=0 SMOKE_PUBLIC_DIR=public bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app   # network; identity vs this checkout
 bash scripts/vercel_secrets_check.sh                           # names only
 bash scripts/ci_static_gates.sh
 bash scripts/autoroute_dev.sh
@@ -55,11 +58,13 @@ python3 -m pytest tests -q
 
 | Check | Result |
 |-------|--------|
-| `python3 -m pytest tests/test_deploy_workflow.py -q` | exit 0 — 14 passed (DP-01 … DP-13 + secrets-check script) |
+| `python3 -m pytest tests/test_deploy_workflow.py -q` | exit 0 — 18 passed (DP-01 … DP-17 + secrets-check script; DP-14/15/16 run loopback HTTP servers on 127.0.0.1, no outbound network) |
 | `bash -n` both scripts | exit 0 |
 | `bash scripts/deploy_smoke.sh` (no args) | exit 2 — `usage: scripts/deploy_smoke.sh <url> …` |
 | `SMOKE_RETRIES=1 SMOKE_SLEEP_S=0 bash scripts/deploy_smoke.sh http://127.0.0.1:9` | exit 1 — `retry 1/1 … HTTP 000`, `FAIL: GET http://127.0.0.1:9 -> HTTP 000 (expected 200)` |
-| `bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` | exit 0 — `ok:` ×5, `OK deploy_smoke https://hop-ultrasonic-1digital-design.vercel.app` (currently served build already satisfies the smoke contract) |
+| `bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` | exit 0 — `ok:` ×5, `OK deploy_smoke https://hop-ultrasonic-1digital-design.vercel.app` (currently served build already satisfies the smoke contract — which is exactly why plain smoke is not a ship signal) |
+| `SMOKE_RETRIES=1 SMOKE_SLEEP_S=0 SMOKE_PUBLIC_DIR=public bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` | exit 1 — `identity: / ETag '0c9f…787b' != local md5 7575…3b78 … served build is not this checkout (yet)`, `FAIL: GET … -> HTTP 200 but build identity mismatch (expected 200)`. Expected: prod predates this checkout (`/patch.json` and `/manifest.webmanifest` ETags **do** equal the local md5 — confirms the ETag == md5 scheme) |
+| `curl -sS -D - -o /dev/null …/patch.json` vs `md5sum public/patch.json` | `etag: "5e3a654b5d44fb82a9295869b96a835f"` == local md5 (2026-09-08); same for `/manifest.webmanifest` |
 | `bash scripts/vercel_secrets_check.sh` (clean shell) | exit 1 — `VERCEL_TOKEN: MISSING`, `VERCEL_ORG_ID: MISSING`, `VERCEL_PROJECT_ID: MISSING`, recipe printed, no values |
 | same with the three names exported to dummy values | exit 0 — `OK vercel_secrets_check`; dummy values not echoed |
 | `yaml.safe_load(deploy.yml)` job order | `secrets_check, gates, deploy_dev, test, deploy_prod` |
@@ -76,5 +81,6 @@ python3 -m pytest tests -q
 
 | Req | Status |
 |-----|--------|
-| DP-01 … DP-13 (offline) | **PASS** (local) |
+| DP-01 … DP-17 (offline) | **PASS** (local) |
+| Review findings (header diagnostic, redirect/bypass leak, hook false-green) | **FIXED** — regression tests DP-14 … DP-17 |
 | Live dev → test → prod run | **PENDING** — blocked on secrets (owner action, `docs/deploy.md` §b–d) |

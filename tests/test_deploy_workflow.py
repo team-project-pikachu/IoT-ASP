@@ -1,17 +1,21 @@
 """Structure tests for the continuous-ship pipeline (issue #27) — offline, deterministic.
 
-Covers DP-01 … DP-13 from docs/specs/27-continuous-ship-dev-test-prod.md: parses
+Covers DP-01 … DP-17 from docs/specs/27-continuous-ship-dev-test-prod.md: parses
 .github/workflows/deploy.yml with PyYAML, vercel.json with json, and exercises the two bash
-scripts without network (usage error + a closed local port only).
+scripts without outbound network (usage error, a closed local port, and loopback HTTP servers that
+replay the review findings: missing header, cross-host redirect with the bypass secret, build identity).
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
-from urllib.parse import urlparse
 import subprocess
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 import yaml
@@ -62,6 +66,66 @@ def jobs(wf: dict) -> dict:
 @pytest.fixture(scope="module")
 def cfg() -> dict:
     return json.loads(VERCEL_JSON.read_text(encoding="utf-8"))
+
+
+SMOKE_ENV = {"PATH": "/usr/bin:/bin:/usr/local/bin", "SMOKE_RETRIES": "1", "SMOKE_SLEEP_S": "0"}
+GOOD_FILES = {
+    "index.html": b"<html><body>Hold / Manual <button id=holdPatchBtn></button> holdManual</body></html>",
+    "patch.json": b'{"schemaVersion": 1, "algo": "hop"}',
+    "manifest.webmanifest": b'{"name": "hop"}',
+}
+ROUTES = {"/": "index.html", "/patch.json": "patch.json", "/manifest.webmanifest": "manifest.webmanifest"}
+
+
+class _LoopbackSite:
+    """Minimal static site on 127.0.0.1 mimicking Vercel: ETag == md5(content), configurable headers."""
+
+    def __init__(self, files: dict[str, bytes], *, permissions_policy: str | None, redirect_to: str | None = None):
+        self.files = files
+        self.requests: list[dict] = []
+        site = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *_):  # silence
+                pass
+
+            def do_GET(self):
+                site.requests.append({"path": self.path, "headers": {k.lower(): v for k, v in self.headers.items()}})
+                if redirect_to is not None:
+                    self.send_response(302)
+                    self.send_header("Location", redirect_to + self.path)
+                    self.end_headers()
+                    return
+                name = ROUTES.get(self.path)
+                if name is None:
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+                body = site.files[name]
+                self.send_response(200)
+                self.send_header("Content-Type", "application/manifest+json" if name.endswith("webmanifest") else "text/html")
+                self.send_header("ETag", '"%s"' % hashlib.md5(body).hexdigest())
+                if permissions_policy is not None:
+                    self.send_header("Permissions-Policy", permissions_policy)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+        self.server = HTTPServer(("127.0.0.1", 0), Handler)
+        self.url = "http://127.0.0.1:%d" % self.server.server_address[1]
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+
+    def __enter__(self):
+        self.thread.start()
+        return self
+
+    def __exit__(self, *_):
+        self.server.shutdown()
+        self.server.server_close()
+
+
+def _smoke(url: str, **env: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["bash", str(SMOKE), url], cwd=ROOT, capture_output=True, text=True, env={**SMOKE_ENV, **env})
 
 
 def _run_text(job: dict) -> str:
@@ -318,3 +382,91 @@ def test_dp13_dispatch_semantics(wf: dict, jobs: dict):
         assert checkouts[0]["with"]["ref"] == "${{ env.DEPLOY_REF }}", name
     # hook-only fallback: prod may run when test was skipped only because the CLI secrets are absent
     assert "needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true'" in jobs["deploy_prod"]["if"]
+
+
+# ── DP-14 (review: header_value aborted under pipefail before the diagnostic) ─
+def test_dp14_missing_header_prints_diagnostic():
+    with _LoopbackSite(GOOD_FILES, permissions_policy=None) as site:
+        res = _smoke(site.url)
+    assert res.returncode == 1
+    assert "FAIL: Permissions-Policy header missing 'microphone'" in res.stderr, res.stderr + res.stdout
+    assert "ok: Hold / Manual + holdManual present" in res.stdout
+    # and the happy path on the same server shape is green
+    with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)") as site:
+        res = _smoke(site.url)
+    assert res.returncode == 0, res.stderr
+    assert "OK deploy_smoke %s" % site.url in res.stdout
+
+
+# ── DP-15 (review: curl -L forwarded the bypass secret to a cross-host redirect) ─
+def test_dp15_redirect_never_followed_and_bypass_never_forwarded():
+    canary = "leak-canary-9f2a"
+    with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)") as target:
+        with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)", redirect_to=target.url) as hop:
+            res = _smoke(hop.url, BYPASS=canary)
+        assert res.returncode == 1
+        assert "HTTP 302: redirect to" in res.stderr and "not followed" in res.stderr, res.stderr
+        assert "FAIL: GET %s -> HTTP 302 (expected 200)" % hop.url in res.stderr
+        assert target.requests == [], "redirect target must never be contacted"
+        assert canary not in res.stdout + res.stderr
+        # the secret does reach the intended (loopback) host as the documented header
+        assert hop.requests and hop.requests[0]["headers"].get("x-vercel-protection-bypass") == canary
+    text = SMOKE.read_text(encoding="utf-8")
+    assert "--max-redirs 0" in text
+    assert not re.search(r"curl [^\n]*(\s-L\b|--location)", text), "smoke must never follow redirects"
+    # bypass secret is refused over plaintext to a non-loopback host, before any request is made
+    res = _smoke("http://10.255.255.1", BYPASS=canary)
+    assert res.returncode == 1
+    assert "refusing to send the protection-bypass secret over plaintext" in res.stderr
+    assert "retry" not in res.stderr and canary not in res.stdout + res.stderr
+
+
+# ── DP-16 (review: hook path went green on a passing OLD build) ───────────────
+def test_dp16_build_identity_via_etag(tmp_path: Path):
+    same = tmp_path / "same"
+    same.mkdir()
+    for name, body in GOOD_FILES.items():
+        (same / name).write_bytes(body)
+    stale = tmp_path / "stale"
+    stale.mkdir()
+    for name, body in GOOD_FILES.items():
+        (stale / name).write_bytes(body)
+    (stale / "index.html").write_bytes(GOOD_FILES["index.html"] + b"<!-- new commit -->")
+    with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)") as site:
+        good = _smoke(site.url, SMOKE_PUBLIC_DIR=str(same))
+        bad = _smoke(site.url, SMOKE_PUBLIC_DIR=str(stale))
+        missing = _smoke(site.url, SMOKE_PUBLIC_DIR=str(tmp_path / "nope"))
+    assert good.returncode == 0, good.stderr
+    assert "ok: build identity" in good.stdout
+    assert bad.returncode == 1
+    assert "served build is not this checkout" in bad.stderr, bad.stderr
+    assert "build identity mismatch" in bad.stderr
+    assert "FAIL: GET %s -> HTTP 200 but build identity mismatch (expected 200)" % site.url in bad.stderr
+    assert missing.returncode == 1 and "is not a directory" in missing.stderr
+    # without SMOKE_PUBLIC_DIR the same stale checkout is irrelevant (plain smoke)
+    with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)") as site:
+        assert _smoke(site.url).returncode == 0
+
+
+# ── DP-17 (review: hook fallback bypassed dev/test on automatic runs) ─────────
+def test_dp17_hook_path_is_dispatch_only_and_identity_checked(jobs: dict):
+    prod_if = " ".join(str(jobs["deploy_prod"]["if"]).split())
+    assert (
+        "needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true' && github.event_name == 'workflow_dispatch'"
+        in prod_if
+    ), prod_if
+    hook_steps = [s for s in jobs["deploy_prod"]["steps"] if "has_hook == 'true'" in str(s.get("if", ""))]
+    assert len(hook_steps) >= 2, "hook trigger + poll steps"
+    for step in hook_steps:
+        assert "github.event_name == 'workflow_dispatch'" in step["if"], step["name"]
+    poll = [s for s in hook_steps if "deploy_smoke.sh" in str(s.get("run", ""))]
+    assert len(poll) == 1
+    assert poll[0]["env"]["SMOKE_PUBLIC_DIR"] == "public"
+    assert "serves this checkout" in poll[0]["run"]
+    final = [s for s in jobs["deploy_prod"]["steps"] if "Final smoke" in str(s.get("name", ""))]
+    assert len(final) == 1 and final[0]["env"]["SMOKE_PUBLIC_DIR"] == "public"
+    smoke = [s for s in jobs["test"]["steps"] if "deploy_smoke.sh" in str(s.get("run", ""))]
+    assert len(smoke) == 1 and smoke[0]["env"]["SMOKE_PUBLIC_DIR"] == "public"
+    probe = jobs["secrets_check"]["steps"][0]["run"]
+    assert '[ "$GITHUB_EVENT_NAME" = "workflow_run" ]' in probe
+    assert "::notice title=Deploy hook only::" in probe and "workflow_dispatch target=prod" in probe
