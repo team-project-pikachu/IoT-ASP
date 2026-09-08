@@ -63,7 +63,7 @@ Credential **names only** in public config: `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOU
 
 ## Notion
 
-See **[notion-links.md](notion-links.md)** for the 2026-09-07 workspace search log (queries, false positives, empty relevant set). No IoT-ASP / ultrasonic / SensorKit / Gemini Enterprise hub pages yet — create later via [Issue #19](https://github.com/team-project-pikachu/IoT-ASP/issues/19). Do not put street addresses in public Notion-linked docs.
+See **[notion-links.md](notion-links.md)** for the hub URL and the 2026-09-07 workspace search log (kept as history). Hub: [IoT-ASP — Adaptive Signal Processing hub](https://www.notion.so/IoT-ASP-Adaptive-Signal-Processing-hub-3d5bf46958418109a303eb31342ff50d) (created 2026-09-08 for [Issue #19](https://github.com/team-project-pikachu/IoT-ASP/issues/19)). Do not put street addresses in public Notion-linked docs. Do not create a second hub page.
 
 ## Related
 
