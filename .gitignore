@@ -29,6 +29,11 @@ coverage.xml
 .coverage
 .coverage.*
 
+# Swift SPM / native compile-check (#41)
+native/**/.build/
+native/**/.swift-build-check.out
+native/**/.swift-build-check.err
+native/**/.swiftpm/
 # Accidental nested worktrees inside the clone (#34)
 /IoT-ASP-wt-*/
 .github/nest.op.env
