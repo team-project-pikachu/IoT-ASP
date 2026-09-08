@@ -4,15 +4,17 @@
 set -euo pipefail
 REPO="${GITHUB_REPOSITORY:-team-project-pikachu/IoT-ASP}"
 WANT_NAME="main-protection"
+ERR_TMP="$(mktemp "${TMPDIR:-/tmp}/iot-asp-ruleset-status.XXXXXX")"
+trap 'rm -f "$ERR_TMP"' EXIT
 
 echo "# rulesets for $REPO (names + enforcement only)"
 out="$(gh api "repos/$REPO/rulesets" --jq \
   '.[] | select(.name == "main-protection") | "id=\(.id) name=\(.name) enforcement=\(.enforcement)"' \
-  2>/tmp/iot-asp-ruleset-status.err || true)"
+  2>"$ERR_TMP" || true)"
 
 if [[ -z "$out" ]]; then
   echo "FAIL: ruleset name=${WANT_NAME} not found or gh error" >&2
-  cat /tmp/iot-asp-ruleset-status.err >&2 || true
+  cat "$ERR_TMP" >&2 || true
   exit 1
 fi
 printf '%s\n' "$out"
