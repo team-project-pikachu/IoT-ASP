@@ -136,8 +136,6 @@ jobs:
   e2e:
     name: e2e smoke
     runs-on: ubuntu-latest
-    env:
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/pw-browsers
     steps:
       - uses: actions/checkout@v4
 
@@ -152,12 +150,16 @@ jobs:
           cache-dependency-path: tests/e2e/package-lock.json
 
       - name: Install Playwright (pinned in tests/e2e/package.json) + Chromium
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/pw-browsers
         run: |
           cd tests/e2e
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
 
       - name: Playwright smoke against public/ (Hold/Manual, telemetry fields, reseed, watchdog)
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/pw-browsers
         run: bash tests/e2e/run.sh
 
   pr_issue_ref:
