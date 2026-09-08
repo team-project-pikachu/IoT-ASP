@@ -58,6 +58,9 @@ def test_invariant_literals(html: str) -> None:
 
 
 # ── 2. ids ───────────────────────────────────────────────────────────────────
+NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog",
+           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal",
+           "telemetryUrlLabel", "patchUrlLabel")
 NEW_IDS = ("copyLogBtn", "copyFleetLogBtn", "reseedBtn", "simImpulseBtn", "fleetSeedCompare",
            "telHopAge", "telResumes", "telWatchdog",
            "telImpulse", "telVolBlast", "telAlarm", "fleetLocal")
@@ -126,6 +129,17 @@ def test_enrichment_literals(html: str) -> None:
         assert lit in html, lit
     assert "+fMin.value <= 100" in html
     assert "hour12: false" in html
+
+
+def test_backend_url_query_overrides(html: str) -> None:
+    """#61 — live URLs via query, never baked secrets."""
+    assert 'id="telemetryUrlLabel"' in html
+    assert 'id="patchUrlLabel"' in html
+    assert 'qs.get("patch")' in html or "qs.get('patch')" in html
+    assert 'qs.get("telemetry")' in html
+    assert 'qs.get("pollMs")' in html
+    assert 'BACKEND_TELEMETRY_URL = ""' in html
+    assert 'TELEMETRY_URL || "off"' in html or "TELEMETRY_URL || 'off'" in html
 
 
 # ── 5. delimited blocks + log ────────────────────────────────────────────────

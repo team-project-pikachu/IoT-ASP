@@ -22,7 +22,7 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #10 #11 | [10-11-react-rewrite.md](10-11-react-rewrite.md) — React / React Strict DOM rewrite + fleet polish | parked — constraints only | frontend |
 | #14 #15 #21 #23 | [14-15-21-23-edge-integrations.md](14-15-21-23-edge-integrations.md) — Pi 5 USB-C node, Apple Home / HomeKit / Matter, Google Home Wi-Fi autorotate, AI Edge Portal | parked — research; #21/#23 docs on `main` (`docs/connectivity-wifi.md`, `docs/ai-edge-portal.md`) | infra |
 | #18 | [18-node3-chair-infrasound.md](18-node3-chair-infrasound.md) — node 3 chair-taped phone + infrasound LF-accel proxy | parked — priors shipped (`infra_felt`), node not deployed | frontend + backend |
-| #19 | [19-notion-hub.md](19-notion-hub.md) — Notion hub page for ASP tooling | parked — search done, hub not created | docs |
+| #19 | [19-notion-hub.md](19-notion-hub.md) — Notion hub page for ASP tooling | hub created 2026-09-08; docs back-linked; optional DB/sync remaining | docs |
 | #20 | [20-timestore.md](20-timestore.md) — timestore: SciPy ≥16-param fit, 0.0006 s quantum, NWS weather prior, cipher tags | implemented on `main` (`timestore.py` + `packages/algo-timestore/`, #30) | backend |
 | #22 | [22-structured-fleet-logs.md](22-structured-fleet-logs.md) — structured fleet telemetry logs (`fleet_log.py`) | implemented on branch — integration hooks pending | backend |
 | #24 | [24-adk-2x-migration.md](24-adk-2x-migration.md) — `google-adk` 2.x migration (`google-genai` already 2.x) | parked — keep `google-adk<2` | backend |
@@ -36,6 +36,13 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #44 #46 #50 | [44-web-pwa-impulse-blast.md](44-web-pwa-impulse-blast.md) — web impulse-to-blast path | stubbed with telemetry latch | frontend |
 | #45 #47 #51 | [45-web-pwa-alarm-reactivity.md](45-web-pwa-alarm-reactivity.md) — web alarm state machine | stubbed with observable clear state | frontend |
 | #37 | [37-vercel-webhooks.md](37-vercel-webhooks.md) — Vercel webhooks → GitHub notify | implemented on branch (public HTTPS host + secrets owner-gated) | infra |
+| #60 | [60-adk-autoroute-deploy.md](60-adk-autoroute-deploy.md) — ADK Cloud Run / Agent Engine deploy | open — service exists; prod URL owner-gated | backend |
+| #61 | [61-wire-backend-urls.md](61-wire-backend-urls.md) — wire live patch/telemetry URLs for fleet | open — query-param UI; live URLs owner-gated | frontend |
+| #62 | [62-mvp-field-acceptance-e2e.md](62-mvp-field-acceptance-e2e.md) — 3-phone field checklist + Playwright | checklist + local e2e; field lab pending | frontend |
+| #63 | [63-main-branch-protection.md](63-main-branch-protection.md) — main ruleset / required checks | open — scripts/docs ready; apply owner-gated | infra |
+| #64 | [64-sebok-vv-mvp-matrix.md](64-sebok-vv-mvp-matrix.md) — SEBoK matrix pass for MVP ship slice | open — `.vv/matrix.md` scaffold | docs |
+| #65 #68 | [65-68-mvp-closed-log.md](65-68-mvp-closed-log.md) — closed-issue log CLI + Actions | implemented on branch | infra + docs |
+| #69 | [69-mvp-roadmap.md](69-mvp-roadmap.md) — durable MVP milestone → issue roadmap | implemented on branch | docs |
 
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
 tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items referenced from
