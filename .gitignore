@@ -13,6 +13,7 @@ venv/
 .adk/
 .autoroute-dry/
 .vercel/
+.github/secrets.op.env
 .pytest_cache/
 tests/e2e/node_modules/
 tests/e2e/test-results/
