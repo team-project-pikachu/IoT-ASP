@@ -21,6 +21,14 @@
 - [ ] Negative: Beam is **not** offered as classic A2DP sink (or document firmware exception)
 - [ ] SoCo on LAN (names only in logs; no street PII)
 
+## CoreMotion suite (#140)
+
+- [ ] Arm CoreMotion: systems-check shows accel/gyro/deviceMotion **yes** on device (Simulator may be **no**)
+- [ ] `|a|` updates while phone is shaken; `|ω|` updates on rotate
+- [ ] Pedometer row stays **skip** (never requested)
+- [ ] Magnetometer / altimeter: **yes** only if hardware bit is true — no fake values
+- [ ] Sample rate request in 1–100 Hz (`plan Hz`)
+
 ## Alarm / impulse
 
 - [ ] Simulate impulse → `triggered` / `volBlast`
