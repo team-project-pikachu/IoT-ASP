@@ -1,65 +1,84 @@
 import SwiftUI
 
-/// Primary hop / ASP control surface.
+/// Phone node: power + what’s going on. Hop / Nest / Glass / Systems live on the command center.
 struct HopTabView: View {
     @EnvironmentObject var session: ASPSessionModel
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Fleet") {
-                    Picker("Node sink", selection: $session.sink) {
-                        Text("Soundcore 2 A2DP").tag(FleetSink.soundcore2A2DP)
-                        Text("Sonos Beam AirPlay").tag(FleetSink.sonosBeamAirPlay)
-                        Text("Phone speaker").tag(FleetSink.phoneSpeaker)
-                    }
-                    LabeledContent("active route", value: session.activeRouteLabel)
-                    Text(SoundcoreConstraints.ultrasonicHonesty)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    RoutePickerRepresentable()
-                        .frame(height: 44)
-                }
+        ZStack {
+            Color(red: 20 / 255, green: 21 / 255, blue: 25 / 255)
+                .ignoresSafeArea()
+            VStack(spacing: 28) {
+                Text("HOP")
+                    .font(.system(size: 13, weight: .semibold))
+                    .tracking(3.6)
+                    .foregroundStyle(Color(red: 118 / 255, green: 124 / 255, blue: 140 / 255))
 
-                Section("Arm") {
-                    Button(session.sensorsArmed ? "Disarm sensors" : "Arm sensors") {
-                        session.sensorsArmed ? session.disarmSensors() : session.armSensors()
-                    }
-                    LabeledContent("sensing", value: session.sensingState.rawValue)
-                    LabeledContent("motion", value: session.motionArmed ? "on" : "off")
-                    LabeledContent("mic 48 kHz", value: session.micArmed ? "on" : "off")
-                    if let err = session.sessionError {
-                        Text(err).font(.caption).foregroundStyle(.red)
-                    }
-                }
+                Text(session.operatorStatus)
+                    .font(.system(size: 56, weight: .regular, design: .monospaced))
+                    .foregroundStyle(statusColor)
+                    .accessibilityLabel("Status \(session.operatorStatus)")
 
-                Section("Alarm") {
-                    LabeledContent("State", value: session.alarm.state.rawValue)
-                    LabeledContent("impulse", value: session.alarm.impulse ? "true" : "false")
-                    LabeledContent("volBlast", value: session.alarm.volBlast ? "true" : "false")
-                    LabeledContent("vol", value: String(format: "%.1f", session.alarm.targetVol))
-                    Toggle("Hold / Manual", isOn: Binding(
-                        get: { session.alarm.holdManual },
-                        set: { session.setHold($0) }
-                    ))
-                    Button("Arm alarm") { session.arm() }
-                    Button("Simulate impulse") { session.simulateImpulse() }
+                Button(action: togglePower) {
+                    Text(session.sensorsArmed ? "On" : "Off")
+                        .font(.system(size: 15, weight: .semibold))
+                        .tracking(2.4)
+                        .textCase(.uppercase)
+                        .frame(width: 128, height: 128)
+                        .foregroundStyle(session.sensorsArmed
+                            ? Color(red: 227 / 255, green: 168 / 255, blue: 1)
+                            : Color(red: 118 / 255, green: 124 / 255, blue: 140 / 255))
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(red: 29 / 255, green: 31 / 255, blue: 39 / 255))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(session.sensorsArmed
+                                    ? Color(red: 157 / 255, green: 92 / 255, blue: 1)
+                                    : Color(red: 51 / 255, green: 55 / 255, blue: 71 / 255), lineWidth: 1)
+                        )
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(session.sensorsArmed ? "On" : "Off")
 
-                Section("Vib") {
-                    Picker("materialPreset", selection: $session.materialPreset) {
-                        Text("table").tag(MaterialPreset.table)
-                        Text("speaker").tag(MaterialPreset.speaker)
-                        Text("handheld").tag(MaterialPreset.handheld)
-                        Text("chair").tag(MaterialPreset.chair)
-                    }
-                    LabeledContent("vibClass", value: session.vibClass)
-                    LabeledContent("|a| (g)", value: String(format: "%.3f", session.lastAbsA))
-                    LabeledContent("physical", value: session.lastPhysicalEvent)
-                    LabeledContent("acoustic", value: session.lastAcousticEvent)
+                Toggle("Hold / Manual", isOn: Binding(
+                    get: { session.alarm.holdManual },
+                    set: { session.setHold($0) }
+                ))
+                .tint(Color(red: 157 / 255, green: 92 / 255, blue: 1))
+                .padding(.horizontal, 32)
+
+                Link("Command center", destination: NativeAppShell.commandCenterURL)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Color(red: 157 / 255, green: 92 / 255, blue: 1))
+
+                if let err = session.sessionError {
+                    Text(err)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                 }
             }
-            .navigationTitle("Hop")
+            .padding()
+        }
+    }
+
+    private var statusColor: Color {
+        switch session.operatorStatus {
+        case "Alert": return Color(red: 1, green: 162 / 255, blue: 58 / 255)
+        case "On": return Color(red: 123 / 255, green: 224 / 255, blue: 168 / 255)
+        case "Hold": return Color(red: 227 / 255, green: 168 / 255, blue: 1)
+        default: return Color(red: 200 / 255, green: 204 / 255, blue: 216 / 255)
+        }
+    }
+
+    private func togglePower() {
+        if session.sensorsArmed {
+            session.disarmSensors()
+        } else {
+            session.armSensors()
         }
     }
 }

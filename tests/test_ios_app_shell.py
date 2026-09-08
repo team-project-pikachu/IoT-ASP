@@ -1,4 +1,4 @@
-"""Native iOS app chrome — tabs, Arm sensors, background pause."""
+"""Native iOS node chrome — on/off, status, command center, background pause."""
 
 from pathlib import Path
 
@@ -15,16 +15,19 @@ def test_files():
         assert p.is_file(), p
 
 
-def test_four_tabs():
+def test_phone_is_node_not_command_center():
     src = SHELL.read_text(encoding="utf-8")
     for name in ("hop", "nestAlarm", "glassShatter", "systems"):
         assert f"case {name}" in src
     ui = CONTENT.read_text(encoding="utf-8")
-    assert "TabView" in ui
     assert "HopTabView" in ui
-    assert "NestAlarmTabView" in ui
-    assert "GlassShatterTabView" in ui
-    assert "SystemsCheckView" in ui
+    assert "TabView {" not in ui
+    assert "NestAlarmTabView" not in ui
+    assert "GlassShatterTabView" not in ui
+    assert "SystemsCheckView" not in ui
+    hop = HOP.read_text(encoding="utf-8")
+    assert "Command center" in hop
+    assert "hop-ultrasonic-1digital-design.vercel.app" in src
 
 
 def test_arm_sensors_and_background():
@@ -35,8 +38,12 @@ def test_arm_sensors_and_background():
     assert "emitHeartbeat" in sess
     assert "shouldPost" in sess
     hop = HOP.read_text(encoding="utf-8")
-    assert "Arm sensors" in hop
+    assert '"On"' in hop and '"Off"' in hop
     assert "Hold / Manual" in hop
+    assert "armSensors()" in hop
+    assert "schemaVersion" not in hop
+    assert "SensorKit" not in hop
+    assert "telemetry URL" not in hop.lower()
 
 
 def test_scene_phase_wired():

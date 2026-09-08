@@ -51,8 +51,10 @@ def test_watch_sources_are_watch_ui_plus_alarm_only():
     assert "WatchContentView.swift" in body
     assert "WatchSessionModel.swift" in body
     assert "B80000000000000000000030" in body
+    assert "B80000000000000000000055" in body
     assert "A80000000000000000000030" not in body
-    for name in ("HopTabView.swift", "NativeAppShell.swift", "ASPAudioSession.swift"):
+    assert "A80000000000000000000055" not in body
+    for name in ("HopTabView.swift", "ASPAudioSession.swift", "IoTASPCommandApp.swift"):
         assert name not in body, name
 
 
@@ -60,3 +62,4 @@ def test_distinct_module_names():
     text = PBX.read_text(encoding="utf-8")
     assert "PRODUCT_MODULE_NAME = IoTASPApp;" in text
     assert "PRODUCT_MODULE_NAME = IoTASPWatch;" in text
+    assert "PRODUCT_MODULE_NAME = IoTASPCommand;" in text

@@ -52,6 +52,16 @@ final class ASPSessionModel: ObservableObject {
     @Published var deviceId: String = "node1"
     @Published var activeRouteLabel: String = "unknown"
     var sensorsArmed: Bool { motionArmed || micArmed }
+
+    /// One-word operator status for the phone node UI (command center stays on Vercel / Mac).
+    var operatorStatus: String {
+        NativeAppShell.statusLine(
+            on: sensorsArmed,
+            hold: alarm.holdManual,
+            paused: sensingState == .backgroundPaused,
+            alert: alarm.volBlast || alarm.state == .triggered || alarm.state == .sustaining
+        )
+    }
     #if canImport(CoreMotion)
     private var motion: PhoneMotionLogger?
     #endif

@@ -8,6 +8,16 @@ final class WatchSessionModel: NSObject, ObservableObject, WCSessionDelegate {
     @Published var volBlast = false
     @Published var hold = false
 
+    var operatorStatus: String {
+        NativeAppShell.statusLine(
+            on: true,
+            hold: hold,
+            paused: false,
+            alert: volBlast || alarmState == AlarmState.triggered.rawValue
+                || alarmState == AlarmState.sustaining.rawValue
+        )
+    }
+
     private let alarm = AlarmStateMachine()
 
     override init() {

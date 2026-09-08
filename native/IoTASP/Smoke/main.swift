@@ -189,8 +189,13 @@ struct IoTASPSmoke {
         check("no lf mic", NativeAECHonesty.lfMic == false)
         check("alpha 0.85", NativeAECHonesty.alpha == 0.85)
 
-        // Native iOS app shell
-        check("four tabs", NativeAppShell.tabTitles == ["Hop", "Nest Alarm", "Glass Shatter", "Systems"])
+        // Native iOS node + Vercel/macOS command center
+        check("four tabs mapped", NativeAppShell.tabTitles == ["Hop", "Nest Alarm", "Glass Shatter", "Systems"])
+        check("cc vercel", NativeAppShell.commandCenterURLString.contains("hop-ultrasonic-1digital-design.vercel.app"))
+        check("status off", NativeAppShell.statusLine(on: false, hold: false, paused: false, alert: false) == "Off")
+        check("status hold wins", NativeAppShell.statusLine(on: true, hold: true, paused: false, alert: true) == "Hold")
+        check("status alert", NativeAppShell.statusLine(on: true, hold: false, paused: false, alert: true) == "Alert")
+        check("status on", NativeAppShell.statusLine(on: true, hold: false, paused: false, alert: false) == "On")
         check("arm implies mic", NativeAppShell.armSensorsImplies().contains("ultrasonic-mic"))
         check("banner C1", NativeAppShell.constraintBanner.contains("A2DP"))
         let paused = BackgroundSensingPolicy.onEnterBackground(txPlaying: false)
