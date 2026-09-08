@@ -582,7 +582,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     || BACKEND_TELEMETRY_URL
     || (BACKEND_BASE_URL ? joinBackend(BACKEND_BASE_URL, BACKEND_TELEMETRY_PATH) : "");
   const POLL_MS = Math.max(2000, Math.min(5000, +(qs.get("pollMs") || BACKEND_POLL_MS_DEFAULT)));
-  const VOL_PATCH_MAX = 12, VOL_STEP = 0.5;
+  const VOL_PATCH_MAX = 100, VOL_STEP = 0.5;
   const BAND_US_LO = 17000, BAND_US_HI = 23000, BAND_LF_LO = 10, BAND_LF_HI = 20;
   let BAND_ABS_LO = 17000, BAND_ABS_HI = 23000;
   // Hardware-limited preferred TX band (BT A2DP + Soundcore DSP roll-off) for ultrasonic
