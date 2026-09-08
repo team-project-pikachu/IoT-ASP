@@ -1136,7 +1136,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function noteImpulse(source, deltaHint){
     // armed→triggered→sustaining + blast; Hold wins.
     if (!suddenAuto || holdManual) return false;
-    if (!running && !sensorsArmed) return false;
+    if (!running && !sensorsArmed && source !== "simulate") return false;
     const now = performance.now();
     const train = impulse && (now - lastImpulseAt) < IMPULSE_LATCH_MS;
     lastImpulseAt = now;
@@ -2584,7 +2584,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const simImpulseBtn = $("simImpulseBtn");
   if (simImpulseBtn) {
     simImpulseBtn.addEventListener("click", function(){
-      noteImpulse(true, false);
+      noteImpulse("simulate", null);
       publishFleetHeartbeat();
       paintFleetCards();
       updateTelUI();

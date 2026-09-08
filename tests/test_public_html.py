@@ -97,10 +97,21 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "function copyFleetLogJsonl()" in html
     assert "function fleetLogLineFromTel(" in html
     assert 'id="simImpulseBtn"' in html
-    assert "noteImpulse(true, false)" in html
+    # The Simulate button passes a real source STRING, not booleans. It used to call
+    # noteImpulse(true, false), which put `true` where `source` is read as a string by
+    # blastVolJump/monLog — and, more importantly, could not satisfy the e2e contract in
+    # tests/e2e/public_smoke.spec.mjs ("simulate impulse"), because noteImpulse bails when
+    # neither audio nor sensors are armed and the e2e clicks Simulate on a cold page.
+    # Two tests encoded contradictory contracts; the behavioural one wins.
+    assert 'noteImpulse("simulate"' in html
     note = _fn_body(html, "function noteImpulse(source, deltaHint){")
     assert "enterExtremeFromBurst(" in note
     assert "blastVolJump(" in note
+    # An explicit click may bypass the armed-sensor guard...
+    assert 'source !== "simulate"' in note
+    # ...but Hold / Manual is checked FIRST and is never bypassed (CLAUDE.md invariant 6).
+    guard_lines = [ln.strip() for ln in note.splitlines() if "return false" in ln]
+    assert guard_lines and "holdManual" in guard_lines[0], guard_lines
     # #54 SM: EMA accel rise (no gravity baseline warm-up vars)
     assert "accelBaselineReady" not in html
     assert "ACCEL_BASELINE_WARM_N" not in html
