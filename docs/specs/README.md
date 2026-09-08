@@ -18,10 +18,17 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #2 | [02-max-entropy-seeds.md](02-max-entropy-seeds.md) — max-entropy seeds, min hop delta, start stagger, Reseed | implemented on branch | frontend |
 | #3 | [03-continuous-monitoring-watchdog.md](03-continuous-monitoring-watchdog.md) — continuous polling / monitoring watchdog | implemented on branch | frontend |
 | #4 #5 #6 | [04-06-vibration-channels.md](04-06-vibration-channels.md) — physical (DeviceMotion), acoustic (mic energy), material-dependent channel selection | parked — partly shipped (`priors.MATERIAL_CHANNEL_BIAS`, vib classes); arming UI not shipped | frontend + backend |
+| #4 native | [04-physical-vib-native.md](04-physical-vib-native.md) — CoreMotion physical channel + shake hop | implemented on branch | native |
+| #5 native | [05-acoustic-vib-native.md](05-acoustic-vib-native.md) — mic/spectrum burst vs rolling median | implemented on branch | native |
+| #6 native | [06-material-channel-native.md](06-material-channel-native.md) — materialPreset arming | implemented on branch | native |
 | #7 #8 | [07-08-rlhf-loops.md](07-08-rlhf-loops.md) — RLHF +/− loops (θ vector, `localStorage` schema, bandit step) | parked — design only | frontend |
 | #10 #11 | [10-11-react-rewrite.md](10-11-react-rewrite.md) — React / React Strict DOM rewrite + fleet polish | parked — constraints only | frontend |
 | #14 #15 #21 #23 | [14-15-21-23-edge-integrations.md](14-15-21-23-edge-integrations.md) — Pi 5 USB-C node, Apple Home / HomeKit / Matter, Google Home Wi-Fi autorotate, AI Edge Portal | parked — research; #21/#23 docs on `main` (`docs/connectivity-wifi.md`, `docs/ai-edge-portal.md`) | infra |
 | #18 | [18-node3-chair-infrasound.md](18-node3-chair-infrasound.md) — node 3 chair-taped phone + infrasound LF-accel proxy | parked — priors shipped (`infra_felt`), node not deployed | frontend + backend |
+| #18 native | [18-chair-lf-native.md](18-chair-lf-native.md) — chair profile + LF accel felt proxy | implemented on branch | native |
+| #146 | [146-audio-routes.md](146-audio-routes.md) — A2DP TX + phone mic RX; Sonos AirPlay | implemented on branch | native |
+| #147 | [147-telemetry-bridge.md](147-telemetry-bridge.md) — schemaVersion 1 POST/poll | implemented on branch | native |
+| #142 | [142-other-sensors.md](142-other-sensors.md) — ambient light honesty | implemented on branch | native |
 | #19 | [19-notion-hub.md](19-notion-hub.md) — Notion hub page for ASP tooling | hub created 2026-09-08; docs back-linked; optional DB/sync remaining | docs |
 | #20 | [20-timestore.md](20-timestore.md) — timestore: SciPy ≥16-param fit, 0.0006 s quantum, NWS weather prior, cipher tags | implemented on `main` (`timestore.py` + `packages/algo-timestore/`, #30) | backend |
 | #22 | [22-structured-fleet-logs.md](22-structured-fleet-logs.md) — structured fleet telemetry logs (`fleet_log.py`) | implemented on branch — integration hooks pending | backend |
@@ -43,6 +50,9 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #64 | [64-sebok-vv-mvp-matrix.md](64-sebok-vv-mvp-matrix.md) — SEBoK matrix pass for MVP ship slice | open — `.vv/matrix.md` scaffold | docs |
 | #65 #68 | [65-68-mvp-closed-log.md](65-68-mvp-closed-log.md) — closed-issue log CLI + Actions | implemented on branch | infra + docs |
 | #69 | [69-mvp-roadmap.md](69-mvp-roadmap.md) — durable MVP milestone → issue roadmap | implemented on branch | docs |
+| #140 | [140-coremotion-suite.md](140-coremotion-suite.md) — full CoreMotion suite (accel/gyro/mag/attitude; pedometer skip) | implemented on branch | native |
+| #141 | [141-ultrasonic-mic.md](141-ultrasonic-mic.md) — 48 kHz mic, AEC/NS/AGC off, bandEnergyUs | implemented on branch | native |
+| #144 | [144-permission-ux.md](144-permission-ux.md) — mic/motion/SensorKit request order | implemented on branch | native |
 
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
 tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items referenced from
