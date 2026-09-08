@@ -34,12 +34,13 @@ The system should respond to vibration **physical or acoustic**, depending on ma
 
 Docs ingest: `reference/knowledge/INGEST.md`.
 
-## Roadmap
+## Roadmap & docs
 
-Canonical plan: [`docs/roadmap.md`](docs/roadmap.md) — milestones by **OS/product** (iOS, macOS, Nest, Sonos, Platform/ADK); categories via `area:drivers` / `area:sdk` / `area:adk` / `area:agentic`.  
-PRD / UAT / SEBoK test plan: [`docs/PRD.md`](docs/PRD.md) · [`docs/UAT.md`](docs/UAT.md) · [`docs/TESTING_PLAN.md`](docs/TESTING_PLAN.md).  
-Legacy pointer: [`docs/mvp-roadmap.md`](docs/mvp-roadmap.md). Closed-issue log: [`docs/mvp-closed-log.md`](docs/mvp-closed-log.md).  
-Board: [Project 5](https://github.com/orgs/team-project-pikachu/projects/5). Parked features keep label `parked`. Issue titles: `{Surface}: …`.
+**Docs index (start here):** [`docs/README.md`](docs/README.md)  
+Canonical plan: [`docs/roadmap.md`](docs/roadmap.md) — milestones by OS/product (iOS, macOS, Nest, Sonos, Platform/ADK).  
+PRD / UAT / testing: [`docs/PRD.md`](docs/PRD.md) · [`docs/UAT.md`](docs/UAT.md) · [`docs/TESTING_PLAN.md`](docs/TESTING_PLAN.md).  
+Legacy pointer: [`docs/mvp-roadmap.md`](docs/mvp-roadmap.md). Closed log: [`docs/mvp-closed-log.md`](docs/mvp-closed-log.md).  
+Board: [Project 5](https://github.com/orgs/team-project-pikachu/projects/5). Issue titles: `{Surface}: …`.
 
 ## Control plane
 

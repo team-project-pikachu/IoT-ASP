@@ -1,19 +1,19 @@
 # Testing plan — SEBoK Verification & Validation
 
-**Product:** IoT-ASP / hop-ultrasonic  
-**Companion:** [UAT.md](UAT.md) (acceptance) · [PRD.md](PRD.md) · [roadmap.md](roadmap.md) · [architecture-pwa.md](architecture-pwa.md) · [test-traceability.md](test-traceability.md) · [vv/README.md](vv/README.md) · [`.vv/matrix.md`](../.vv/matrix.md)
+**TL;DR:** Verify in CI (`make test`, autoroute dry-run, HTML gates). Validate in the field ([UAT.md](UAT.md)). Matrix rows stay `stub` until fresh `.vv/` evidence. No parallel test framework — extend SEBoK.
 
-## SEBoK framing (repo-aligned)
+**Product:** IoT-ASP / hop-ultrasonic · **Index:** [README.md](README.md)  
+**Companion:** [UAT.md](UAT.md) · [PRD.md](PRD.md) · [roadmap.md](roadmap.md) · [architecture-pwa.md](architecture-pwa.md) · [test-traceability.md](test-traceability.md) · [vv/README.md](vv/README.md) · [`.vv/matrix.md`](../.vv/matrix.md)
+
+## SEBoK framing
 
 | Term | Meaning here |
 |------|----------------|
-| **Verification** | Built right — schema, clamps, CI, stub builds, code/docs audit |
-| **Validation** | Right system — field/device behavior meets PRD (see UAT) |
+| **Verification** | Built right — schema, clamps, CI, stub builds |
+| **Validation** | Right system — field behavior (see UAT) |
 | **Methods** | Inspection, analysis, demonstration, test |
-| **Evidence** | `.vv/<issue>/` packages; matrix Status `stub`→`pass` only with fresh results |
-| **Promotion** | Project #5 Done requires evidence for that CI / issue |
-
-Do **not** invent a parallel framework; extend existing SEBoK matrix + `docs/vv/`.
+| **Evidence** | `.vv/<issue>/`; `stub`→`pass` only with fresh results |
+| **Promotion** | Project #5 Done needs that evidence |
 
 ## Test levels
 

@@ -1,8 +1,8 @@
 # Design constraints (formal)
 
-Public IoT-ASP scientific tooling. **These are non-negotiable product constraints**, not optional notes. No site PII.
+**TL;DR:** C1 = phone→speaker is **native A2DP only** (no Web Bluetooth TX). C5 = continuous 120 V AC. C6 = public TX band **17–23 kHz**. Full table below; agent rules: [rules-index.md](rules-index.md).
 
-Agent-facing Cursor rules (ops/fleet, algo/telemetry, backend/V&V, prior art): [rules-index.md](rules-index.md).
+Public IoT-ASP scientific tooling. **These are non-negotiable product constraints**, not optional notes. No site PII. **Index:** [README.md](README.md).
 
 ## C1 — iPhone ↔ speaker = native Bluetooth only
 

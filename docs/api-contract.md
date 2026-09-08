@@ -1,16 +1,20 @@
 # API contract — static frontend ↔ GCP/ADK backend
 
-**Version:** `schemaVersion: 1`  
-**Scope:** Decoupled control plane between the Vercel static app (`public/`) and the GCP/ADK autoroute stack (`services/autoroute-adk/`).
+**TL;DR:** Frontend **polls** `patch.json` and may **POST** telemetry. Backend authors clamped patches. Wire version is `schemaVersion: 1`. No Gemini keys in the browser. Hold/Manual freezes remote apply.
 
-## Invariants
+**Version:** `schemaVersion: 1` · **Index:** [README.md](README.md)  
+**Scope:** Vercel `public/` ↔ GCP/ADK (`services/autoroute-adk/`).
 
-1. The **frontend only polls/applies patches** and optionally **POSTs/beacons telemetry**. It never embeds Gemini/Vertex API keys, ADK agent code, or Vertex client logic.
-2. The **backend** owns ingest → GCS → ADK/Gemini → clamped `patch.json`. Frontend change ≠ backend redeploy and vice versa.
-3. No site PII (addresses, names, speech) in telemetry or public artifacts.
-4. Phone TX audio is **iOS native A2DP only** (not Web Bluetooth). See [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md).
-5. Fleet power assumption: **continuous 120 V AC** (**C5**) — patches must not encode battery-save duty cycles.
-6. Public TX band: telemetry `band` is **`17-23k`** (**C6**; `10-20` UI removed; patches with `10-20` are clamped to US).
+## Invariants (read these first)
+
+| # | Rule |
+|---|------|
+| 1 | Frontend polls/applies patches (+ optional telemetry). No Vertex/ADK keys in the page. |
+| 2 | Backend: ingest → GCS → ADK/Gemini → clamped `patch.json`. Deploys are independent. |
+| 3 | No site PII in telemetry or public artifacts. |
+| 4 | Phone TX = **native A2DP** only ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md)). |
+| 5 | Fleet power = continuous **120 V AC** (C5). |
+| 6 | Public TX band = **`17-23k`** (C6). |
 
 ## Endpoints (frontend view)
 
@@ -39,6 +43,8 @@ Backend HTTP surface (independent of Vercel):
 | Ingest | Cloud Run / Cloud Functions (`ingest_main.py`) | Writes `meta/telemetry/<deviceId>/<ts>.json` |
 | Patch object | GCS (or signed/CDN URL the phone polls) | `meta/patches/<deviceId>.json` |
 | Agent | ADK Agent Engine / Cloud Run | Authors patches; see [adk-autoroute.md](adk-autoroute.md) |
+
+## Deep dive — telemetry & patch fields
 
 ## Telemetry POST / beacon schema (`schemaVersion: 1`)
 

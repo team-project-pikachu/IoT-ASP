@@ -1,13 +1,17 @@
 # UAT — User Acceptance Test plan (SEBoK-aligned)
 
-**Product:** IoT-ASP / hop-ultrasonic  
+**TL;DR:** UAT = humans on real phones/speakers/Nest say “this matches the PRD.” CI alone is not UAT. Sign off with evidence under `.vv/` before Project Done. Simulator ≠ ultrasonic/A2DP acceptance.
+
+**Product:** IoT-ASP / hop-ultrasonic · **Index:** [README.md](README.md)  
 **Traceability:** [PRD.md](PRD.md) ↔ [TESTING_PLAN.md](TESTING_PLAN.md) ↔ [roadmap.md](roadmap.md) ↔ `.vv/matrix.md`  
-**Guide:** [vv/README.md](vv/README.md) (NASA SEBoK-style V&V)
+**Guide:** [vv/README.md](vv/README.md)
 
 ## Purpose
 
-**Validation** (“right system”): humans accept that each OS/product surface meets PRD intent in real environments.  
-**Verification** (“built right”) lives primarily in [TESTING_PLAN.md](TESTING_PLAN.md) / CI / `.vv/` packs.
+| Term | Meaning |
+|------|---------|
+| **Validation (this doc)** | Right system — field acceptance per surface |
+| **Verification** | Built right — [TESTING_PLAN.md](TESTING_PLAN.md), CI, `.vv/` packs |
 
 ## Roles
 

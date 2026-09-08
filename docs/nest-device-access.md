@@ -7,7 +7,7 @@ Management (SDM) API**, and the console steps only the account owner can perform
 Everything below is either a documented owner step or a deterministic script the owner runs. No agent
 in this repo authenticates interactively, and no credential value is ever committed.
 
-Related: [`docs/specs/85-nest-google-home-integration.md`](specs/85-nest-google-home-integration.md) ·
+Related: issue [#85](https://github.com/team-project-pikachu/IoT-ASP/issues/85) ·
 [`docs/api-contract.md`](api-contract.md) · [`scripts/nest_gcp_bootstrap.sh`](../scripts/nest_gcp_bootstrap.sh)
 
 ---

@@ -1,10 +1,10 @@
 # Vercel PWA platform architecture (hop-ultrasonic)
 
-**Status:** living · **Canonical for:** macOS / Mac Studio + web fleet control surface  
-**Live:** https://hop-ultrasonic.vercel.app/ · **Source root:** `public/`  
-**Aligned to:** [PRD.md](PRD.md) · [roadmap.md](roadmap.md) · [api-contract.md](api-contract.md) · [TESTING_PLAN.md](TESTING_PLAN.md) · [deploy.md](deploy.md)
+**TL;DR:** `public/` is a static blaster: Web Audio + Hold/Manual + patch poll. Backend (GCP/ADK) owns ingest and writes clamped `patch.json`. No Vertex keys in the browser. No service worker that caches patches. This doc does **not** invent Nest OAuth client IDs, SensorKit grants, or browser Vertex keys.
 
-This document is the **AI-architect** view of the durable browser control plane. It does **not** invent Nest OAuth client IDs, SensorKit grants, or Vertex keys in the frontend.
+**Status:** living · **Canonical for:** macOS / Mac Studio + web fleet control surface  
+**Live:** https://hop-ultrasonic.vercel.app/ · **Source:** `public/` · **Index:** [README.md](README.md)  
+**Aligned to:** [PRD.md](PRD.md) · [roadmap.md](roadmap.md) · [api-contract.md](api-contract.md) · [TESTING_PLAN.md](TESTING_PLAN.md) · [deploy.md](deploy.md)
 
 ## 1. Role in the product
 
@@ -96,6 +96,8 @@ suddenFreq / micDiff / impulse  →  telemetry beacon
 | **audioSink** | Default `sonos-beam-2` label | Honesty: Sonos DSP may crush US carriers; Soundcore remains C1 primary |
 
 Sonos Beam Gen 2 is a **system/AirPlay sink** story (milestone **Sonos**), not a Web Bluetooth target. Ultrasonic FR is experimental — systems-check rows must stay honest.
+
+## Deep dive — areas, tests, non-goals
 
 ## 6. Map to areas & milestones
 
