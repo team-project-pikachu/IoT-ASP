@@ -433,8 +433,6 @@ def test_nest_status_surface_is_display_only(html: str) -> None:
 
 
 def test_nest_mock_is_schema_version_1_and_carries_no_pii() -> None:
-    import json
-
     data = json.loads((ROOT / "public" / "nest.json").read_text(encoding="utf-8"))
     assert data["schemaVersion"] == 1
     blob = json.dumps(data)
