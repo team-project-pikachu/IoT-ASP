@@ -56,6 +56,12 @@ jobs:
       - name: Run timestore SciPy simulation
         run: python packages/algo-timestore/scripts/sim_fit.py
 
+      - name: Vendor sync check (algo_timestore → ADK package)
+        run: bash scripts/sync_algo_timestore_to_adk.sh --check
+
+      - name: ADK-only layout import smoke (timestore)
+        run: bash scripts/adk_layout_import_smoke.sh
+
       - name: Import / schema smoke (clamps, sudden_freq, priors)
         run: |
           PYTHONPATH=services/autoroute-adk python - <<'PY'
@@ -73,6 +79,8 @@ jobs:
               "fleet_log_summary",
               "live_features",
               "hw_limits_report",
+              "nest_fleet_status",
+              "nest_classify_burst",
           ]
           tool_names = [
               getattr(tool, "name", None) or getattr(tool, "__name__", None)

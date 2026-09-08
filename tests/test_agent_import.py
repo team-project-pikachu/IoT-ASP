@@ -35,6 +35,8 @@ EXPECTED_ROOT_AGENT_TOOL_NAMES = (
     "fleet_log_summary",
     "live_features",
     "hw_limits_report",
+    "nest_fleet_status",
+    "nest_classify_burst",
 )
 
 

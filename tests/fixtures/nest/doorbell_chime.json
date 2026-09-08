@@ -1,0 +1,19 @@
+{
+  "eventId": "701df587-469a-40dc-b04d-d4a03cebfe15",
+  "timestamp": "2019-01-01T00:00:01Z",
+  "resourceUpdate": {
+    "name": "enterprises/project-id/devices/device-id",
+    "events": {
+      "sdm.devices.events.DoorbellChime.Chime": {
+        "eventSessionId": "CjY5Y3VKaTZwR3o4Y19YbTVfMF...",
+        "eventId": "IORswHpcuHPx8oWIxMa_ES0xwo..."
+      }
+    }
+  },
+  "userId": "AVPHwEuBfnPOnTqzVFT4IONX2Qqhu9EJ4ubO-bNnQ-yi",
+  "eventThreadId": "d67cd3f7-86a7-425e-8bb3-462f92ec9f59",
+  "eventThreadState": "STARTED",
+  "resourceGroup": [
+    "enterprises/project-id/devices/device-id"
+  ]
+}

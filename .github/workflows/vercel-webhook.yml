@@ -1,13 +1,10 @@
 # Vercel webhook → GitHub summary (via repository_dispatch)
 #
-# Vercel cannot POST directly into Actions. A public HTTPS receiver verifies
-# x-vercel-signature with secrets.VERCEL_WEBHOOK_SECRET, then fires:
-#   gh api repos/team-project-pikachu/IoT-ASP/dispatches \
-#     -f event_type=vercel-deployment \
-#     -f client_payload[type]=deployment.succeeded \
-#     -f client_payload[url]=https://...
-# See docs/vercel-webhooks.md (issue #37). Never put the webhook secret in
-# client_payload or this file.
+# Vercel cannot POST directly into Actions. Public HTTPS receiver verifies
+# x-vercel-signature with env name VERCEL_WEBHOOK_SECRET, then fires:
+#   event_type=vercel-deployment
+# See docs/vercel-webhooks.md + services/vercel-webhook-receiver/ (issue #37).
+# Never put the webhook secret in client_payload or this file.
 
 name: Vercel webhook notify
 
@@ -24,9 +21,14 @@ on:
         description: Optional deployment URL (public)
         required: false
         default: ""
+      id:
+        description: Optional Vercel event id (public)
+        required: false
+        default: ""
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   summarize:
@@ -36,8 +38,9 @@ jobs:
         env:
           EVENT_TYPE: ${{ github.event.client_payload.type || inputs.type }}
           DEPLOY_URL: ${{ github.event.client_payload.url || inputs.url }}
-          EVENT_ID: ${{ github.event.client_payload.id || '' }}
+          EVENT_ID: ${{ github.event.client_payload.id || inputs.id }}
           EVENT_NAME: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           {
@@ -51,6 +54,21 @@ jobs:
             echo "| source | \`${EVENT_NAME}\` |"
             echo
             echo "HMAC verify happens **outside** Actions (receiver + \`VERCEL_WEBHOOK_SECRET\`)."
-            echo "Docs: \`docs/vercel-webhooks.md\` · issue #37 · related #27."
+            echo "Docs: \`docs/vercel-webhooks.md\` · receiver: \`services/vercel-webhook-receiver/\` · issue #37 · related #27."
           } >> "$GITHUB_STEP_SUMMARY"
           echo "OK vercel-webhook summarize type=${EVENT_TYPE:-unknown}"
+
+          # Best-effort comment on the webhooks tracking issue (no secrets).
+          if [[ "${EVENT_NAME}" == "repository_dispatch" ]]; then
+            body=$(printf '%s\n' \
+              "### Vercel webhook notify" \
+              "" \
+              "- **type:** \`${EVENT_TYPE:-unknown}\`" \
+              "- **url:** ${DEPLOY_URL:-_(none)_}" \
+              "- **id:** \`${EVENT_ID:-_(none)_}\`" \
+              "- **Actions run:** ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+              "" \
+              "_Automated from \`vercel-webhook.yml\` — secret values never included._")
+            gh issue comment 37 --repo "$GITHUB_REPOSITORY" --body "$body" \
+              || echo "WARN: could not comment on #37 (non-fatal)"
+          fi

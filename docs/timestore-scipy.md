@@ -1,13 +1,25 @@
 # Timestore SciPy MVP (#20)
 
-Standalone package path (collision-safe vs ADK service):
-[`packages/algo-timestore/`](../packages/algo-timestore/).
+Canonical library: [`packages/algo-timestore/`](../packages/algo-timestore/).
 
-## Why a separate package
+ADK packaging copy (what `adk deploy … iot_asp_autoroute` ships):
+[`services/autoroute-adk/iot_asp_autoroute/algo_timestore/`](../services/autoroute-adk/iot_asp_autoroute/algo_timestore/).
 
-The standalone package owns fitting and privacy boundaries. Autoroute imports it
-through a thin adapter, includes its time context in routing priors, and stamps
-persisted telemetry.
+## Why a separate package + vendor copy
+
+The standalone package owns fitting and privacy boundaries. Autoroute includes
+time context in routing priors and stamps persisted telemetry via a thin
+adapter (`iot_asp_autoroute/timestore.py`) that **relative-imports**
+`iot_asp_autoroute.algo_timestore`.
+
+`adk deploy` does **not** include the monorepo `packages/` tree, so the library
+is vendored under the agent package and kept in sync with:
+
+```bash
+bash scripts/sync_algo_timestore_to_adk.sh          # copy canonical → vendor
+bash scripts/sync_algo_timestore_to_adk.sh --check  # CI drift gate
+bash scripts/adk_layout_import_smoke.sh            # ADK-only PYTHONPATH smoke
+```
 
 ## Spec
 
