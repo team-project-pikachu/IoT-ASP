@@ -71,9 +71,25 @@ micDiff_band = micEnergy_band − α · outLevel_band
 
 **Response (sustained):** while `micDiff` stays hot (above release hysteresis), keep **extreme** mode: shriek family (`shriek_chirp` / `shriek_sweep` / `burst`) + aggressive dwell / vol (0.5-step, night ≤ `nightTargetVol`) / seed jitter within clamps. Exit after **~2.5 s** quiet. **Hold/Manual** freezes and clears extreme.
 
+### Impulse → blast volume (alarm reactivity)
+
+Quick impulses are sharper than the EMA burst onset and react **like a security alarm** (not a soft fade):
+
+| `alarmState` | Meaning |
+|--------------|---------|
+| `armed` | Listening (`suddenAuto`); no active blast |
+| `triggered` | Impulse onset; blast vol engaged immediately |
+| `sustaining` | Impulse train / still-hot; blast vol + extreme/shriek/mirrors held |
+| `cleared` | Quiet hysteresis satisfied; brief latch then return to `armed` |
+| `off` | `suddenAuto` disabled |
+
+**Impulse detectors:** (1) micDiff **sample-to-sample rise** &gt; `IMPULSE_RISE_DB` (~11 dB) or **peak vs EMA** &gt; `IMPULSE_PEAK_DB` (~14 dB); (2) accel **rise vs EMA** &gt; `IMPULSE_ACCEL_RISE` (scaled by vib sensitivity); (3) environmental `soundBurst` onset also enters the alarm path for fast reaction.
+
+**Blast volume:** jump UI vol toward `VOL_PATCH_MAX` (100) in **0.5** quanta, capped by night `nightTargetVol` when active. **Hold / Manual** refuses blast, clears `impulse`/`volBlast`, and forces `alarmState=cleared`. Sustain while the impulse latch (~700 ms) or burst still-hot continues; clear only after **~2.5 s** quiet (`BURST_QUIET_MS`) — same hysteresis family as extreme exit.
+
 **TX align:** default response band **17–23 kHz**; if `bandBurst` is `lf`/`both` **and** `lfDriveCapable`, may arm **10–20 Hz**. Continuous mic while armed/Signal on.
 
-Wire fields: `soundBurst`, `extremeActive`, `micEnergy`, `outLevel`, `micDiff` / `micNet`, `bandBurst`. Evidence: `.vv/burst-shriek.md`.
+Wire fields: `soundBurst`, `extremeActive`, `impulse`, `volBlast`, `alarmState`, `micEnergy`, `outLevel`, `micDiff` / `micNet`, `bandBurst`. Evidence: `.vv/burst-shriek.md`. Related: #44 #45 #25 #42.
 
 ## Impulse → blast / alarm reactivity
 

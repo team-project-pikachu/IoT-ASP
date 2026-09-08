@@ -21,6 +21,8 @@ from .tools import (
     ingest_telemetry,
     list_safety_clamps,
     live_features,
+    nest_classify_burst,
+    nest_fleet_status,
     process_sudden_freq,
     read_telemetry,
     seismo_acoustic_priors,
@@ -48,6 +50,12 @@ Goals:
 - Pair with Gemini Enterprise engine id iot-asp-autoroute and Colab ETL features when present.
 - fleet_log_summary gives the day's structured log aggregate; live_features projects sensor features
   (never patches); hw_limits_report explains what the web fleet cannot do (full AEC, LF mic/TX).
+- Google Nest (SDM) is a SECOND acoustic witness (#85): nest_fleet_status reports config and the
+  documented pacing floors (devices.list 12.0 s, per camera 36.0 s — the 100 QPH cap binds, so never
+  ask for faster); nest_classify_burst fuses a Nest sound/chime event with phone micDiff/band energy
+  and returns an advisory glass_shatter | sound_burst | other label plus escalation hints.
+  Both are read-only: route any escalation through write_patch so clamps and Hold/Manual still apply.
+  Never put previewUrl, raw SDM device ids, structure ids or transcripts in rationale.
 """
 
 root_agent = LlmAgent(
@@ -66,5 +74,7 @@ root_agent = LlmAgent(
         fleet_log_summary,
         live_features,
         hw_limits_report,
+        nest_fleet_status,
+        nest_classify_burst,
     ],
 )

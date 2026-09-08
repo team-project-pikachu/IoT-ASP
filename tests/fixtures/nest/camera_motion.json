@@ -1,0 +1,19 @@
+{
+  "eventId": "017a0133-e2d0-4e43-9923-9f41d68aa3ef",
+  "timestamp": "2019-01-01T00:00:01Z",
+  "resourceUpdate": {
+    "name": "enterprises/project-id/devices/device-id",
+    "events": {
+      "sdm.devices.events.CameraMotion.Motion": {
+        "eventSessionId": "CjY5Y3VKaTZwR3o4Y19YbTVfMF...",
+        "eventId": "xDjEm_bDknGxd5t9hnBcom_k87..."
+      }
+    }
+  },
+  "userId": "AVPHwEuBfnPOnTqzVFT4IONX2Qqhu9EJ4ubO-bNnQ-yi",
+  "eventThreadId": "d67cd3f7-86a7-425e-8bb3-462f92ec9f59",
+  "eventThreadState": "STARTED",
+  "resourceGroup": [
+    "enterprises/project-id/devices/device-id"
+  ]
+}

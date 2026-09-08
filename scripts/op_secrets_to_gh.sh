@@ -39,7 +39,22 @@ need() { command -v "$1" >/dev/null 2>&1 || fail "$1 not installed (brew install
 
 need op 1password-cli
 need gh gh
-op whoami >/dev/null 2>&1 || fail "op not signed in — run: eval \$(op signin)"
+
+# Headless service-account auth is the DEFAULT and preferred path: OP_SERVICE_ACCOUNT_TOKEN
+# authenticates the CLI non-interactively — no `op signin`, no biometric unlock, no desktop
+# app — so this script runs unattended in CI, on a second machine, or over SSH.
+# Verification for a service account is `op user get --me` (Type: SERVICE_ACCOUNT); `op whoami`
+# is the interactive-session check. A service account must be GRANTED access to the vault, and
+# `op item` needs --vault when it can see more than one.
+# Source: https://www.1password.dev/service-accounts/use-with-1password-cli/ (fetched 2026-09-08)
+if [[ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]]; then
+  op user get --me >/dev/null 2>&1 \
+    || fail "OP_SERVICE_ACCOUNT_TOKEN is set but rejected — check the token and that vault '$VAULT' is granted to the service account"
+  echo "op: headless service account (OP_SERVICE_ACCOUNT_TOKEN)"
+else
+  op whoami >/dev/null 2>&1 || fail "op not authenticated. Preferred: export OP_SERVICE_ACCOUNT_TOKEN=... (headless, no biometrics). Interactive fallback: eval \$(op signin)"
+  echo "op: interactive session (set OP_SERVICE_ACCOUNT_TOKEN to run headless)"
+fi
 gh auth status >/dev/null 2>&1 || fail "gh not signed in — run: gh auth login"
 
 cmd="${1:-help}"
