@@ -17,7 +17,7 @@ xcodebuild -version
 On this Studio checkout (2026-09-07): only **Command Line Tools** are active — `xcodebuild` requires full **Xcode.app**. Open the sources in:
 
 - **Xcode** (preferred): File → New → App, drop in `Sources/`, or
-- **Swift Playgrounds** (iPad/Mac): paste `SonosRouteShellApp.swift` + `ContentView.swift` into an App playground.
+- **Swift Playgrounds** (iPad/Mac): paste **all three** of `SonosRouteShellApp.swift`, `ContentView.swift`, and `RoutePicker.swift` into an App playground (`ContentView` references `RoutePicker`).
 
 ## Session policy (sketch)
 

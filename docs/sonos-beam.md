@@ -2,15 +2,16 @@
 
 **Status:** parked research until Beam Gen 2 hardware is in hand for systems check.  
 **Board:** [Project 5](https://github.com/orgs/team-project-pikachu/projects/5) · issue [#39](https://github.com/team-project-pikachu/IoT-ASP/issues/39).  
-**Formal constraint:** [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) **C1** (carrier TX is OS route, not Web Bluetooth).  
-**Evidence cache:** `.firecrawl/` (gitignored) from Firecrawl search/scrape; Apple API notes via Context7 `/websites/developer_apple_avfaudio` + [Apple Developer Documentation](https://developer.apple.com/documentation/).
+**Formal constraint:** [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) **C1** requires **iOS native Bluetooth A2DP** for carrier TX (not Web Bluetooth). **AirPlay 2 to Beam is a researched exception** — OS-owned route, but **not** currently C1-compliant A2DP; do not treat this doc as revising C1.  
+**Evidence cache:** `.firecrawl/` (gitignored) from Firecrawl search/scrape; Apple API notes via Context7 `/websites/developer_apple_avfaudio` + [Apple Developer Documentation](https://developer.apple.com/documentation/).  
+**Agent skill priors:** [skills-repo PR #1](https://github.com/team-project-pikachu/skills-repo/pull/1) (`awesome-swift-ios` + SoCo CLI + sonos-web) — install via `bearlabs-core@bearlabs` marketplace.
 
 ## Fleet role — Node 3
 
 | Node | Device | Sink | Primary phone→speaker path |
 |------|--------|------|----------------------------|
 | 1–2 | iPhone 16 (fleet) | Soundcore 2 | **iOS native A2DP** (C1 MVP) |
-| **3** | **Third iPhone 16** | **Sonos Beam Gen 2** | **AirPlay 2** (not Soundcore-style A2DP) |
+| **3** | **Third iPhone 16** | **Sonos Beam Gen 2** | **AirPlay 2** (researched C1 exception — not A2DP) |
 
 Node 3 is the **third-device** path: one dedicated iPhone 16 paired/routed to the Beam for ASP scientific tooling alongside (not instead of) phones 1–2. Chair-taped Node-3 sensing (#18) remains a separate bias; this doc is the **Sonos audio sink** research for that third phone.
 
@@ -22,7 +23,7 @@ Node 3 is the **third-device** path: one dedicated iPhone 16 paired/routed to th
 |-------|---------|---------|
 | Phone BT A2DP sink | Beam Gen 2 is **not** a generic iPhone Bluetooth stereo sink for Web Audio hop-blasting | Official guide lists Wi‑Fi + AirPlay 2 + HDMI eARC; RTINGS: wireless phone streaming is Wi‑Fi / no Bluetooth support; Sonos community threads treat Beam as non-BT |
 | AirPlay 2 | Supported on Beam Gen 2 (iOS 11.4+) — Control Center / app AirPlay picker routes iPhone system audio to Sonos | [Sonos Beam Gen 2 guide](https://www.sonos.com/en-us/guides/beam), [Stream AirPlay to Sonos](https://support.sonos.com/en-us/article/stream-airplay-audio-to-sonos) |
-| Safari / Chrome iOS PWA | Still cannot pick BT/AirPlay devices in-page; user must set **OS route** (Control Center AirPlay) before/during Web Audio TX | Same C1 pattern as A2DP; see [iphone-bluetooth.md](iphone-bluetooth.md) |
+| Safari / Chrome iOS PWA | Still cannot pick BT/AirPlay devices in-page; user must set **OS route** (Control Center AirPlay) before/during Web Audio TX | Same OS-route pattern as C1 A2DP, but AirPlay itself remains a **C1 exception** until DESIGN_CONSTRAINTS is revised; see [iphone-bluetooth.md](iphone-bluetooth.md) |
 | Dolby Atmos | Hardware/marketing Atmos is primarily **HDMI eARC** (and selected Sonos/app music paths). **iPhone AirPlay of Web Audio is effectively stereo** — do not treat Atmos as an ASP transport feature | Sonos Atmos notes; community: Atmos via AirPlay from phone is unreliable / often stereo |
 | Official Sonos Control API | Cloud Control API (OAuth) for household/groups/volume — complementary to LAN tools; does **not** replace AirPlay for phone Web Audio TX | [About Control API](https://docs.sonos.com/reference/about-control-api) |
 
@@ -53,7 +54,7 @@ Optional HTTP API server mode for scripted LAN ops. Fit for ASP: **deterministic
 
 - Browser controller via [node-sonos](https://github.com/bencevans/node-sonos).
 - Install (host npm): `npm install -g sonos-web-cli` → `sonos-web install` → `http://localhost:5050`.
-- **Docker caveat:** images need `network_mode: host` for Sonos discovery; **host networking is Linux-only** — not supported on Docker Desktop for Mac/Windows. Prefer bare `sonos-web-cli` on macOS Studio, or a Linux box / Apple `container` Linux VM on the same Wi‑Fi as the Beam.
+- **Docker caveat:** images typically need `network_mode: host` for Sonos discovery. Host networking was historically Linux-only on Docker Desktop; Docker Desktop 4.34+ documents opt-in host networking on Mac/Windows — **verify Sonos discovery on your host** rather than assuming it works. Prefer bare `sonos-web-cli` on macOS Studio, or a Linux box / Apple `container` Linux VM on the same Wi‑Fi as the Beam.
 
 ### Honesty boundary
 
@@ -62,7 +63,7 @@ iPhone 16 (Node 3)  --AirPlay 2-->  Beam Gen 2   ← carrier / Web Audio TX path
 LAN host (SoCo / sonos-web)  --UPnP-->  Beam Gen 2   ← volume / group / queue control
 ```
 
-SoCo / sonos-web **do not** satisfy C1 by themselves for the public hop blaster. The blaster still needs the OS AirPlay route (or a verified native shell route).
+SoCo / sonos-web **do not** satisfy C1 by themselves for the public hop blaster. AirPlay is an OS-owned route but **not** the formal C1 A2DP requirement — the blaster still needs a verified native/OS route, and Node 3 remains a parked exception until C1 is revised or Beam A2DP is proven.
 
 ## Native shell sketch (AirPlay picker)
 

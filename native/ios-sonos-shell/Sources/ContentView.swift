@@ -34,16 +34,27 @@ struct ContentView: View {
             return
         }
         let eng = AVAudioEngine()
+        // Preserve phase across render callbacks; derive increment from engine output rate
+        // (AirPlay routes are often not 48 kHz).
+        let phaseBox = TonePhaseBox()
+        let sampleRate = eng.outputNode.outputFormat(forBus: 0).sampleRate
+        let hz = sampleRate > 0 ? sampleRate : 48_000
+        let phaseInc = Float(2 * Double.pi * 880 / hz)
+        let twoPi = Float(2 * Double.pi)
         let osc = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
             let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
+            var phase = phaseBox.phase
             for buffer in abl {
                 guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
                 let n = Int(frameCount)
                 for i in 0..<n {
                     // Audible stub only — not the scientific ultrasonic band.
-                    data[i] = 0.05 * sin(Float(i) * 2 * .pi * 880 / 48_000)
+                    data[i] = 0.05 * sin(phase)
+                    phase += phaseInc
+                    if phase >= twoPi { phase -= twoPi }
                 }
             }
+            phaseBox.phase = phase
             return noErr
         }
         eng.attach(osc)
@@ -56,4 +67,9 @@ struct ContentView: View {
             print("engine start failed: \(error)")
         }
     }
+}
+
+/// Mutable phase carrier so the render callback can close over a reference type.
+private final class TonePhaseBox {
+    var phase: Float = 0
 }
