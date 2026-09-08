@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .timestore import autoroute_timestore_prior
+
 # Prompt blurbs (keys must stay in sync with VIB_ALGO_WEIGHTS / CITATIONS usage).
 PRIORS: dict[str, str] = {
     "structure_borne": (
@@ -287,6 +289,7 @@ def seismo_bundle() -> dict[str, Any]:
         "citations": CITATIONS,
         "lfBandHz": list(LF_BAND_HZ),
         "usBandHz": list(US_BAND_HZ),
+        "timestore": autoroute_timestore_prior(),
         "honesty": (
             "LF accel is a felt proxy; true infrasound mic/TX requires lfDriveCapable. "
             "No full NS/CFD on-phone."
