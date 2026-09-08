@@ -26,12 +26,12 @@
 | #26 | stubbed-live | Colab live GCS features | `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `notebooks/iot_asp_colab_etl.md`, `scripts/colab_live_gcs.sh` |
 | #27 | docs-only | Vercel Actions secrets | `docs/deploy.md`, `.vv/deploy/VERCEL.md`, `scripts/vercel_secrets_check.sh` |
 | #34 | implemented | mdc_convert GEN_MARK guard | `scripts/mdc_convert.py`, `tests/test_mdc_convert.py`, `docs/mdc-conversion.md` |
-| #39 | parked stub | Sonos Beam Gen 2 sink | `docs/sonos-beam.md` + `docs/issues/ISSUE-39-*` |
-| #41 | stubbed | Native iOS + watchOS | `native/IoTASP/`, `native/README.md`, `docs/native-xcode.md` |
-| #42 | stubbed | Impulse→blast + alarm (combined) | `public/index.html`, `docs/algorithms.md`, `native/IoTASP/Shared/Alarm/` |
-| #43 | implemented-docs | Soundcore manufacturer specs | `docs/hardware/soundcore-specs.md`, `docs/hardware/soundcore-2.md` |
-| #44 | stubbed | Web PWA impulse→blast | `public/index.html`, `tests/test_public_html.py` |
-| #45 | stubbed | Web PWA alarm reactivity | `public/index.html`, `docs/algorithms.md` |
+| #39 | parked stub | Sonos Beam Gen 2 sink | `docs/specs/39-sonos-beam-sink.md` + `docs/issues/ISSUE-39-*` |
+| #41 | stubbed | Native iOS + watchOS | `docs/specs/41-native-ios-watchos.md`, `native/IoTASP/`, `.vv/41/README.md` |
+| #42 | stubbed | Impulse→blast + alarm (combined) | `docs/specs/42-impulse-alarm-combined.md`, `public/index.html`, `.vv/42/README.md` |
+| #43 | implemented-docs | Soundcore manufacturer specs | `docs/specs/43-soundcore-manufacturer-specs.md`, `docs/hardware/soundcore-specs.md` |
+| #44 | stubbed | Web PWA impulse→blast | `docs/specs/44-web-pwa-impulse-blast.md`, `public/index.html`, `.vv/42/README.md` |
+| #45 | stubbed | Web PWA alarm reactivity | `docs/specs/45-web-pwa-alarm-reactivity.md`, `public/index.html`, `.vv/42/README.md` |
 | #46 | duplicate | dup of #44 | see #44 |
 | #47 | duplicate | dup of #45 | see #45 |
 | #48 | duplicate | dup of #41 | see #41 |
@@ -51,4 +51,3 @@
 - PR #35 — same #34 GEN_MARK guard (landed here too for Balanced PR).
 - PR #40 — Sonos #39 docs (this branch includes `docs/sonos-beam.md` + shell stub).
 - PR #36 — ADK vendor (orthogonal; not forced here).
-

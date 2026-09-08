@@ -326,3 +326,9 @@ def test_impulse_alarm_and_fleet_stub(html: str) -> None:
         assert tok in body, tok
     assert "clearAlarm(" in html and "IMPULSE_ACCEL_DELTA" in html
     assert "setInterval(function(){ alarmTick(performance.now()); }, 200)" in html
+    assert 'alarmState = "cleared";' in html
+    assert 'alarmState = "armed";' not in _fn_body(html, "function alarmTick(now){")
+    assert "if (impulse) {" in _fn_body(html, "function beaconTelemetry(){")
+    assert "d.instanceId === instanceId" in html
+    assert "fleetPeers[d.instanceId] = d" in html
+    assert "deviceId, instanceId, seed" in html

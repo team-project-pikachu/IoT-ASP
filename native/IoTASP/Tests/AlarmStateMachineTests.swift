@@ -33,8 +33,11 @@ final class AlarmStateMachineTests: XCTestCase {
         m.tick(now: t0.addingTimeInterval(0.5), impulseEvent: nil, nightNY: false)
         XCTAssertEqual(m.state, .sustaining)
         m.tick(now: t0.addingTimeInterval(3.0), impulseEvent: nil, nightNY: false)
-        XCTAssertEqual(m.state, .armed)
+        XCTAssertEqual(m.state, .cleared)
         XCTAssertFalse(m.volBlast)
+
+        m.tick(now: t0.addingTimeInterval(3.1), impulseEvent: ImpulseEvent(fromAccel: false, fromMicDiff: true, riseMs: 20), nightNY: false)
+        XCTAssertEqual(m.state, .triggered)
     }
 
     func testFleetHasSoundcoreAndSonos() {

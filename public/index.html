@@ -584,7 +584,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
   let pulseMs=120, shriekMs=55;
-  let deviceId="", seed=0, seedSource="entropy";
+  let deviceId="", instanceId="", seed=0, seedSource="entropy";
   try {
     deviceId = localStorage.getItem("hop.deviceId") || "";
     if (!deviceId) {
@@ -596,8 +596,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     seedSource = stored > 0 ? "stored" : "entropy";
     seed = stored > 0 ? stored : entropySeed();
     if (seedSource === "entropy") localStorage.setItem("hop.seed", String(seed));
+    instanceId = sessionStorage.getItem("hop.instanceId") || "";
+    if (!instanceId) {
+      instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
+      sessionStorage.setItem("hop.instanceId", instanceId);
+    }
   } catch (_) {
     deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
+    instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
     seed = entropySeed();
     seedSource = "entropy";
   }
@@ -1222,9 +1228,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function alarmTick(now){
     if (holdManual) return;
     const t = now || performance.now();
-    if (impulse && (t - lastImpulseAt) > 80) impulse = false;
     if (alarmState !== "triggered" && alarmState !== "sustaining") return;
-    const quiet = !impulse && (t - lastImpulseAt) > 80;
+    const quiet = (t - lastImpulseAt) > 80;
     if (!quiet) {
       alarmState = "sustaining";
       volBlast = true;
@@ -1234,7 +1239,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (!alarmQuietSince) alarmQuietSince = t;
     if ((t - alarmQuietSince) >= BURST_QUIET_MS) {
       volBlast = false;
-      alarmState = "armed";
+      alarmState = "cleared";
       alarmQuietSince = 0;
     } else {
       alarmState = "sustaining";
@@ -2337,15 +2342,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   if (fleetBc) {
     fleetBc.onmessage = function(ev){
       const d = ev && ev.data;
-      if (!d || !d.deviceId || d.deviceId === deviceId) return;
-      fleetPeers[d.deviceId] = d;
+      if (!d || !d.deviceId || !d.instanceId || d.instanceId === instanceId) return;
+      fleetPeers[d.instanceId] = d;
       paintFleetCards();
     };
   }
 
   function publishFleetHeartbeat(){
     const snap = {
-      deviceId, seed, seedSource, algo: (typeof algoWireName === "function" ? algoWireName() : algo),
+      deviceId, instanceId, seed, seedSource, algo: (typeof algoWireName === "function" ? algoWireName() : algo),
       alarmState, impulse: !!impulse, volBlast: !!volBlast, holdManual, ts: Date.now()
     };
     try { localStorage.setItem("hop.fleetLocal", JSON.stringify(snap)); } catch (_) {}
@@ -2384,9 +2389,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function beaconTelemetry(){
     updateTelUI();
     publishFleetHeartbeat();
+    let body = "";
+    if (TELEMETRY_URL) body = JSON.stringify(telemetryPayload());
+    if (impulse) {
+      impulse = false;
+      updateTelUI();
+    }
     if (!TELEMETRY_URL) return;
     try {
-      const body = JSON.stringify(telemetryPayload());
       if (navigator.sendBeacon) {
         navigator.sendBeacon(TELEMETRY_URL, new Blob([body], { type: "application/json" }));
       } else {

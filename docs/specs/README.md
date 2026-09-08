@@ -29,26 +29,21 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #25 | [25-hw-limited-lf-aec-micdiff.md](25-hw-limited-lf-aec-micdiff.md) — HW-limited LF mic/TX + AEC, `micDiff` (`mic_diff.py`) | HW-limited — backend helper implemented on branch | backend |
 | #26 | [26-colab-live-gcs-features.md](26-colab-live-gcs-features.md) — Colab live GCS: accel / gyro / `micDiff` → `meta/features` | implemented on branch (live write pending owner run) | backend |
 | #27 | [27-continuous-ship-dev-test-prod.md](27-continuous-ship-dev-test-prod.md) — continuous ship: GitHub Actions dev → test → prod into Vercel | implemented on branch (secrets not yet set) | infra |
+| #39 | [39-sonos-beam-sink.md](39-sonos-beam-sink.md) — Sonos Beam Gen 2 Node 3 sink | parked — ADR + AirPlay shell stub | native + research |
+| #41 #48 #52 | [41-native-ios-watchos.md](41-native-ios-watchos.md) — native iOS/watchOS companion apps | stubbed — unsigned; device validation pending | native |
+| #42 | [42-impulse-alarm-combined.md](42-impulse-alarm-combined.md) — combined impulse-to-blast alarm | stubbed in web + native shared logic | frontend + native |
+| #43 #49 #53 | [43-soundcore-manufacturer-specs.md](43-soundcore-manufacturer-specs.md) — Soundcore 2 manufacturer dossier | documentation implemented | docs |
+| #44 #46 #50 | [44-web-pwa-impulse-blast.md](44-web-pwa-impulse-blast.md) — web impulse-to-blast path | stubbed with telemetry latch | frontend |
+| #45 #47 #51 | [45-web-pwa-alarm-reactivity.md](45-web-pwa-alarm-reactivity.md) — web alarm state machine | stubbed with observable clear state | frontend |
 
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
-[#41](https://github.com/team-project-pikachu/IoT-ASP/issues/41) under `native/IoTASP/`), #12 #13 #16 #17
-(tracking / parent items referenced from `docs/ci.md` and spec 26), #37 (Vercel webhooks for
-hop-ultrasonic — docs + verify stub in `docs/vercel-webhooks.md`, complementary to #27), **#39**
-(Sonos Beam Gen 2 + third iPhone 16 — [`docs/sonos-beam.md`](../sonos-beam.md); AirPlay 2 TX + SoCo /
-sonos-web; parked until HW), **#41** (iOS + watchOS app), **#42** (impulse→blast / alarm reactivity —
-[`docs/algorithms.md`](../algorithms.md)), **#43** (Soundcore 2 manufacturer specs TODO —
-[`docs/hardware/soundcore-2.md`](../hardware/soundcore-2.md)).
+tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items referenced from
+`docs/ci.md` and spec 26), and #37 (Vercel webhooks for hop-ultrasonic — docs + verify stub in
+`docs/vercel-webhooks.md`, complementary to #27).
 
 Owner surface legend: **frontend** = `public/` (Vercel), **backend** = `services/autoroute-adk/` (GCP,
 independent deploy), **infra** = `.github/`, `scripts/`, `vercel.json`, edge hardware, **docs** = `docs/`,
 `reference/`, Notion.
-
-
-| #39 | [../sonos-beam.md](../sonos-beam.md) — Sonos Beam Gen 2 Node 3 (AirPlay research) | parked — ADR + shell stub | research |
-| #41 #48 #52 | [../native-xcode.md](../native-xcode.md) + `native/IoTASP/` — iOS/Watch stubs | stubbed (not signed) | native |
-| #42 #44 #45 (+dups) | [../algorithms.md](../algorithms.md) § Impulse/alarm — web PWA stubs | stubbed in `public/index.html` | frontend |
-| #43 #49 #53 | [../hardware/soundcore-specs.md](../hardware/soundcore-specs.md) — Anker Soundcore 2 | docs shipped | docs |
-| Balanced board | [../issues/BALANCED-BUILD-STATUS.md](../issues/BALANCED-BUILD-STATUS.md) | status artifact | docs |
 
 ## Known missing docs
 

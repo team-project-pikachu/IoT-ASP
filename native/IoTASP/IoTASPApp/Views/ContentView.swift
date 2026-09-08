@@ -41,7 +41,7 @@ struct ContentView: View {
                 Section("Route") {
                     RoutePickerRepresentable()
                         .frame(height: 44)
-                    Text("OS owns A2DP/AirPlay route (C1). Web cannot SensorKit.")
+                    Text("C1 carrier TX requires A2DP. AirPlay is a parked Sonos research exception. Web cannot SensorKit.")
                         .font(.caption2)
                 }
             }

@@ -24,7 +24,7 @@ final class M {
         guard state == .triggered || state == .sustaining else { return }
         if quiet == nil { quiet = now }
         if now.timeIntervalSince(quiet!) >= 2.5 {
-            state = .armed
+            state = .cleared
             volBlast = false
             quiet = nil
         } else {
@@ -47,7 +47,9 @@ assert(m.state == .triggered && m.volBlast, "trigger blast")
 m.tick(impulse: false, now: t0.addingTimeInterval(0.5))
 assert(m.state == .sustaining, "sustain")
 m.tick(impulse: false, now: t0.addingTimeInterval(3.0))
-assert(m.state == .armed && !m.volBlast, "clear re-arm")
+assert(m.state == .cleared && !m.volBlast, "clear observable")
+m.tick(impulse: true, now: t0.addingTimeInterval(3.1))
+assert(m.state == .triggered && m.volBlast, "retrigger from clear")
 m.holdOn()
 m.tick(impulse: true, now: Date())
 assert(m.state == .cleared && !m.volBlast, "hold wins")
