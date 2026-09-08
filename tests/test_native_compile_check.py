@@ -24,4 +24,5 @@ def test_native_compile_check_script():
     if proc.returncode == 0:
         assert "OK native_compile_check" in proc.stdout
         assert "alarm_smoke OK" in proc.stdout
+        assert "IoTASPSmoke OK" in proc.stdout
         assert "App Store" in proc.stdout or "SensorKit" in proc.stdout

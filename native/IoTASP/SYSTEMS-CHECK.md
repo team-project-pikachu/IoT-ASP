@@ -21,6 +21,22 @@
 - [ ] Negative: Beam is **not** offered as classic A2DP sink (or document firmware exception)
 - [ ] SoCo on LAN (names only in logs; no street PII)
 
+## CoreMotion suite (#140)
+
+- [ ] Arm CoreMotion: systems-check shows accel/gyro/deviceMotion **yes** on device (Simulator may be **no**)
+- [ ] `|a|` updates while phone is shaken; `|ω|` updates on rotate
+- [ ] Pedometer row stays **skip** (never requested)
+- [ ] Magnetometer / altimeter: **yes** only if hardware bit is true — no fake values
+- [ ] Sample rate request in 1–100 Hz (`plan Hz`)
+
+## Near-ultrasonic mic (#141)
+
+- [ ] Arm mic: preferred 48000 Hz vs **granted** Hz shown
+- [ ] US Nyquist OK only if granted ≥ 46 kHz
+- [ ] AEC/NS/AGC off **requested** (measurement mode); note OS may override
+- [ ] Simulator: stub note, no crash
+- [ ] Do not claim calibrated 17–23 kHz SPL
+
 ## Alarm / impulse
 
 - [ ] Simulate impulse → `triggered` / `volBlast`
