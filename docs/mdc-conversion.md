@@ -42,7 +42,8 @@ python3 scripts/mdc_convert.py --json             # machine-readable plan
 ```
 
 Idempotent: a second run is a no-op, `--check` passes, and text outside the markers in `CLAUDE.md` /
-`SPEC.md` is preserved. Deleting a `.mdc` prunes its generated rule/skill/block on the next run; hand-written
+`SPEC.md` is preserved (only newline normalisation is applied: CRLF → LF, and runs of three or more
+newlines collapse to one blank line). Deleting a `.mdc` prunes its generated rule/skill/block on the next run; hand-written
 files in `.claude/rules/` (no provenance comment) are never touched.
 
 ## Config (`.mdc-convert.json`)

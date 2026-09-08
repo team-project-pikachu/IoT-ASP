@@ -35,7 +35,9 @@ mdc-check:
 all: gates dryrun test mdc-check
 
 e2e:
+	@test -f tests/e2e/run.sh || { echo "tests/e2e/run.sh not found — the Playwright smoke lives in tests/e2e/ (see docs/specs/01-m0-public-blaster.md)"; exit 1; }
 	bash tests/e2e/run.sh
 
 protect-main:
+	@test -f scripts/gh_protect_main.sh || { echo "scripts/gh_protect_main.sh not found — see docs/branch-protection.md"; exit 1; }
 	bash scripts/gh_protect_main.sh

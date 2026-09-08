@@ -16,7 +16,8 @@ Nested rule folders (``<dir>/.cursor/rules/x.mdc``) are scoped to ``<dir>/**``.
 
 Idempotent: generated files carry a provenance comment; managed blocks sit between
 ``<!-- mdc:begin <slug> … -->`` / ``<!-- mdc:end <slug> -->`` markers under the
-``<!-- mdc:managed-section -->`` anchor. Text outside markers is never touched.
+``<!-- mdc:managed-section -->`` anchor. Text outside markers is preserved, apart from
+newline normalisation (CRLF → LF; runs of three or more newlines collapse to one blank line).
 Stale generated outputs (source removed) are pruned. ``--check`` is a CI gate.
 
 Sources (formats verified 2026-09-08 via Context7):
@@ -61,7 +62,7 @@ TARGETS = ("claude", "rule", "skill", "spec")
 
 # ── frontmatter ──────────────────────────────────────────────────────────────
 
-_FM_RE = re.compile(r"\A﻿?---[ \t]*\r?\n(.*?)(?:\r?\n)?---[ \t]*(?:\r?\n|\Z)", re.S)
+_FM_RE = re.compile(r"\A\ufeff?---[ \t]*\r?\n(.*?)(?:\r?\n)?---[ \t]*(?:\r?\n|\Z)", re.S)
 
 
 def _unquote(v: str) -> str:
