@@ -3,7 +3,7 @@
 **Config item:** `services/autoroute-adk/iot_asp_autoroute/mic_diff.py` + `tests/test_mic_diff.py`
 **Spec:** `docs/specs/25-hw-limited-lf-aec-micdiff.md`
 **Branch:** `claude/mdc-conversion-features-gu3yzk` (base `4e4f5db`)
-**Date:** 2026-09-08 (UTC)
+**Date:** 2026-09-08 (UTC) — refreshed after the adversarial-review fix round (same day)
 **Environment:** Python 3.11.15, numpy 2.4.6 (CI: 3.12 + `requirements-dev.txt`)
 **SEBoK plan:** not modified · **Secrets:** none read or printed · **Site PII:** none
 
@@ -20,6 +20,8 @@
 | BS-07 | `hw_limits_report` → four limits `full_aec`, `lf_mic`, `lf_tx`, `alpha_calibration`, docs + `#9` pointers, no URLs |
 | BS-08 | CLI `python3 -m iot_asp_autoroute.mic_diff --demo` exits 0, deterministic; no args → exit 2 |
 | BS-09 | Module imports without scipy / google; source has no CFD / Navier / Web Bluetooth claims |
+| BS-10 | `apply_burst_bias` **refuses, never rewrites**: a base patch `clamps.validate_patch` refuses (`shriekMs` 500 / −100 / 0 / `"abc"`, `algo` off-whitelist, `fMin ≥ fMax`, `pulseMs`/`vol` out of range) comes back as an untouched copy and `validate_patch` still refuses it with the same message (`burst_bias_eligibility`) |
+| BS-11 | Spec `docs/specs/25-…md` carries the eleven mandatory sections in order incl. **Prior art** (`.claude/rules/docs-and-specs.md`) |
 
 ## Procedure
 
@@ -36,12 +38,12 @@ python3 -m pytest tests -q
 
 | Command | Exit | Result |
 |---------|------|--------|
-| `python3 -m pytest tests/test_mic_diff.py -q` | 0 | `19 passed` (MD-01 … MD-17) |
+| `python3 -m pytest tests/test_mic_diff.py -q` | 0 | `21 passed` (MD-01 … MD-19; MD-18 = refuse-never-rewrite regression, MD-19 = spec sections / Prior art) |
 | `python3 -m iot_asp_autoroute.mic_diff --demo` | 0 | JSON below; two consecutive runs byte-identical |
 | `python3 -m iot_asp_autoroute.mic_diff` | 2 | `usage: python3 -m iot_asp_autoroute.mic_diff [-h] [--demo]` on stderr, empty stdout |
 | `bash scripts/ci_static_gates.sh` | 0 | `OK ci_static_gates` |
-| `bash scripts/autoroute_dev.sh` | 0 | `DRY-RUN OK` (module not on the dry-run path until the integrator hook lands) |
-| `python3 -m pytest tests -q` | 0 | `51 passed` (whole suite) |
+| `bash scripts/autoroute_dev.sh` | 0 | `DRY-RUN OK` / `OK fleet_log jsonl` (burst hook is on the dry-run path via `sudden_freq.py:133-135`; dry-run telemetry has no burst keys → no bias → unchanged output) |
+| `python3 -m pytest tests -q` | 0 | `213 passed` (whole suite, fix round; earlier baseline `51 passed` before the other work items landed) |
 
 ### Demo JSON (key fields)
 
@@ -73,13 +75,24 @@ report.limits           4            # full_aec, lf_mic, lf_tx, alpha_calibratio
 |-----------|------|
 | Hold / Manual wins (refuse for `micDiff ∈ {None, −10, 0, 6.01, 40, 1e9}`; flags ignored under hold) | MD-09 |
 | `shriekMs` clamp `[20, 120]` — `110 + 15 → 120.0`, never `125`; bogus bias 999 ignored | MD-11, MD-17 |
+| Refuse, never silently rewrite (invariant 5) — out-of-policy base (`shriekMs` 500 → stays 500, `validate_patch` → `shriekMs=500.0 outside [20.0,120.0]`; `0` / `"abc"` / `algo evil` / `fMin ≥ fMax` likewise); only the +15 delta is clamped (`20 → 35`, `105 → 120`); through `author_sudden_freq_patch`: `micDiff 9` → `shriek_chirp`, `shriekMs 70.0`, `burstBias`; hold → refused upstream | MD-18 |
+| Spec section order incl. Prior art (five venues, `docs/PRIOR_ART.md`, `features_live.py` cited) | MD-19 |
 | `algo` whitelist — `BURST_ALGO in ALLOWED_ALGOS`; `validate_patch(out)[0] is True` | MD-01, MD-11 |
 | `vol_hard_max == vol_soft_max == 100.0`; `apply_burst_bias` never touches `vol`/`fMin`/`fMax`/`band` | MD-01, MD-11 |
 | No CFD / Navier / Web Bluetooth strings; no `os.environ`; fresh import adds no `scipy` / `google` modules | MD-15 |
 | Deterministic CLI (seeded, no timestamps) | MD-16 |
 
-## Integration still pending (integrator-owned files, requested not edited)
+## Integration (integrator-owned files — landed on the branch, verified by reading)
 
-- `sudden_freq.py::author_sudden_freq_patch` — `burst_decision_from_telemetry` + `apply_burst_bias` after the duty bias, before `validate_patch`.
-- `tools.py` — tool `hw_limits_report()`; `agent.py` `tools=[…]` registration.
-- `docs/api-contract.md` — optional additive patch row `burstBias`.
+- `sudden_freq.py:9`, `:133-135` — `burst_decision_from_telemetry` + `apply_burst_bias` after the duty bias, before `validate_patch` (holdManual refuse at `:67-68` runs first).
+- `tools.py:13`, `:236-244` — tool `hw_limits_report()`; `agent.py:20`, `:67` registration; `.github/workflows/ci.yml:81-85` import smoke.
+- `docs/api-contract.md` — additive patch row `burstBias` present.
+
+## Fix round (adversarial review, 2026-09-08)
+
+| Finding | Root cause | Fix | Regression |
+|---------|-----------|-----|------------|
+| `apply_burst_bias` laundered an out-of-policy `shriekMs` (500 → 120, −100 → 20, 0 / `"abc"` → 65) into an accepted patch | Helper clamped the **input** instead of refusing it; had its own copy of the policy | `burst_bias_eligibility` runs `clamps.validate_patch` (single source of truth) first; ineligible drafts return untouched so the downstream `validate_patch` refuses them with its own message; only the +15 delta is clamped | MD-18 (8 refusable bases + boundaries + end-to-end through `author_sudden_freq_patch`) |
+| Spec lacked the mandatory `## Prior art` section | Section omitted when the spec was authored | Added *Prior art* (repo / Mac clone / org repos / awesome-lists / Context7 + Firecrawl, build-vs-adopt decision with sources) | MD-19 (heading order + venue names + citations) |
+
+Demo JSON after the fix: byte-identical to the table above (`micDiff 5.5`, `calibration.alpha 0.8575`, `burst.extreme true` at 13.5 dB, `burstHold.reason "holdManual — refuse"`, `aec.fullAEC false`, `lf.lfMic false`, 4 limits); two consecutive runs `cmp` identical; no-arg run exit 2.

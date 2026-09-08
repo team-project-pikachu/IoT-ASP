@@ -29,7 +29,7 @@ import random
 import sys
 from typing import Any, Iterable
 
-from .clamps import ALLOWED_ALGOS, CLAMPS
+from .clamps import ALLOWED_ALGOS, CLAMPS, validate_patch
 from .priors import LF_BAND_HZ, lf_drive_capable, normalize_vib_class
 
 # ── constants (asserted by tests/test_mic_diff.py) ───────────────────────────
@@ -306,19 +306,47 @@ def burst_decision_from_telemetry(t: dict[str, Any] | None, thr_db: Any = MIC_DI
     return burst_decision(md, thr_db, hold, vib)
 
 
+BIAS_REFUSE_PREFIX = "refuse burst bias: "
+
+
+def burst_bias_eligibility(patch: Any) -> tuple[bool, str]:
+    """May ``apply_burst_bias`` touch this patch? Only when it already validates.
+
+    ``clamps.validate_patch`` is the single source of truth for policy; a draft it
+    refuses (``shriekMs`` outside ``CLAMPS['shriekMs']`` or non-numeric, ``algo``
+    off the whitelist, band / ``vol`` violations …) is **refused, never rewritten**
+    into policy by the bias (CLAUDE.md invariant 5). Returns ``(ok, reason)`` where
+    ``reason`` carries ``validate_patch``'s own message on refusal.
+    """
+    if not isinstance(patch, dict):
+        return False, f"{BIAS_REFUSE_PREFIX}patch is not a dict"
+    ok, msg, _clamped = validate_patch(patch)
+    if not ok:
+        return False, f"{BIAS_REFUSE_PREFIX}{msg}"
+    return True, "ok"
+
+
 def apply_burst_bias(patch: dict[str, Any], decision: dict[str, Any] | None) -> dict[str, Any]:
     """Return a copy of ``patch`` biased toward ``shriek_chirp`` when ``decision['extreme']``.
 
-    ``shriekMs`` is clamped to ``CLAMPS['shriekMs']`` so the caller's
-    ``clamps.validate_patch`` (still mandatory) sees an in-policy value. Never
-    touches ``vol``, ``fMin``, ``fMax`` or ``band``.
+    The bias is applied **only** to a patch that ``clamps.validate_patch`` already
+    accepts (``burst_bias_eligibility``). An out-of-policy draft — ``shriekMs``
+    outside ``CLAMPS['shriekMs']`` / non-numeric, ``algo`` off the whitelist, … —
+    comes back as an unchanged copy (no ``algo`` swap, no ``burstBias``), so the
+    caller's mandatory ``validate_patch`` still refuses it with its own message:
+    refuse, never silently rewrite. On an eligible patch only the **+15 ms delta**
+    is clamped to ``CLAMPS['shriekMs']`` (``110 + 15 → 120``). Never touches
+    ``vol``, ``fMin``, ``fMax`` or ``band``.
     """
     out = copy.deepcopy(patch)
     if not decision or not decision.get("extreme"):
         return out
+    eligible, _reason = burst_bias_eligibility(out)
+    if not eligible:
+        return out
     lo, hi = CLAMPS["shriekMs"]
-    base = _finite(out.get("shriekMs"))
-    if base is None or base == 0:
+    base = _finite(out.get("shriekMs"))  # eligible ⇒ absent/None or finite inside [lo, hi]
+    if base is None:
         base = 50.0
     out["algo"] = BURST_ALGO
     out["shriekMs"] = _clamp(lo, hi, base + SHRIEK_MS_BIAS)

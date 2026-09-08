@@ -14,9 +14,15 @@ from TX-only pairs, (c) answers "can this fleet do full AEC / LF mic / LF TX?" w
 that always yields to Hold / Manual, and (e) exposes the leftover list as a report for the ADK agent.
 
 **Implemented on branch `claude/mdc-conversion-features-gu3yzk` (2026-09-08):**
-`services/autoroute-adk/iot_asp_autoroute/mic_diff.py`, `tests/test_mic_diff.py` (19 tests, MD-01 … MD-17)
+`services/autoroute-adk/iot_asp_autoroute/mic_diff.py`, `tests/test_mic_diff.py` (21 tests, MD-01 … MD-19)
 and `.vv/burst-shriek.md` now exist; see *Shipped on `main`* → "This item" and the *Implementation
-deltas* note under *Acceptance tests*. The integrator hooks (§ Remaining scope 4) are still requests.
+deltas* note under *Acceptance tests*. The integrator hooks (§ Remaining scope 4) have landed on the branch
+(`sudden_freq.py:133-135`, `tools.py:236-244`, `agent.py:20`/`:67`, `ci.yml:81-85`).
+
+**Fix round (2026-09-08, adversarial review):** `apply_burst_bias` now biases only a patch that
+`clamps.validate_patch` already accepts (`burst_bias_eligibility`); an out-of-policy draft is returned
+untouched so the mandatory downstream `validate_patch` refuses it — **refuse, never silently rewrite**
+(CLAUDE.md invariant 5). Regression: MD-18. This *Prior art* section was added (MD-19 guards the section order).
 
 On the base checkout (`4e4f5db`) the public HTML does **not** yet emit `micDiff` / `outLevel` / `soundBurst` / `extremeActive` /
 `lfEnergy` / `usEnergy` (`grep` over `public/` returns nothing — see *Shipped on main*). The owner's
@@ -36,6 +42,38 @@ every burst key as an **optional telemetry input** and computes `micDiff` server
    outright under `holdManual`.
 5. `hw_limits_report()` — the four HW-limited leftovers with pointers to `docs/algorithms.md`,
    `docs/iphone-bluetooth.md` and the native-companion path (#9) — callable as an ADK tool.
+
+## Prior art
+
+Searched in the order `CLAUDE.md` → Working conventions prescribes (2026-09-08 UTC); register row in
+`docs/PRIOR_ART.md` (`iot_asp_autoroute/mic_diff.py (#25)`).
+
+1. **This repo** (`rg micDiff|mic_diff|echoCancellation`, `git log -S micDiff --all`, `origin/*`): the
+   contract row `micDiff = micEnergy − 0.85·outLevel` (`docs/api-contract.md`), the phone mic constraints
+   `echoCancellation:false …` (`public/index.html:937-944`), `priors.lf_drive_capable` /
+   `band_for_telemetry` / `duty_bias_for_vib`, `clamps.validate_patch`, and the #26 sibling helper
+   `features_live.py` (`MIC_DIFF_ALPHA = 0.85`, `mic_diff(mic, out, alpha, given=)` feature projector).
+   Nothing calibrates α, answers capability questions, or turns `micDiff` into a clamped patch bias.
+   **Reuse:** same α, same wire names, `validate_patch` as the only policy gate, `priors.lf_drive_capable`
+   for `lfTx`; `features_live.py` keeps its projector-side copy (feature records are never authoritative).
+2. **Owner's Mac clone** (issue #25 body): browser-side `micDiff`, `soundBurst` / `extremeActive` /
+   `bandBurst` and the extreme shriek mode are "shipped in public hop UI" there, ahead of `origin/main`.
+   **Decision:** backend helpers only, no UI duplication; the beacon keys are treated as optional inputs.
+3. **Org repos** (`team-project-pikachu`): no other repo carries an AEC / calibration helper reachable from
+   this session; the native companion (#9) is an issue, not code yet.
+4. **awesome-lists** (`github.com/topics/awesome-list` — awesome-claude-code, awesome-cursorrules,
+   awesome-actions, awesome-vercel, awesome-observability): nothing on Web Audio echo cancellation; the
+   GitHub topic `acoustic-echo-cancellation` lists adaptive-filter toolkits (below).
+5. **Context7 / Firecrawl developer search** — OSS adaptive-filter AEC in Python:
+   [padasip](https://github.com/matousc89/padasip) (`FilterNLMS`, numpy; Context7 `/matousc89/padasip`),
+   [adaptfilt](https://github.com/wramberg/adaptfilt) (LMS/NLMS/AP, numpy, AEC example),
+   [pyaec](https://github.com/ewan-xu/pyaec) (LMS … Kalman / FDAF; needs `librosa` + `pyroomacoustics`).
+   **Decision: build (numpy `lstsq`, ~40 lines) — do not adopt.** Those toolkits cancel echo on the
+   **time-domain sample stream**; the web fleet never ships samples off the phone (PII rule, beacon is
+   device metrics only), only two scalar levels per heartbeat (`micEnergy`, `outLevel`). A single-tap
+   least-squares gain through the origin is the whole model for that data, it is deterministic and
+   offline (CI), and it adds no runtime dependency to the ADK package (`numpy` is already required by
+   `vib_anomaly.py`). Full sample-level AEC belongs to the native companion (#9).
 
 ## Shipped on `main`
 
@@ -73,10 +111,12 @@ Verified by reading the files on this checkout (line numbers exact at `4e4f5db`)
 | `calibrate_alpha` — `numpy.linalg.lstsq(out[:, None], mic, rcond=None)`, rank-0 refuse, `[0, 2]` clamp, `< 3` pairs refuse; numpy imported lazily inside the function | `mic_diff.py:126` |
 | `aec_capability` (`fullAEC` hard-coded `False`; UA classified by `_ua_class` `:176`, never echoed) | `mic_diff.py:188` |
 | `lf_capability` (`lfMic` hard-coded `False`; `lfTx = priors.lf_drive_capable`) | `mic_diff.py:214` |
-| `burst_decision`, `burst_decision_from_telemetry`, `apply_burst_bias` (Hold / Manual refuse first; `shriekMs` clamped to `CLAMPS["shriekMs"]`) | `mic_diff.py:263`, `:290`, `:309` |
-| `hw_limits_report` — four limits `full_aec`, `lf_mic`, `lf_tx`, `alpha_calibration` (`_LIMITS` data at `:334`) | `mic_diff.py:377` |
-| `demo()` (seed 25) + `main()` CLI (`--demo` → exit 0; no args → usage on stderr, exit 2) | `mic_diff.py:400`, `:422` |
-| Tests MD-01 … MD-17 | `tests/test_mic_diff.py` |
+| `burst_decision`, `burst_decision_from_telemetry` (Hold / Manual refuse first) | `mic_diff.py:263`, `:290` |
+| `burst_bias_eligibility` (`validate_patch` pre-gate, `BIAS_REFUSE_PREFIX` at `:309`) + `apply_burst_bias` (refuses out-of-policy input untouched; clamps only the +15 delta to `CLAMPS["shriekMs"]`) | `mic_diff.py:312`, `:329` |
+| `hw_limits_report` — four limits `full_aec`, `lf_mic`, `lf_tx`, `alpha_calibration` (`_LIMITS` data at `:362`) | `mic_diff.py:405` |
+| `demo()` (seed 25) + `main()` CLI (`--demo` → exit 0; no args → usage on stderr, exit 2) | `mic_diff.py:428`, `:450` |
+| Tests MD-01 … MD-19 | `tests/test_mic_diff.py` |
+| Integrator hooks landed: burst bias in the patch author (after the duty bias, before `validate_patch`), `hw_limits_report` ADK tool + registration, CI import smoke | `sudden_freq.py:9`, `:133-135`; `tools.py:13`, `:236-244`; `agent.py:20`, `:67`; `.github/workflows/ci.yml:81-85` |
 | Evidence | `.vv/burst-shriek.md` |
 
 ## Remaining scope
@@ -111,7 +151,8 @@ Functions (all pure; never mutate inputs):
 | `lf_capability(telemetry) -> dict` | `{"lfTx": priors.lf_drive_capable(telemetry), "lfMic": False, "micBinHz": round(WEB_SAMPLE_HZ / MIC_FFT_SIZE, 2)` (= `23.44`), `"txBinHz": round(WEB_SAMPLE_HZ / TX_FFT_SIZE, 2)` (= `2.93`), `"lfBandHz": [10.0, 20.0]`, `"reasons": [...]}`. `reasons` always contains `"lfMic: consumer mic/BT high-pass (docs/algorithms.md § Infrasound honesty)"` and `"lfMic: micAnalyser fftSize 2048 @ 48 kHz -> 23.44 Hz/bin; <20 Hz is bin 0"`; adds `"lfTx: gated by lfDriveCapable (priors.lf_drive_capable)"` when `lfTx` is `False`, `"lfTx: lfDriveCapable asserted by telemetry"` when `True`, and `"holdManual"` when `telemetry.get("holdManual")`. `telemetry=None` → `lfTx False`. `lfMic` is **never** `True` (web fleet). |
 | `burst_decision(mic_diff_db, thr_db=MIC_DIFF_THR_DB, hold_manual=False, vib_class=None) -> dict` | Keys in this order: `extreme`, `algo`, `shriekMsBias`, `thrDb`, `micDiffDb`, `vibClass`, `reason`. If `hold_manual` (truthy) → `extreme False, algo None, shriekMsBias 0, reason "holdManual — refuse"` **regardless of `mic_diff_db`**. If `mic_diff_db` is `None`/non-numeric/non-finite → `extreme False, algo None, bias 0, reason "micDiff unavailable"`. Else `extreme = mic_diff_db > thr_db` (strict). `extreme` → `algo "shriek_chirp", shriekMsBias 15, reason "micDiff X dB > thr Y dB; vibClass=…"`; not extreme → `algo None, bias 0, reason "micDiff X dB <= thr Y dB"`. `vibClass = priors.normalize_vib_class(vib_class)` (rationale only; it does not change the decision). |
 | `burst_decision_from_telemetry(t, thr_db=MIC_DIFF_THR_DB) -> dict` | `hold = bool(t.get("holdManual"))`. If not hold and (`t.get("soundBurst") is True` or `t.get("extremeActive") is True`) → the same dict as an extreme decision with `reason` prefixed `"soundBurst/extremeActive flag"` and `micDiffDb = mic_diff_from_telemetry(t)` (may be `None`). Otherwise `burst_decision(mic_diff_from_telemetry(t), thr_db, hold, t.get("vibClass"))`. |
-| `apply_burst_bias(patch, decision) -> dict` | Returns a **copy**. If `not decision.get("extreme")` → unchanged copy. Else set `algo = "shriek_chirp"`, `shriekMs = min(120, max(20, float(patch.get("shriekMs") or 50) + decision["shriekMsBias"]))`, append `"; burst→shriek_chirp (+15 ms)"` to `rationale` (created if absent), set `burstBias = {"micDiffDb": …, "shriekMsBias": 15}` (additive patch field). Never touches `vol`, `fMin`, `fMax`, `band`. The caller still runs `clamps.validate_patch` (this helper never bypasses it; `apply_burst_bias` output on a valid patch is valid by construction — test asserts). |
+| `burst_bias_eligibility(patch) -> (bool, str)` | `(False, "refuse burst bias: patch is not a dict")` for a non-dict; else `ok, msg, _ = clamps.validate_patch(patch)` → `(True, "ok")` or `(False, "refuse burst bias: " + msg)`. `validate_patch` is the **only** policy oracle — no second copy of the clamp table. |
+| `apply_burst_bias(patch, decision) -> dict` | Returns a **copy**. If `not decision.get("extreme")` → unchanged copy. If `burst_bias_eligibility(patch)` is false → **unchanged copy** (no `algo` swap, no `shriekMs` change, no `burstBias`), so the caller's mandatory `validate_patch` refuses the draft with its own message — refuse, never silently rewrite (CLAUDE.md invariant 5; MD-18). Else set `algo = "shriek_chirp"`, `shriekMs = min(120, max(20, base + 15))` where `base = float(patch["shriekMs"])` when present and not `None`, else `50` — only the **+15 delta** is clamped (`110 → 120`, `20 → 35`), never the input; append `"; burst→shriek_chirp (+15 ms)"` to `rationale` (created if absent), set `burstBias = {"micDiffDb": …, "shriekMsBias": 15}` (additive patch field). Never touches `vol`, `fMin`, `fMax`, `band`. The caller still runs `clamps.validate_patch`; output on an eligible patch is valid by construction (MD-11). |
 | `hw_limits_report() -> dict` | `{"issue": 25, "status": "hw-limited", "blocksRedeploy": False, "nativeCompanionIssue": 9, "relatedIssues": [9, 18, 26], "docs": ["docs/algorithms.md", "docs/iphone-bluetooth.md", "docs/api-contract.md", "docs/specs/25-hw-limited-lf-aec-micdiff.md"], "limits": [...]}` with **exactly four** `limits` entries, `id` ∈ `{"full_aec", "lf_mic", "lf_tx", "alpha_calibration"}` in that order, each `{"id", "title", "limitedBy", "shippedPath", "doc", "nativePath"}`: `full_aec` (browser speech-mode AEC only; shipped = output-bus subtraction α = 0.85; doc `docs/iphone-bluetooth.md`; native `#9 AVAudioSession`), `lf_mic` (mic HPF + 23.44 Hz/bin; shipped = `lfEnergy` accel felt proxy; doc `docs/algorithms.md § Infrasound honesty`; native = dedicated infrasound mic/geophone, parked), `lf_tx` (A2DP/Soundcore roll-off; shipped = `10-20` band gated by `lfDriveCapable`; doc `docs/algorithms.md`; native/experimental = Node-3 / phone speaker, #18), `alpha_calibration` (α depends on device + BT route; shipped = `calibrate_alpha` from TX-only pairs; doc = this spec; native = per-route AEC in #9). Pure constant data; JSON-serialisable; contains no URLs other than `docs/` paths and issue numbers. |
 | `demo() -> dict` | Deterministic: `random.Random(25)`; 12 TX-only pairs with `outLevel ∈ [-40, -10]` dB and `mic = 0.85·out + N(0, 0.5)` → `calibrate_alpha` (expect `abs(alpha − 0.85) < 0.1`); `micDiff = mic_diff(-20.0, -30.0)` (= `5.5`); `burst` for `{-20, -30}` → not extreme, and for `micEnergy -12` → extreme; `aec_capability("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) … Safari/604.1")`; `lf_capability({"lfDriveCapable": False})`; `burst_decision(20.0, hold_manual=True)` (refused); `hw_limits_report()`. Keys: `micDiff`, `calibration`, `burst`, `burstHold`, `aec`, `lf`, `report`. |
 | CLI | `python3 -m iot_asp_autoroute.mic_diff --demo` prints `json.dumps(demo(), indent=2, sort_keys=True)` and exits 0; no args → usage on stderr, exit 2. No network, no GCS, no scipy, no `google-adk`. |
@@ -124,7 +165,7 @@ exit codes, the demo JSON's `calibration.alpha`, `burst.extreme`, `burstHold.rea
 table for the four HW limits (`full_aec` = limited, `lf_mic` = limited, `lf_tx` = gated, `alpha` =
 calibrated in demo). No secrets, no site PII.
 
-### 4. Integration (integrator-owned files — requested, **not** edited by this item)
+### 4. Integration (integrator-owned files — requested by this item, **landed** on the branch; kept as the contract)
 
 - `sudden_freq.py::author_sudden_freq_patch`, after the shriek/pulse bias (`:82-84`) and before
   `validate_patch` (`:130`):
@@ -164,13 +205,20 @@ Semantics restated (canonical text stays in `api-contract.md`): `micDiff = micEn
   `micDiff`; `burst_decision_from_telemetry` reads `holdManual` first; `lf_capability` reports `lfTx
   False` under hold because `priors.lf_drive_capable` does (`priors.py:207-208`). The integrator hook
   sits after `sudden_freq.py:67-68`, and `tools.write_patch` re-checks (`tools.py:61-66`).
-- **Band clamps untouched:** `apply_burst_bias` never writes `fMin`/`fMax`/`band`/`vol`;
-  `shriekMs` is clamped to `CLAMPS["shriekMs"] == (20, 120)` before `validate_patch`, so `shriekMs 110 + 15
-  → 120`, never `125`. `vol_hard_max == vol_soft_max == 100.0` untouched.
+- **Band clamps untouched:** `apply_burst_bias` never writes `fMin`/`fMax`/`band`/`vol`; only the
+  **+15 delta** is clamped to `CLAMPS["shriekMs"] == (20, 120)`, so `shriekMs 110 + 15 → 120`, never `125`.
+  `vol_hard_max == vol_soft_max == 100.0` untouched.
+- **Refuse, never rewrite (invariant 5):** `apply_burst_bias` runs `clamps.validate_patch` first
+  (`burst_bias_eligibility`). A draft with `shriekMs` outside `[20, 120]`, `shriekMs 0`, a non-numeric
+  `shriekMs`, an `algo` off the whitelist, `fMin ≥ fMax`, `pulseMs`/`vol` out of range … is returned as an
+  **unchanged copy**; the downstream `validate_patch` then refuses it with the same message it would have
+  produced without the bias (`shriekMs=500.0 outside [20.0,120.0]`, `shriekMs not numeric`, `algo not
+  allowed: …`). The helper can therefore never turn a refusable patch into an accepted one (MD-18).
 - **Algo whitelist:** `BURST_ALGO == "shriek_chirp"` is asserted `in ALLOWED_ALGOS` at import.
 - **α clamp `[0, 2]` and refusal `< 3` pairs:** a bad calibration set can only produce the default
   `0.85` with `ok False` + reason, never a wild α; the caller must not persist α when `ok` is false.
-- **No silent rewrite:** nothing here mutates telemetry; the decision dict carries `reason` for the
+- **No silent rewrite:** nothing here mutates telemetry or the caller's patch object (deep copy); the
+  decision dict carries `reason`, and `burst_bias_eligibility` carries `validate_patch`'s message, for the
   monitor log / rationale.
 - **Physics honesty:** `lfMic` is hard-coded `False`, `fullAEC` is hard-coded `False`; `lfEnergy` is
   documented as an accelerometer felt proxy; no infrasound-capture or CFD claims anywhere in the module
@@ -204,6 +252,8 @@ needed except for the CLI test. Run: `python3 -m pytest tests/test_mic_diff.py -
 | MD-14 | hw_limits_report keys: `r = hw_limits_report()` → `r["issue"] == 25`, `r["status"] == "hw-limited"`, `r["blocksRedeploy"] is False`, `r["nativeCompanionIssue"] == 9`, `[l["id"] for l in r["limits"]] == ["full_aec","lf_mic","lf_tx","alpha_calibration"]`, every limit has exactly the keys `{"id","title","limitedBy","shippedPath","doc","nativePath"}` with non-empty strings, `"docs/algorithms.md" in r["docs"]` and `"docs/iphone-bluetooth.md" in r["docs"]`, `json.dumps(r)` round-trips, `hw_limits_report() == hw_limits_report()` and returns a fresh object (`is not`), `"http" not in json.dumps(r)` |
 | MD-15 | honesty greps: source of `mic_diff.py` contains no `CFD`, no `Navier`, no `bluetooth.requestDevice`, no `import scipy`, no `from google`, no `os.environ`; contains `"proxy"`; `sys.modules` after `import iot_asp_autoroute.mic_diff` in a fresh subprocess lacks `scipy` and `google` |
 | MD-16 | CLI demo: `subprocess.run([sys.executable, "-m", "iot_asp_autoroute.mic_diff", "--demo"], cwd="services/autoroute-adk", capture_output=True, env={**os.environ, "IOT_ASP_AUTOROUTE_DRY_RUN": "1"})` → returncode 0, stdout parses as JSON with keys `{"micDiff","calibration","burst","burstHold","aec","lf","report"}`, `out["micDiff"] == 5.5`, `abs(out["calibration"]["alpha"] − 0.85) < 0.1`, `out["burst"]["extreme"] is True`, `out["burstHold"]["reason"] == "holdManual — refuse"`, `out["aec"]["fullAEC"] is False`, `out["lf"]["lfMic"] is False`, `len(out["report"]["limits"]) == 4`; two runs produce byte-identical stdout; no-arg run exits 2 |
+| MD-18 | refuse, never rewrite: for each out-of-policy base `{"algo":"hop","shriekMs":500}`, `shriekMs −100`, `shriekMs 0`, `shriekMs "abc"`, `{"algo":"evil","shriekMs":50}`, `fMin 22000 > fMax 18000`, `pulseMs 5000`, `vol 101` — `clamps.validate_patch(base)[0] is False` (precondition); `out = apply_burst_bias(base, extreme)` → `out == base` (fresh copy, no `burstBias`, `algo` unchanged), `clamps.validate_patch(out)` is `(False, <same message as for base>)`, `burst_bias_eligibility(base) == (False, "refuse burst bias: " + message)`; eligible boundaries `20 → 35.0`, `105 → 120.0`, `120 → 120.0`, `None → 65.0`; `burst_bias_eligibility(BASE) == (True, "ok")`, non-dict → `False`; through `sudden_freq.author_sudden_freq_patch`: `{"algo":"hop","shriekMs":50,"micDiff":9.0}` → `ok True`, `algo shriek_chirp`, `shriekMs 70.0`, `burstBias` present; `holdManual` → `(False, "holdManual — refuse patch", {})` |
+| MD-19 | spec sections: `docs/specs/25-hw-limited-lf-aec-micdiff.md` `## ` headings are exactly `Status · Goal · Prior art · Shipped on \`main\` · Remaining scope · Wire fields · Clamps / safety · Acceptance tests · CI gate · Risks / HW limits · Sources` in that order (`.claude/rules/docs-and-specs.md`); the *Prior art* section names all five venues (this repo, Mac clone, org repos, awesome-lists, Context7 / Firecrawl), cites `docs/PRIOR_ART.md` and `features_live.py`; the spec mentions `burst_bias_eligibility`, `MD-18`, `MD-19` |
 | MD-17 | negative controls: `burst_decision("6.5")` (string) → `extreme True` (numeric coercion) but `burst_decision("abc")["reason"] == "micDiff unavailable"`; `apply_burst_bias(patch, {"extreme": True, "shriekMsBias": 999, "micDiffDb": 9})` → `shriekMs == 120.0` (clamp wins over a bogus bias); `apply_burst_bias({"algo": "hop"}, {})` returns `{"algo": "hop"}`; `lf_capability({"lfDriveCapable": "true"})` (string, not bool) → `lfTx False` (matches `priors.lf_drive_capable` strict `is True`) |
 
 **Implementation deltas (as shipped — the table above remains binding, these are additions):**
@@ -222,6 +272,10 @@ needed except for the CLI test. Run: `python3 -m pytest tests/test_mic_diff.py -
   `__init__` soft-imports `agent` → `tools` → `vib_anomaly` → scipy in that environment).
 - `mic_diff(..., alpha=<non-finite>)` and `burst_decision(..., thr_db=<non-numeric>)` fall back to the
   module defaults (`0.85`, `6.0`) rather than raising; booleans are never treated as levels.
+- **Fix round:** `apply_burst_bias` no longer coerces a `shriekMs` of `0` / non-numeric / out-of-range to
+  the `50` default or into the clamp window — such a draft is ineligible and returned untouched
+  (`burst_bias_eligibility`), so `validate_patch` refuses it downstream (MD-18). Only an absent or `None`
+  `shriekMs` uses the `50` baseline (`→ 65.0`, MD-11 unchanged).
 
 ## CI gate
 
@@ -289,6 +343,12 @@ Additional risks:
   Firecrawl developer search — webkit/webkit PR #14490 / https://bugs.webkit.org/show_bug.cgi?id=257495
   ("Set echoCancellation to true if not explicitly set within a getUserMedia call" — WebKit defaults the
   speech-mode processor **on**, so the page must pass `false` explicitly).
+- Prior-art lookups (2026-09-08): Context7 `/matousc89/padasip` (`FilterNLMS(n, mu, eps)`, numpy-based
+  adaptive filtering; https://github.com/matousc89/padasip); Firecrawl developer search —
+  https://github.com/wramberg/adaptfilt (LMS/NLMS/AP in numpy, AEC example),
+  https://github.com/ewan-xu/pyaec (time/frequency-domain adaptive filters; requires `librosa`,
+  `pyroomacoustics`), https://github.com/topics/acoustic-echo-cancellation. None fits scalar-per-heartbeat
+  data; see *Prior art*.
 - GitHub issue #25 (scope, "Do not block public hop redeploys"), #9 (native/Xcode shell), #18
   (phone-speaker LF), #26 (`micDiff`/`shriekBias` consumer) — read via the GitHub connector on 2026-09-08.
 - Repo (file:line cites above): `docs/api-contract.md`, `docs/DESIGN_CONSTRAINTS.md`,
