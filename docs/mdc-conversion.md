@@ -39,12 +39,14 @@ python3 scripts/mdc_convert.py --dry-run          # plan only
 python3 scripts/mdc_convert.py --check            # CI gate (exit 1 when outputs are stale)
 python3 scripts/mdc_convert.py --src ../.cursor/rules   # also pull shared rules from apps/
 python3 scripts/mdc_convert.py --json             # machine-readable plan
+python3 scripts/mdc_convert.py --force            # overwrite hand-written targets lacking GEN_MARK
 ```
 
 Idempotent: a second run is a no-op, `--check` passes, and text outside the markers in `CLAUDE.md` /
 `SPEC.md` is preserved (only newline normalisation is applied: CRLF → LF, and runs of three or more
 newlines collapse to one blank line). Deleting a `.mdc` prunes its generated rule/skill/block on the next run; hand-written
-files in `.claude/rules/` (no provenance comment) are never touched.
+files in `.claude/rules/` (no provenance comment) are never overwritten unless you pass `--force`
+(matching `.mdc` → same slug is a conflict, not a silent clobber).
 
 ## Config (`.mdc-convert.json`)
 

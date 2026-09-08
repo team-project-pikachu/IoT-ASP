@@ -1,7 +1,7 @@
 # Native Xcode path (parked — issue #9)
 
 **Research closeout (docs only):** [sensorkit-research-closeout.md](sensorkit-research-closeout.md) · evidence [`.vv/9/`](../.vv/9/).  
-**This wave:** no SensorKit entitlement, no Xcode project.
+**Balanced stub (2026-09-08):** source sketch under [`native/IoTASP/`](../native/IoTASP/) + [`native/README.md`](../native/README.md) (issues #41/#48/#52). Still **no** SensorKit entitlement grant and **no** signed App Store build.
 
 MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md)). Xcode is for a future shell that can unlock fuller audio/BT APIs.
 

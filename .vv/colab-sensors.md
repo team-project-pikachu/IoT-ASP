@@ -128,3 +128,8 @@ values alongside `lastHopAgeMs`, `ctxResumes`, and `watchdogTrips`, so
 the browser and Colab paths use one `schemaVersion: 1` vocabulary.
 `shriekBias` remains a feature hint only: ADK owns clamping and patch
 writes, and Hold / Manual always wins.
+
+## Balanced stub pass (2026-09-08)
+
+- Added `scripts/colab_live_gcs.sh` (dry-run default; refuses `LIVE_GCS=1` without `IOT_ASP_GCS_BUCKET`).
+- **Live URI evidence still PENDING** — owner Colab run with userdata names only.

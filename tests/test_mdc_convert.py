@@ -330,6 +330,88 @@ def test_external_source_dir_via_src_flag(tmp_path):
     assert mdc.main(["--root", str(root), "--src", "../.cursor/rules", "--check"]) == 0
 
 
+def test_refuse_overwrite_handwritten_without_gen_mark(tmp_path, capsys):
+    """Matching .mdc must not clobber a hand-written .claude/rules file lacking GEN_MARK.
+
+    Regression for the PR #29 review finding: adding
+    ``.cursor/rules/autoroute-backend.mdc`` used to overwrite the hand-written
+    ``.claude/rules/autoroute-backend.md`` (body became ``# OVERWRITTEN``).
+    """
+    root = tmp_path / "collision"
+    rules_out = root / ".claude" / "rules"
+    rules_out.mkdir(parents=True)
+    hand = rules_out / "autoroute-backend.md"
+    hand_body = "---\npaths:\n  - \"services/**\"\n---\n# Hand written — keep me\n"
+    hand.write_text(hand_body, encoding="utf-8")
+    (root / ".cursor" / "rules").mkdir(parents=True)
+    (root / ".cursor" / "rules" / "autoroute-backend.mdc").write_text(
+        "---\nglobs: services/**\nalwaysApply: false\n---\n# OVERWRITTEN\n",
+        encoding="utf-8",
+    )
+
+    assert mdc.main(["--root", str(root)]) == 1
+    err = capsys.readouterr().err
+    assert "CONFLICT" in err and "GEN_MARK" in err
+    assert hand.read_text(encoding="utf-8") == hand_body
+    assert "# OVERWRITTEN" not in hand.read_text(encoding="utf-8")
+    assert mdc.GEN_MARK not in hand.read_text(encoding="utf-8")
+
+    # --check also refuses (does not report a silent STALE that invites clobber)
+    assert mdc.main(["--root", str(root), "--check"]) == 1
+    assert "CONFLICT" in capsys.readouterr().err
+
+    # --dry-run reports the conflict but does not write
+    assert mdc.main(["--root", str(root), "--dry-run"]) == 0
+    assert hand.read_text(encoding="utf-8") == hand_body
+
+    # --force opts in to the overwrite
+    assert mdc.main(["--root", str(root), "--force"]) == 0
+    after = hand.read_text(encoding="utf-8")
+    assert mdc.GEN_MARK in after
+    assert "# OVERWRITTEN" in after
+    assert "Hand written — keep me" not in after
+
+
+def test_generated_rule_still_updates_without_force(tmp_path):
+    """Files that already carry GEN_MARK remain managed and update without --force."""
+    root = make_repo(tmp_path)
+    assert mdc.main(["--root", str(root)]) == 0
+    target = root / ".claude" / "rules" / "auto-csv.md"
+    assert mdc.GEN_MARK in target.read_text(encoding="utf-8")
+    (root / ".cursor" / "rules" / "auto_csv.mdc").write_text(
+        AUTO_CSV + "- Extra bullet.\n", encoding="utf-8"
+    )
+    assert mdc.main(["--root", str(root)]) == 0
+    assert "- Extra bullet." in target.read_text(encoding="utf-8")
+
+
+def test_long_frontmatter_gen_mark_not_misclassified(tmp_path):
+    """GEN_MARK after a long paths frontmatter must still count as managed (no --force)."""
+    root = tmp_path / "long-fm"
+    (root / ".cursor" / "rules").mkdir(parents=True)
+    # Many globs → rendered YAML paths: block pushes GEN_MARK well past 800 chars.
+    globs = ", ".join(f"services/path{i:04d}/**/*.py" for i in range(80))
+    (root / ".cursor" / "rules" / "long_globs.mdc").write_text(
+        f"---\ndescription: Long globs regression\nglobs: {globs}\nalwaysApply: false\n---\n# Body\n",
+        encoding="utf-8",
+    )
+    assert mdc.main(["--root", str(root)]) == 0
+    target = root / ".claude" / "rules" / "long-globs.md"
+    text = target.read_text(encoding="utf-8")
+    assert mdc.GEN_MARK in text
+    # Provenance comment must appear after a large frontmatter (regression vs [:800] scan).
+    mark_at = text.index(mdc.GEN_MARK)
+    assert mark_at > 800, mark_at
+    # Second convert without --force must refresh (not refuse as hand-written).
+    (root / ".cursor" / "rules" / "long_globs.mdc").write_text(
+        f"---\ndescription: Long globs regression\nglobs: {globs}\nalwaysApply: false\n---\n# Body\n- refreshed\n",
+        encoding="utf-8",
+    )
+    assert mdc.main(["--root", str(root)]) == 0
+    assert "- refreshed" in target.read_text(encoding="utf-8")
+    assert mdc.main(["--root", str(root), "--check"]) == 0
+
+
 def test_repo_itself_is_up_to_date():
     """The live repo must pass the CI gate (no .mdc committed here; outputs consistent)."""
     assert mdc.main(["--root", str(ROOT), "--check"]) == 0

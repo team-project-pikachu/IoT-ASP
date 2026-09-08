@@ -42,7 +42,7 @@ from iot_asp_autoroute.fleet_log import (  # noqa: E402
 EXPECTED_KEYS = [
     "kind", "schemaVersion", "ts", "level", "event", "deviceId", "band", "power", "nightNY",
     "lfArmed", "lfDriveCapable", "lfGate", "algo", "vibClass", "suddenFreq", "suddenState",
-    "holdManual", "peakHz", "absA", "micEnergy", "msg",
+    "holdManual", "peakHz", "absA", "micEnergy", "impulse", "volBlast", "alarmState", "msg",
 ]  # fmt: skip
 
 BASE_TEL = {

@@ -100,8 +100,6 @@ public final class AlarmStateMachine: @unchecked Sendable {
         if quietFor >= config.clearQuietSeconds {
             state = .cleared
             volBlast = false
-            // Re-arm for next threat (alarm semantics — not soft fade on first dip).
-            state = .armed
             quietSince = nil
         } else {
             state = .sustaining

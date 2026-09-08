@@ -29,9 +29,9 @@ python3 scripts/mdc_convert.py --dry-run --json
 
 | Check | Result |
 |-------|--------|
-| `pytest tests/test_mdc_convert.py` | **19 passed** (0.14 s) |
-| `mdc_convert.py --check` on this repo | exit 0 — `no .mdc sources found … outputs up to date` (the `.mdc` files live only on the owner's Mac clone; none are on `origin/main`) |
-| `--dry-run --json` | `{"deletes": [], "notes": [], "rules": [], "writes": []}` |
+| `pytest tests/test_mdc_convert.py` | exit 0 — **22 passed** (0.21 s) |
+| `mdc_convert.py --check` on this repo | exit 0 — four `.mdc` sources mapped; outputs up to date |
+| `--dry-run --json` | Covered by the converter fixture tests; no write was performed by this evidence run |
 
 ## Pass/fail
 

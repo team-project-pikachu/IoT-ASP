@@ -77,26 +77,25 @@ Wire fields: `soundBurst`, `extremeActive`, `micEnergy`, `outLevel`, `micDiff` /
 
 ## Impulse → blast / alarm reactivity
 
-**Semantics:** security-alarm style — not a gentle ramp.
+**Web + native (issues #42 / #44 / #45; duplicates #46/#47/#50/#51; native #41).** Security-alarm style — not a gentle ramp.
 
 | State | Meaning |
 |-------|---------|
 | `armed` | Sensors live; waiting for onset |
 | `triggered` | First short-duration impulse (accel spike and/or `micDiff` onset with short rise time) |
 | `sustaining` | Impulse train / hot micDiff continues; keep blast |
-| `cleared` | Quiet hysteresis met (~**2.5 s**); auto **re-arm** (do not soft-fade on first dip) |
+| `cleared` | Quiet hysteresis met (~**2.5 s**); remains observable until the next impulse retriggers |
 
 **Impulse definition:** short rise (≲120 ms) where either (a) `|a|` jumps ≥ onset above EMA baseline, or (b) `micDiff` jumps ≥ ~9 dB above EMA baseline (same family as environmental burst).
 
-**Blast:** set `volBlast=true`, jump UI `vol` toward **100** (night window may cap via `nightTargetVol`; 0.5-step glide only when escalating from quiet under night rules). Prefer extreme / shriek / contour-mirror family while blasting.
+**Blast:** set `volBlast=true`, jump UI `vol` toward **100** / `VOL_PATCH_MAX` (night window may cap via `nightTargetVol`; 0.5-step glide only when escalating from quiet under night rules). Prefer extreme / shriek / contour-mirror family while blasting. Hold / Manual disarm → `cleared`, freeze remote + blast (`holdManual` wins).
 
-**Hold / Manual:** disarm → `cleared`, freeze remote + blast (`holdManual` wins).
+**Telemetry (additive, schemaVersion 1):** `impulse` (bool, latched through the next heartbeat), `volBlast` (bool), `alarmState` ∈ `armed`|`triggered`|`sustaining`|`cleared`.
 
-**Telemetry (additive, schemaVersion 1):** `impulse` (bool), `volBlast` (bool), `alarmState` ∈ `armed`\|`triggered`\|`sustaining`\|`cleared`.
-
-**Surfaces:** Web DeviceMotion+mic (issue **#42** / PWA lane); native iPhone+Watch [`native/IoTASP/`](../native/IoTASP/) (**#41**). SensorKit not on web (#9).
+**Surfaces:** Web DeviceMotion+mic (`public/index.html`); native iPhone+Watch [`native/IoTASP/`](../native/IoTASP/) (`Shared/Alarm/AlarmStateMachine.swift`). SensorKit not on web (#9).
 
 **Intense vib:** treat **10–20 Hz** as intense vibrations band for TX gate and/or sensing priority (`infra_felt` / LF). Log **1–100 Hz** accel+gyro on native paths.
+
 
 ## Algorithms
 

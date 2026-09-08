@@ -133,6 +133,7 @@
 			buildConfigurationList = A50000000000000000000001 /* Build configuration list for PBXNativeTarget "IoTASP" */;
 			buildPhases = (
 				A40000000000000000000001 /* Sources */,
+				A40000000000000000000003 /* Embed Watch Content */,
 			);
 			buildRules = ();
 			dependencies = (
@@ -154,9 +155,23 @@
 			name = IoTASPWatch;
 			productName = IoTASPWatch;
 			productReference = A10000000000000000000002 /* IoTASPWatch.app */;
-			productType = "com.apple.product-type.application";
+			productType = "com.apple.product-type.application.watchapp2";
 		};
 /* End PBXNativeTarget section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A40000000000000000000003 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				A80000000000000000000002 /* IoTASPWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXProject section */
 		A70000000000000000000001 /* Project object */ = {
@@ -216,6 +231,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXBuildFile section */
+		A80000000000000000000002 /* IoTASPWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* IoTASPWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A80000000000000000000010 /* IoTASPApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000010 /* IoTASPApp.swift */; };
 		A80000000000000000000011 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* ContentView.swift */; };
 		A80000000000000000000012 /* ASPSessionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* ASPSessionModel.swift */; };

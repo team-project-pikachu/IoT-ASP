@@ -7,7 +7,7 @@ Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 | `IoTASPApp/` | **iPhone** primary shell (SwiftUI) |
 | `IoTASPWatch/` | **Apple Watch** companion (Watch Connectivity) |
 | `Shared/` | Alarm state machine, impulse detector, fleet (Soundcore + Sonos), SensorKit gate |
-| `Package.swift` | Shared logic + unit tests (`swift test`) without Xcode.app |
+| `Package.swift` | Shared logic + discoverable XCTest target (`swift test` when the selected toolchain includes XCTest) |
 | `IoTASP.xcodeproj/` | Open in **Xcode.app** to build device/simulator |
 
 ## Issues
@@ -16,7 +16,8 @@ Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 - Related: [#42](https://github.com/team-project-pikachu/IoT-ASP/issues/42) impulse→blast / alarm
 - Related: [#39](https://github.com/team-project-pikachu/IoT-ASP/issues/39) Sonos Beam Node 3
 - Related: [#9](https://github.com/team-project-pikachu/IoT-ASP/issues/9) SensorKit research (closed; entitlement still parked)
-- TODO Soundcore specs: [#43](https://github.com/team-project-pikachu/IoT-ASP/issues/43) → `docs/hardware/soundcore-2.md (stub; full dossier PR #55 / docs/specs/43-soundcore-2-a2dp.md)`
+- TODO Soundcore specs: [#43](https://github.com/team-project-pikachu/IoT-ASP/issues/43) → `docs/hardware/soundcore-2.md` (dossier: `soundcore-specs.md` / PR #55)
+
 
 ## What runs on-device vs stubbed
 
@@ -34,7 +35,7 @@ Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 ## Build
 
 ```bash
-# Shared tests (no Xcode.app required)
+# Shared tests (requires a Swift toolchain that includes XCTest)
 cd native/IoTASP && swift test
 
 # App / Watch (requires Xcode.app)
@@ -42,11 +43,13 @@ open IoTASP.xcodeproj
 # Scheme: IoTASP (iOS) · IoTASPWatch
 ```
 
-Studio note: `xcodebuild -version` fails when only Command Line Tools are selected — install/select Xcode.app.
+Studio note: the installed Command Line Tools may omit XCTest, and `xcodebuild -version` fails when only
+Command Line Tools are selected. In that environment, run `swift Scripts/alarm_smoke.swift`; install/select
+Xcode.app before running `swift test` or building the app targets.
 
 ## Alarm reactivity (definition)
 
-`armed → triggered → sustaining → cleared→re-arm`  
+`armed → triggered → sustaining → cleared` (the next impulse retriggers directly)
 Impulse (accel spike and/or micDiff onset, short rise) → `volBlast` jump to max (night/Hold rules) + shriek/extreme family preference. Clear only after **2.5 s** quiet hysteresis. Hold/Manual disarms.
 
 ## Skills
