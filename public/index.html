@@ -1061,7 +1061,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     else if (!suddenAuto) next = "off";
     if (alarmState === next) return;
     alarmState = next;
-    if (typeof updateTelUI === "function") updateTelUI();
+    updateTelUI();
   }
 
   /** Effective alarm for UI / telemetry / debug — Hold clears; suddenAuto-off → off. */
@@ -1147,7 +1147,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (typeof monLog === "function" && !train) {
       monLog("impulse · " + (source || "micDiff") + " · alarm sustaining");
     }
-    if (typeof updateTelUI === "function") updateTelUI();
+    updateTelUI();
     return true;
   }
 
@@ -2424,9 +2424,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       logTail: records.slice(-3),
       net: netKind(),
       route: hwCaps.route || "a2dp",
-      impulse: !!impulse,
-      volBlast: !!volBlast,
-      alarmState,
       ax, ay, az
     };
   }
