@@ -164,6 +164,10 @@ struct IoTASPSmoke {
         let rows = OtherSensorsGate.table(altimeterHardware: false)
         check("ambient unavailable", rows.contains(where: { $0.kind == .ambientLight && $0.available == false }))
 
+        // #145 background
+        check("bg pause", BackgroundSensingPolicy.onEnterBackground(txPlaying: true) == .backgroundPaused)
+        check("no silent audio lie", BackgroundSensingPolicy.rejectedBackgroundModes.contains(where: { $0.contains("always-on") }))
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

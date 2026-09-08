@@ -35,6 +35,7 @@
 		A10000000000000000000044 /* AudioRouteMatrix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRouteMatrix.swift; sourceTree = "<group>"; };
 		A10000000000000000000045 /* TelemetryBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryBridge.swift; sourceTree = "<group>"; };
 		A10000000000000000000046 /* OtherSensorsGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherSensorsGate.swift; sourceTree = "<group>"; };
+		A10000000000000000000047 /* BackgroundSensingPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundSensingPolicy.swift; sourceTree = "<group>"; };
 		A2000000000000000000000C /* Wire */ = {isa = PBXGroup; children = ( A10000000000000000000045 /* TelemetryBridge.swift */, ); path = Wire; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -129,6 +130,7 @@
 				A10000000000000000000042 /* VibChannelPolicy.swift */,
 				A10000000000000000000043 /* LfAccelProxy.swift */,
 				A10000000000000000000046 /* OtherSensorsGate.swift */,
+				A10000000000000000000047 /* BackgroundSensingPolicy.swift */,
 			);
 			path = Sensors;
 			sourceTree = "<group>";
@@ -248,6 +250,7 @@
 				A80000000000000000000043 /* LfAccelProxy.swift in Sources */,
 				A80000000000000000000045 /* TelemetryBridge.swift in Sources */,
 				A80000000000000000000046 /* OtherSensorsGate.swift in Sources */,
+				A80000000000000000000047 /* BackgroundSensingPolicy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,6 +274,7 @@
 				A80000000000000000000044 /* AudioRouteMatrix.swift in Sources */,
 				A80000000000000000000045 /* TelemetryBridge.swift in Sources */,
 				A80000000000000000000046 /* OtherSensorsGate.swift in Sources */,
+				A80000000000000000000047 /* BackgroundSensingPolicy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -297,6 +301,7 @@
 		A80000000000000000000044 /* AudioRouteMatrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000044 /* AudioRouteMatrix.swift */; };
 		A80000000000000000000045 /* TelemetryBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000045 /* TelemetryBridge.swift */; };
 		A80000000000000000000046 /* OtherSensorsGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000046 /* OtherSensorsGate.swift */; };
+		A80000000000000000000047 /* BackgroundSensingPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000047 /* BackgroundSensingPolicy.swift */; };
 		A80000000000000000000039 /* PermissionSequencer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000039 /* PermissionSequencer.swift */; };
 		A80000000000000000000040 /* PhysicalVibChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000040 /* PhysicalVibChannel.swift */; };
 		A80000000000000000000041 /* AcousticVibChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000041 /* AcousticVibChannel.swift */; };
