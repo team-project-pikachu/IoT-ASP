@@ -82,3 +82,4 @@ Caches under `.context7/` (see [asp-prior-art.md](asp-prior-art.md)).
 ## Privacy
 
 - Private study protocol: companion `IoT-ASP-study`. Pointer: [STUDY_PRIVATE.md](STUDY_PRIVATE.md)
+- **Glass shatter consent (#99):** [glass-shatter-privacy.md](glass-shatter-privacy.md) · [specs/99-glass-shatter-privacy.md](specs/99-glass-shatter-privacy.md) (live OAuth steps stay on parked #93; SensorKit entitlements are M9 #113 / `privacy-entitlements-native.md`)
