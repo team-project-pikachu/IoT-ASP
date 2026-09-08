@@ -1,0 +1,152 @@
+{
+  "anomaly": {
+    "disturbance": false,
+    "engine": "scipy",
+    "functions": [
+      "scipy.signal.medfilt",
+      "scipy.stats.median_abs_deviation",
+      "scipy.signal.find_peaks"
+    ],
+    "last": {
+      "anomaly": false,
+      "baseline": 0.02,
+      "deltaQ": 0.0015,
+      "vib": 0.021500000000000002,
+      "vibQ": 0.021500000000000002
+    },
+    "mad": 0.0011119516638792024,
+    "n": 12,
+    "ok": true,
+    "peaks": [
+      8
+    ],
+    "quantum": 0.0005,
+    "sampleHz": 1.0
+  },
+  "credentialPolicy": "userdata-or-env-refs-only",
+  "derived": {
+    "anomalySharedModule": "iot_asp_autoroute.vib_anomaly",
+    "micDiffAlpha": 0.85,
+    "micDiffQuantum": 0.1,
+    "priorHint": "structure_borne",
+    "priorKeys": [
+      "structure_borne",
+      "linearized_acoustic",
+      "infra_felt",
+      "sudden_freq",
+      "sound_burst"
+    ],
+    "sampleHz": 1.0,
+    "sensors": {
+      "accelAxesPresent": true,
+      "accelMagG": 0.021500000000000002,
+      "bandBurst": "none",
+      "bandEnergyLf": null,
+      "bandEnergyUs": null,
+      "extremeActive": false,
+      "gyroAxesPresent": true,
+      "gyroBurst": false,
+      "gyroMagRadS": 0.5562637953345516,
+      "lfUsBandBurst": false,
+      "micDiff": -14.5,
+      "shriekBiasEligible": false,
+      "soundBurst": false,
+      "vibBurst": false
+    },
+    "suddenFreqEvent": false,
+    "vibQuantumG": 0.0005
+  },
+  "deviceId": "node1",
+  "engineId": "iot-asp-autoroute",
+  "kind": "iot_asp_features",
+  "live": false,
+  "micDiffAlpha": 0.85,
+  "sampleHz": 1.0,
+  "schemaVersion": 1,
+  "sensorColumns": [
+    "ax",
+    "ay",
+    "az",
+    "gx",
+    "gy",
+    "gz",
+    "accelAxes",
+    "gyroAxes",
+    "outLevel",
+    "micDiff",
+    "bandBurst",
+    "soundBurst",
+    "extremeActive",
+    "lfEnergy",
+    "usEnergy",
+    "lastHopAgeMs",
+    "ctxResumes",
+    "watchdogTrips"
+  ],
+  "sensors": {
+    "accelAxes": [
+      -0.0366,
+      0.0459,
+      0.9939
+    ],
+    "ax": -0.0366,
+    "ay": 0.0459,
+    "az": 0.9939,
+    "bandBurst": "us",
+    "ctxResumes": 0,
+    "gx": 0.4069,
+    "gy": 0.2608,
+    "gyroAxes": [
+      0.4069,
+      0.2608,
+      0.2754
+    ],
+    "gz": 0.2754,
+    "lastHopAgeMs": 510,
+    "lfEnergy": -70.0,
+    "micDiff": -14.5,
+    "outLevel": -30.0,
+    "usEnergy": -50.0,
+    "watchdogTrips": 0
+  },
+  "shriekBias": false,
+  "sourceCount": 12,
+  "sourceObjects": [
+    "meta/telemetry/node1/2026-09-08T00-00-00Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-01Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-02Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-03Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-04Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-05Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-06Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-07Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-08Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-09Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-10Z.json",
+    "meta/telemetry/node1/2026-09-08T00-00-11Z.json"
+  ],
+  "telemetry": {
+    "absA": 0.021500000000000002,
+    "absOmega": 0.5562637953345516,
+    "algo": "hop",
+    "ax": -0.0366,
+    "ay": 0.0459,
+    "az": 0.9939,
+    "band": "17-23k",
+    "bandBurst": "none",
+    "deviceId": "node1",
+    "gx": 0.4069,
+    "gy": 0.2608,
+    "gz": 0.2754,
+    "holdManual": false,
+    "micDiff": -14.5,
+    "micEnergy": -40.0,
+    "outLevel": -30.0,
+    "schemaVersion": 1,
+    "suddenFreq": false,
+    "ts": "2026-09-08T00:00:11Z",
+    "vibClass": "physical"
+  },
+  "ts": "2026-09-08T00:00:11Z",
+  "writer": "iot_asp_autoroute.features_live"
+}
