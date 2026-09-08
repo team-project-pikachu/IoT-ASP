@@ -134,6 +134,27 @@ writes, and Hold / Manual always wins.
 - Added `scripts/colab_live_gcs.sh` (dry-run default; refuses `LIVE_GCS=1` without `IOT_ASP_GCS_BUCKET`).
 - **Live URI evidence still PENDING** — owner Colab run with userdata names only.
 
-## Dry-run fixture (Balanced PR3)
+## Dry-run fixture (Balanced PR3) — hermetic `--check` evidence
 
-`bash scripts/colab_gcs_fixture.sh --check` vs `fixtures/colab_gcs/`. Live remains PENDING.
+**Config item:** `scripts/colab_gcs_fixture.sh` + `fixtures/colab_gcs/features_node1_seed26.json`  
+**Date:** 2026-09-08T04:45:51Z (UTC)  
+**Procedure:**
+
+```bash
+bash scripts/colab_gcs_fixture.sh --check
+python3 -m pytest tests/test_colab_gcs_fixture.py -q
+```
+
+**Observed:**
+
+| Command | Exit | Result |
+|---------|------|--------|
+| `bash scripts/colab_gcs_fixture.sh --check` | **0** | Hermetic `mktemp` dry root; full-document compare vs golden (`sensors`/`derived`/`telemetry`/`anomaly`/`shriekBias` included); prints `OK fixture check … (full document)` |
+| `pytest tests/test_colab_gcs_fixture.py -q` | **0** | 2 passed |
+| Pollution control (junk under `.autoroute-dry` then `--check`) | **0** | `--check` ignores polluted `.autoroute-dry`; still matches golden |
+
+| Req | Status |
+|-----|--------|
+| Hermetic `--check` (no `.autoroute-dry` reuse) | **PASS** |
+| Full golden document assert | **PASS** |
+| Live GCS write | **PENDING** — owner `LIVE_GCS=1` |

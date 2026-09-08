@@ -1,7 +1,7 @@
 # ISSUE-26 — Colab live GCS features
 
 **Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/26  
-**Status:** dry-run + golden fixture (stack PR3); live PENDING
+**Status:** partial — dry-run + golden fixture (stack PR3); live Colab/GCS acceptance still PENDING
 
 ## Did
 

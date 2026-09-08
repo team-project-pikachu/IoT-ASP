@@ -1,7 +1,7 @@
 # ISSUE-27 — Set Vercel Actions secrets for continuous MVP ship
 
 **Classification:** docs/ops — **names only**  
-**Status:** docs + name-presence checker (stack PR3); values OWNER-GATED
+**Status:** blocked/partial — docs + name-presence checker (stack PR3); values OWNER-GATED until trio exists and preview/prod deploy succeeds
 
 ## Exact secret NAMES
 
