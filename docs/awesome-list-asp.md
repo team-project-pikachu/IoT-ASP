@@ -26,7 +26,7 @@ gh search repos --topic awesome scipy signal --limit 10
 | [faroit/awesome-python-scientific-audio](https://github.com/faroit/awesome-python-scientific-audio) | DSP / scientific audio priors |
 | [nitnelav/awesome-acoustic](https://github.com/nitnelav/awesome-acoustic) | Acoustics awesome list |
 | Firecrawl developer-index | [`.firecrawl/developer-index/INDEX.md`](../.firecrawl/developer-index/INDEX.md) (71 entries) |
-| [awesome-iot-asp.md](awesome-iot-asp.md) | Curated IoT-ASP index |
+| [awesome-iot-asp.md](awesome-iot-asp.md) | Redirect → [README.md](README.md) (canonical index) |
 
 ## Outstanding
 

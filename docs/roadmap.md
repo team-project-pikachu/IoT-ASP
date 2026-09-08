@@ -1,10 +1,12 @@
 # IoT-ASP product roadmap (OS / surface)
 
+**TL;DR:** Work is organized by **surface milestones** (iOS, macOS, Nest, Sonos, Platform) — not old M0–M9 numbers. Drain order: Platform → macOS → iOS → Nest → Sonos. Labels `area:drivers|sdk|adk|agentic` say *what kind* of work.
+
 Canonical product plan. **Milestones = OS/product surface.** **Labels = work category.**  
 Legacy M0–M9 numbers are closed or renamed — do not open parallel taxonomies.
 
-**Board:** [Project 5](https://github.com/orgs/team-project-pikachu/projects/5) · **Closed log:** [mvp-closed-log.md](mvp-closed-log.md)  
-**PRD:** [PRD.md](PRD.md) · **UAT:** [UAT.md](UAT.md) · **Testing (SEBoK V&V):** [TESTING_PLAN.md](TESTING_PLAN.md)
+**Board:** [Project 5](https://github.com/orgs/team-project-pikachu/projects/5) · **Closed log:** [mvp-closed-log.md](mvp-closed-log.md) · **Index:** [README.md](README.md)  
+**PRD:** [PRD.md](PRD.md) · **UAT:** [UAT.md](UAT.md) · **Testing:** [TESTING_PLAN.md](TESTING_PLAN.md) · **PWA:** [architecture-pwa.md](architecture-pwa.md) · **Traceability:** [test-traceability.md](test-traceability.md)
 
 ### Issue title convention
 
@@ -70,5 +72,5 @@ Also use existing `enhancement`, `mvp`, `docs`, `parked` as needed.
 ## Related docs
 
 - Constraints: [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) · API: [api-contract.md](api-contract.md)
-- Index: [awesome-iot-asp.md](awesome-iot-asp.md) · Specs: [specs/README.md](specs/README.md)
+- Index: [README.md](README.md) · Specs: [specs/README.md](specs/README.md)
 - Legacy pointer: [mvp-roadmap.md](mvp-roadmap.md) (redirects here)
