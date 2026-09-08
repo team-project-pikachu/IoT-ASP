@@ -19,6 +19,7 @@ Issue-linked PRs are the intended path for Project 5 Todo work (#12, #16, #17, r
 4. **`tests`** — `pip install -r requirements-dev.txt` then `python -m pytest tests -q` (converter, fleet log, micDiff, live features, ruleset JSON, deploy workflow, public HTML).
 5. **`mdc check`** — `python3 scripts/mdc_convert.py --check` (Cursor `.mdc` → Claude Code outputs are fresh).
 6. **`e2e smoke`** — Playwright against `public/` (`tests/e2e/run.sh`); informative, not required by the ruleset.
+7. **`M8 Home iOS stub presence`** — file presence for `native/IoTASPHome` + `services/gemini-burst-detect/detect.py`, then `pytest tests/test_gemini_burst_detect.py`. Informative. Full stub build: `make home-ios-build` (macOS).
 
 ## Continuous ship
 

@@ -78,6 +78,8 @@ DEFAULT_ENGINE_ID: Final[str] = "iot-asp-autoroute"
 
 #: Classification labels. `glass_shatter` is the #95/#96 event class; `sound_burst` is
 #: the generic acoustic onset already on the wire; `other` means do not escalate.
+#: HomeNest twin wire keys (`eventClass` camelCase) live in services/gemini-burst-detect
+#: and native/IoTASPHome AcousticDetectResult (#96); `other` maps to stub `unknown`.
 LABEL_GLASS_SHATTER: Final[str] = "glass_shatter"
 LABEL_SOUND_BURST: Final[str] = "sound_burst"
 LABEL_OTHER: Final[str] = "other"

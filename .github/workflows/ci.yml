@@ -215,3 +215,23 @@ jobs:
           fi
           echo "::error::PR must link an issue (e.g. Fixes #12, Closes #16, Related: #9). See .github/PULL_REQUEST_TEMPLATE.md and docs/ci.md"
           exit 1
+
+  # M8 / #96 — presence + Python wire-contract stub (full swift build: make home-ios-build on macOS)
+  home_ios_stub:
+    name: M8 Home iOS stub presence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package + detector present
+        run: |
+          test -f native/IoTASPHome/Package.swift
+          test -f native/IoTASPHome/Sources/HomeNestAlarm/AcousticEventClass.swift
+          test -f scripts/home_ios_build.sh
+          test -f services/gemini-burst-detect/detect.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Python detect stub pytest
+        run: |
+          python3 -m pip install pytest
+          python3 -m pytest tests/test_gemini_burst_detect.py -q
