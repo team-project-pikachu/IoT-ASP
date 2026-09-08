@@ -9,6 +9,9 @@ from .ciphers import experiment_tag
 from .quantum import TIME_QUANTUM_S, circle_fraction_utc, quantize_posix
 from .weather import fairfax_weather_prior
 
+_SAFE_META_TYPES = (bool, int, float)
+_SAFE_META_KEYS = frozenset({"fitSamples", "schemaVersion", "suddenFreq"})
+
 
 def stamp(
     meta: dict[str, Any] | None = None,
@@ -16,7 +19,7 @@ def stamp(
     experiment: str | None = None,
     include_weather: bool = True,
 ) -> dict[str, Any]:
-    """Build a timestore stamp; optional cipher tag + county weather prior."""
+    """Build a timestore stamp with protected fields and sanitized metadata."""
     now = datetime.now(timezone.utc).timestamp()
     q = quantize_posix(now)
     out: dict[str, Any] = {
@@ -40,5 +43,12 @@ def stamp(
             "streetAddress": None,
         }
     if meta:
-        out.update(meta)
+        invalid = [
+            key
+            for key, value in meta.items()
+            if key not in _SAFE_META_KEYS or not isinstance(value, _SAFE_META_TYPES)
+        ]
+        if invalid:
+            raise ValueError(f"unsupported stamp metadata keys or values: {invalid}")
+        out["meta"] = dict(meta)
     return out

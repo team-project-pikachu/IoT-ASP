@@ -5,9 +5,9 @@ Standalone package path (collision-safe vs ADK service):
 
 ## Why a separate package
 
-Hybrid ADK work under `services/autoroute-adk/` proceeds in parallel (Claude /
-other PRs). Timestore SciPy fit, ciphers, and Fairfax weather priors ship here
-first; a thin ADK import can wire later without blocking this MVP.
+The standalone package owns fitting and privacy boundaries. Autoroute imports it
+through a thin adapter, includes its time context in routing priors, and stamps
+persisted telemetry.
 
 ## Spec
 
@@ -16,10 +16,18 @@ first; a thin ADK import can wire later without blocking this MVP.
 | Circle | 24 h diurnal fraction UTC |
 | Horizon | POSIX now → **+1 year** |
 | Quantum | **0.0006** s |
-| Fit | `scipy.optimize.curve_fit` with **16** params (mean + 7 harmonic pairs + drift) |
+| Fit | `scipy.optimize.curve_fit` with **16** params (mean + 7 harmonic pairs + bounded periodic weather response) |
 | Weather | Fairfax County VA **county centroid** via Open-Meteo; default **climate fallback** offline |
-| Ciphers | Blake2b-64 tags over non-PII experiment labels |
+| Ciphers | Blake2b-64 tags over source-registered opaque experiment IDs |
 | PII | **No** street addresses in stamps or weather payloads (`streetAddress: null`) |
+
+The fit result contains parameters, per-parameter uncertainty, residuals, RMSE,
+weather metadata/effect magnitude, and a protected timestore stamp.
+
+## Autoroute integration
+
+- `seismo_acoustic_priors()` returns `timestore` circle, horizon, quantum, and fit context.
+- `ingest_telemetry()` adds a protected `timestore` sidecar before persistence.
 
 ## Local sim
 

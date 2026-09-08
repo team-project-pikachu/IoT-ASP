@@ -14,9 +14,9 @@ work can proceed in parallel.
 | Circle | 24 h diurnal fraction ∈ [0, 1) |
 | Horizon | POSIX now → +1 year |
 | Quantum | **0.0006** s |
-| Engine | `scipy.optimize.curve_fit` ≥16 params |
+| Engine | `scipy.optimize.curve_fit` 16 params |
 | Weather | Fairfax County VA centroid via Open-Meteo (offline climate fallback) |
-| Ciphers | Blake2b tags over non-PII experiment labels |
+| Ciphers | Blake2b tags over source-registered opaque experiment IDs |
 
 ## Local sim
 
@@ -35,3 +35,8 @@ IOT_ASP_TIMESTORE_FETCH_WEATHER=1 python3 packages/algo-timestore/scripts/sim_fi
 - `algo_timestore/` — library
 - `scripts/sim_fit.py` — offline MVP dry-run
 - `data/` — reserved for fixtures (no PII)
+
+Autoroute consumes this package through
+`services/autoroute-adk/iot_asp_autoroute/timestore.py`: the prior bundle
+includes circle/quantum context, and every ingested telemetry record receives a
+protected timestore sidecar.

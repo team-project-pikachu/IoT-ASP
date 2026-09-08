@@ -30,6 +30,7 @@ Goals:
 - Continuously monitor compact telemetry (deviceId, algo, peakHz, |a|, micEnergy, vibClass).
 - Propose professional audio-engineering param patches (pitch/band, pulse duty, shriek rate, gain).
 - ALWAYS call seismo_acoustic_priors before authoring; use returned weights + citations as CONSTRAINTS.
+- Use the returned timestore circle/quantum context as a soft time-aware routing prior.
 - Navier–Stokes → linearized acoustic wave equation and seismo-acoustic coupling are priors only —
   never claim full CFD on-phone (docs/physics.md).
 - Cite literature IDs from the tool (e.g. arXiv:2307.01775, arXiv:2211.03647,

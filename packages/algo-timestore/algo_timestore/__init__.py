@@ -1,6 +1,6 @@
 """ASP timestore: 24h circle, year horizon, SciPy ≥16-param fit (#20)."""
 
-from .ciphers import experiment_tag
+from .ciphers import FAIRFAX_CIRCLE_SIM_ID, REGISTERED_EXPERIMENT_IDS, experiment_tag
 from .fit import N_PARAMS, fit_circle_series, model_circle
 from .quantum import TIME_QUANTUM_S, circle_fraction_utc, quantize_posix, within_year_horizon
 from .stamp import stamp
@@ -10,6 +10,8 @@ __all__ = [
     "TIME_QUANTUM_S",
     "N_PARAMS",
     "FAIRFAX_COUNTY_CENTROID",
+    "FAIRFAX_CIRCLE_SIM_ID",
+    "REGISTERED_EXPERIMENT_IDS",
     "quantize_posix",
     "circle_fraction_utc",
     "within_year_horizon",

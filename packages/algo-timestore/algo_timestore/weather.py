@@ -85,7 +85,14 @@ def fairfax_weather_prior(*, fetch: bool | None = None, timeout_s: float = 4.0) 
             "precipMm": float(cur.get("precipitation", _CLIMATE_FALLBACK["precipMm"])),
         }
         return out
-    except (urllib.error.URLError, TimeoutError, ValueError, KeyError, json.JSONDecodeError):
+    except (
+        urllib.error.URLError,
+        TimeoutError,
+        TypeError,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+    ):
         out = {**base, **_CLIMATE_FALLBACK, "ok": True, "mode": "climate-fallback-after-error"}
         return out
 

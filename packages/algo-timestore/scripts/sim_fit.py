@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from algo_timestore import (  # noqa: E402
+    FAIRFAX_CIRCLE_SIM_ID,
     N_PARAMS,
     TIME_QUANTUM_S,
     experiment_tag,
@@ -40,28 +41,37 @@ def synthetic_series(n: int = 96) -> tuple[np.ndarray, np.ndarray]:
 
 def main() -> int:
     x, y = synthetic_series()
-    result = fit_circle_series(x, y, fetch_weather=False)
-    tag = experiment_tag("fairfax-circle-sim-v0")
-    weather = fairfax_weather_prior(fetch=False)
+    result = fit_circle_series(x, y, fetch_weather=None)
+    tag = experiment_tag(FAIRFAX_CIRCLE_SIM_ID)
+    weather = fairfax_weather_prior(fetch=None)
     out = {
         "ok": bool(result.get("ok")),
         "quantumS": TIME_QUANTUM_S,
         "nParams": result["nParams"],
         "rmse": result["rmse"],
         "cipher": tag,
-        "stamp": stamp(experiment="fairfax-circle-sim-v0"),
+        "stamp": stamp(experiment=FAIRFAX_CIRCLE_SIM_ID),
         "weatherMode": weather.get("mode"),
         "fit": {
             "engine": result["engine"],
             "n": result["n"],
             "weatherBias": result["weatherBias"],
+            "weatherEffectPeak": result["weatherEffectPeak"],
             "paramsHead": result["params"][:4],
         },
     }
     print(json.dumps(out, indent=2))
     assert result["nParams"] >= 16
     assert result["rmse"] < 0.2
+    assert result["weatherEffectPeak"] > 0.0
+    assert len(result["residuals"]) == len(x)
     assert weather.get("streetAddress") is None
+    try:
+        fit_circle_series(x[:N_PARAMS], y[:N_PARAMS], weather=weather)
+    except ValueError as exc:
+        assert f">{N_PARAMS}" in str(exc)
+    else:
+        raise AssertionError("fit must reject zero residual degrees of freedom")
     print(
         f"\n# timestore sim ok: nParams={result['nParams']} rmse={result['rmse']:.4f} "
         f"quantum={TIME_QUANTUM_S}",

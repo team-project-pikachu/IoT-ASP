@@ -3,36 +3,27 @@
 from __future__ import annotations
 
 import hashlib
-import re
-from typing import Any
+from typing import Final
 
-_SAFE = re.compile(r"^[a-zA-Z0-9._:-]{1,64}$")
+# Experiment IDs are opaque constants registered in source so user-provided labels,
+# phone numbers, email addresses, and locations can never enter cipher payloads.
+FAIRFAX_CIRCLE_SIM_ID: Final = "exp_8a9f0d2c6b7e4a11"
+REGISTERED_EXPERIMENT_IDS: Final = frozenset({FAIRFAX_CIRCLE_SIM_ID})
 
 
 def experiment_tag(
-    label: str,
+    experiment_id: str,
     *,
     salt: str = "iot-asp-timestore-v0",
-    meta: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Return a compact non-PII tag for diversity / cipher hooks.
-
-    ``label`` must be alphanumeric / ``._:-`` only (no streets, phones, emails).
-    """
-    if not _SAFE.match(label):
-        raise ValueError(
-            "experiment label must be non-PII token matching "
-            r"^[a-zA-Z0-9._:-]{1,64}$"
-        )
-    payload = f"{salt}|{label}".encode("utf-8")
+) -> dict[str, str | bool]:
+    """Return a compact tag for a source-registered opaque experiment ID."""
+    if experiment_id not in REGISTERED_EXPERIMENT_IDS:
+        raise ValueError("experiment_id must be a registered opaque experiment ID")
+    payload = f"{salt}|{experiment_id}".encode("utf-8")
     digest = hashlib.blake2b(payload, digest_size=8).hexdigest()
-    out: dict[str, Any] = {
+    return {
         "cipher": "blake2b-64",
-        "label": label,
+        "experimentId": experiment_id,
         "tag": digest,
         "pii": False,
     }
-    if meta:
-        # Only allow already-safe scalar meta keys (caller responsibility).
-        out["meta"] = {str(k): meta[k] for k in list(meta)[:8]}
-    return out
