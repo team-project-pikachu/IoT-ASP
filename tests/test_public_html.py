@@ -59,6 +59,10 @@ def test_invariant_literals(html: str) -> None:
 
 # ── 2. ids ───────────────────────────────────────────────────────────────────
 NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog",
+           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal",
+           "telemetryUrlLabel", "patchUrlLabel")
+NEW_IDS = ("copyLogBtn", "copyFleetLogBtn", "reseedBtn", "simImpulseBtn", "fleetSeedCompare",
+           "telHopAge", "telResumes", "telWatchdog",
            "telImpulse", "telVolBlast", "telAlarm", "fleetLocal")
 OLD_IDS = ("telDevice", "telSeed", "telAlgo", "telPeak", "telAccel", "telMic", "telVib", "telHold",
            "telSudden", "monLog", "sysList", "sysBtn", "vol", "fMin", "fMax", "holdPatchBtn", "power")
@@ -85,12 +89,57 @@ def test_telemetry_payload_tokens(html: str) -> None:
         assert bad not in body, bad
 
 
+def test_fleet_log_export_and_impulse_sim(html: str) -> None:
+    assert "const FLEET_LOG_KEYS = [" in html
+    assert '"impulse","volBlast","alarmState","msg"' in html.replace(" ", "") or (
+        "impulse" in html and "volBlast" in html and "alarmState" in html and "FLEET_LOG_KEYS" in html
+    )
+    assert "function copyFleetLogJsonl()" in html
+    assert "function fleetLogLineFromTel(" in html
+    assert 'id="simImpulseBtn"' in html
+    assert "noteImpulse(true, false)" in html
+    note = _fn_body(html, "function noteImpulse(source, deltaHint){")
+    assert "enterExtremeFromBurst(" in note
+    assert "blastVolJump(" in note
+    # #54 SM: EMA accel rise (no gravity baseline warm-up vars)
+    assert "accelBaselineReady" not in html
+    assert "ACCEL_BASELINE_WARM_N" not in html
+    assert "accelBaselineSamples" not in html
+    assert "hop.tabSeed" in html
+    assert 'sessionStorage.setItem("hop.tabSeed"' in html
+    assert 'sessionStorage.getItem("hop.tabSeed"' in html
+    # hop.seed may mirror to localStorage for tooling/spec-02 reseed asserts; tab RNG is session-scoped.
+    assert 'localStorage.setItem("hop.seed"' in html
+    hyst = _fn_body(html, "function tickAlarmHysteresis(now, stillHot){")
+    assert "BURST_QUIET_MS" in hyst and "lastImpulseAt" in hyst
+    assert "clearImpulseAlarm(" in hyst
+    assert "function clearImpulseAlarm(" in html
+    assert 'setAlarmState("cleared")' in html or "ALARM_CLEARED_MS" in html
+    mon = _fn_body(html, "function monLog(msg, event, fields, level){")
+    assert "fleet" in mon
+    assert "r.fleet" in _fn_body(html, "function copyFleetLogJsonl(){")
+    assert "d.instanceId === instanceId" in html
+    assert "Seed compare" in html
+    assert "peerStale" in html
+
+
 # ── 4. enrichment literals ───────────────────────────────────────────────────
 def test_enrichment_literals(html: str) -> None:
     for lit in ('"ac120"', '"America/New_York"', '"10-20"', '"17-23k"', "function nightNYNow("):
         assert lit in html, lit
     assert "+fMin.value <= 100" in html
     assert "hour12: false" in html
+
+
+def test_backend_url_query_overrides(html: str) -> None:
+    """#61 — live URLs via query, never baked secrets."""
+    assert 'id="telemetryUrlLabel"' in html
+    assert 'id="patchUrlLabel"' in html
+    assert 'qs.get("patch")' in html or "qs.get('patch')" in html
+    assert 'qs.get("telemetry")' in html
+    assert 'qs.get("pollMs")' in html
+    assert 'BACKEND_TELEMETRY_URL = ""' in html
+    assert 'TELEMETRY_URL || "off"' in html or "TELEMETRY_URL || 'off'" in html
 
 
 # ── 5. delimited blocks + log ────────────────────────────────────────────────
@@ -222,9 +271,11 @@ def test_min_hop_delta_and_stagger(html: str) -> None:
 
 def test_reseed(html: str) -> None:
     assert html.count("function reseed(") == 1
-    for lit in ('"stored"', '"entropy"', 'reseed("ui")', 'reseed("patch")', "seedSource"):
+    for lit in ('"entropy"', 'reseed("ui")', 'reseed("patch")', "seedSource"):
         assert lit in html, lit
-    assert 'localStorage.setItem("hop.seed", String(seed))' in html
+    # Per-tab seed lives in sessionStorage so same-origin peers can diverge
+    assert 'sessionStorage.setItem("hop.tabSeed", String(seed))' in html
+    assert '"session"' in html or '"stored"' in html
 
 
 # ── spec 03: watchdog ────────────────────────────────────────────────────────

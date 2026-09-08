@@ -56,6 +56,8 @@ DEFAULT_CONFIG = {
     "skills_dir": ".claude/skills",
     "manifest": ".claude/mdc-manifest.json",
     "exclude_dirs": [".git", "node_modules", ".venv", "venv", "__pycache__", ".autoroute-dry", "study"],
+    # Prefixes (not only exact names): nested git worktrees must never be discovered as rule sources (#34).
+    "exclude_dir_prefixes": ["IoT-ASP-wt-"],
     "spec": [],
     "map": {},
     "agent_requested_as": "skill",  # or "rule"
@@ -201,17 +203,28 @@ def _rel(root: Path, p: Path) -> str:
 
 def discover_sources(root: Path, cfg: dict) -> list[Path]:
     excl = set(cfg["exclude_dirs"])
+    excl_prefixes = tuple(cfg.get("exclude_dir_prefixes") or ())
+
+    def _skip_dirname(name: str) -> bool:
+        if name in excl:
+            return True
+        return any(name.startswith(pref) for pref in excl_prefixes)
+
+    def _path_excluded(rel: str) -> bool:
+        parts = rel.split("/")
+        return any(part in excl or any(part.startswith(pref) for pref in excl_prefixes) for part in parts)
+
     found: set[Path] = set()
     # 1) configured source dirs (relative to root, or absolute / outside the repo), recursive
     for src in cfg["sources"]:
         d = (root / os.path.expanduser(str(src))).resolve()
         if d.is_dir():
             for p in d.rglob("*.mdc"):
-                if not any(part in excl for part in _rel(root, p).split("/")):
+                if not _path_excluded(_rel(root, p)):
                     found.add(p)
     # 2) nested <dir>/.cursor/rules anywhere in the repo
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [d for d in dirnames if d not in excl]
+        dirnames[:] = [d for d in dirnames if not _skip_dirname(d)]
         dp = Path(dirpath)
         if dp.name == "rules" and dp.parent.name == ".cursor":
             for fn in filenames:

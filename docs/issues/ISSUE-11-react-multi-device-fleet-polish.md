@@ -1,31 +1,24 @@
 # ISSUE-11 — React multi-device fleet polish
 
 **Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/11  
-**Classification:** parked stub (Balanced election)  
+**Classification:** parked React rewrite; **static fleet slice deepened** (Balanced PR2)  
 **Owner surface:** frontend  
 **Canonical spec / ADR:** `docs/specs/10-11-react-rewrite.md`
 
 ## Scope (this pass)
 
-Parked React rewrite; Balanced pass shipped a **static** fleet card stub (BroadcastChannel) in public/index.html.
+Parked full React rewrite (#10). Static PWA fleet panel now has seed compare, peer staleness, impulse/blast badges, Simulate impulse.
 
-## Constraints
+## Did
 
-- No site PII in public docs.
-- Do not invent secrets, entitlements, or HW capabilities.
-- Prefer linking existing `docs/specs/` over forking tables (`docs/api-contract.md` is wire canon).
+- `public/index.html` fleet cards + BroadcastChannel heartbeat + seed compare strip
+- Tests: `simImpulseBtn`, `fleetSeedCompare`, `copyFleetLogBtn`
 
-## What landed locally
+## Didn't
 
-- This stub note under `docs/issues/`.
-- Pointers to existing specs / code hooks only.
-
-## What did **not** land
-
-- Full product implementation for this issue.
-- Live HW / Notion / HomeKit / Pi / ADK 2.x bumps where listed as parked.
+- React / RSD rewrite (#10 still parked)
+- Cross-phone discovery (needs native / #10)
 
 ## Next
 
 - Full React cards wait on #10
-- Static stub is intentional
