@@ -155,6 +155,29 @@ Structured records land in `meta/logs/<deviceId>/<YYYY-MM-DD>.jsonl`; sensor fea
 
 Additive sensor/burst fields are **optional** on the wire (`schemaVersion` stays `1`). Colab ETL + ADK project them when present; consumers ignore unknown keys.
 
+### M8 acoustic detector result (additive; #96)
+
+Shared by Swift `AcousticDetectResult` and `services/gemini-burst-detect/detect.py`. Nest ADK labels in `nest/detector.py` use the same `sound_burst` / `glass_shatter` strings (`other` ↔ Swift/Python stub `unknown` for non-escalate).
+
+```json
+{
+  "burst": true,
+  "eventClass": "glass_shatter",
+  "confidence": 0.8,
+  "escalateDb": 4.0
+}
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `burst` | bool | Onset above stub `onsetDb` (default 9.0) |
+| `eventClass` | string | `sound_burst` \| `glass_shatter` \| `unknown` |
+| `confidence` | number | 0–1 advisory |
+| `escalateDb` | number | Suggested louder step; glass stub uses 4.0, sound burst 2.0 |
+| thresholds | — | Glass when `riseMs` ≤ `glassRiseMsMax` (default 80); else sound_burst under glass hint |
+
+Input feature aliases accepted by the Python stub: `energyDeltaDb`/`energy_delta_db`, `riseMs`/`rise_ms`, `eventClassHint`/`event_class_hint`. Hold / Manual still refuses blast patches upstream.
+
 **Storage:** `gs://<private-bucket>/meta/telemetry/<deviceId>/<ts>.json`
 
 ## Param patch JSON schema (`schemaVersion: 1`)
