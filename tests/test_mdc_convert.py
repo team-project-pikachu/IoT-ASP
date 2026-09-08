@@ -385,7 +385,6 @@ def test_generated_rule_still_updates_without_force(tmp_path):
     assert "- Extra bullet." in target.read_text(encoding="utf-8")
 
 
-<<<<<<< HEAD
 def test_long_frontmatter_gen_mark_not_misclassified(tmp_path):
     """GEN_MARK after a long paths frontmatter must still count as managed (no --force)."""
     root = tmp_path / "long-fm"
@@ -413,8 +412,6 @@ def test_long_frontmatter_gen_mark_not_misclassified(tmp_path):
     assert mdc.main(["--root", str(root), "--check"]) == 0
 
 
-=======
->>>>>>> 80f65c0 (Refuse mdc_convert overwrite of hand-written Claude rules.)
 def test_repo_itself_is_up_to_date():
     """The live repo must pass the CI gate (no .mdc committed here; outputs consistent)."""
     assert mdc.main(["--root", str(ROOT), "--check"]) == 0
