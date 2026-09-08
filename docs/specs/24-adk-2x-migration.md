@@ -12,7 +12,7 @@ Versions on 2026-09-08 (PyPI, via Firecrawl): `google-adk` **2.8.0** (2026-08-26
 latest 1.x **1.39.1**, 2026-08-27 — the 1.x line is still maintained) · `google-genai` **2.22.0**
 (2026-09-02; 2.0.0 2026-05-07; last 1.x **1.75.0**, 2026-05-04).
 
-Honesty pass (this revision, `origin/main` @ `2ca7501`): acceptance is the **named** `root_agent` tool set, not a frozen integer count. `#29` / `#25` / `#26` added `fleet_log_summary`, `live_features`, and `hw_limits_report` after an earlier draft froze a 7-tool list.
+Honesty pass (this revision, `origin/main` @ `2ca7501`): acceptance is the **named** `root_agent` tool set, not a frozen integer count. `#29` / `#25` / `#26` added `fleet_log_summary`, `live_features`, and `hw_limits_report` after an earlier draft froze a 7-tool list; `#85` then added `nest_fleet_status` and `nest_classify_burst` for the Google Nest (SDM) acoustic path.
 
 ## Goal
 
@@ -20,7 +20,7 @@ Move the autoroute backend to `google-adk>=2.8,<3` (and keep `google-genai>=2.22
 wire contract, the clamps, the dry-run path, or the frontend — and with an import smoke that proves
 `iot_asp_autoroute.agent.root_agent` still loads and exposes **exactly these named tools** (order as in `agent.py`):
 
-`read_telemetry`, `write_patch`, `list_safety_clamps`, `seismo_acoustic_priors`, `colab_handoff_note`, `ingest_telemetry`, `process_sudden_freq`, `fleet_log_summary`, `live_features`, `hw_limits_report`.
+`read_telemetry`, `write_patch`, `list_safety_clamps`, `seismo_acoustic_priors`, `colab_handoff_note`, `ingest_telemetry`, `process_sudden_freq`, `fleet_log_summary`, `live_features`, `hw_limits_report`, `nest_fleet_status`, `nest_classify_burst`.
 
 Do not freeze a raw integer in the unpark test; assert the name set (and, when wrapping preserves order, the sequence). Adding or renaming a tool is a spec change, not a silent count bump.
 
@@ -44,7 +44,7 @@ Verified by reading the files on `origin/main` @ `2ca7501` (this branch):
 | Parked 2.x **example** pins (`google-adk>=2.8.0,<3`, `google-genai>=2.22.0,<3`) — not installed | `services/autoroute-adk/requirements-adk2.example.txt` |
 | `from google.adk.agents import LlmAgent` inside `try/except ImportError` (the only ADK import in the package) | `services/autoroute-adk/iot_asp_autoroute/agent.py:9-15` |
 | `root_agent = LlmAgent(name="iot_asp_autoroute", description=…, instruction=INSTRUCTION, tools=[10 named callables])` | `agent.py:53-70` |
-| Tools are plain Python functions (`read_telemetry`, `write_patch`, `list_safety_clamps`, `seismo_acoustic_priors`, `colab_handoff_note`, `ingest_telemetry`, `process_sudden_freq`, `fleet_log_summary`, `live_features`, `hw_limits_report`) — no `FunctionTool`, no `BaseAgent` subclass, no session-service code, no `Runner` usage | `services/autoroute-adk/iot_asp_autoroute/tools.py`; `grep -rn "Runner\|BaseAgent\|SessionService\|_run_async_impl" services/` → nothing |
+| Tools are plain Python functions (`read_telemetry`, `write_patch`, `list_safety_clamps`, `seismo_acoustic_priors`, `colab_handoff_note`, `ingest_telemetry`, `process_sudden_freq`, `fleet_log_summary`, `live_features`, `hw_limits_report`, `nest_fleet_status`, `nest_classify_burst`) — no `FunctionTool`, no `BaseAgent` subclass, no session-service code, no `Runner` usage | `services/autoroute-adk/iot_asp_autoroute/tools.py`; `grep -rn "Runner\|BaseAgent\|SessionService\|_run_async_impl" services/` → nothing |
 | No direct `google.genai` import anywhere (`grep -rn "google.genai\|from google import genai" services/` → nothing); only `google.cloud.storage` and `google.api_core` | `gcs_io.py`, `features_live.py`, `fleet_log.py` |
 | Package importable without ADK (`__init__.py` soft-fails `agent`); dry-run `scripts/autoroute_dev.sh` uses only stdlib + numpy/scipy | `iot_asp_autoroute/__init__.py`; `CLAUDE.md` § Toolchain; `.claude/rules/autoroute-backend.md:10` |
 | CI `tests` job does **not** install `google-adk` (`requirements-dev.txt` only). `autoroute` job installs `requirements.txt` and runs an import smoke for clamps / sudden_freq / Hold refuse | `docs/ci.md`; `.github/workflows/ci.yml` |

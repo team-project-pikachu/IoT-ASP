@@ -25,3 +25,7 @@ study/
 *.wav
 recordings/
 tests/e2e/.server.log
+
+# Accidental nested worktrees inside the clone (#34)
+/IoT-ASP-wt-*/
+.github/nest.op.env

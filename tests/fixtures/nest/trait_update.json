@@ -1,0 +1,16 @@
+{
+  "eventId": "434217af-4559-4277-b4ea-0d964e5531a9",
+  "timestamp": "2019-01-01T00:00:01Z",
+  "resourceUpdate": {
+    "name": "enterprises/project-id/devices/device-id",
+    "traits": {
+      "sdm.devices.traits.ThermostatMode": {
+        "mode": "COOL"
+      }
+    }
+  },
+  "userId": "AVPHwEuBfnPOnTqzVFT4IONX2Qqhu9EJ4ubO-bNnQ-yi",
+  "resourceGroup": [
+    "enterprises/project-id/devices/device-id"
+  ]
+}

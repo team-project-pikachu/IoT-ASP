@@ -1,0 +1,17 @@
+{
+  "eventId": "f6e0daf3-93da-4e83-9138-1cbf89855bdb",
+  "timestamp": "2019-01-01T00:00:01Z",
+  "resourceUpdate": {
+    "name": "enterprises/project-id/devices/device-id",
+    "events": {
+      "sdm.devices.events.CameraClipPreview.ClipPreview": {
+        "eventSessionId": "CjY5Y3VKaTZwR3o4Y19YbTVfMF...",
+        "previewUrl": "https://previewUrl/..."
+      }
+    }
+  },
+  "userId": "AVPHwEuBfnPOnTqzVFT4IONX2Qqhu9EJ4ubO-bNnQ-yi",
+  "resourceGroup": [
+    "enterprises/project-id/devices/device-id"
+  ]
+}

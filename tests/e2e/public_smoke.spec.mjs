@@ -6,7 +6,8 @@ import { test, expect } from "@playwright/test";
 const PORT = process.env.E2E_PORT || "8765";
 test.use({ baseURL: `http://127.0.0.1:${PORT}` });
 
-const LOG_KEYS = ["seq", "ts", "level", "event", "msg", "fields"];
+// `fleet` is a per-record snapshot for Copy fleet_log JSONL (#22); keep exact key order.
+const LOG_KEYS = ["seq", "ts", "level", "event", "msg", "fields", "fleet"];
 
 async function openPage(page) {
   const errors = [];
@@ -253,6 +254,64 @@ test.describe("public blaster smoke", () => {
     expect(JSON.stringify(await payload(page))).not.toContain("SECRETREL456");
     await expect(page.locator("#patchUrlLabel")).toHaveText("patch.json?token=SECRETREL456");
     expect(errors).toEqual([]);
+  });
+
+
+  test("two tabs exchange fleet heartbeats + simulate impulse (#11 #22 #44)", async ({ browser }) => {
+    const context = await browser.newContext();
+    const pageA = await context.newPage();
+    const pageB = await context.newPage();
+    const errors = [];
+    pageA.on("pageerror", e => errors.push(String(e)));
+    pageB.on("pageerror", e => errors.push(String(e)));
+    await pageA.goto("/");
+    await pageB.goto("/");
+    await pageA.waitForFunction(() => !!window.__hop);
+    await pageB.waitForFunction(() => !!window.__hop);
+    const meta = await Promise.all([
+      pageA.evaluate(() => ({ ...window.__hop.getState(), tabSeed: sessionStorage.getItem("hop.tabSeed") })),
+      pageB.evaluate(() => ({ ...window.__hop.getState(), tabSeed: sessionStorage.getItem("hop.tabSeed") })),
+    ]);
+    // Shared telemetry deviceId; distinct per-tab instanceId + session seed for peer compare
+    expect(meta[0].deviceId).toBeTruthy();
+    expect(meta[0].instanceId).toBeTruthy();
+    expect(meta[0].instanceId).not.toBe(meta[1].instanceId);
+    expect(String(meta[0].seed)).not.toBe(String(meta[1].seed));
+    await pageA.waitForFunction(() => {
+      const t = document.getElementById("fleetSeedCompare")?.textContent || "";
+      return /incoherent OK/.test(t) || /peers=/.test(t);
+    }, null, { timeout: 8000 });
+    await pageA.click("#simImpulseBtn");
+    await pageA.waitForFunction(() => {
+      const p = window.__hop.telemetryPayload();
+      return (p.impulse === true || p.volBlast === true)
+        && (p.alarmState === "triggered" || p.alarmState === "sustaining")
+        && p.extremeActive === true;
+    }, null, { timeout: 5000 });
+    const p = await pageA.evaluate(() => window.__hop.telemetryPayload());
+    expect(p.extremeActive).toBe(true);
+    expect(["triggered", "sustaining"]).toContain(p.alarmState);
+    // Hold restores volume path and cleared latch
+    await pageA.click("#holdPatchBtn");
+    await pageA.waitForFunction(() => window.__hop.getState().alarmState === "cleared", null, { timeout: 3000 });
+    // Fleet JSONL rows preserve per-record fleet snapshots (ts/event), not only live telemetry
+    const jsonl = await pageA.evaluate(async () => {
+      const orig = navigator.clipboard?.writeText?.bind(navigator.clipboard);
+      let captured = "";
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText = async (t) => { captured = String(t || ""); };
+      }
+      document.getElementById("copyFleetLogBtn")?.click();
+      await new Promise(r => setTimeout(r, 50));
+      if (orig) navigator.clipboard.writeText = orig;
+      return captured;
+    });
+    expect(jsonl.trim().length).toBeGreaterThan(0);
+    const rows = jsonl.trim().split("\n").map(l => JSON.parse(l));
+    expect(rows[0].kind).toBe("fleet_log");
+    expect(rows[0].ts).toBeTruthy();
+    expect(errors).toEqual([]);
+    await context.close();
   });
 
   test("systems check escapes a reflected ?patch= value (no XSS)", async ({ page }) => {

@@ -1,19 +1,7 @@
 # ISSUE-45 — Web PWA alarm reactivity
 
-**Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/45  
-**Classification:** ship / stub iterate (Balanced)  
-**Status:** stubbed
-
-## Did
-
-- `public/index.html`
-- `docs/algorithms.md`
+**Status:** working slice (PR2) — armed→triggered→sustaining→cleared→armed with quiet hysteresis + cleared latch; `alarmTick` sustains while `soundBurst`/`lastBurstAt` hot; restores `volBeforeBlast` on clear; fleet cards show alarm.
 
 ## Didn't
 
-- Invent credentials or claim cloud/HW integrations live when gated.
-- Auto-close the GitHub issue (human verifies).
-
-## Next
-
-- Quiet hysteresis uses BURST_QUIET_MS
+- Native Watch WCSession production polish (see #41)

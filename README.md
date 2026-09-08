@@ -36,7 +36,11 @@ Docs ingest: `reference/knowledge/INGEST.md`.
 
 ## Roadmap
 
-Tracked as GitHub milestones M0–M5 (seeds, monitoring, vib rotation, RLHF ±, SensorKit research). Parked features are issues labeled `parked`.
+Canonical map: [`docs/mvp-roadmap.md`](docs/mvp-roadmap.md) (M0–M7 → GitHub issues, parked vs ship).  
+Closed-issue audit trail: [`docs/mvp-closed-log.md`](docs/mvp-closed-log.md).  
+Balanced stub board: [`docs/issues/BALANCED-BUILD-STATUS.md`](docs/issues/BALANCED-BUILD-STATUS.md).
+
+Tracked as GitHub milestones / Project 5. Parked features are issues labeled `parked`.
 
 ## Control plane
 
