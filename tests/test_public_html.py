@@ -46,6 +46,15 @@ def test_invariant_literals(html: str) -> None:
     assert re.search(r"const SCHEMA_VERSION = 1;", html)
     assert re.search(r"const VOL_PATCH_MAX = 100,", html), "VOL_PATCH_MAX must match clamps.py hard max (C4)"
     assert "BAND_ABS_LO = 17000, BAND_ABS_HI = 23000" in html
+    for lit in ("function blastVolJump(", "function noteImpulse(", "alarmState", "volBlast", "IMPULSE_RISE_DB"):
+        assert lit in html, lit
+    assert "function effectiveAlarmState(" in html
+    assert "function clearAlarm(" in html
+    assert "function alarmTick(" in html
+    assert "alarmState: effectiveAlarmState()" in html
+    assert "accelRawPrev" not in html
+    assert "micEnergy_band" not in html  # keep subtract in JS netMicDiff only
+    assert "function netMicDiff(" in html
 
 
 # ── 2. ids ───────────────────────────────────────────────────────────────────
@@ -214,7 +223,7 @@ def test_banner_lines_well_formed(html: str) -> None:
 
 # ── 12. size guard ───────────────────────────────────────────────────────────
 def test_size_guard() -> None:
-    # Raised 2026-09-08 for fleet cards + impulse/alarm stubs (#11/#42/#44/#45).
+    # Raised 2026-09-08 for fleet cards + impulse/alarm SM (#11/#42/#44/#45).
     assert HTML_PATH.stat().st_size < 140_000
 
 
@@ -348,22 +357,20 @@ def test_systems_check_rows_escaped(html: str) -> None:
 
 def test_impulse_alarm_and_fleet_stub(html: str) -> None:
     assert html.count("function noteImpulse(") == 1
-    assert html.count("function alarmTick(") == 1
+    assert html.count("function tickAlarmHysteresis(") == 1
     assert html.count("function blastVolJump(") == 1
-    assert html.count("function clearAlarm(") == 1
+    assert html.count("function clearImpulseAlarm(") == 1
+    assert html.count("function effectiveAlarmState(") == 1
     assert "BroadcastChannel" in html and "iot-asp-fleet" in html
     for el_id in ("telImpulse", "telVolBlast", "telAlarm", "fleetLocal", "fleetPeer2", "fleetPeer3"):
         assert html.count(f'id="{el_id}"') == 1, el_id
     body = _fn_body(html, "function telemetryPayload(){")
-    for tok in ("impulse: !!impulse", "volBlast: !!volBlast", "alarmState"):
+    for tok in ("impulse: !!impulse", "volBlast: !!volBlast", "alarmState: effectiveAlarmState()"):
         assert tok in body, tok
-    assert "clearAlarm(" in html and "IMPULSE_ACCEL_DELTA" in html
-    assert "setInterval(function(){ alarmTick(performance.now()); }, 200)" in html
-    assert 'alarmState = "cleared";' in html
-    # Quiet expiry clears first; armed only after CLEARED_LATCH_MS
-    assert "CLEARED_LATCH_MS" in html
-    assert 'alarmState = "armed";' in _fn_body(html, "function alarmTick(now){")
-    assert "if (impulse) {" in _fn_body(html, "function beaconTelemetry(){")
+    assert "IMPULSE_ACCEL_RISE" in html and "IMPULSE_RISE_DB" in html
+    assert "accelRawPrev" not in html
+    assert "accelBaseline" not in html
+    assert "tickAlarmHysteresis(now, stillHot || onset || micImpulse)" in html
     assert "d.instanceId === instanceId" in html
     assert "fleetPeers[d.instanceId] = d" in html
     assert "deviceId, instanceId, seed" in html
