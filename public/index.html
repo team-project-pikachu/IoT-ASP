@@ -389,7 +389,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     <p class="sub" id="fleetSeedCompare" style="margin:10px 0 0">Seed compare · —</p>
     <div class="tapbar" style="margin-top:10px">
       <button type="button" class="tap" id="simImpulseBtn">Simulate impulse</button>
+      <button type="button" class="tap" id="simSoundBurstBtn" title="Nest/Gemini sound_burst to louder alarm">Sim sound_burst</button>
+      <button type="button" class="tap" id="simGlassShatterBtn" title="glass_shatter event to louder alarm">Sim glass_shatter</button>
+      <button type="button" class="tap" id="simCameraSoundBtn" title="SDM CameraSound trait event stub to louder alarm">Sim CameraSound</button>
     </div>
+    <p class="sub" style="margin:8px 0 0">M8 Nest/SDM eventClass stub (#101): sound_burst · glass_shatter · SDM CameraSound → existing alarmState/volBlast. No Nest credentials in the browser.</p>
   </section>
 
   <section class="mon" id="monitor">
@@ -415,6 +419,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <div>alarm <b id="telAlarm">armed</b></div>
       <div>impulse <b id="telImpulse">off</b></div>
       <div>volBlast <b id="telVolBlast">off</b></div>
+      <div>eventClass <b id="telEventClass">none</b></div>
       <div>bandBurst <b id="telBandBurst">—</b></div>
       <div>sensors <b id="telSensors">idle</b></div>
       <div>mic <b id="telSensMic">—</b></div>
@@ -588,6 +593,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const IMPULSE_LATCH_MS = 700, ALARM_CLEARED_MS = 450;
   let alarmState = "armed"; // armed | triggered | sustaining | cleared | off
   let impulse = false, volBlast = false;
+  // M8 Nest/SDM + glass: sound_burst | glass_shatter | CameraSound | none (additive #101)
+  let eventClass = "none";
   let lastImpulseAt = 0, alarmClearedAt = 0;
   let prevMicDiffSample = -120, accelEma = 0;
   let ax=0, ay=0, az=0;
@@ -1116,6 +1123,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const wasLive = impulse || volBlast || alarmState === "triggered" || alarmState === "sustaining";
     impulse = false;
     volBlast = false;
+    eventClass = "none";
     if (holdManual || !suddenAuto) {
       setAlarmState(holdManual ? "cleared" : "off");
     } else if (wasLive || alarmState !== "armed") {
@@ -1125,6 +1133,31 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (wasLive && typeof monLog === "function") {
       monLog("alarm cleared · " + (reason || "quiet"));
     }
+  }
+
+  /** Nest/SDM + glass_shatter UI stub (#101): set eventClass and escalate via alarmState/volBlast. */
+  function applyEventClass(cls){
+    const allowed = { sound_burst: 1, glass_shatter: 1, CameraSound: 1 };
+    if (!allowed[cls]) return false;
+    if (holdManual) return false;
+    eventClass = cls;
+    impulse = true;
+    lastImpulseAt = performance.now();
+    if (alarmState === "armed" || alarmState === "cleared" || alarmState === "off") {
+      setAlarmState("triggered");
+    } else {
+      setAlarmState("sustaining");
+    }
+    blastVolJump("eventClass " + cls);
+    if (alarmState === "triggered") setAlarmState("sustaining");
+    if (suddenAuto && !extremeActive) {
+      enterExtremeFromBurst(IMPULSE_PEAK_DB, "us");
+    }
+    if (typeof monLog === "function") {
+      monLog("eventClass · " + cls + " · alarm " + alarmState + (volBlast ? " · blast" : ""));
+    }
+    if (typeof updateTelUI === "function") updateTelUI();
+    return true;
   }
 
   function rearmAlarmIfDue(now){
@@ -2209,7 +2242,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   // Fixed-order fleet_log lines (#22 RECORD_KEYS) for Colab / dry-run handoff — browser-side mirror only.
   const FLEET_LOG_KEYS = ["kind","schemaVersion","ts","level","event","deviceId","band","power","nightNY",
     "lfArmed","lfDriveCapable","lfGate","algo","vibClass","suddenFreq","suddenState","holdManual","peakHz",
-    "absA","micEnergy","impulse","volBlast","alarmState","msg"];
+    "absA","micEnergy","impulse","volBlast","alarmState","eventClass","msg"];
   function fleetLogLineFromTel(extra){
     const tel = telemetryPayload();
     const row = {
@@ -2236,6 +2269,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       impulse: !!impulse,
       volBlast: !!volBlast,
       alarmState: alarmState,
+      eventClass: eventClass || "none",
       msg: (extra && extra.msg) || ""
     };
     const ordered = {};
@@ -2388,7 +2422,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId }),
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, eventClass, deviceId, instanceId }),
+    applyEventClass: (cls) => applyEventClass(cls),
     getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
 
@@ -2422,6 +2457,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (telImpulse) telImpulse.textContent = impulse ? "ON" : "off";
     const telVolBlast = $("telVolBlast");
     if (telVolBlast) telVolBlast.textContent = volBlast ? "ON" : "off";
+    const telEventClass = $("telEventClass");
+    if (telEventClass) telEventClass.textContent = eventClass || "none";
     const telBb = $("telBandBurst");
     if (telBb) telBb.textContent = bandBurst || "—";
     const age = lastHopAgeMs(), hopAgeEl = $("telHopAge");
@@ -2463,6 +2500,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       impulse: !!impulse,
       volBlast: !!volBlast,
       alarmState: effectiveAlarmState(),
+      eventClass: eventClass || "none",
       bandBurst: bandBurst || "none",
       soundBurstMeta: {
         energyDelta: burstEnergyDelta,
@@ -2526,7 +2564,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function publishFleetHeartbeat(){
     const snap = {
       deviceId, instanceId, seed, seedSource, algo: (typeof algoWireName === "function" ? algoWireName() : algo),
-      alarmState, impulse: !!impulse, volBlast: !!volBlast, holdManual, ts: Date.now()
+      alarmState, impulse: !!impulse, volBlast: !!volBlast, eventClass: eventClass || "none",
+      holdManual, ts: Date.now()
     };
     try { localStorage.setItem("hop.fleetLocal", JSON.stringify(snap)); } catch (_) {}
     try { if (fleetBc) fleetBc.postMessage(snap); } catch (_) {}
@@ -2543,6 +2582,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (localMeta) {
       localMeta.textContent = "seed " + seed + " · " + (typeof algoWireName === "function" ? algoWireName() : algo)
         + " · alarm " + alarmState
+        + (eventClass && eventClass !== "none" ? (" · " + eventClass) : "")
         + (impulse ? " · impulse" : "")
         + (volBlast ? " · blast" : "")
         + (holdManual ? " · HOLD" : "");
@@ -2564,6 +2604,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         const age = peer.ts ? Math.max(0, Math.round((now - peer.ts) / 1000)) : "?";
         meta.textContent = "seed " + peer.seed + " · " + (peer.algo || "—")
           + " · alarm " + (peer.alarmState || "—")
+          + (peer.eventClass && peer.eventClass !== "none" ? (" · " + peer.eventClass) : "")
           + (peer.impulse ? " · impulse" : "")
           + (peer.volBlast ? " · blast" : "")
           + (peerStale(peer) ? " · STALE " + age + "s" : " · " + age + "s");
@@ -2590,6 +2631,19 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       updateTelUI();
     });
   }
+  function wireEventClassSim(id, cls){
+    const btn = $(id);
+    if (!btn) return;
+    btn.addEventListener("click", function(){
+      applyEventClass(cls);
+      publishFleetHeartbeat();
+      paintFleetCards();
+      updateTelUI();
+    });
+  }
+  wireEventClassSim("simSoundBurstBtn", "sound_burst");
+  wireEventClassSim("simGlassShatterBtn", "glass_shatter");
+  wireEventClassSim("simCameraSoundBtn", "CameraSound");
 
   function beaconTelemetry(){
     updateTelUI();
