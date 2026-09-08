@@ -56,3 +56,17 @@
 - PR #40 — Sonos #39 docs (this branch includes `docs/sonos-beam.md` + shell stub).
 - PR #36 — ADK vendor (orthogonal; not forced here).
 - PR #73 — MVP roadmap/closed-log stubs for #60–#69 (coordinate on merge).
+
+## Stacked PRs
+
+See [STACKED-PRS.md](STACKED-PRS.md).
+
+## Outstanding themes (log-only — 2026-09-08)
+
+1. **Merge order / conflicts:** resolve `#70` and `#76` before tip `#105`.
+2. **Secrets:** Vercel `#27`, GCS `#26`, Nest/OAuth `#83`/`#93`.
+3. **Nest console / Gemini live:** M8 `#87`/`#103` stubbed only.
+4. **HW parked:** `#104`/`#39`/`#14`/`#18`.
+5. **Field + V&V:** `#61`→`#62`→`#64`.
+
+Comments + project 5 board refreshed same day; see [STACKED-PRS.md](STACKED-PRS.md).
