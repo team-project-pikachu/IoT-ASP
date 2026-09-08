@@ -101,6 +101,11 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("IoT-ASP")
+            .safeAreaInset(edge: .bottom) {
+                Text("Product tabs: Hop · HomeNestAlarm · Glass Shatter (Nest OAuth parked — demo uses AlarmStateMachine only)")
+                    .font(.caption2)
+                    .padding(8)
+            }
         }
     }
 }

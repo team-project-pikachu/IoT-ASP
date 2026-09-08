@@ -173,6 +173,17 @@ struct IoTASPSmoke {
         check("all require grant", SensorKitReaderMap.specs.allSatisfy(\.requiresAppleGrant))
         check("skip when not entitled", SensorKitReaderMap.start(entitled: false).contains("CoreMotion"))
 
+        // #150 product tabs
+        check("nest parked", ProductTabHooks.nestOAuthParked)
+        check("burst→sound_burst", ProductTabHooks.classify(acoustic: .acousticBurst, impulse: nil) == .sound_burst)
+        check("none hop tab", ProductTabHooks.tab(for: .none) == .hop)
+        let a = AlarmStateMachine(); a.arm()
+        ProductTabHooks.demoWithoutNestTokens(alarm: a, event: .sound_burst)
+        check("demo triggers alarm", a.state == .triggered)
+        a.setHoldManual(true)
+        ProductTabHooks.demoWithoutNestTokens(alarm: a, event: .sound_burst)
+        check("hold wins nest demo", a.state == .cleared)
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()
