@@ -16,4 +16,4 @@ paths:
 - Timestamps UTC ISO-8601 `%Y-%m-%dT%H:%M:%SZ`; object names replace `:` with `-`.
 - Every module gets a `tests/test_<module>.py` with negative controls (holdManual refuse, out-of-band refuse, nonsense keys ignored) and a `__main__`/CLI demo that runs offline.
 - Secrets: env or Colab `userdata` **names** only (`GOOGLE_CLOUD_PROJECT`, `IOT_ASP_GCS_BUCKET`, `GCP_SA_JSON`). Never print or log values.
-- ADK 2.x migration is parked (#24): keep `google-adk>=1,<2`, `google-genai>=1,<2` unless that issue is unparked.
+- ADK 2.x migration is parked (#24): keep `google-adk>=1.39.1,<2`; `google-genai>=2.22.0,<3` is already required by ADK 1.36+ and is not part of the parked migration.
