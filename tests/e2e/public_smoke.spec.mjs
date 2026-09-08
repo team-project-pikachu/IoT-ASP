@@ -312,14 +312,18 @@ test.describe("public blaster smoke", () => {
       const t = document.getElementById("fleetSeedCompare")?.textContent || "";
       return /peers=/.test(t) || /incoherent OK/.test(t);
     }, null, { timeout: 8000 });
-    // Freeze peer heartbeat age by rewriting peer ts far in the past
-    await pageA.evaluate(() => {
-      // paintFleetCards reads fleetPeers closed over in page; mutate via BC message with old ts
+    // Overwrite the live peer's heartbeat with an aged ts, then stop pageB so it cannot refresh.
+    const peer = await pageB.evaluate(() => {
+      const s = window.__hop.getState();
+      return { instanceId: s.instanceId, deviceId: s.deviceId, seed: s.seed };
+    });
+    await pageB.close();
+    await pageA.evaluate((peer) => {
       const ch = new BroadcastChannel("iot-asp-fleet");
       ch.postMessage({
-        deviceId: "peer-stale-test",
-        instanceId: "tab-stale-peer",
-        seed: 4242,
+        deviceId: peer.deviceId || "peer-stale-test",
+        instanceId: peer.instanceId,
+        seed: peer.seed || 4242,
         seedSource: "entropy",
         algo: "hop",
         alarmState: "armed",
@@ -329,12 +333,17 @@ test.describe("public blaster smoke", () => {
         ts: Date.now() - 20000
       });
       ch.close();
-    });
+    }, peer);
     await pageA.waitForFunction(() => {
-      const meta = document.getElementById("fleetPeer2Meta")?.textContent || "";
-      return /STALE/.test(meta);
+      const meta2 = document.getElementById("fleetPeer2Meta")?.textContent || "";
+      const meta3 = document.getElementById("fleetPeer3Meta")?.textContent || "";
+      return /STALE/.test(meta2) || /STALE/.test(meta3);
     }, null, { timeout: 5000 });
-    const cardClass = await pageA.evaluate(() => document.getElementById("fleetPeer2")?.className || "");
+    const cardClass = await pageA.evaluate(() => {
+      const c2 = document.getElementById("fleetPeer2")?.className || "";
+      const c3 = document.getElementById("fleetPeer3")?.className || "";
+      return c2.includes("stale") ? c2 : c3;
+    });
     expect(cardClass).toContain("stale");
     await context.close();
   });
