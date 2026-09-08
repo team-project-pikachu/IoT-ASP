@@ -86,11 +86,17 @@ open(path, "w", encoding="utf-8").writelines(out)
 print("appended:", row)
 PY
 backfill() {
-  echo "backfill: listing closed issues on $REPO …"
-  local nums
-  nums="$(gh issue list --repo "$REPO" --state closed --limit 200 --json number --jq '.[].number' | sort -n)"
-  local n
+  echo "backfill: listing closed issues on $REPO (paginated)…"
+  local nums n
+  # Paginated retrieval — do not silently stop at 200 with a false OK.
+  nums="$(
+    gh api --paginate "repos/${REPO}/issues?state=closed&per_page=100" \
+      --jq '.[] | select(has("pull_request") | not) | .number' \
+      | sort -n | uniq
+  )"
   for n in $nums; do
+    [[ -n "$n" ]] || continue
+    append_one "$n"
     append_one "$n" || true
   local N="$1"
   shift || true

@@ -20,17 +20,17 @@ on:
         required: false
 
 # Default GITHUB_TOKEN often has contents: read. Rulesets may block direct push to main.
-# This job runs the CLI append and attempts a commit only when write is available;
-# otherwise it posts a soft notice and exits 0 so the issue close is never blocked.
+# Append failures (auth/API/parse) must fail the job. Push denial is soft-handled separately.
 permissions:
   contents: write
   issues: read
+  pull-requests: write
+
         description: Issue number to append (backfill)
         required: true
       outcome:
         description: One-line outcome
         default: closed
-  pull-requests: write
 concurrency:
   group: mvp-closed-log
   cancel-in-progress: false
@@ -45,18 +45,38 @@ jobs:
           fetch-depth: 0
 
       - name: Append closed issue to log
+        id: write
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_FROM_EVENT: ${{ github.event.issue.number }}
+          ISSUE_FROM_INPUT: ${{ github.event.inputs.issue_number }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          N="${{ github.event.inputs.issue_number || github.event.issue.number }}"
-          if [[ -z "${N}" ]]; then
-            echo "No issue number; skipping"
-            exit 0
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "${ISSUE_FROM_INPUT:-}" ]; then
+            N="$ISSUE_FROM_INPUT"
+          else
+            N="${ISSUE_FROM_EVENT:-}"
           fi
+          case "$N" in
+            ''|*[!0-9]*) echo "No valid issue number; skipping"; exit 0 ;;
+          esac
+          echo "n=$N" >> "$GITHUB_OUTPUT"
           chmod +x scripts/mvp_closed_log_append.sh
-          bash scripts/mvp_closed_log_append.sh "$N" || true
+          # Do NOT suppress append failures — only push denial is soft below.
+          bash scripts/mvp_closed_log_append.sh "$N"
+
       - name: Commit log if changed
+        if: steps.write.outputs.n != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          N: ${{ steps.write.outputs.n }}
+          PUSH_MAIN: ${{ vars.MVP_CLOSED_LOG_PUSH_MAIN || '0' }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          bash scripts/mvp_closed_log_append.sh "$N" || true
         id: commit
         continue-on-error: true
           if git diff --quiet -- docs/mvp-closed-log.md; then
@@ -64,11 +84,29 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/mvp-closed-log.md
-          git commit -m "docs: append closed issue #${{ github.event.issue.number || github.event.inputs.issue_number }} to MVP log"
-          # Prefer automation branch if main is protected; soft-fail on push denial.
-          if [[ "${MVP_CLOSED_LOG_PUSH_MAIN:-0}" == "1" ]]; then
-            git push origin HEAD:main || echo "NOTICE: push to main blocked (ruleset/contents). Run scripts/mvp_closed_log_append.sh locally or open a PR."
+          git commit -m "docs: append closed issue #${N} to MVP log"
+
+          if [ "$PUSH_MAIN" = "1" ]; then
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "NOTICE: push to main blocked (ruleset/contents). Falling back to automation branch."
+          fi
+
+          # Unique branch per run avoids non-fast-forward on a shared tip.
+          BRANCH="automation/mvp-closed-log-${N}-${RUN_ID}"
+          if git push -u origin "HEAD:${BRANCH}"; then
+            if gh pr view "$BRANCH" -R "$REPO" >/dev/null 2>&1; then
+              echo "PR for ${BRANCH} already open"
+            else
+              gh pr create -R "$REPO" \
+                --base main \
+                --head "$BRANCH" \
+                --title "chore: mvp closed-log (#${N})" \
+                --body "Append closed issue #${N} to docs/mvp-closed-log.md. Tracks #68."
+            fi
           else
+            echo "NOTICE: could not push ${BRANCH}; run scripts/mvp_closed_log_append.sh locally (docs/mvp-closed-log.md)."
             BRANCH="automation/mvp-closed-log"
             git push -u origin "HEAD:${BRANCH}" || echo "NOTICE: could not push ${BRANCH}; manual CLI path documented in docs/mvp-closed-log.md"
       - name: Resolve issue number
