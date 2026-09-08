@@ -37,9 +37,34 @@ The design therefore never *depends* on that inference: the event path is schedu
 own cadence and, if it were metered tomorrow, the SDM limiter would still gate every
 ``devices.*`` call independently.
 
-Division of labour, then: **events carry reaction** (a ``CameraSound.Sound`` reaches the
-existing burst path within one ``events_cadence_s``), **polling carries liveness** —
+Division of labour, then: **events carry reaction**, **polling carries liveness** —
 connectivity reconciliation and proof the fleet is still answering — at the 36 s floor.
+
+Latency budget for the reactive path (#103: external sounds must reach the app promptly)
+----------------------------------------------------------------------------------------
+``events_cadence_s`` defaults to :data:`MIN_EVENTS_CADENCE_S` (1.0 s), **not** to a
+comfortable tick, because the waiting happens on the *server*: a Pub/Sub ``:pull`` with no
+``returnImmediately`` long-polls and returns as soon as a message exists. Sleeping on the
+client between pulls would add dead time to every burst for no benefit — which is exactly
+why ``returnImmediately`` is documented as deprecated
+(https://docs.cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions/pull).
+The 1.0 s floor is a spin guard for the degenerate case where the server returns an empty
+result instantly, not a pacing choice.
+
+End to end, an external sound reaches a louder alarm in roughly:
+
+===========================================  ==================
+stage                                        contribution
+===========================================  ==================
+Nest detection → Pub/Sub publish             vendor, ~1–3 s
+``:pull`` returns (long-poll, not a tick)     ~0 s
+classify + author + clamp + write             sub-second, local
+PWA patch poll (2–5 s clamped, 3 s default)  ≤ 5 s
+===========================================  ==================
+
+so a few seconds, dominated by vendor delivery and the phone's own poll — neither of which
+this module can shorten. Raising ``events_cadence_s`` above the floor only makes bursts
+land later; do it only to save Pub/Sub request cost, never as a default.
 
 Hard guards
 -----------
@@ -64,6 +89,7 @@ from __future__ import annotations
 import json
 import math
 import random
+import re
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Mapping
@@ -78,6 +104,7 @@ __all__ = [
     "ACTION_GET",
     "ACTION_LIST",
     "MIN_EVENTS_CADENCE_S",
+    "NODE_RE",
     "NestPoller",
     "PatchWriteRefused",
     "PollAction",
@@ -86,6 +113,7 @@ __all__ = [
     "assert_telemetry_only",
     "nest_state_object_name",
     "telemetry_object_name",
+    "validate_node",
 ]
 
 # ── action kinds ─────────────────────────────────────────────────────────────
@@ -115,6 +143,14 @@ DEFAULT_MAX_MESSAGES: int = 10
 
 TELEMETRY_PREFIX: str = "meta/telemetry/"
 FORBIDDEN_PREFIX: str = "meta/patches"
+
+#: Path-safe ASP node id. Mirrors ``features_live.NODE_RE`` exactly (asserted by
+#: ``tests/test_nest_poller.py``) — copied rather than imported because
+#: ``features_live`` reaches numpy/scipy through ``colab_etl`` and this module must
+#: import with stdlib only. A node id becomes a path segment of
+#: ``meta/telemetry/<node>/``, so anything with ``/``, ``..`` or whitespace is refused
+#: before it can steer a write out of that prefix.
+NODE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
 # ── write guards ─────────────────────────────────────────────────────────────
@@ -181,12 +217,25 @@ def assert_telemetry_only(payload: Mapping[str, Any]) -> None:
         )
 
 
+def validate_node(node_id: Any) -> str:
+    """Return ``node_id`` iff it matches :data:`NODE_RE`; else ``ValueError``.
+
+    Same rule (and same reason) as ``features_live.validate_node``: the node id is a
+    path segment of every object this module could ever write, so ``/``, ``..``,
+    whitespace and a trailing newline are refused before any name is built.
+    """
+    node = str(node_id) if node_id is not None else ""
+    if not NODE_RE.fullmatch(node):
+        raise ValueError(f"refuse: node id must match {NODE_RE.pattern!r}, got {node!r}")
+    return node
+
+
 def telemetry_object_name(node_id: str, ts: str) -> str:
     """``meta/telemetry/<node>/<ts with ':'→'-'>.json``, guarded before it is returned."""
-    node = str(node_id).strip()
+    node = validate_node(node_id)
     stamp = str(ts).strip().replace(":", "-")
-    if not node or not stamp:
-        raise ValueError("refuse: node_id and ts are required to build an object name")
+    if not stamp or "/" in stamp or ".." in stamp:
+        raise ValueError(f"refuse: ts must be a plain UTC stamp, got {ts!r}")
     name = f"{TELEMETRY_PREFIX}{node}/{stamp}.json"
     assert_not_patch_path(name)
     return name
@@ -259,7 +308,7 @@ class NestPoller:
         limiter: Any | None = None,
         list_cadence_s: float | None = None,
         camera_cadence_s: float | None = None,
-        events_cadence_s: float = 10.0,
+        events_cadence_s: float = MIN_EVENTS_CADENCE_S,
         clock: Callable[[], float] = time.monotonic,
         rng: random.Random | None = None,
         jitter_frac: float = 0.1,
@@ -270,9 +319,11 @@ class NestPoller:
         write_state: bool = True,
         deduper: Any | None = None,
     ) -> None:
-        node = str(node_id).strip() if node_id is not None else ""
-        if not node:
+        if node_id is None or not str(node_id).strip():
             raise ValueError("node_id is required (the ASP node the Nest fleet is bound to)")
+        # Refuse here, not at the first write: an unusable node id must fail loudly at
+        # construction rather than after the poller has already made API calls.
+        node = validate_node(str(node_id).strip())
         if not (0.0 <= float(jitter_frac) < 1.0):
             raise ValueError(f"jitter_frac must be in [0, 1), got {jitter_frac!r}")
 
