@@ -40,9 +40,15 @@ AppShellRootView (TabView)
 ## Verify
 
 ```bash
+# ubuntu-safe / CI (#112)
+make home-ios-presence
+
+# macOS stub build (required green)
 make home-ios-build
 # or
 cd native/IoTASPHome && swift build
 ```
+
+CI job name: **M9 Home iOS AppShell presence** (`.github/workflows/ci.yml`). Docs: [`docs/ci.md`](../ci.md).
 
 Open in Xcode: `open native/IoTASPHome/Package.swift` → present `AppShellRootView()`.

@@ -215,3 +215,12 @@ jobs:
           fi
           echo "::error::PR must link an issue (e.g. Fixes #12, Closes #16, Related: #9). See .github/PULL_REQUEST_TEMPLATE.md and docs/ci.md"
           exit 1
+
+  # M9 / #112 — AppShell presence (full swift build: make home-ios-build on macOS)
+  home_ios_m9_shell:
+    name: M9 Home iOS AppShell presence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: AppShell + home-ios scripts present
+        run: bash scripts/home_ios_presence_check.sh
