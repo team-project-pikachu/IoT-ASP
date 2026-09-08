@@ -175,3 +175,18 @@ def test_docs_sections():
         "/websites/github_en_rest",
     ):
         assert needle in text, needle
+
+
+def test_docs_emergency_path_uses_disabled_not_evaluate():
+    # Regression (adversarial review, issue #27): the "Evaluate" enforcement status is GitHub
+    # Enterprise-only; on this repo's plan the picker offers only Active / Disabled. The emergency
+    # path must say "Disabled", and any mention of `evaluate` must carry the Enterprise caveat so the
+    # doc never again sends an admin looking for an option that is not there.
+    text = DOC.read_text(encoding="utf-8")
+    section = text.split("## Auto-merge and the Cursor flow", 1)[1].split("## Plan availability", 1)[0]
+    assert "Emergency" in section
+    assert "Disabled" in section, "emergency path must use the Disabled enforcement status"
+    assert "set the ruleset to `evaluate`" not in text
+    for line in text.splitlines():
+        if "evaluate" in line.lower():
+            assert "enterprise" in line.lower(), f"mention of evaluate without Enterprise caveat: {line!r}"

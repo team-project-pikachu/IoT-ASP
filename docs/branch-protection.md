@@ -155,7 +155,17 @@ names, script `bash -n` + `DRY_RUN=1`, this doc's sections).
 - **Emergency**: if a required check is structurally broken (e.g. a job renamed), fix `ci.yml` **and** the
   JSON in the same PR — the `tests` job will otherwise fail on `test_contexts_match_ci_job_names_exactly`,
   and the old context would stay required until the ruleset is updated. There is no bypass; that is the
-  point. If truly stuck, an admin can set the ruleset to `evaluate` from the UI, merge, then set it back.
+  point. If truly stuck, an admin has two documented paths, both leaving an audit trail:
+  1. **Disable, merge, re-enable** — Settings → Rules → Rulesets → `main-protection` → set **Enforcement
+     status** to **Disabled**, merge the fixing PR, set it back to **Active** (or re-run
+     `bash scripts/gh_protect_main.sh`, which PUTs `enforcement: "active"` from the JSON). Equivalent from
+     the CLI: `gh api -X PUT repos/team-project-pikachu/IoT-ASP/rulesets/<id> --input <(jq '.enforcement="disabled"' .github/rulesets/main-protection.json)`.
+  2. **Temporary admin bypass** — add the `RepositoryRole` `5` / `bypass_mode: "pull_request"` entry from the
+     escape-hatch section, apply, merge, then remove it and re-apply.
+
+  Do **not** plan on the **Evaluate** status — it is a GitHub Enterprise feature (dry-run with Rule Insights);
+  on this repo's plan the enforcement picker offers only **Active** and **Disabled** (see *Plan availability*
+  and Sources).
 
 ## Plan availability
 
@@ -164,7 +174,10 @@ GitHub Free for organizations**, and in public and private repositories on GitHu
 GitHub Enterprise Cloud. `team-project-pikachu/IoT-ASP` is **public**, so no plan change is needed. (If the
 repo were ever made private on a Free org plan, the ruleset would stop being enforced until the plan
 changed — another reason to keep the repo public.) Push rulesets and organization-level rulesets are
-Team/Enterprise features and are not used here.
+Team/Enterprise features and are not used here. Likewise the **Evaluate** enforcement status is
+Enterprise-only: the non-Enterprise *About rulesets* / *Creating rulesets for a repository* pages list only
+**Active** and **Disabled**, and the REST docs mark `evaluate` as exclusive to GitHub Enterprise. The
+only non-enforcing state available here is **Disabled**.
 
 ## Acceptance
 
@@ -173,7 +186,7 @@ Team/Enterprise features and are not used here.
 | RS-01 | `main-protection.json` parses; keys `name`, `target`, `enforcement`, `bypass_actors`, `conditions`, `rules`; `name == "main-protection"`, `target == "branch"`, `enforcement == "active"`, `conditions.ref_name.include == ["~DEFAULT_BRANCH"]`, `exclude == []`, `bypass_actors == []`; no server-assigned keys (`id`, `source`, `_links`, …) so the file imports cleanly | `tests/test_ruleset_json.py::test_json_loads_and_required_keys`, `::test_enforcement_active`, `::test_targets_default_branch_only`, `::test_no_bypass_actors_by_default` |
 | RS-02 | Rule types == `{deletion, non_fast_forward, pull_request, required_status_checks}`; `pull_request` parameters exactly as in the table above; `required_status_checks` has `strict_required_status_checks_policy: true`, `do_not_enforce_on_create: false`; contexts are unique and **equal** the set of `jobs.*.name` parsed from `ci.yml` with PyYAML; `pr_issue_ref` is `if: github.event_name == 'pull_request'` | `::test_rule_types`, `::test_pull_request_parameters`, `::test_required_status_checks_parameters`, `::test_contexts_match_ci_job_names_exactly`, `::test_pr_issue_ref_job_is_pr_only` |
 | RS-03 | `scripts/gh_protect_main.sh`: bash shebang, `set -euo pipefail`, `REPO` default `team-project-pikachu/IoT-ASP`, `gh auth status`, PUT-or-POST with `--input`, PATCH `allow_auto_merge=true` + `delete_branch_on_merge=true`, prints `OK gh_protect_main`; `bash -n` passes; `DRY_RUN=1` exits 0 offline without `gh`; no token-shaped strings in script or doc | `::test_script_syntax_and_conventions`, `::test_script_dry_run_offline`, `::test_script_no_secret_values` |
-| RS-04 | This doc has the sections Why / What each rule does / How to apply / How to verify / Auto-merge and the Cursor flow / Plan availability / Acceptance / Sources, the UI import URL, `gh ruleset check main`, the `RepositoryRole` bypass recipe and the Context7 source id | `::test_docs_sections` |
+| RS-04 | This doc has the sections Why / What each rule does / How to apply / How to verify / Auto-merge and the Cursor flow / Plan availability / Acceptance / Sources, the UI import URL, `gh ruleset check main`, the `RepositoryRole` bypass recipe and the Context7 source id; the emergency path says **Disabled** (never recommends the Enterprise-only `evaluate` status — every mention of `evaluate` carries the Enterprise caveat) | `::test_docs_sections`, `::test_docs_emergency_path_uses_disabled_not_evaluate` |
 | RS-05 | Live (owner, once): `gh api repos/team-project-pikachu/IoT-ASP/rulesets` shows `main-protection` with `enforcement: active`; a direct push to `main` is refused with `GH013`; `allow_auto_merge` and `delete_branch_on_merge` are `true` | manual — record in `.vv/ci/` (integrator) |
 
 CI gate: the `tests` job (`python -m pytest tests -q`) runs RS-01…RS-04 on every PR; `scripts/ci_static_gates.sh`
@@ -182,12 +195,18 @@ and `scripts/autoroute_dev.sh` are unaffected (no `public/` or backend change).
 ## Sources
 
 - Context7 `/websites/github_en_rest` — *REST API endpoints for rules* (`POST /repos/{owner}/{repo}/rulesets`
-  body: `name` required, `target` `branch|tag|push`, `enforcement` `disabled|active|evaluate`, `bypass_actors`,
+  body: `name` required, `target` `branch|tag|push`, `enforcement` `disabled|active|evaluate` (`evaluate` is Enterprise-only per the docs,
+  so `disabled` is the only non-enforcing value on this repo's plan); `bypass_actors`,
   `conditions.ref_name` with `~DEFAULT_BRANCH` / `~ALL`, `rules[]`; `PUT /repos/{owner}/{repo}/rulesets/{ruleset_id}`
   same body; `bypass_actors[].actor_type` ∈ `Integration | OrganizationAdmin | RepositoryRole | Team | DeployKey | User`,
   `bypass_mode` ∈ `always | pull_request | exempt`). https://docs.github.com/en/rest/repos/rules
 - GitHub docs — *About rulesets* (plan availability; up to 75 rulesets per repo; anyone with read access can
-  view rulesets) https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets
+  view rulesets; *Using ruleset enforcement statuses* lists only **Active** and **Disabled** on the non-Enterprise page)
+  https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets
+- GitHub docs — *Creating rulesets for a repository → Using ruleset enforcement statuses*: non-Enterprise page
+  lists **Active** / **Disabled**; the `enterprise-cloud@latest` variant adds **Evaluate** (Rule Insights)
+  https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository ;
+  https://docs.github.com/enterprise-cloud@latest/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository
 - GitHub docs — *Managing rulesets for a repository → Importing a ruleset* (New ruleset ▸ Import a ruleset ▸
   JSON file ▸ Create; exported JSON excludes the bypass list)
   https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/managing-rulesets-for-a-repository

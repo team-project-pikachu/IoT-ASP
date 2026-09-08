@@ -37,3 +37,23 @@ Comparison table on the same page repeats: Output Power 12W · Water IPX7 · Pla
 - Firecrawl CLI scrape of `https://www.anker.com/ca/products/soundcore-2` (2026-09-07).
 - Artifact: `.firecrawl/scrape_-20260907T225729Z.json` (local cache).
 - Manual/datasheet PDF search via Firecrawl returned no additional official FR curve; product page is the authoritative public listing used here.
+
+## Feature specs
+
+One spec per Project 5 issue lives in [`docs/specs/`](docs/specs/) — index, status per issue, owner
+surface, and the list of docs that exist only on the owner's Mac clone: [`docs/specs/README.md`](docs/specs/README.md).
+Wire fields stay canonical in [`docs/api-contract.md`](docs/api-contract.md).
+
+Open, non-parked items:
+
+| Issue | Spec |
+|-------|------|
+| #1 — M0 public Vercel hop blaster (shipped) + telemetry fields + M0 polish | [docs/specs/01-m0-public-blaster.md](docs/specs/01-m0-public-blaster.md) |
+| #2 — Max-entropy seeds + decoherent coverage | [docs/specs/02-max-entropy-seeds.md](docs/specs/02-max-entropy-seeds.md) |
+| #3 — Continuous polling & monitoring watchdog | [docs/specs/03-continuous-monitoring-watchdog.md](docs/specs/03-continuous-monitoring-watchdog.md) |
+| #22 — Structured fleet telemetry logs | [docs/specs/22-structured-fleet-logs.md](docs/specs/22-structured-fleet-logs.md) |
+| #25 — HW-limited: LF mic/TX + AEC for `soundBurst` `micDiff` | [docs/specs/25-hw-limited-lf-aec-micdiff.md](docs/specs/25-hw-limited-lf-aec-micdiff.md) |
+| #26 — Colab live GCS: accel / gyro / `micDiff` telemetry → `meta/features` | [docs/specs/26-colab-live-gcs-features.md](docs/specs/26-colab-live-gcs-features.md) |
+| #27 — Continuous ship: GitHub Actions dev → test → prod into Vercel | [docs/specs/27-continuous-ship-dev-test-prod.md](docs/specs/27-continuous-ship-dev-test-prod.md) |
+
+Parked items (#4–#8, #10, #11, #14, #15, #18–#21, #23, #24) have specs too; see the index.
