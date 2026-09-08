@@ -52,7 +52,7 @@ def test_invariant_literals(html: str) -> None:
 NEW_IDS = ("copyLogBtn", "copyFleetLogBtn", "reseedBtn", "simImpulseBtn", "fleetSeedCompare",
            "telHopAge", "telResumes", "telWatchdog",
            "telImpulse", "telVolBlast", "telAlarm", "fleetLocal",
-           "telemetryUrlLabel", "patchUrlLabel")
+           "telemetryUrlLabel", "patchUrlLabel", "fleetBackendStrip")
 OLD_IDS = ("telDevice", "telSeed", "telAlgo", "telPeak", "telAccel", "telMic", "telVib", "telHold",
            "telSudden", "monLog", "sysList", "sysBtn", "vol", "fMin", "fMax", "holdPatchBtn", "power")
 
@@ -65,7 +65,7 @@ def test_ids_present_once(html: str, el_id: str) -> None:
 # ── 3. telemetryPayload keys ─────────────────────────────────────────────────
 PAYLOAD_TOKENS = ("band", "power", "nightNY", "lfArmed", "lfDriveCapable", "lastHopAgeMs",
                   "ctxResumes", "watchdogTrips", "logSeq", "logTail", "holdManual",
-                  "schemaVersion: SCHEMA_VERSION", "impulse", "volBlast", "alarmState")
+                  "schemaVersion: SCHEMA_VERSION", "impulse", "volBlast", "alarmState", "gx", "gy", "gz", "absOmega")
 
 
 def test_telemetry_payload_tokens(html: str) -> None:

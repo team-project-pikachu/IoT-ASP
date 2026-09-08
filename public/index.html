@@ -210,6 +210,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 .fleet-card .id{font:600 11px/1.3 var(--mono);color:var(--ink);word-break:break-all}
 .fleet-card .meta{font:400 11px/1.45 var(--mono);color:var(--dim);margin-top:6px}
 .fleet-card.local{border-color:var(--lime)}
+.fleet-card.stale{border-color:var(--amber);opacity:.85}
 @media (max-width:520px){.fleet-grid{grid-template-columns:1fr}}
 
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
@@ -387,6 +388,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       </div>
     </div>
     <p class="sub" id="fleetSeedCompare" style="margin:10px 0 0">Seed compare · —</p>
+    <p class="sub" id="fleetBackendStrip" style="margin:6px 0 0">Backend · patch — · telemetry off · poll —</p>
     <div class="tapbar" style="margin-top:10px">
       <button type="button" class="tap" id="simImpulseBtn">Simulate impulse</button>
     </div>
@@ -585,6 +587,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let lastImpulseAt=0, alarmQuietSince=0, accelBaseline=0.05;
   const IMPULSE_ACCEL_DELTA = 0.45;
   let ax=0, ay=0, az=0;
+  let gx=0, gy=0, gz=0, absOmega=0;
   let accelMag=0, lfMag=0, acousticEnergy=-120;
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
@@ -1262,14 +1265,21 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   window.addEventListener("devicemotion", e => {
     const a = e.acceleration || e.accelerationIncludingGravity;
-    if (!a) return;
-    ax = a.x || 0; ay = a.y || 0; az = a.z || 0;
-    const mag = Math.hypot(ax, ay, az);
-    accelMag = 0.85 * accelMag + 0.15 * mag;
-    const emaA = 0.9 * accelBaseline + 0.1 * mag;
-    const dA = mag - accelBaseline;
-    accelBaseline = emaA;
-    if (dA >= IMPULSE_ACCEL_DELTA) noteImpulse(true, false);
+    if (a) {
+      ax = a.x || 0; ay = a.y || 0; az = a.z || 0;
+      const mag = Math.hypot(ax, ay, az);
+      accelMag = 0.85 * accelMag + 0.15 * mag;
+      const emaA = 0.9 * accelBaseline + 0.1 * mag;
+      const dA = mag - accelBaseline;
+      accelBaseline = emaA;
+      if (dA >= IMPULSE_ACCEL_DELTA) noteImpulse(true, false);
+    }
+    // api-contract optional gyro axes (rad/s when available; else stay 0)
+    const rr = e.rotationRate;
+    if (rr) {
+      gx = rr.alpha || 0; gy = rr.beta || 0; gz = rr.gamma || 0;
+      absOmega = 0.85 * absOmega + 0.15 * Math.hypot(gx, gy, gz);
+    }
     // crude LF proxy: low-pass of magnitude deltas
     const g = e.accelerationIncludingGravity;
     if (g){
@@ -2354,6 +2364,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       event: (soundBurst || extremeActive) ? "soundBurst" : (suddenFreq ? "suddenFreq" : undefined),
       absA: accelMag,
       a: accelMag,
+      ax, ay, az,
+      absOmega,
+      omega: absOmega,
+      gx, gy, gz,
       micEnergy: Math.round((isFinite(acousticEnergy) ? acousticEnergy : -120) * 10) / 10,
       outLevel: Math.round((isFinite(outLevel) ? outLevel : -120) * 10) / 10,
       micDiff: Math.round((isFinite(micDiff) ? micDiff : -120) * 10) / 10,
@@ -2384,8 +2398,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       route: hwCaps.route || "a2dp",
       impulse: !!impulse,
       volBlast: !!volBlast,
-      alarmState,
-      ax, ay, az
+      alarmState
     };
   }
 
@@ -2436,6 +2449,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       if (card) {
         const idEl = card.querySelector(".id");
         if (idEl) idEl.textContent = peer ? peer.deviceId : fallbackId;
+        card.classList.toggle("stale", !!(peer && peerStale(peer)));
+        if (!peer) card.classList.remove("stale");
       }
       if (meta) {
         if (!peer) { meta.textContent = fallback; return; }
@@ -2457,6 +2472,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       cmp.textContent = "Seed compare · local=" + seed
         + (peerN ? (" · peers=" + ids.map(function(id){ return fleetPeers[id].seed; }).join(",")) : " · no peers")
         + (unique.length === seeds.length && peerN > 0 ? " · incoherent OK" : (peerN ? " · CHECK shared seeds" : " · open a 2nd tab to compare"));
+    }
+    const strip = $("fleetBackendStrip");
+    if (strip) {
+      const shortPatch = (typeof PATCH_URL === "string" && PATCH_URL) ? PATCH_URL.replace(/^https?:\/\//, "").slice(0, 48) : "/patch.json";
+      const shortTel = (typeof TELEMETRY_URL === "string" && TELEMETRY_URL) ? TELEMETRY_URL.replace(/^https?:\/\//, "").slice(0, 40) : "off";
+      strip.textContent = "Backend · patch " + shortPatch + " · telemetry " + shortTel + " · poll " + POLL_MS + "ms";
     }
   }
   const simImpulseBtn = $("simImpulseBtn");

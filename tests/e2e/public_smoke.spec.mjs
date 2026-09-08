@@ -255,6 +255,27 @@ test.describe("public blaster smoke", () => {
     expect(errors).toEqual([]);
   });
 
+
+  test("fleet panel + simulate impulse + gyro keys (#11 #42 #62)", async ({ page }) => {
+    const errors = await openPage(page);
+    await expect(page.locator("#fleetPanel")).toBeAttached();
+    await expect(page.locator("#fleetBackendStrip")).toBeAttached();
+    await expect(page.locator("#simImpulseBtn")).toBeAttached();
+    await page.click("#simImpulseBtn");
+    await page.waitForFunction(() => {
+      const p = window.__hop.telemetryPayload();
+      return p.impulse === true || p.volBlast === true || p.alarmState === "triggered" || p.alarmState === "sustaining";
+    }, null, { timeout: 5000 });
+    const p = await payload(page);
+    expect(typeof p.gx).toBe("number");
+    expect(typeof p.gy).toBe("number");
+    expect(typeof p.gz).toBe("number");
+    expect(typeof p.absOmega).toBe("number");
+    expect(p.schemaVersion).toBe(1);
+    await expect(page.locator("#fleetBackendStrip")).toContainText("telemetry");
+    expect(errors).toEqual([]);
+  });
+
   test("systems check escapes a reflected ?patch= value (no XSS)", async ({ page }) => {
     const errors = [];
     page.on("pageerror", e => errors.push(String(e)));
