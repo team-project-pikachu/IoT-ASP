@@ -12,6 +12,7 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 — issues `#1`�
 ```
 public/                          # static PWA blaster (Vercel) — single-file app: index.html + patch.json mock
 services/autoroute-adk/          # Google ADK Python agent + tools + clamps + priors + Colab ETL (GCP, independent deploy)
+packages/iot-asp-study/          # public-safe templates/schema/doctor (#67); gitignored study/ unchanged
 scripts/                         # gates + dry-run + KB refresh + mdc converter
 tests/                           # pytest (stdlib + numpy/scipy) — run before every push
 docs/                            # contract, constraints, autoroute, CI, physics, specs/
@@ -39,7 +40,7 @@ reference/                       # literature + Firecrawl/Context7 knowledge dig
    patches and the phone ignores remote patches. The UI label `Hold / Manual`, wire key `holdManual`, and
    element `holdPatchBtn` must stay in `public/index.html`.
 7. **No site PII** anywhere public: no street addresses, neighbor identifiers, recording URIs, speech
-   transcripts. Study material lives in gitignored `study/`.
+   transcripts. Study material lives in gitignored `study/`; public templates live in `packages/iot-asp-study`.
 8. **Physics honesty:** linearized acoustics / Navier–Stokes / seismo-acoustic coupling are priors and
    prompt constraints only. Never claim CFD on-phone. Safari + BT cannot capture or play true infrasound;
    LF accelerometer energy is a felt proxy.
