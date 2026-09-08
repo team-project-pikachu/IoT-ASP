@@ -92,8 +92,15 @@ class _LoopbackSite:
             def do_GET(self):
                 site.requests.append({"path": self.path, "headers": {k.lower(): v for k, v in self.headers.items()}})
                 if redirect_to is not None:
+                    # Only redirect known routes, and build Location from the constant route key —
+                    # never from the raw request path (CodeQL py/http-response-splitting).
+                    known = {route: route for route in ROUTES}.get(self.path)
+                    if known is None:
+                        self.send_response(404)
+                        self.end_headers()
+                        return
                     self.send_response(302)
-                    self.send_header("Location", redirect_to + self.path)
+                    self.send_header("Location", redirect_to + known)
                     self.end_headers()
                     return
                 name = ROUTES.get(self.path)
