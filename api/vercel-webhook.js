@@ -41,9 +41,20 @@ function signatureMatches(secret, rawBody, headerSig) {
 function publicHttpsUrl(val) {
   if (typeof val !== 'string') return '';
   const s = val.trim();
-  if (!s || s.startsWith('http://') || s.startsWith('javascript:') || s.startsWith('data:')) {
+  if (!s) return '';
+  const lower = s.toLowerCase();
+  // Reject non-https schemes (CodeQL incomplete-url-scheme / XSS vectors).
+  if (
+    lower.startsWith('http://') ||
+    lower.startsWith('javascript:') ||
+    lower.startsWith('data:') ||
+    lower.startsWith('vbscript:') ||
+    lower.startsWith('file:')
+  ) {
     return '';
   }
+  const beforeSlash = s.split('/')[0];
+  if (beforeSlash.includes(':') && !lower.startsWith('https:')) return '';
   if (s.startsWith('https://')) return s;
   if (s.startsWith('//')) return `https:${s}`;
   if (s.includes('.') && !s.includes(' ') && !s.startsWith('.')) return `https://${s}`;

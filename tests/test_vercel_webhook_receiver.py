@@ -130,6 +130,14 @@ def test_redact_normalizes_schemeless_deployment_url(handler):
     assert out["url"] == "https://hop-ultrasonic-1digital-design.vercel.app"
 
 
+def test_public_https_url_rejects_dangerous_schemes(handler):
+    assert handler._public_https_url("vbscript:alert(1)") == ""
+    assert handler._public_https_url("javascript:alert(1)") == ""
+    assert handler._public_https_url("data:text/html,hi") == ""
+    assert handler._public_https_url("http://evil.example") == ""
+    assert handler._public_https_url("https://ok.vercel.app") == "https://ok.vercel.app"
+
+
 def test_notify_once_cli_dry(tmp_path, monkeypatch):
     mod = _load("vercel_webhook_notify_once", NOTIFY)
     event = {"type": "deployment.canceled", "id": "c1", "payload": {"url": "https://y.vercel.app"}}

@@ -58,7 +58,13 @@ def _public_https_url(val: Any) -> str:
     if not isinstance(val, str):
         return ""
     s = val.strip()
-    if not s or s.startswith(("http://", "javascript:", "data:")):
+    if not s:
+        return ""
+    lower = s.lower()
+    # Reject non-https schemes (CodeQL incomplete-url-scheme / XSS vectors).
+    if lower.startswith(("http://", "javascript:", "data:", "vbscript:", "file:")):
+        return ""
+    if ":" in s.split("/", 1)[0] and not lower.startswith("https:"):
         return ""
     if s.startswith("https://"):
         return s
