@@ -1,0 +1,115 @@
+name: CI — no breaking changes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  autoroute:
+    name: autoroute dry-run + clamps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/autoroute-adk/requirements.txt
+
+      - name: Install autoroute package deps
+        run: |
+          python -m pip install --upgrade pip
+          # Dry-run path is stdlib + local package; install pins for import smoke.
+          pip install -r services/autoroute-adk/requirements.txt
+
+      - name: Assert vol_hard_max=100 (drift gate)
+        run: |
+          PYTHONPATH=services/autoroute-adk python - <<'PY'
+          from iot_asp_autoroute.clamps import CLAMPS, SCHEMA_VERSION, validate_patch
+          assert SCHEMA_VERSION == 1, SCHEMA_VERSION
+          assert CLAMPS["vol_hard_max"] == 100.0, CLAMPS
+          assert CLAMPS["vol_soft_max"] == 100.0, CLAMPS
+          ok50, _, c50 = validate_patch({"algo": "hop", "vol": 50, "fMin": 17000, "fMax": 23000})
+          assert ok50 and c50["vol"] == 50.0, c50
+          ok_lin, _, c_lin = validate_patch({"algo": "hop", "vol": 0.5, "fMin": 17000, "fMax": 23000})
+          assert ok_lin and c_lin["vol"] == 50.0, c_lin
+          ok_hi, msg_hi, _ = validate_patch({"algo": "hop", "vol": 101, "fMin": 17000, "fMax": 23000})
+          assert not ok_hi and "hard max" in msg_hi, msg_hi
+          print("vol_hard_max drift gate OK")
+          PY
+
+      - name: Run scripts/autoroute_dev.sh
+        run: bash scripts/autoroute_dev.sh
+
+      - name: Import / schema smoke (clamps, sudden_freq, priors)
+        run: |
+          PYTHONPATH=services/autoroute-adk python - <<'PY'
+          from iot_asp_autoroute import clamps, sudden_freq, priors
+          from iot_asp_autoroute.clamps import SCHEMA_VERSION, validate_patch
+          assert SCHEMA_VERSION == 1
+          ok, msg, out = validate_patch(
+              {"schemaVersion": 1, "algo": "hop", "fMin": 17000, "fMax": 23000, "vol": 100}
+          )
+          assert ok, msg
+          assert out.get("schemaVersion") == 1
+          bundle = priors.seismo_bundle()
+          assert isinstance(bundle, dict) and bundle
+          tel = {
+              "schemaVersion": 1,
+              "suddenFreq": True,
+              "peakHz": 19500,
+              "fMin": 17000,
+              "fMax": 23000,
+              "holdManual": True,
+              "vibClass": "physical",
+          }
+          ok_auth, reason, _ = sudden_freq.author_sudden_freq_patch(tel)
+          assert not ok_auth and "holdManual" in reason, (ok_auth, reason)
+          print("clamp/schema/Hold import smoke OK")
+          PY
+
+  static_gates:
+    name: HTML Hold + secrets + patch.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Static gates (Hold/Manual, no keys, schemaVersion)
+        run: bash scripts/ci_static_gates.sh
+
+  pr_issue_ref:
+    name: PR must reference an issue
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Fixes/Closes/Related #N in PR body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          TEXT="${PR_TITLE}
+
+          ${PR_BODY}"
+          if printf '%s' "$TEXT" | grep -Eiq '(Fixes|Closes|Resolves|Related)[[:space:]]+#[[:digit:]]+|#[[:digit:]]+'; then
+            echo "Issue reference found in PR title/body"
+            exit 0
+          fi
+          echo "::error::PR must link an issue (e.g. Fixes #12, Closes #16, Related: #9). See .github/PULL_REQUEST_TEMPLATE.md and docs/ci.md"
+          exit 1
