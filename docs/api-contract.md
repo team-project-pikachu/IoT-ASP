@@ -143,7 +143,9 @@ Compact JSON heartbeat. Required fields marked ★.
 | `micDiff` | | number | `micEnergy − 0.85·outLevel` (best-effort AEC; browser cannot do full AEC) — #25 |
 | `bandBurst` | | string | `lf` \| `us` \| `both` burst classification — #25/#26 |
 | `soundBurst` / `extremeActive` | | bool | Environmental burst detected / sustained extreme shriek mode — #25 |
-| `impulse` / `volBlast` / `alarmState` | | bool / bool / string | Impulse→blast alarm SM — #44 #45 #42 |
+| `impulse` | | bool | Short-rise accel or micDiff onset this cycle — #42/#44 |
+| `volBlast` | | bool | Alarm/impulse jumped volume toward max — #42/#44 |
+| `alarmState` | | string | `armed` \| `triggered` \| `sustaining` \| `cleared` \| `off` — #42/#45 (Hold→cleared, suddenAuto off→off via effectiveAlarmState) |
 | `lfEnergy` / `usEnergy` | | number | LF (<20 Hz proxy) and US (>17 kHz) band energy (dB) — #25 |
 
 Backend enrichment (`fleet_log.enrich_telemetry`) fills `band`, `power`, `nightNY`, `lfArmed`,

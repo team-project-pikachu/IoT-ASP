@@ -1,7 +1,7 @@
 # Native Xcode path (parked — issue #9)
 
 **Research closeout (docs only):** [sensorkit-research-closeout.md](sensorkit-research-closeout.md) · evidence [`.vv/9/`](../.vv/9/).  
-**This wave:** no SensorKit entitlement, no Xcode project.
+**Balanced stub (2026-09-08):** source sketch under [`native/IoTASP/`](../native/IoTASP/) + [`native/README.md`](../native/README.md) (issues #41/#48/#52). Still **no** SensorKit entitlement grant and **no** signed App Store build.
 
 MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md)). Xcode is for a future shell that can unlock fuller audio/BT APIs.
 
@@ -23,3 +23,7 @@ MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRA
 | CoreBluetooth sensors | No | Optional later — **not** carrier TX |
 
 Author UX wireframes in **Chrome**; validate HIG on Simulator + device Safari/native. See [iphone-bluetooth.md](iphone-bluetooth.md), [ux-tooling.md](ux-tooling.md).
+
+## Sonos AirPlay shell sketch (#39)
+
+Canonical app: [`native/IoTASP/`](../native/IoTASP/) (iOS + Watch) — fleet sink picker includes Soundcore A2DP and Sonos Beam AirPlay. Legacy sketch: [`native/ios-sonos-shell/`](../native/ios-sonos-shell/). Docs: [sonos-beam.md](sonos-beam.md), [sensorkit-watch.md](sensorkit-watch.md). Full `xcodebuild` needs Xcode.app (Command Line Tools alone are insufficient on this Studio). Shared alarm/impulse logic: `swift test` in `native/IoTASP/`.

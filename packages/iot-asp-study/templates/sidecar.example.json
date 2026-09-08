@@ -1,0 +1,10 @@
+{
+  "ext_source": "outside",
+  "site_code": "SITE",
+  "node": "node1",
+  "algo": "hop",
+  "vib_channel": "none",
+  "started_at_utc": "2026-09-08T00:00:00Z",
+  "ended_at_utc": "2026-09-08T00:05:00Z",
+  "notes": "example sidecar — placeholders only"
+}

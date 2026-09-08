@@ -204,6 +204,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 .mon-log .line:last-child{border-bottom:0}
 .mon-log .hi{color:var(--uv-hot)}
 .hold-on{border-color:var(--amber)!important;color:var(--amber)!important}
+.fleet{padding:16px 0;border-bottom:1px solid var(--rule)}
+.fleet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.fleet-card{background:#0E0F13;border:1px solid var(--rule);padding:10px;min-width:0}
+.fleet-card .id{font:600 11px/1.3 var(--mono);color:var(--ink);word-break:break-all}
+.fleet-card .meta{font:400 11px/1.45 var(--mono);color:var(--dim);margin-top:6px}
+.fleet-card.local{border-color:var(--lime)}
+@media (max-width:520px){.fleet-grid{grid-template-columns:1fr}}
 
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 @media (max-width:520px){
@@ -361,6 +368,25 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   </section>
 
 
+
+  <section class="fleet" id="fleetPanel" aria-label="Fleet nodes">
+    <p class="legend">Fleet · this tab + peers (stub — not React)</p>
+    <p class="sub" style="margin:8px 0 0">Same-origin tabs advertise over <code>BroadcastChannel</code>. Other phones stay placeholders until native/#10.</p>
+    <div class="fleet-grid">
+      <div class="fleet-card local" id="fleetLocal">
+        <div class="id">local</div>
+        <div class="meta" id="fleetLocalMeta">—</div>
+      </div>
+      <div class="fleet-card" id="fleetPeer2">
+        <div class="id">node-2</div>
+        <div class="meta" id="fleetPeer2Meta">waiting for peer tab</div>
+      </div>
+      <div class="fleet-card" id="fleetPeer3">
+        <div class="id">node-3</div>
+        <div class="meta" id="fleetPeer3Meta">chair / Sonos research (#18 #39)</div>
+      </div>
+    </div>
+  </section>
 
   <section class="mon" id="monitor">
     <div class="plot-head">
@@ -559,11 +585,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let impulse = false, volBlast = false;
   let lastImpulseAt = 0, alarmClearedAt = 0;
   let prevMicDiffSample = -120, accelEma = 0;
+  let ax=0, ay=0, az=0;
   let accelMag=0, lfMag=0, acousticEnergy=-120;
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
   let pulseMs=120, shriekMs=55;
-  let deviceId="", seed=0, seedSource="entropy";
+  let deviceId="", instanceId="", seed=0, seedSource="entropy";
   try {
     deviceId = localStorage.getItem("hop.deviceId") || "";
     if (!deviceId) {
@@ -575,8 +602,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     seedSource = stored > 0 ? "stored" : "entropy";
     seed = stored > 0 ? stored : entropySeed();
     if (seedSource === "entropy") localStorage.setItem("hop.seed", String(seed));
+    instanceId = sessionStorage.getItem("hop.instanceId") || "";
+    if (!instanceId) {
+      instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
+      sessionStorage.setItem("hop.instanceId", instanceId);
+    }
   } catch (_) {
     deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
+    instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
     seed = entropySeed();
     seedSource = "entropy";
   }
@@ -1307,7 +1340,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.addEventListener("devicemotion", e => {
     const a = e.acceleration || e.accelerationIncludingGravity;
     if (!a) return;
-    const mag = Math.hypot(a.x || 0, a.y || 0, a.z || 0);
+    ax = a.x || 0; ay = a.y || 0; az = a.z || 0;
+    const mag = Math.hypot(ax, ay, az);
     const accelRise = mag - (accelEma || mag);
     accelEma = accelEma ? (0.88 * accelEma + 0.12 * mag) : mag;
     accelMag = 0.85 * accelMag + 0.15 * mag;
@@ -1318,7 +1352,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       lfMag = 0.92 * lfMag + 0.08 * Math.abs(gmag - (lfMag || gmag));
     }
     const thr = (+vibSens.value || 12) / 10;
-    // Accel impulse vs EMA; thr scales sensitivity
+    // Accel impulse vs EMA; thr scales sensitivity (no gravity-baseline false blast)
     if (suddenAuto && !holdManual && (running || sensorsArmed)
         && accelRise > Math.max(IMPULSE_ACCEL_RISE, thr * 0.45)) {
       noteImpulse("accel rise=" + accelRise.toFixed(2), accelRise);
@@ -2272,7 +2306,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast }),
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId }),
     getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
 
@@ -2313,6 +2347,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (hopAgeEl) hopAgeEl.textContent = age == null ? "—" : age + " ms";
     if (resumesEl) resumesEl.textContent = String(ctxResumes || 0);
     if (wdEl) wdEl.textContent = String(watchdogTrips || 0);
+    const telImpulseEl = $("telImpulse"), telVolBlastEl = $("telVolBlast"), telAlarmEl = $("telAlarm");
+    if (telImpulseEl) telImpulseEl.textContent = impulse ? "ON" : "off";
+    if (telVolBlastEl) telVolBlastEl.textContent = volBlast ? "ON" : "off";
+    if (telAlarmEl) telAlarmEl.textContent = alarmState;
+    paintFleetCards();
     if (geminiFlagLive) geminiFlagLive.textContent = geminiAutorouteFlag ? "pending" : "—";
     if (patchUrlLabel) patchUrlLabel.textContent = PATCH_URL;
     if (patchStatusEl) patchStatusEl.textContent = patchStatus;
@@ -2384,15 +2423,75 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       logSeq,
       logTail: records.slice(-3),
       net: netKind(),
-      route: hwCaps.route || "a2dp"
+      route: hwCaps.route || "a2dp",
+      impulse: !!impulse,
+      volBlast: !!volBlast,
+      alarmState,
+      ax, ay, az
     };
+  }
+
+  const fleetPeers = {};
+  let fleetBc = null;
+  try { if (typeof BroadcastChannel !== "undefined") fleetBc = new BroadcastChannel("iot-asp-fleet"); } catch (_) {}
+  if (fleetBc) {
+    fleetBc.onmessage = function(ev){
+      const d = ev && ev.data;
+      if (!d || !d.deviceId || !d.instanceId || d.instanceId === instanceId) return;
+      fleetPeers[d.instanceId] = d;
+      paintFleetCards();
+    };
+  }
+
+  function publishFleetHeartbeat(){
+    const snap = {
+      deviceId, instanceId, seed, seedSource, algo: (typeof algoWireName === "function" ? algoWireName() : algo),
+      alarmState, impulse: !!impulse, volBlast: !!volBlast, holdManual, ts: Date.now()
+    };
+    try { localStorage.setItem("hop.fleetLocal", JSON.stringify(snap)); } catch (_) {}
+    try { if (fleetBc) fleetBc.postMessage(snap); } catch (_) {}
+  }
+
+  function paintFleetCards(){
+    const localMeta = $("fleetLocalMeta");
+    const localCard = $("fleetLocal");
+    if (localCard) {
+      const idEl = localCard.querySelector(".id");
+      if (idEl) idEl.textContent = deviceId || "local";
+    }
+    if (localMeta) {
+      localMeta.textContent = "seed " + seed + " · " + (typeof algoWireName === "function" ? algoWireName() : algo)
+        + " · alarm " + alarmState + (holdManual ? " · HOLD" : "");
+    }
+    const ids = Object.keys(fleetPeers).sort();
+    const p2 = $("fleetPeer2Meta"), p3 = $("fleetPeer3Meta");
+    const c2 = $("fleetPeer2"), c3 = $("fleetPeer3");
+    function fill(card, meta, peer, fallbackId, fallback){
+      if (card) {
+        const idEl = card.querySelector(".id");
+        if (idEl) idEl.textContent = peer ? peer.deviceId : fallbackId;
+      }
+      if (meta) {
+        meta.textContent = peer
+          ? ("seed " + peer.seed + " · " + (peer.algo || "—") + " · alarm " + (peer.alarmState || "—"))
+          : fallback;
+      }
+    }
+    fill(c2, p2, ids[0] ? fleetPeers[ids[0]] : null, "node-2", "waiting for peer tab");
+    fill(c3, p3, ids[1] ? fleetPeers[ids[1]] : null, "node-3", "chair / Sonos research (#18 #39)");
   }
 
   function beaconTelemetry(){
     updateTelUI();
+    publishFleetHeartbeat();
+    let body = "";
+    if (TELEMETRY_URL) body = JSON.stringify(telemetryPayload());
+    if (impulse) {
+      impulse = false;
+      updateTelUI();
+    }
     if (!TELEMETRY_URL) return;
     try {
-      const body = JSON.stringify(telemetryPayload());
       if (navigator.sendBeacon) {
         navigator.sendBeacon(TELEMETRY_URL, new Blob([body], { type: "application/json" }));
       } else {
@@ -2506,12 +2605,18 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     holdManual = !holdManual;
     holdPatchBtn.setAttribute("aria-pressed", String(holdManual));
     holdPatchBtn.classList.toggle("hold-on", holdManual);
-    if (holdManual) exitExtremeMode();
+    if (holdManual) {
+      exitExtremeMode();
+      clearAlarm("hold");
+    } else if (alarmState === "cleared") {
+      alarmState = "armed";
+    }
     monLog(holdManual ? "Hold / Manual ON — patches ignored" : "Hold / Manual off — patches resume");
     updateTelUI();
   });
 
   setInterval(beaconTelemetry, 2000);
+  setInterval(function(){ alarmTick(performance.now()); }, 200);
   setInterval(pollPatch, POLL_MS); // default 3000 ms; ?pollMs= clamps 2000–5000
   setTimeout(pollPatch, 500);
   updateTelUI();
