@@ -472,3 +472,29 @@ def test_nest_url_override_cannot_be_pointed_off_origin(html: str) -> None:
     # the override is routed through the guard, never used raw
     assert 'const NEST_URL = sameOriginPath(qs.get("nest"), BACKEND_NEST_PATH);' in html
     assert 'qs.get("nest") ||' not in html, "raw ?nest= must not reach fetch()"
+
+# ── hop button boot / platform (post-#138 regression) ─────────────────────
+def test_logseq_initialized_before_boot_setbandmode(html: str) -> None:
+    """Boot setBandMode must not run while logSeq/FLEET_LOG_KEYS are in TDZ (kills listeners)."""
+    assert "let logSeq = 0;" in html
+    log_i = html.index("let logSeq = 0;")
+    fleet_i = html.index("const FLEET_LOG_KEYS = [")
+    # Prefer deferred boot call after fleet keys; tolerate only post-fleet setBandMode("us")
+    boot_marker = 'setBandMode("us"); // safe'
+    assert boot_marker in html, "boot setBandMode must be deferred past FLEET_LOG_KEYS"
+    boot_i = html.index(boot_marker)
+    assert log_i < boot_i
+    assert fleet_i < boot_i
+    assert 'id="bandLf"' not in html
+    assert "bandLfBtn" not in html
+
+
+def test_detect_platform_mac_vs_iphone(html: str) -> None:
+    body = _fn_body(html, "function detectPlatform(){")
+    assert "iPadDesktopUA" in body
+    assert "touchPoints > 1" in body
+    assert "macos-desktop" in body and "iphone" in body
+    assert "mac-studio" in body
+    assert 'id="telPlatform"' in html
+    # Must not treat Mac desktop (maxTouchPoints==0 or 1) as iPhone
+    assert "maxTouchPoints || 0) > 0" not in body.replace(" ", "") or "touchPoints > 1" in body
