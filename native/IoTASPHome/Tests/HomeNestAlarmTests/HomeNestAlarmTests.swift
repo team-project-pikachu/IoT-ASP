@@ -1,4 +1,5 @@
 import XCTest
+@testable import AppShell
 @testable import HomeNestAlarm
 
 final class HomeNestAlarmTests: XCTestCase {
@@ -62,6 +63,16 @@ final class HomeNestAlarmTests: XCTestCase {
         ])
         let ctx = catalog.snapshotContext(for: .glassShatter)
         XCTAssertEqual(ctx?.cameraId, "snap-cam")
+    }
+
+    func testAppShellCatalogHasM9Placeholders() {
+        let ids = AppShellCatalog.ids
+        XCTAssertEqual(ids, ["sensorkit", "coremotion", "avfoundation-mic"])
+        let sk = SensorKitShellModule()
+        XCTAssertFalse(sk.entitlementDeclared)
+        XCTAssertTrue(sk.modeLabel.lowercased().contains("stub") || sk.modeLabel.contains("not entitled") || sk.modeLabel.contains("unavailable"))
+        XCTAssertEqual(CoreMotionShellModule().id, "coremotion")
+        XCTAssertEqual(MicAVFoundationShellModule().id, "avfoundation-mic")
     }
 
 }

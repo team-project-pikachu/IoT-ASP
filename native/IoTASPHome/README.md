@@ -1,12 +1,14 @@
-# IoTASPHome — Google Home APIs iOS + Nest / Gemini acoustic MVP (M8)
+# IoTASPHome — Google Home / Nest + M9 SensorKit-ready app shell
 
 Second first-class native feature alongside [`../IoTASP`](../IoTASP) (ASP ultrasonic / hop).
 
 | Path | Role |
 |------|------|
-| `Sources/HomeNestAlarm/` | Detector event classes, escalating alarm, Home SDK facade, Nest camera stubs, **glass shatter** pipeline |
-| `Sources/HomeNestAlarmUI/` | SwiftUI tabs: ASP Ultrasonic (sibling note) · **HomeNestAlarm** · **Glass Shatter** |
-| `Package.swift` | SPM library — **builds without proprietary GoogleHomeSDK** |
+| `Sources/HomeNestAlarm/` | M8: detector event classes, escalating alarm, Home SDK facade, Nest camera stubs, glass shatter |
+| `Sources/AppShell/` | **M9 (#109):** SensorKit / CoreMotion / Mic **module placeholders** (no entitlement invent) |
+| `Sources/HomeNestAlarmUI/` | `HomeNestRootView` (M8) · **`AppShellRootView`** (M9 successor tabs) |
+| `Resources/Info-AppShell.plist.example` | Motion + mic usage-string scaffold for a future host `.app` |
+| `Package.swift` | SPM — **builds without proprietary GoogleHomeSDK** |
 
 ## Home APIs iOS get-started (known summary)
 
@@ -21,9 +23,10 @@ Source: https://developers.home.google.com/apis/ios/get-started (last updated 20
 
 ## Features
 
-1. **HomeNestAlarm** — Nest camera discovery stub + sound-burst detect → reactive **louder** alarm (`EscalatingAlarmController` ↔ fleet `volBlast` / `alarmState` concepts).  
-2. **Glass Shatter** — event-triggered class `glass_shatter` sharing the same Gemini/gcloud detector interface (`AcousticEventClass`).  
-3. Sibling ASP ultrasonic remains in `native/IoTASP`.
+1. **HomeNestAlarm** — Nest camera discovery stub + sound-burst detect → reactive **louder** alarm.  
+2. **Glass Shatter** — event-triggered class `glass_shatter` sharing the Gemini/gcloud detector interface.  
+3. **AppShell (M9)** — tabs for SensorKit / Motion / Mic placeholders; wire to #110 / #111 packages later.  
+4. Sibling ASP ultrasonic remains in `native/IoTASP`.
 
 ## Build (stub mode — required green)
 
@@ -48,36 +51,33 @@ bash scripts/home_apis_gcloud_bootstrap.sh --apply # owner confirmation required
 
 ## Secrets
 
-Never commit OAuth client IDs, Nest tokens, or API keys. Reference 1Password `dev` item **names** only. Identity: betty@bearresearch.io.
+Never commit OAuth client IDs, Nest tokens, or API keys. Reference 1Password `dev` item **names** only. Identity: betty@bearresearch.io. SensorKit entitlement remains human + Apple gated (`entitlementDeclared == false` in shell).
 
 ## Cross-links
 
 - Apple Home / HomeKit (#15) is **parked and separate** — this is **Google** Home / Nest.  
-- Milestone: M8 — Nest cameras + Gemini sound-burst MVP (+ glass shatter).  
-- Spec doc: `docs/milestones/M8-nest-gemini-soundburst-mvp.md`
+- M8 milestone: `docs/milestones/M8-nest-gemini-soundburst-mvp.md`  
+- M9 shell: `docs/milestones/M9-native-ios-app-shell.md`  
+- Sibling libs: #110 SensorKit stub · #111 CoreMotion/mic · #112 CI · #113 privacy docs
 
-## Swift Playgrounds / Xcode (#102)
-
-This SPM package is the **Swift Playground–adjacent** learning/prototype target for HomeNestAlarm.
+## Swift Playgrounds / Xcode
 
 ### Open in Xcode (recommended on Mac)
 
 1. `open native/IoTASPHome/Package.swift` (or File → Open in Xcode).
-2. Build the `HomeNestAlarm` / `HomeNestAlarmUI` schemes — stub mode needs **no** GoogleHomeSDK.
-3. SwiftUI previews / a tiny App playground can import `HomeNestAlarmUI` and present `HomeNestRootView()` (tabs: ASP Ultrasonic note · **HomeNestAlarm** · **Glass Shatter**).
+2. Build `AppShell` / `HomeNestAlarm` / `HomeNestAlarmUI` — stub mode needs **no** GoogleHomeSDK.
+3. Present **`AppShellRootView()`** for the full M9 shell (or `HomeNestRootView()` for M8-only Nest/Glass).
 
 ### Swift Playgrounds (iPad / Mac)
 
 1. Create an App playground.
-2. Add the local package folder `native/IoTASPHome` (File → Add Package / shared playground package), or paste the `Sources/HomeNestAlarm` + `Sources/HomeNestAlarmUI` files.
-3. Entry: `HomeNestRootView()` — second-feature tabs already include HomeNestAlarm + Glass Shatter.
+2. Add the local package folder `native/IoTASPHome`.
+3. Entry: `AppShellRootView()` — includes M8 Nest/Glass + M9 module placeholder tabs.
 
 ### Build gate
 
 ```bash
 make home-ios-build   # exit 0 without proprietary GoogleHomeSDK
-# equivalent: cd native/IoTASPHome && swift build
 ```
 
 CLT-only hosts may skip `swift test` when XCTest is missing; full Xcode.app runs tests green.
-
