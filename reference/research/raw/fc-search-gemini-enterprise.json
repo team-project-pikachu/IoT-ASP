@@ -1,0 +1,59 @@
+Gemini Enterprise app: Best of Google AI for Business
+  URL: https://cloud.google.com/gemini-enterprise
+  # Gemini Enterprise app brings the best of Google AI to every employee
+## Gemini Enterprise app editions
+### Key benefits:
+#### 25 GiB storage and data indexing per seat (pooled)
+![users icon](https://www.gstatic.com/bricks/image/087bfa9b-dd46-4b01-ac95-a300c767dc92.svg)
+
+#### Up to 300 seats
+Starting at
+
+$30
+
+USD per seat per month
+
+### Everything in Business edition and:
+#### Up to 75 GiB storage and data indexing per seat (pooled)
+![users icon](https://www.gstatic.com/bricks/image/087bfa9b-dd46-4b01-ac95-a300c767dc92.svg)
+
+#### Unlimited seats
+![add circle icon](https://www.gstatic.com/bricks/image/2983d0c1-6914-4c75-902a-b74a043a76e6.svg)
+
+About apps and data stores | Gemini Enterprise
+  URL: https://docs.cloud.google.com/gemini/enterprise/docs/apps-data-stores
+  - [Gemini Enterprise](https://docs.cloud.google.com/gemini/enterprise/docs)
+
+# About apps and data stores    Stay organized with collections      Save and categorize content based on your preferences.
+- **App**: A Gemini Enterprise app provides search results, actions, and
+agents to your end users. The term _app_ can be used interchangeably with the
+term _engine_ in the context of APIs.
+
+Integrate Gemini Enterprise Agents with Google Workspace - Codelabs
+  URL: https://codelabs.developers.google.com/ge-gws-agents
+  In this codelab, you build Gemini Enterprise agents that are tightly integrated with Google Workspace via data stores, Google-managed Model ...
+
+Gemini Enterprise Agent Platform | Google Cloud Documentation
+  URL: https://docs.cloud.google.com/gemini-enterprise-agent-platform
+  8 days ago · Gemini Enterprise Agent Platform is our open and comprehensive platform that empowers businesses to rapidly build, scale, govern, and optimize ...
+
+What Is Gemini Enterprise (Formerly Agentspace)? 2026 Guide - Atlan
+  URL: https://atlan.com/know/ai-agent/ai-agent-applications/google-agentspace/
+  Gemini Enterprise (formerly Google Agentspace) pairs Google Cloud search with AI agents for research, planning, and action.
+
+Gemini Enterprise Agent Platform (formerly Vertex AI) | Google Cloud
+  URL: https://cloud.google.com/products/gemini-enterprise-agent-platform
+  Gemini Enterprise Agent Platform (formerly Vertex AI) is a comprehensive platform for developers to build, scale, govern and optimize agents.
+
+Gemini Enterprise Agent Platform: What It Means for Business ...
+  URL: https://www.mindstudio.ai/blog/gemini-enterprise-agent-platform-business-automation
+  ## What the Gemini Enterprise Agent Platform Actually Is
+- **Enterprise data grounding** — the ability to connect to internal knowledge bases, BigQuery data warehouses, and proprietary document stores so agents work with your actual business context
+
+## Frequently Asked Questions
+### What is the Gemini Enterprise Agent Platform?
+It lets a single natural-language prompt trigger multiple specialized AI agents that can take actions across Google Workspace apps (Gmail, Calendar, Docs, Sheets), third-party tools like Jira and Salesforce, and connected data sources like BigQuery.
+
+Using Data Stores in Gemini Enterprise : r/googlecloud - Reddit
+  URL: https://www.reddit.com/r/googlecloud/comments/1tb33f7/using_data_stores_in_gemini_enterprise/
+  Just wanted to share I Found out you can now build agents in Big Query studio and publish them in to Gemini enterprise as A2A agents. Very easy ...

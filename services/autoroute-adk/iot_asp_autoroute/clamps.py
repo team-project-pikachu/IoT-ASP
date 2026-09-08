@@ -5,7 +5,17 @@ from __future__ import annotations
 from typing import Any
 
 ALLOWED_ALGOS = frozenset(
-    {"hop", "am_gate", "shriek_chirp", "shriek_sweep", "burst", "infra_mod"}
+    {
+        "hop",
+        "am_gate",
+        "shriek_chirp",
+        "shriek_sweep",
+        "burst",
+        "infra_mod",
+        "cry_mirror",
+        "siren_mirror",
+        "death_metal_mirror",
+    }
 )
 
 # Dual TX bands (C6): default ultrasonic; optional LF when patch/telemetry band=10-20.

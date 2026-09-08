@@ -375,8 +375,10 @@ def test_fl12_notebook_ipynb_and_md_in_sync():
 
 
 def test_fl13_constants():
-    assert fl.ALL_COLUMNS[: len(TELEMETRY_FEATURE_COLUMNS)] == TELEMETRY_FEATURE_COLUMNS
-    assert fl.ALL_COLUMNS[len(TELEMETRY_FEATURE_COLUMNS):] == fl.SENSOR_COLUMNS
+    expected_columns = tuple(
+        dict.fromkeys(TELEMETRY_FEATURE_COLUMNS + fl.SENSOR_COLUMNS)
+    )
+    assert fl.ALL_COLUMNS == expected_columns
     assert fl.MIC_DIFF_ALPHA == 0.85
     assert len(fl.SENSOR_COLUMNS) == 18
     assert len(set(fl.ALL_COLUMNS)) == len(fl.ALL_COLUMNS)

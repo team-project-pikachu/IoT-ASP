@@ -1,0 +1,40 @@
+---
+description: IoT-ASP backend decoupling, SEBoK V&V evidence, CI gates, Project 5 tracking
+alwaysApply: true
+---
+
+# ASP backend / V&V / CI (locked)
+
+## Backend decoupled from Vercel
+
+- Static app (`public/`) only **polls/applies patches** and optionally **beacons telemetry**.
+- Never embed Gemini/Vertex keys, ADK agent code, or Vertex clients in frontend HTML/JS.
+- ADK stack (`services/autoroute-adk/`) deploys independently (Agent Engine / Cloud Run) — **ADK deploy without Vercel**.
+- Wire contract: `docs/api-contract.md` with **`schemaVersion`**. Prefer additive fields; bump `schemaVersion` only on breaking wire changes.
+- Clamps (vol ≤100 UI %, band freqs, algo whitelist, Hold refuse) enforced on **backend** before write; frontend applies defensively.
+
+## SEBoK V&V
+
+- Verification/validation evidence lives under **`.vv/`** (per-issue packages + matrix when present).
+- **Hold / Manual wins** over remote patches; include negative controls (bad patch rejected, Hold refuse, nonsense priors ignored).
+- Do not promote Project work to Done without fresh evidence for the exact revision under test.
+- Parser/dry-run demos alone are not promotion proof when the contract defines a semantic result.
+
+## CI + change control
+
+- GitHub Actions on **PRs linked to issues**.
+- **MVP non-breaking → ship continuously** (CI green on `main` → Actions Deploy preview then prod). **Breaking → Project 5 issue first** (no silent `schemaVersion` / clamp / C1–C6 breaks).
+- **Agents: commit incremental MVP slices** as each non-breaking slice finishes and local sim is green (`bash scripts/autoroute_dev.sh` + `bash scripts/ci_static_gates.sh`) — open/update an issue-linked PR; do **not** leave large uncommitted working trees.
+- Deploy workflow: `.github/workflows/deploy.yml` (requires `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID`; skips clearly if missing — see `docs/ci.md`). Never skip Hold/clamp/schema gates.
+- Outstanding locked work → issues on `team-project-pikachu/IoT-ASP` → [Project 5](https://github.com/orgs/team-project-pikachu/projects/5).
+
+## Account + privacy (docs / CI artifacts)
+
+- Public docs: org **`betty@bearresearch.io`** for GCP/Gemini/Chrome iOS context when an account must be named.
+- No secrets, `.env`, API keys, or street addresses in repo, CI logs, or `.vv/` narratives.
+
+## Agent must not
+
+- Couple frontend redeploy to ADK redeploy as a hard dependency.
+- Skip `.vv/` evidence or negative controls when claiming V&V pass.
+- Merge breaking API/contract changes without `schemaVersion` / issue linkage.

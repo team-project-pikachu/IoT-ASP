@@ -74,7 +74,9 @@ SENSOR_COLUMNS: tuple[str, ...] = (
     "ctxResumes",
     "watchdogTrips",
 )
-ALL_COLUMNS: tuple[str, ...] = TELEMETRY_FEATURE_COLUMNS + SENSOR_COLUMNS
+ALL_COLUMNS: tuple[str, ...] = tuple(
+    dict.fromkeys(TELEMETRY_FEATURE_COLUMNS + SENSOR_COLUMNS)
+)
 
 MIC_DIFF_ALPHA = 0.85
 BAND_LF_THR_DB = -60.0

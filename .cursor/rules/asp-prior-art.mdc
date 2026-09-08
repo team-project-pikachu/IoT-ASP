@@ -1,0 +1,71 @@
+---
+description: ASP prior art — awesome-list, .gov, USPTO; fetch via Firecrawl; libs via Context7
+alwaysApply: true
+globs: packages/**/*,services/autoroute-adk/**/*,docs/**/*,public/index.html,reference/**
+---
+
+# ASP prior art + Firecrawl + Context7 (IoT-ASP)
+
+Before inventing new Adaptive Signal Processing algorithm packages (timestore, SciPy anomaly, autoroute, hop/Soundcore path), **search priors** and **fetch with Firecrawl / Context7** — do not greenfield when an awesome-listed, government, or patent lineage already fits.
+
+Rule index for related locked decisions: [docs/rules-index.md](../../docs/rules-index.md).
+
+## 1. Awesome lists (`gh`)
+
+- In-repo hubs first: `docs/awesome-list-asp.md`, `docs/awesome-iot-asp.md`
+- Topic hub: https://github.com/topics/awesome-list
+- Related: `awesome`, `awesome-list`, `awesome-python`, acoustics/DSP domain lists
+- Prefer Firecrawl **developer-index** / search skills to inventory listed tools before greenfield
+- CLI:
+  - `gh search repos --topic awesome-list <keywords>`
+  - `gh search repos --topic awesome <keywords>`
+
+## 2. Government + open scientific sources
+
+Search and cite (no street-address PII):
+
+| Source | Use |
+|--------|-----|
+| NIST | Metrology, DSP, acoustics standards |
+| NASA NTRS | Acoustics / vibration / signal methods |
+| arXiv | Open scientific priors (cite DOI/arXiv id) |
+| .gov acoustics/DSP | Agency technical pages |
+| FCC | Spectrum / RF adjacency when relevant |
+
+## 3. USPTO prior art
+
+- Search patents/public applications for signal processing, ultrasonics, vibrometry, acoustic sensing.
+- Design **novel derivatives** that **cite priors**; **do not copy claims verbatim**.
+- Document lineage in `docs/` and/or `reference/`.
+
+## 4. Firecrawl (mandatory fetch path)
+
+Use **Firecrawl as a service** to retrieve awesome-list READMEs, .gov pages, USPTO/public patent pages, and related blogs — prefer workspace **CLI stable** over inventing scrapers:
+
+- Skills: `firecrawl-cli-stable`, `firecrawl-search`, scrape/map/crawl as appropriate
+- Prefer `scripts/*_stable.sh` / research-cli-kit **CLI before MCP** when the prefer-cli rule applies
+- Cache under project `.firecrawl/` when used
+- **Do not invent Firecrawl dollar costs** — report credits/tokens only when files provide them
+- Cite scraped URLs in docs
+
+## 5. Context7 (mandatory for library/SDK docs)
+
+When incorporating SciPy, Google ADK, Web Audio, or other libraries into the ASP base:
+
+1. `resolve-library-id` (CLI stable or MCP)
+2. `query-docs` scoped to one concept per call
+- Prefer Context7 over training-memory for API syntax
+- Workspace: `context7-cli-stable` / MCP `plugin-context7-context7` / `user-Context7`
+- Prefer CLI (`context7_stable.sh`) when research-cli-kit requires it
+
+## 6. Prefer incorporate → cite → file gaps
+
+1. Prefer incorporation over greenfield when a prior fits formal constraints (native BT A2DP, Hold/Manual, schemaVersion).
+2. Cite awesome / .gov / USPTO / Firecrawl URLs and Context7 library ids in `docs/` (see [docs/asp-prior-art.md](../../docs/asp-prior-art.md)).
+3. Outstanding gaps → GitHub issues on `team-project-pikachu/IoT-ASP` → [Project 5](https://github.com/orgs/team-project-pikachu/projects/5).
+
+## Out of scope
+
+- No secrets or site PII in public docs.
+- No verbatim patent claim text as product code.
+- Do not break C1 native Bluetooth / SDD app control constraints.

@@ -43,7 +43,7 @@ Allowed `algo`: `hop` | `am_gate` | `shriek_chirp` | `shriek_sweep` | `burst` | 
 | Param | Clamp |
 |-------|--------|
 | `fMin`/`fMax` | ∈ [17000, 23000], `fMin` < `fMax` |
-| `vol` | **UI percent** ≤ 12 (residential soft); hard refuse > 20; legacy linear ≤1 normalized ×100 |
+| `vol` | **UI percent** 0–100 (max practical Web Audio); soft==hard 100; legacy linear ≤1 normalized ×100. Hold/Manual freezes remote apply. BT/hardware still limit SPL. |
 | `pulseMs` | 20–200 |
 | `shriekMs` | 20–120; shriek duty refuse if continuous high |
 | `algo` | whitelist only |
@@ -63,6 +63,8 @@ Do **not** claim full CFD on the phone. BT latency makes hop timing soft ([iphon
 - Overview: https://docs.cloud.google.com/agent-builder/agent-development-kit/overview
 - Scaffold: `services/autoroute-adk/`
 - Local: `adk web` or `adk run` · Deploy: `adk deploy agent_engine` / `cloud_run` → `bear-iot-asp-rec` / `us-central1`
+
+**Multi-LLM registry** (post-Gemini, parked): design sketch only — [multi-llm-registry.md](multi-llm-registry.md) / issue **#13**. Production v0 stays Gemini + offline heuristic; no non-Gemini provider calls until scheduled.
 
 ## Dev dry-run
 

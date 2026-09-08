@@ -1,0 +1,46 @@
+---
+description: IoT-ASP locked ops/fleet/control — SDD app, A2DP, loudness, Chrome iOS, night, power, privacy
+alwaysApply: true
+---
+
+# ASP ops / fleet / control (locked)
+
+Public scientific tooling. **No street PII** in public IoT-ASP. Prefer org account **`betty@bearresearch.io`** for Chrome iOS / GCP / Gemini in public docs (not personal Gmail).
+
+## Control surface (SDD via app)
+
+- The **public web app** is the software-defined driving surface (`discover → model → plan → execute`).
+- Humans + Gemini/ADK patches drive the acoustic plant; speaker hardware knobs alone are not the control plane.
+- **Hold / Manual wins** over remote `/patch.json`. Local Signal / sensors may stay armed.
+- Detail: `docs/sdd-app-control.md`, `docs/DESIGN_CONSTRAINTS.md` (C3).
+
+## Audio path (non-negotiable)
+
+| Rule | Detail |
+|------|--------|
+| TX | **Native iOS Bluetooth A2DP** only (Settings + Control Center). **Not** Web Bluetooth TX. |
+| Loudness | Max practical Web Audio (default / clamp **100%** UI). Utilize Soundcore **~12 W** dual drivers via OS A2DP. Be honest: BT absolute volume + speaker DSP still limit SPL. |
+| Autorotate | **Hardware-limited** — respect A2DP/AAC/SBC + BassUp/DSP roll-off; do not claim flat ultrasonic FR. |
+| Bands | Default **17–23 kHz**. Optional **10–20 Hz** only if IoT HW permits **and** user/capability gate (`lfDriveCapable` / arm); else skip/fallback. |
+
+## Chrome iOS + dedicated phone
+
+- On **Signal on / Arm sensors**: arm every available sensor (Web Audio unlock, mic, DeviceMotion, DeviceOrientation; Ambient Light if present). Document WebKit limits — do not invent Safari APIs.
+- Dedicated fleet phone: wake lock / keep awake when practical; Guided Access or Focus checklist; maximize CPU/RAM within WebKit; **Low Power Mode off**.
+- Detail: `docs/sensors-chrome-ios.md`, `docs/iphone-dedicated-mode.md`, `docs/iphone-bluetooth.md`.
+
+## Fleet power + night + connectivity
+
+- **Continuous 120 V AC** for study path (phones + speakers charging). No battery duty-cycle assumptions in autoroute gain/dwell.
+- Night window **22:00–07:00 America/New_York**: volume **0 → 100%** in **0.5** glides/jumps (schedule/courtesy only — not battery-save).
+- Connectivity: **Google Home Wi‑Fi now**; cellular later (track as Project issue). Tag power `ac120` in telemetry when known.
+
+## Parked / deferred
+
+- **AI Edge Portal**: optional later when installed/allowlisted — do not block MVP (`docs/ai-edge-portal.md`).
+- Outstanding locked work → GitHub issues on `team-project-pikachu/IoT-ASP` → [Project 5](https://github.com/orgs/team-project-pikachu/projects/5).
+
+## Agent must not
+
+- Add Web Bluetooth TX, site street addresses, or battery-save logic that contradicts C5.
+- Soften max-gain defaults to “neighbor-safe” without an explicit user election separate from Hold.

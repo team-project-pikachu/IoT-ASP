@@ -44,7 +44,7 @@ def test_invariant_literals(html: str) -> None:
     for lit in ("Hold / Manual", "holdManual", "holdPatchBtn"):
         assert lit in html, lit
     assert re.search(r"const SCHEMA_VERSION = 1;", html)
-    assert re.search(r"const VOL_PATCH_MAX = 12,", html), "VOL_PATCH_MAX drift (owner decision, see spec 01)"
+    assert re.search(r"const VOL_PATCH_MAX = 100,", html), "VOL_PATCH_MAX must match clamps.py hard max (C4)"
     assert "BAND_ABS_LO = 17000, BAND_ABS_HI = 23000" in html
 
 
