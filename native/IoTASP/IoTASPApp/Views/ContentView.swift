@@ -32,7 +32,9 @@ struct ContentView: View {
 
                 Section("Sensors") {
                     Toggle("Arm CoreMotion 1–100 Hz", isOn: $session.motionArmed)
-                    LabeledContent("|a|", value: String(format: "%.3f", session.lastAbsA))
+                    LabeledContent("|a| (g)", value: String(format: "%.3f", session.lastAbsA))
+                    LabeledContent("physical vib", value: session.lastPhysicalEvent)
+                    LabeledContent("shake count", value: "\(session.shakeCount)")
                     LabeledContent("|ω|", value: String(format: "%.3f", session.lastAbsOmega))
                     LabeledContent("plan Hz", value: String(format: "%.0f", session.motionPlanHz))
                     LabeledContent("accel", value: session.motionAvailability.accelerometer ? "yes" : "no")

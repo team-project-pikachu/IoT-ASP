@@ -94,6 +94,18 @@ struct IoTASPSmoke {
         check("denied does not crash", steps.contains(where: { $0.kind == .microphone && $0.isBlocking }))
         check("mic usage on-device", PermissionSequencer.usageDescription(for: .microphone).contains("on-device"))
 
+        // #4 physical vib
+        let ch = PhysicalVibChannel(config: PhysicalVibConfig(thresholdG: 0.1, debounceMs: 300, shakeMultiple: 3, shakeWindowMs: 400, reseedEvery: 4))
+        let t0 = Date()
+        check("below thr none", ch.observe(absA: 0.05, now: t0) == .none)
+        check("physical", ch.observe(absA: 0.15, now: t0) == .physical)
+        check("debounce", ch.observe(absA: 0.15, now: t0.addingTimeInterval(0.1)) == .none)
+        let t1 = t0.addingTimeInterval(0.4)
+        _ = ch.observe(absA: 0.4, now: t1)
+        let hop = ch.observe(absA: 0.4, now: t1.addingTimeInterval(0.05))
+        check("shake hop", hop == .shakeHop)
+        check("disarmed none", ch.observe(absA: 2, now: t1.addingTimeInterval(2), armed: false) == .none)
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

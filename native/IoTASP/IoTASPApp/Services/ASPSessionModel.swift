@@ -29,6 +29,9 @@ final class ASPSessionModel: ObservableObject {
     @Published var alarm = AlarmStateMachine()
 
     private let detector = ImpulseDetector()
+    private let physicalVib = PhysicalVibChannel()
+    @Published var lastPhysicalEvent: String = "none"
+    @Published var shakeCount: Int = 0
     #if canImport(CoreMotion)
     private var motion: PhoneMotionLogger?
     #endif
@@ -155,6 +158,12 @@ final class ASPSessionModel: ObservableObject {
         lastAbsA = sample.absA
         lastAbsOmega = sample.absOmega
         intenseVib = detector.intenseVibProxy(absA: sample.absA, lfEnergyProxy: sample.absA)
+        let phys = physicalVib.observe(absA: sample.absA, armed: true)
+        lastPhysicalEvent = phys.rawValue
+        shakeCount = physicalVib.shakeCount
+        if phys == .shakeHop || phys == .shakeReseed {
+            pendingImpulse = ImpulseEvent(fromAccel: true, fromMicDiff: false, riseMs: 40)
+        }
         if let event = detector.observeAccel(sample) {
             pendingImpulse = event
         }
