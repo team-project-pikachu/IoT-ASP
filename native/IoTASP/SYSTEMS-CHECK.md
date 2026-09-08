@@ -43,6 +43,16 @@
 - [ ] Hold / Manual → `cleared` + freeze
 - [ ] Quiet ~2.5 s → re-arm
 
+## SensorKit entitlement (#148)
+
+- [ ] **Not approved** in this public repo (do not check this box unless a real Apple grant exists)
+- [ ] Bundle ID `io.bearresearch.iotasp` owned by the team
+- [ ] Capability `com.apple.developer.sensorkit.reader.allow` requested in Apple Developer (human)
+- [ ] Provisioning regenerated after approval
+- [ ] `ASP_SENSORKIT_ENTITLED` still **off** until the above are true
+
+See `docs/sensorkit-entitlement-checklist.md`.
+
 ## Explicit non-claims
 
 - SensorKit entitlement: **not granted**
