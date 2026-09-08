@@ -1,0 +1,11 @@
+{
+  "name": "iot-asp-e2e",
+  "private": true,
+  "description": "Playwright smoke for public/index.html (headless Chromium). Pinned to 1.56.1 = pre-installed /opt/pw-browsers/chromium-1194; bump together with the browser cache.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

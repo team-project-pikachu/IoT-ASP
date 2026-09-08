@@ -11,6 +11,8 @@ cd "$ROOT"
 # Prefer package dry_run if present
 if python3 -c 'import iot_asp_autoroute.dry_run' 2>/dev/null; then
   python3 -m iot_asp_autoroute.dry_run
+  # #22: ingest/process hooks must have appended today's structured JSONL under the dry root.
+  test -s ".autoroute-dry/meta/logs/node1/$(date -u +%Y-%m-%d).jsonl" && echo "OK fleet_log jsonl"
   exit 0
 fi
 

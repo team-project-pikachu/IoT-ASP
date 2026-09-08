@@ -17,6 +17,7 @@
 | CI-06 | `public/index.html` retains Hold / Manual |
 | CI-07 | No obvious API keys in public HTML |
 | CI-08 | PR template + CI job require issue ref (`Fixes #N` / Related) |
+| CI-09 | `tests`, `mdc check` (required) and `e2e smoke` (informative) jobs present |
 
 ## Procedure
 
