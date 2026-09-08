@@ -45,7 +45,7 @@ Tracked as GitHub milestones M0–M5 (seeds, monitoring, vib rotation, RLHF ±, 
 - ADK agent: `services/autoroute-adk/` (`docs/adk-autoroute.md`) — deploy **independently** of Vercel; dry-run `bash scripts/autoroute_dev.sh`
 - Colab ETL stub: `notebooks/iot_asp_colab_etl.ipynb`
 - Knowledge base: `reference/knowledge-base/` + `bash scripts/kb_refresh.sh`
-- Private study: local `study/` (gitignored)
+- Private study: local `study/` (gitignored) + companion [`IoT-ASP-study`](https://github.com/team-project-pikachu/IoT-ASP-study); public-safe package [`packages/iot-asp-study`](packages/iot-asp-study/) (#67)
 
 ## Developer workflow
 
@@ -63,6 +63,7 @@ Tracked as GitHub milestones M0–M5 (seeds, monitoring, vib rotation, RLHF ±, 
 public/                 # shipped static web blaster (PWA)
 docs/                   # gemini, ADK, autoroute, physics, Colab, deploy, branch protection
 docs/specs/             # feature specs per Project 5 issue
+packages/iot-asp-study/ # public-safe study schema/doctor (#67); private protocol stays gitignored
 services/autoroute-adk/ # Google ADK Python agent (+ fleet_log, features_live, mic_diff)
 tests/                  # pytest + tests/e2e (Playwright smoke)
 scripts/                # gates, dry-run, mdc_convert, deploy smoke, gh_protect_main

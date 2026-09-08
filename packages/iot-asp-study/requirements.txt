@@ -1,0 +1,2 @@
+# Stdlib-only package. No PyPI pins required for schema/doctor.
+# Keep empty on purpose — do not add @latest deps here.
