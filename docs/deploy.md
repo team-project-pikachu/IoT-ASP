@@ -125,6 +125,35 @@ Vercel CLI in CI is pinned to the current major, `npm i -g vercel@59` (npm `late
 with `tests/test_deploy_workflow.py` (DP-07). Commands are non-interactive: `vercel pull --yes`,
 `vercel build`, `vercel deploy --prebuilt` (no double build), token via `--token=${{ secrets.VERCEL_TOKEN }}`.
 
+## (c′) Option B — 1Password service account instead of copied secrets (owner decision)
+
+Prior-art check (`docs/PRIOR_ART.md`): 1Password ships an official GitHub Action that resolves `op://`
+references at run time with a **service account**, so the four Vercel secrets never have to be copied
+into GitHub at all — only `OP_SERVICE_ACCOUNT_TOKEN` is stored, and rotation happens in 1Password.
+
+```yaml
+# inside a deploy job, before the Vercel CLI steps
+- uses: 1password/load-secrets-action/configure@v4
+  with:
+    service-account-token: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+- uses: 1password/load-secrets-action@v4
+  id: op
+  with:
+    export-env: false
+  env:
+    VERCEL_TOKEN: op://dev/Vercel deploy token gh-actions/credential
+    VERCEL_ORG_ID: op://dev/Vercel hop-ultrasonic/orgId
+    VERCEL_PROJECT_ID: op://dev/Vercel hop-ultrasonic/projectId
+    VERCEL_DEPLOY_HOOK_PROD: op://dev/Vercel deploy hook gh-actions-prod/credential
+# then reference ${{ steps.op.outputs.VERCEL_TOKEN }} etc. instead of ${{ secrets.VERCEL_TOKEN }}
+```
+
+Not enabled by default: the owner's tooling policy asks that service accounts be agreed first. To adopt it,
+create a service account with read access to vault `dev` (1Password → Developer → Service accounts), store
+its token as the single GitHub secret `OP_SERVICE_ACCOUNT_TOKEN`, and switch `secrets_check` / `deploy_*`
+in `deploy.yml` to the step outputs above. Until then Option A (`scripts/op_secrets_to_gh.sh`) remains the path.
+Source: https://www.1password.dev/ci-cd/github-actions (Context7 `/websites/1password_dev`).
+
 ## (d) GitHub Environments
 
 Settings → Environments → **New environment**, create `dev`, `test`, `production` (names must match
