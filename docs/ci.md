@@ -19,6 +19,18 @@ Issue-linked PRs are the intended path for Project 5 Todo work (#12, #16, #17, r
 4. **`tests`** — `pip install -r requirements-dev.txt` then `python -m pytest tests -q` (converter, fleet log, micDiff, live features, ruleset JSON, deploy workflow, public HTML).
 5. **`mdc check`** — `python3 scripts/mdc_convert.py --check` (Cursor `.mdc` → Claude Code outputs are fresh).
 6. **`e2e smoke`** — Playwright against `public/` (`tests/e2e/run.sh`); informative, not required by the ruleset.
+7. **`M9 Home iOS AppShell presence`** (`home_ios_m9_shell`) — ubuntu file gate for `native/IoTASPHome` AppShell + `scripts/home_ios_build.sh` (#112). Does **not** invent OAuth/Nest tokens. Full `swift build` stays on macOS via `make home-ios-build`.
+
+## Native Home iOS (M8 / M9)
+
+| Target | Where | What |
+|--------|--------|------|
+| `make home-ios-presence` | ubuntu CI + local | Loud fail if AppShell / Nest stub files missing (`scripts/home_ios_presence_check.sh`) |
+| `make home-ios-build` | macOS / Xcode CLT | `swift build` stub without GoogleHomeSDK; XCTest NOTE only when module truly missing |
+| M8 Nest/Glass sources | `native/IoTASPHome/Sources/HomeNestAlarm*` | From #102 / PR #116 (and glass PRs #114/#117 when merged) |
+| M9 AppShell | `Sources/AppShell` + `AppShellRootView` | From #109 |
+
+Agents verify with `gh` / `git` / local `make` only — no browser OAuth.
 
 ## Continuous ship
 

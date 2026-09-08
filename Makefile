@@ -1,5 +1,5 @@
 # IoT-ASP — deterministic local entry points (mirror .github/workflows/ci.yml)
-.PHONY: help deps gates dryrun test mdc mdc-check native-check home-ios-build all e2e protect-main
+.PHONY: help deps gates dryrun test mdc mdc-check native-check home-ios-build home-ios-presence all e2e protect-main
 
 PY ?= python3
 
@@ -11,7 +11,8 @@ help:
 	@echo "make mdc        # convert .cursor/rules/*.mdc → CLAUDE.md blocks + .claude/rules + .claude/skills"
 	@echo "make mdc-check  # fail if converted outputs are stale (CI gate)"
 	@echo "make native-check  # CLT swift smoke + SPM resolve (#41; no Xcode.app claim)"
-	@echo "make home-ios-build  # M8/M9 native/IoTASPHome stub swift build (no GoogleHomeSDK) — #102 #109"
+	@echo "make home-ios-build  # M8/M9 native/IoTASPHome stub swift build (no GoogleHomeSDK) — #102 #109 #112"
+	@echo "make home-ios-presence  # M9 ubuntu-safe AppShell file presence (#112; no silent skip)"
 	@echo "make all        # gates + dryrun + test + mdc-check"
 	@echo "make e2e        # Playwright smoke against public/ (see tests/e2e/)"
 	@echo "make protect-main  # apply .github/rulesets/main-protection.json via gh api (run on a machine with gh)"
@@ -39,6 +40,9 @@ native-check:
 
 home-ios-build:
 	bash scripts/home_ios_build.sh
+
+home-ios-presence:
+	bash scripts/home_ios_presence_check.sh
 
 all: gates dryrun test mdc-check
 
