@@ -12,6 +12,7 @@ Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 
 ## Issues
 
+- Related: [#140](https://github.com/team-project-pikachu/IoT-ASP/issues/140) full CoreMotion suite
 - Related: [#41](https://github.com/team-project-pikachu/IoT-ASP/issues/41) native iOS+Watch
 - Related: [#42](https://github.com/team-project-pikachu/IoT-ASP/issues/42) impulse→blast / alarm
 - Related: [#39](https://github.com/team-project-pikachu/IoT-ASP/issues/39) Sonos Beam Node 3
@@ -25,7 +26,7 @@ Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 |---------|--------------------------------|--------------|
 | Alarm state machine | Runs (unit-tested via SPM) | — |
 | Impulse simulate button | Runs | Real CoreMotion wiring: start in session when `motionArmed` |
-| CoreMotion 1–100 Hz | Code present (`PhoneMotionLogger`) | Hook `onSample` → detector in next pass |
+| CoreMotion 1–100 Hz | Code present (`PhoneMotionLogger` + `CoreMotionSuite`) | Simulator: availability all-false; pedometer skipped; mag/altimeter optional |
 | AVRoutePicker / A2DP / AirPlay session | Runs on device | Needs full Xcode; CLT-only hosts cannot `xcodebuild` |
 | watchOS UI + impulse/Hold | Runs on Watch simulator/device | WCSession mirror best-effort |
 | SensorKit readers | Compile-time `#if canImport(SensorKit) && ASP_SENSORKIT_ENTITLED` | **Entitlement not granted** — always stub |
