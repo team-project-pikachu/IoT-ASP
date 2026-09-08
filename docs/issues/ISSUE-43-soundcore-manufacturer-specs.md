@@ -1,19 +1,16 @@
 # ISSUE-43 — Soundcore manufacturer specs
 
-**Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/43  
-**Classification:** ship / stub iterate (Balanced)  
-**Status:** implemented-docs
+**Status:** docs implemented; native honesty strings aligned (PR4)
 
 ## Did
 
-- `docs/hardware/soundcore-specs.md`
-- `docs/hardware/soundcore-2.md`
+- `docs/hardware/soundcore-specs.md` dossier
+- `SoundcoreConstraints` cites published 12 W + unpublished FR honesty
 
 ## Didn't
 
-- Invent credentials or claim cloud/HW integrations live when gated.
-- Auto-close the GitHub issue (human verifies).
+- Invent lab FR / SPL / codec measurements
 
 ## Next
 
-- FR / max SPL unpublished — marked Unknown
+- Optional bench FR later; keep unpublished fields marked unpublished

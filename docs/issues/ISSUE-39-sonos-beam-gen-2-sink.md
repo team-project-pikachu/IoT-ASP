@@ -1,31 +1,16 @@
 # ISSUE-39 — Sonos Beam Gen 2 sink
 
-**Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/39  
-**Classification:** parked stub (Balanced election)  
-**Owner surface:** research  
-**Canonical spec / ADR:** `docs/sonos-beam.md`
+**Status:** parked research deepened (PR4)
 
-## Scope (this pass)
+## Did
 
-Parked research ADR + AirPlay shell stub under native/ios-sonos-shell/.
+- `docs/sonos-beam.md` pre-arrival protocol + SYSTEMS-CHECK link
+- Native fleet sink enum AirPlay for node3
 
-## Constraints
+## Didn't
 
-- No site PII in public docs.
-- Do not invent secrets, entitlements, or HW capabilities.
-- Prefer linking existing `docs/specs/` over forking tables (`docs/api-contract.md` is wire canon).
-
-## What landed locally
-
-- This stub note under `docs/issues/`.
-- Pointers to existing specs / code hooks only.
-
-## What did **not** land
-
-- Full product implementation for this issue.
-- Live HW / Notion / HomeKit / Pi / ADK 2.x bumps where listed as parked.
+- Claim Beam HW in hand or A2DP parity
 
 ## Next
 
-- No A2DP parity claim
-- HW systems check when Beam arrives
+- Systems check when Beam arrives; keep `parked` until then

@@ -30,7 +30,7 @@ Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 | watchOS UI + impulse/Hold | Runs on Watch simulator/device | WCSession mirror best-effort |
 | SensorKit readers | Compile-time `#if canImport(SensorKit) && ASP_SENSORKIT_ENTITLED` | **Entitlement not granted** — always stub |
 | SoCo / sonos-web | Out of process (LAN host) | Documented in `docs/sonos-beam.md` |
-| Soundcore FR/power clamps | Honesty strings in `SoundcoreConstraints` | Official numbers TODO #43 |
+| Soundcore FR/power clamps | Honesty strings in `SoundcoreConstraints` (#43 dossier) | Lab FR still unpublished |
 
 ## Build
 

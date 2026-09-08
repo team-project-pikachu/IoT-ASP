@@ -16,9 +16,9 @@
 | #8 | parked stub | RLHF negative loop | `docs/specs/07-08-rlhf-loops.md` + `docs/issues/ISSUE-08-*` |
 | #10 | parked stub | React / React Strict DOM rewrite | `docs/specs/10-11-react-rewrite.md` + `docs/issues/ISSUE-10-*` |
 | #11 | static deepen | React multi-device fleet polish | `docs/specs/10-11-react-rewrite.md` + `docs/issues/ISSUE-11-*` |
-| #14 | parked stub | Raspberry Pi 5 field node | `docs/specs/14-15-21-23-edge-integrations.md` + `docs/issues/ISSUE-14-*` |
-| #15 | parked stub | Apple Home / HomeKit / Matter | `docs/specs/14-15-21-23-edge-integrations.md` + `docs/issues/ISSUE-15-*` |
-| #18 | parked stub | Node-3 chair + infrasound proxy | `docs/specs/18-node3-chair-infrasound.md` + `docs/issues/ISSUE-18-*` |
+| #14 | parked ADR+ | Raspberry Pi 5 field node | `docs/specs/14-15-21-23-edge-integrations.md` + `docs/issues/ISSUE-14-*` |
+| #15 | parked ADR+ | Apple Home / HomeKit / Matter | `docs/specs/14-15-21-23-edge-integrations.md` + `docs/issues/ISSUE-15-*` |
+| #18 | parked ADR+ | Node-3 chair + infrasound proxy | `docs/specs/18-node3-chair-infrasound.md` + `docs/issues/ISSUE-18-*` |
 | #19 | parked stub | Notion hub | `docs/specs/19-notion-hub.md` + `docs/issues/ISSUE-19-*` |
 | #22 | implemented+wired | Structured fleet logs | `services/autoroute-adk/iot_asp_autoroute/fleet_log.py`, `tests/test_fleet_log.py`, `docs/specs/22-structured-fleet-logs.md` |
 | #24 | parked stub | google-adk / google-genai 2.x | `docs/specs/24-adk-2x-migration.md` + `docs/issues/ISSUE-24-*` |
@@ -26,10 +26,10 @@
 | #26 | fixture+dry-run | Colab live GCS features | `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `notebooks/iot_asp_colab_etl.md`, `scripts/colab_live_gcs.sh` |
 | #27 | docs+name-check | Vercel Actions secrets | `docs/deploy.md`, `.vv/deploy/VERCEL.md`, `scripts/vercel_secrets_check.sh` |
 | #34 | implemented+wt-guard | mdc_convert GEN_MARK guard | `scripts/mdc_convert.py`, `tests/test_mdc_convert.py`, `docs/mdc-conversion.md` |
-| #39 | parked stub | Sonos Beam Gen 2 sink | `docs/specs/39-sonos-beam-sink.md`, `docs/sonos-beam.md` + `docs/issues/ISSUE-39-*` |
-| #41 | stubbed | Native iOS + watchOS | `docs/specs/41-native-ios-watchos.md`, `native/IoTASP/`, `.vv/41/README.md` |
+| #39 | parked research+ | Sonos Beam Gen 2 sink | `docs/specs/39-sonos-beam-sink.md`, `docs/sonos-beam.md` + `docs/issues/ISSUE-39-*` |
+| #41 | stub+checklist | Native iOS + watchOS | `docs/specs/41-native-ios-watchos.md`, `native/IoTASP/`, `docs/native-xcode.md`, `.vv/41/README.md` |
 | #42 | web slice | Impulse→blast + alarm (combined) | `docs/specs/42-impulse-alarm-combined.md`, `public/index.html`, `.vv/42/README.md` |
-| #43 | implemented-docs | Soundcore manufacturer specs | `docs/specs/43-soundcore-manufacturer-specs.md`, `docs/hardware/soundcore-specs.md` |
+| #43 | docs+native align | Soundcore manufacturer specs | `docs/specs/43-soundcore-manufacturer-specs.md`, `docs/hardware/soundcore-specs.md`, `docs/hardware/soundcore-2.md` |
 | #44 | web slice | Web PWA impulse→blast | `docs/specs/44-web-pwa-impulse-blast.md`, `public/index.html`, `tests/test_public_html.py` |
 | #45 | web slice | Web PWA alarm reactivity | `docs/specs/45-web-pwa-alarm-reactivity.md`, `public/index.html`, `docs/algorithms.md` |
 | #46 | duplicate | dup of #44 | see #44 |
