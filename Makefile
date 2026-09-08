@@ -1,5 +1,5 @@
 # IoT-ASP — deterministic local entry points (mirror .github/workflows/ci.yml)
-.PHONY: help deps gates dryrun test mdc mdc-check home-ios-build all e2e protect-main
+.PHONY: help deps gates dryrun test mdc mdc-check native-check home-ios-build all e2e protect-main
 
 PY ?= python3
 
@@ -10,6 +10,7 @@ help:
 	@echo "make test       # pytest tests/"
 	@echo "make mdc        # convert .cursor/rules/*.mdc → CLAUDE.md blocks + .claude/rules + .claude/skills"
 	@echo "make mdc-check  # fail if converted outputs are stale (CI gate)"
+	@echo "make native-check  # CLT swift smoke + SPM resolve (#41; no Xcode.app claim)"
 	@echo "make home-ios-build  # M8 native/IoTASPHome stub swift build (#96 event class; macOS)"
 	@echo "make all        # gates + dryrun + test + mdc-check"
 	@echo "make e2e        # Playwright smoke against public/ (see tests/e2e/)"
@@ -32,6 +33,9 @@ mdc:
 
 mdc-check:
 	$(PY) scripts/mdc_convert.py --check
+
+native-check:
+	bash scripts/native_compile_check.sh
 
 home-ios-build:
 	bash scripts/home_ios_build.sh

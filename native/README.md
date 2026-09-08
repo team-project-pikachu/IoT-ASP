@@ -13,5 +13,6 @@ Balanced stub-first landing for issues **#41 / #48 / #52** (native) and **#39** 
 - **Not** a signed App Store build. SensorKit stays entitlement-gated (`#if` / capability stubs).
 - Studio may only have Command Line Tools — `xcodebuild` needs full Xcode.app.
 - Shared alarm logic smoke: `cd IoTASP && swift Scripts/alarm_smoke.swift`
+- Repo gate (CLT): `bash scripts/native_compile_check.sh` or `make native-check`
 - M8 event-class stub (macOS): `bash scripts/home_ios_build.sh` or `make home-ios-build`
 - Docs: [`docs/native-xcode.md`](../docs/native-xcode.md), [`docs/sonos-beam.md`](../docs/sonos-beam.md), [`docs/hardware/soundcore-specs.md`](../docs/hardware/soundcore-specs.md), [`docs/milestones/M8-nest-gemini-soundburst-mvp.md`](../docs/milestones/M8-nest-gemini-soundburst-mvp.md)

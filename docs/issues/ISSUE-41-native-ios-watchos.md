@@ -1,21 +1,19 @@
 # ISSUE-41 — Native iOS + watchOS
 
-**Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/41  
-**Classification:** ship / stub iterate (Balanced)  
-**Status:** stubbed
+**Status:** stub deepened (stack PR4) + CLT compile-check (stack PR5) — still no entitlement / App Store
 
 ## Did
 
-- `native/IoTASP/`
-- `native/README.md`
-- `docs/native-xcode.md`
+- `native/IoTASP/` + SPM Shared library + CoreMotion session (from #40)
+- `docs/native-xcode.md` build matrix
+- `native/IoTASP/SYSTEMS-CHECK.md` printable checklist
+- `scripts/native_compile_check.sh` + `make native-check` — `alarm_smoke.swift` + `swift package resolve` / best-effort `swift build` **without Xcode.app**
+- `tests/test_native_compile_check.py`
 
 ## Didn't
 
-- Invent credentials or claim cloud/HW integrations live when gated.
-- Auto-close the GitHub issue (human verifies).
+- SensorKit entitlement · signed build · claim device lab complete · `xcodebuild` app schemes
 
 ## Next
 
-- No SensorKit entitlement
-- CLT-only hosts cannot xcodebuild
+- Owner Xcode.app session; tick SYSTEMS-CHECK
