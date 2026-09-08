@@ -63,7 +63,9 @@ NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog",
            "telemetryUrlLabel", "patchUrlLabel")
 NEW_IDS = ("copyLogBtn", "copyFleetLogBtn", "reseedBtn", "simImpulseBtn", "fleetSeedCompare",
            "telHopAge", "telResumes", "telWatchdog",
-           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal")
+           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal",
+           "sonosPanel", "sonosLanUrl", "sonosIp", "sonosTarget",
+           "sonosDiscoverBtn", "sinkSonos", "sinkSoundcore")
 OLD_IDS = ("telDevice", "telSeed", "telAlgo", "telPeak", "telAccel", "telMic", "telVib", "telHold",
            "telSudden", "monLog", "sysList", "sysBtn", "vol", "fMin", "fMax", "holdPatchBtn", "power")
 
@@ -87,6 +89,20 @@ def test_telemetry_payload_tokens(html: str) -> None:
     # device metrics only
     for bad in ("userAgent", "geolocation", "location.", "navigator.language"):
         assert bad not in body, bad
+
+
+def test_sonos_node3_hooks(html: str) -> None:
+    """M0 Sonos Node 3: discover/list + blast/hop hooks; no Web Bluetooth."""
+    assert 'id="sonosPanel"' in html
+    assert "function discoverSonos(" in html
+    assert "function sonosControl(" in html
+    assert "sonos_beam" in html
+    assert "sonosOnBlast" in html
+    assert "sonosOnHop" in html
+    assert "navigator.bluetooth" not in html
+    assert "SONOS_LAN_URL" in html
+    assert "FleetSink.sonosBeamAirPlay" in html or "sonosBeamAirPlay" in html or "sonos_beam" in html
+    assert "CORS" in html or "mixed-content" in html or "mixed content" in html.lower()
 
 
 def test_fleet_log_export_and_impulse_sim(html: str) -> None:
@@ -242,7 +258,8 @@ def test_banner_lines_well_formed(html: str) -> None:
 # ── 12. size guard ───────────────────────────────────────────────────────────
 def test_size_guard() -> None:
     # Raised 2026-09-08 for fleet cards + impulse/alarm SM (#11/#42/#44/#45).
-    assert HTML_PATH.stat().st_size < 140_000
+    # Raised again for Sonos Node 3 panel + LAN/UPnP hooks (#120).
+    assert HTML_PATH.stat().st_size < 160_000
 
 
 # ── spec 02: max-entropy seeds ───────────────────────────────────────────────

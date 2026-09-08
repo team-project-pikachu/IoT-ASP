@@ -212,6 +212,18 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 .fleet-card.local{border-color:var(--lime)}
 @media (max-width:520px){.fleet-grid{grid-template-columns:1fr}}
 
+
+.sonos{padding:16px 0;border-bottom:1px solid var(--rule)}
+.sonos-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+.sonos select{
+  width:100%;background:#0E0F13;border:1px solid var(--rule);border-radius:3px;
+  color:var(--ink);font:400 14px/1.2 var(--mono);padding:11px 10px;-webkit-appearance:none;appearance:none;
+}
+.sonos select:focus-visible{outline:2px solid var(--uv);outline-offset:-1px}
+.sonos .row label{flex:0 0 72px}
+.sonos-status{font:400 11px/1.5 var(--mono);color:var(--dim);margin-top:8px}
+.sonos-status b{color:var(--ink);font-weight:400}
+
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 @media (max-width:520px){
   .deck{justify-content:center}
@@ -383,7 +395,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       </div>
       <div class="fleet-card" id="fleetPeer3">
         <div class="id">node-3</div>
-        <div class="meta" id="fleetPeer3Meta">chair / Sonos research (#18 #39)</div>
+        <div class="meta" id="fleetPeer3Meta">Node 3 · Sonos AirPlay / chair (#18 #39 #120)</div>
       </div>
     </div>
     <p class="sub" id="fleetSeedCompare" style="margin:10px 0 0">Seed compare · —</p>
@@ -392,14 +404,50 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     </div>
   </section>
 
+  <section class="sonos" id="sonosPanel" aria-label="Sonos Node 3">
+    <p class="legend">Sonos · Node 3 sink (#120 / #39)</p>
+    <p class="sub" style="margin:8px 0 0">
+      Carrier TX is an <b>OS AirPlay 2</b> route (Control Center → Beam) — same honesty as Soundcore A2DP,
+      not Web Bluetooth and not Sonos cloud OAuth. Optional same-LAN control uses a <b>bridge URL</b>
+      (node-sonos-http-api / SoCo HTTP) or a speaker <b>IP</b> for UPnP SOAP; Vercel HTTPS pages usually
+      cannot call <code>http://speaker:1400</code> (mixed content + CORS) without a same-LAN proxy.
+    </p>
+    <div class="seg" role="group" aria-label="Fleet audio sink" style="margin-top:10px">
+      <button type="button" id="sinkSoundcore" aria-pressed="true">Soundcore A2DP</button>
+      <button type="button" id="sinkSonos" aria-pressed="false">Sonos AirPlay</button>
+    </div>
+    <div class="sonos-grid">
+      <div class="row" style="margin:0">
+        <label for="sonosLanUrl">LAN</label>
+        <input type="text" id="sonosLanUrl" placeholder="http://192.168.x.x:5005" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="row" style="margin:0">
+        <label for="sonosIp">IP</label>
+        <input type="text" id="sonosIp" placeholder="192.168.x.x (UPnP :1400)" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="row" style="margin:0">
+        <label for="sonosTarget">Room</label>
+        <select id="sonosTarget" aria-label="Sonos room target">
+          <option value="">— discover or demo —</option>
+        </select>
+      </div>
+    </div>
+    <div class="tapbar" style="margin-top:10px">
+      <button type="button" class="tap" id="sonosDiscoverBtn">Discover</button>
+      <button type="button" class="tap" id="sonosPlayBtn">Play</button>
+      <button type="button" class="tap" id="sonosPauseBtn">Pause</button>
+      <button type="button" class="tap" id="sonosBlastBtn">Blast vol</button>
+      <button type="button" class="tap" id="sonosMuteBtn">Mute</button>
+    </div>
+    <p class="sonos-status" id="sonosStatus">sink Soundcore · LAN off · no target</p>
+  </section>
+
   <section class="mon" id="monitor">
     <div class="plot-head">
       <p class="legend">Monitor · telemetry beacon (no site PII)</p>
-
-    <p class="sub" id="fleetBackendStrip" style="margin:6px 0 0">Backend · patch — · telemetry off · poll —</p>
-
       <p class="legend" id="ctxStateLabel">ctx —</p>
     </div>
+    <p class="sub" id="fleetBackendStrip" style="margin:6px 0 0">Backend · patch — · telemetry off · poll —</p>
     <p class="sub" style="margin:8px 0 0">Fleet audio: <b>iPhone native Bluetooth</b> → paired Soundcore (OS route). No Web Bluetooth.</p>
     <div class="mon-grid">
       <div>deviceId <b id="telDevice">—</b></div>
@@ -522,6 +570,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const BACKEND_PATCH_PATH = "/patch.json";
   const BACKEND_TELEMETRY_PATH = "/ingest";
   const BACKEND_POLL_MS_DEFAULT = 3000;
+  // Sonos LAN bridge (node-sonos-http-api / SoCo HTTP). Empty = offline / demo-only.
+  // Override: ?sonos=<bridgeUrl>&sonosIp=<speakerIp>&sonosRoom=<name>&sonosDemo=1
+  const SONOS_LAN_URL = "";
 
   const $ = id => document.getElementById(id);
   const powerBtn = $("power"), powerLabel = $("powerLabel");
@@ -597,7 +648,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let accelMag=0, lfMag=0, acousticEnergy=-120;
   let gx=0, gy=0, gz=0, absOmega=0, gyroSampled=false;
   const DEG_TO_RAD = Math.PI / 180;
-
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
   let pulseMs=120, shriekMs=55;
@@ -643,6 +693,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     || BACKEND_TELEMETRY_URL
     || (BACKEND_BASE_URL ? joinBackend(BACKEND_BASE_URL, BACKEND_TELEMETRY_PATH) : "");
   const POLL_MS = Math.max(2000, Math.min(5000, +(qs.get("pollMs") || BACKEND_POLL_MS_DEFAULT)));
+  const SONOS_URL = (qs.get("sonos") || SONOS_LAN_URL || "").replace(/\/$/, "");
+  const SONOS_DEMO = qs.get("sonosDemo") === "1" || qs.get("sonosDemo") === "true";
+  let sonosSink = "soundcore"; // soundcore | sonos_beam (FleetSink.sonosBeamAirPlay honesty)
+  let sonosTargets = [];
+  let sonosSelected = null; // { id, room, host, source }
+  let sonosLastErr = "";
+
   const VOL_PATCH_MAX = 100, VOL_STEP = 0.5;
   const BAND_US_LO = 17000, BAND_US_HI = 23000, BAND_LF_LO = 10, BAND_LF_HI = 20;
   let BAND_ABS_LO = 17000, BAND_ABS_HI = 23000;
@@ -1101,6 +1158,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       monLog("volBlast · " + before.toFixed(1) + "→" + next.toFixed(1)
         + (reason ? (" · " + reason) : ""));
     }
+    if (typeof sonosOnBlast === "function") sonosOnBlast(next, reason || "blast");
     return true;
   }
 
@@ -1163,6 +1221,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (typeof monLog === "function" && !train) {
       monLog("impulse · " + (source || "micDiff") + " · alarm sustaining");
     }
+    if (typeof sonosOnHop === "function") sonosOnHop("impulse");
     updateTelUI();
     return true;
   }
@@ -1392,15 +1451,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       if (accelMag < thr * 0.4) updateVibClass(acousticEnergy > -55 ? "acoustic" : "none");
     }
     // DeviceMotionEvent.rotationRate is deg/s — convert to rad/s for contract/ETL (#26)
-        const rr = e.rotationRate;
-        if (rr && (rr.alpha != null || rr.beta != null || rr.gamma != null)) {
-          gx = (rr.alpha || 0) * DEG_TO_RAD;
-          gy = (rr.beta || 0) * DEG_TO_RAD;
-          gz = (rr.gamma || 0) * DEG_TO_RAD;
-          absOmega = 0.85 * absOmega + 0.15 * Math.hypot(gx, gy, gz);
-          gyroSampled = true;
-        }
-    
+    const rr = e.rotationRate;
+    if (rr && (rr.alpha != null || rr.beta != null || rr.gamma != null)) {
+      gx = (rr.alpha || 0) * DEG_TO_RAD;
+      gy = (rr.beta || 0) * DEG_TO_RAD;
+      gz = (rr.gamma || 0) * DEG_TO_RAD;
+      absOmega = 0.85 * absOmega + 0.15 * Math.hypot(gx, gy, gz);
+      gyroSampled = true;
+    }
   }, { passive:true });
 
   // ══ graph ═════════════════════════════════════════════════════════════
@@ -1461,6 +1519,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     powerLabel.textContent = "Signal on";
     freqBig.classList.add("live");
     schedule();
+    if (typeof sonosOnHop === "function") sonosOnHop("signal_on");
   }
 
   function stop(){
@@ -1478,6 +1537,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     freqBig.classList.remove("live","hop");
     measuredEl.textContent = "\u2014"; targetEl.textContent = "\u2014";
     holdEl.textContent = "\u2014"; countdownEl.textContent = "\u2014";
+    if (typeof sonosOnPause === "function") sonosOnPause("signal_off");
   }
 
   const toggle = async () => {
@@ -1887,10 +1947,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     } catch (_) { return "wifi"; }
   }
 
+  // Optional e2e clock inject (#62): window.__hop.setTestNowMs(ms) freezes America/New_York night math.
+  var __testNowMs = null;
+  function clockNow(){ return __testNowMs == null ? new Date() : new Date(__testNowMs); }
   function nyMinutesNow(){
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone: NIGHT_TZ, hour: "numeric", minute: "numeric", hour12: false
-    }).formatToParts(new Date());
+    }).formatToParts(clockNow());
     const h = +parts.find(x => x.type === "hour").value;
     const m = +parts.find(x => x.type === "minute").value;
     const hh = h === 24 ? 0 : h;
@@ -1989,6 +2052,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       hwCaps.rolloffSuspect = false;
     } else if (route === "phone" || route === "builtin") {
       hwCaps.lfDriveCapable = true;
+    } else if (route === "sonos_beam" || route === "airplay" || route === "sonosBeamAirPlay") {
+      hwCaps.lfDriveCapable = false;
+      hwCaps.rolloffSuspect = true;
     } else {
       // a2dp / soundcore default NA
       hwCaps.lfDriveCapable = false;
@@ -2284,7 +2350,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     try {
       const parts = new Intl.DateTimeFormat("en-US", {
         timeZone: "America/New_York", hour: "numeric", hour12: false
-      }).formatToParts(new Date());
+      }).formatToParts(clockNow());
       const h = parseInt((parts.find(p => p.type === "hour") || {}).value, 10) % 24;
       return Number.isFinite(h) && (h >= 22 || h < 7);
     } catch (_) { return false; }
@@ -2400,12 +2466,322 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const reseedBtn = $("reseedBtn");
   if (reseedBtn) reseedBtn.addEventListener("click", () => reseed("ui"));
 
+
+  // ══ Sonos Node 3 (#120) ══════════════════════════════════════════════
+  // TX carriers remain Web Audio → OS AirPlay. This block only lists targets and
+  // mirrors volume/play via LAN bridge or best-effort UPnP SOAP (CORS/mixed-content limited).
+  const sonosLanUrlEl = $("sonosLanUrl"), sonosIpEl = $("sonosIp"), sonosTargetEl = $("sonosTarget");
+  const sonosStatusEl = $("sonosStatus");
+  const sinkSoundcoreBtn = $("sinkSoundcore"), sinkSonosBtn = $("sinkSonos");
+  if (sonosLanUrlEl && SONOS_URL) sonosLanUrlEl.value = SONOS_URL;
+  if (sonosIpEl && qs.get("sonosIp")) sonosIpEl.value = qs.get("sonosIp");
+
+  function sonosPeer3Fallback(){
+    if (sonosSink === "sonos_beam") {
+      const room = (sonosSelected && sonosSelected.room) || qs.get("sonosRoom") || "Beam";
+      return "Sonos · " + room + " · AirPlay OS route (#120)";
+    }
+    return "Node 3 · Sonos AirPlay / chair (#18 #39 #120)";
+  }
+
+  function paintSonosStatus(extra){
+    if (!sonosStatusEl) return;
+    const lan = (sonosLanUrlEl && sonosLanUrlEl.value.trim()) || SONOS_URL || "";
+    const tgt = sonosSelected ? (sonosSelected.room + (sonosSelected.host ? (" @" + sonosSelected.host) : "")) : "no target";
+    const sink = sonosSink === "sonos_beam" ? "Sonos AirPlay" : "Soundcore";
+    sonosStatusEl.textContent = "sink " + sink
+      + " · LAN " + (lan ? "on" : "off")
+      + " · " + tgt
+      + (extra ? (" · " + extra) : "")
+      + (sonosLastErr ? (" · err " + sonosLastErr) : "");
+  }
+
+  function setSonosSink(mode){
+    sonosSink = mode === "sonos_beam" ? "sonos_beam" : "soundcore";
+    if (sinkSoundcoreBtn) sinkSoundcoreBtn.setAttribute("aria-pressed", String(sonosSink === "soundcore"));
+    if (sinkSonosBtn) sinkSonosBtn.setAttribute("aria-pressed", String(sonosSink === "sonos_beam"));
+    try { localStorage.setItem("hop.sink", sonosSink); } catch (_) {}
+    if (sonosSink === "sonos_beam") {
+      hwCaps.route = "sonos_beam";
+      evaluateLfCapability({ route: "sonos_beam" });
+      hwCaps.lfDriveCapable = false;
+      monLog("sink · Sonos AirPlay (sonos_beam) — set Control Center AirPlay; LAN control optional");
+    } else {
+      hwCaps.route = "a2dp";
+      evaluateLfCapability({ route: "a2dp" });
+      monLog("sink · Soundcore A2DP");
+    }
+    paintSonosStatus();
+    paintFleetCards();
+    updateTelUI();
+  }
+
+  function sonosDemoTargets(){
+    return [
+      { id: "demo-beam", room: "Beam", host: "", source: "demo" },
+      { id: "demo-living", room: "Living Room", host: "", source: "demo" }
+    ];
+  }
+
+  function fillSonosSelect(list){
+    sonosTargets = list || [];
+    if (!sonosTargetEl) return;
+    const prev = sonosTargetEl.value;
+    sonosTargetEl.innerHTML = "";
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = sonosTargets.length ? "— select room —" : "— discover or demo —";
+    sonosTargetEl.appendChild(opt0);
+    sonosTargets.forEach(function(t){
+      const o = document.createElement("option");
+      o.value = t.id;
+      o.textContent = t.room + (t.host ? (" · " + t.host) : "") + (t.source === "demo" ? " (demo)" : "");
+      sonosTargetEl.appendChild(o);
+    });
+    const want = qs.get("sonosRoom");
+    let pick = prev;
+    if (want) {
+      const m = sonosTargets.find(function(t){ return t.room.toLowerCase() === want.toLowerCase(); });
+      if (m) pick = m.id;
+    }
+    if (pick && sonosTargets.some(function(t){ return t.id === pick; })) {
+      sonosTargetEl.value = pick;
+      sonosSelected = sonosTargets.find(function(t){ return t.id === pick; }) || null;
+    } else {
+      sonosSelected = null;
+    }
+  }
+
+  function parseZonesPayload(data){
+    const out = [];
+    const zones = Array.isArray(data) ? data : (data && (data.zones || data.speakers || data.rooms)) || [];
+    zones.forEach(function(z, i){
+      const coord = z.coordinator || z;
+      const room = coord.roomName || coord.name || z.roomName || z.name || ("zone-" + i);
+      const host = coord.host || coord.ip || z.host || z.ip || "";
+      out.push({ id: "z-" + i + "-" + room, room: String(room), host: String(host || ""), source: "bridge" });
+    });
+    return out;
+  }
+
+  function sonosSoapEnvelope(serviceUrn, action, bodyInner){
+    return '<?xml version="1.0" encoding="utf-8"?>'
+      + '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"'
+      + ' s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
+      + "<s:Body><u:" + action + ' xmlns:u="' + serviceUrn + '">'
+      + bodyInner
+      + "</u:" + action + "></s:Body></s:Envelope>";
+  }
+
+  async function sonosSoap(host, servicePath, serviceUrn, action, bodyInner){
+    const url = "http://" + host + ":1400" + servicePath;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": 'text/xml; charset="utf-8"',
+        SOAPAction: '"' + serviceUrn + "#" + action + '"'
+      },
+      body: sonosSoapEnvelope(serviceUrn, action, bodyInner)
+    });
+    if (!res.ok) throw new Error("SOAP HTTP " + res.status);
+    return res.text();
+  }
+
+  async function discoverSonos(){
+    sonosLastErr = "";
+    paintSonosStatus("discovering…");
+    const bridge = ((sonosLanUrlEl && sonosLanUrlEl.value.trim()) || SONOS_URL || "").replace(/\/$/, "");
+    const ip = (sonosIpEl && sonosIpEl.value.trim()) || qs.get("sonosIp") || "";
+    let list = [];
+    try {
+      if (bridge) {
+        const paths = ["/zones", "/api/zones", "/speakers", "/api/speakers"];
+        let last = null;
+        for (let i = 0; i < paths.length; i++) {
+          try {
+            const r = await fetch(bridge + paths[i], { cache: "no-store" });
+            if (!r.ok) { last = "HTTP " + r.status; continue; }
+            list = parseZonesPayload(await r.json());
+            if (list.length) break;
+          } catch (e) { last = String(e && e.message || e); }
+        }
+        if (!list.length && last) throw new Error(last);
+      } else if (ip) {
+        // Best-effort UPnP status scrape — usually blocked from https:// Vercel (mixed content / CORS).
+        try {
+          const r = await fetch("http://" + ip + ":1400/status/zp", { cache: "no-store" });
+          const txt = await r.text();
+          const m = txt.match(/<ZoneName>([^<]+)<\/ZoneName>/) || txt.match(/<zpzone[^>]*name="([^"]+)"/i);
+          list = [{ id: "ip-" + ip, room: (m && m[1]) || ("Sonos@" + ip), host: ip, source: "upnp" }];
+        } catch (e) {
+          sonosLastErr = "UPnP blocked (CORS/mixed-content) — use same-LAN ?sonos= bridge";
+          list = [{ id: "ip-" + ip, room: qs.get("sonosRoom") || ("Sonos@" + ip), host: ip, source: "manual" }];
+        }
+      } else if (SONOS_DEMO) {
+        list = sonosDemoTargets();
+      } else {
+        list = sonosDemoTargets();
+        sonosLastErr = "no LAN URL — showing demo rooms; set ?sonos= or speaker IP";
+      }
+    } catch (e) {
+      sonosLastErr = String(e && e.message || e).slice(0, 120);
+      list = SONOS_DEMO || !bridge ? sonosDemoTargets() : [];
+    }
+    fillSonosSelect(list);
+    paintSonosStatus(list.length ? ("found " + list.length) : "none");
+    paintFleetCards();
+    return list;
+  }
+
+  async function sonosControl(action, levelOpt){
+    if (holdManual && (action === "blast" || action === "volume" || action === "play")) {
+      sonosLastErr = "hold";
+      paintSonosStatus("held");
+      return false;
+    }
+    const bridge = ((sonosLanUrlEl && sonosLanUrlEl.value.trim()) || SONOS_URL || "").replace(/\/$/, "");
+    const tgt = sonosSelected;
+    const room = (tgt && tgt.room) || qs.get("sonosRoom") || "";
+    const host = (tgt && tgt.host) || ((sonosIpEl && sonosIpEl.value.trim()) || qs.get("sonosIp") || "");
+    const level = Math.max(0, Math.min(100, levelOpt == null ? Math.round(+vol.value) : Math.round(+levelOpt)));
+    sonosLastErr = "";
+    try {
+      if (bridge && room) {
+        const enc = encodeURIComponent(room);
+        let path = "";
+        if (action === "play") path = "/" + enc + "/play";
+        else if (action === "pause") path = "/" + enc + "/pause";
+        else if (action === "mute") path = "/" + enc + "/mute";
+        else if (action === "unmute") path = "/" + enc + "/unmute";
+        else if (action === "blast" || action === "volume") path = "/" + enc + "/volume/" + level;
+        else throw new Error("unknown action");
+        const r = await fetch(bridge + path, { cache: "no-store" });
+        if (!r.ok) throw new Error("bridge HTTP " + r.status);
+        paintSonosStatus(action + " ok");
+        if (typeof monLog === "function") monLog("sonos · " + action + " · " + room);
+        return true;
+      }
+      if (host && (action === "blast" || action === "volume" || action === "mute" || action === "play" || action === "pause")) {
+        // Direct UPnP SOAP — expected to fail from HTTPS PWA; documented for same-LAN http origins / proxies.
+        if (action === "blast" || action === "volume") {
+          await sonosSoap(host,
+            "/MediaRenderer/RenderingControl/Control",
+            "urn:schemas-upnp-org:service:RenderingControl:1",
+            "SetVolume",
+            "<InstanceID>0</InstanceID><Channel>Master</Channel><DesiredVolume>" + level + "</DesiredVolume>");
+        } else if (action === "mute") {
+          await sonosSoap(host,
+            "/MediaRenderer/RenderingControl/Control",
+            "urn:schemas-upnp-org:service:RenderingControl:1",
+            "SetMute",
+            "<InstanceID>0</InstanceID><Channel>Master</Channel><DesiredMute>1</DesiredMute>");
+        } else if (action === "play" || action === "pause") {
+          const act = action === "play" ? "Play" : "Pause";
+          const extra = action === "play" ? "<Speed>1</Speed>" : "";
+          await sonosSoap(host,
+            "/MediaRenderer/AVTransport/Control",
+            "urn:schemas-upnp-org:service:AVTransport:1",
+            act,
+            "<InstanceID>0</InstanceID>" + extra);
+        }
+        paintSonosStatus(action + " SOAP ok");
+        if (typeof monLog === "function") monLog("sonos SOAP · " + action + " · " + host);
+        return true;
+      }
+      if (tgt && tgt.source === "demo") {
+        paintSonosStatus(action + " demo-noop");
+        if (typeof monLog === "function") monLog("sonos demo · " + action + " · " + (room || "demo"));
+        return true;
+      }
+      sonosLastErr = "no bridge/IP target";
+      paintSonosStatus("skipped");
+      return false;
+    } catch (e) {
+      sonosLastErr = String(e && e.message || e).slice(0, 120);
+      paintSonosStatus("fail");
+      if (typeof monLog === "function") monLog("sonos fail · " + sonosLastErr);
+      return false;
+    }
+  }
+
+  function sonosOnBlast(level, reason){
+    if (sonosSink !== "sonos_beam") return;
+    sonosControl("blast", level);
+  }
+  function sonosOnHop(why){
+    if (sonosSink !== "sonos_beam") return;
+    // Unmute + nudge play on hop/signal — volume already handled by blast path when alarming.
+    sonosControl("unmute").then(function(){ return sonosControl("play"); });
+  }
+  function sonosOnPause(why){
+    if (sonosSink !== "sonos_beam") return;
+    // Do not auto-pause Sonos on Signal off by default — AirPlay TX stop is OS-owned.
+    paintSonosStatus("signal off (AirPlay OS)");
+  }
+
+  if (sinkSoundcoreBtn) sinkSoundcoreBtn.addEventListener("click", function(){ setSonosSink("soundcore"); });
+  if (sinkSonosBtn) sinkSonosBtn.addEventListener("click", function(){ setSonosSink("sonos_beam"); });
+  const sonosDiscoverBtn = $("sonosDiscoverBtn");
+  const sonosPlayBtn = $("sonosPlayBtn"), sonosPauseBtn = $("sonosPauseBtn");
+  const sonosBlastBtn = $("sonosBlastBtn"), sonosMuteBtn = $("sonosMuteBtn");
+  if (sonosDiscoverBtn) sonosDiscoverBtn.addEventListener("click", function(){ discoverSonos(); });
+  if (sonosPlayBtn) sonosPlayBtn.addEventListener("click", function(){ sonosControl("play"); });
+  if (sonosPauseBtn) sonosPauseBtn.addEventListener("click", function(){ sonosControl("pause"); });
+  if (sonosBlastBtn) sonosBlastBtn.addEventListener("click", function(){
+    if (holdManual) { paintSonosStatus("held"); return; }
+    blastVolJump("sonos UI");
+    sonosControl("blast", +vol.value);
+  });
+  if (sonosMuteBtn) sonosMuteBtn.addEventListener("click", function(){ sonosControl("mute"); });
+  if (sonosTargetEl) sonosTargetEl.addEventListener("change", function(){
+    sonosSelected = sonosTargets.find(function(t){ return t.id === sonosTargetEl.value; }) || null;
+    if (sonosSelected && sonosSelected.host && sonosIpEl && !sonosIpEl.value) sonosIpEl.value = sonosSelected.host;
+    paintSonosStatus("selected");
+    paintFleetCards();
+  });
+  try {
+    const savedSink = localStorage.getItem("hop.sink");
+    if (savedSink === "sonos_beam" || qs.get("sink") === "sonos" || qs.get("sink") === "sonos_beam") {
+      setSonosSink("sonos_beam");
+    } else {
+      paintSonosStatus();
+    }
+  } catch (_) { paintSonosStatus(); }
+  if (SONOS_DEMO || SONOS_URL || qs.get("sonosIp")) {
+    setTimeout(function(){ discoverSonos(); }, 400);
+  }
+
+
   // ══ debug hook (#1) ═══════════════════════════════════════════════════
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId }),
-    getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId, suddenAuto, suddenState }),
+    getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips }),
+    // Read-only / inject hooks for Playwright MVP acceptance (#62) — not used by production UI.
+    getNight: () => ({ ...nightProgress01(), nightActive: !!nightActive, nightTargetVol, nightUserOverride: !!nightUserOverride, nightNYNow: nightNYNow() }),
+    setTestNowMs: (ms) => {
+      __testNowMs = (ms == null || ms === "") ? null : Number(ms);
+      if (__testNowMs != null && !Number.isFinite(__testNowMs)) __testNowMs = null;
+      nightTick();
+      updateTelUI();
+      return __testNowMs;
+    },
+    forceSuddenRotate: (reason, peakHz) => {
+      if (!suddenAuto) setSuddenAuto(true);
+      autorotateOnSudden(String(reason || "e2e"), peakHz == null ? 19000 : peakHz);
+      updateTelUI();
+      return suddenState;
+    },
+    fleetLogKeys: () => FLEET_LOG_KEYS.slice(),
+    sonos: Object.freeze({
+      discover: () => discoverSonos(),
+      list: () => sonosTargets.slice(),
+      getSelected: () => sonosSelected,
+      control: (action, level) => sonosControl(action, level),
+      setSink: (mode) => setSonosSink(mode),
+      getSink: () => sonosSink
+    })
   });
 
   function updateTelUI(){
@@ -2454,6 +2830,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (patchUrlLabel) patchUrlLabel.textContent = PATCH_URL;
     if (telemetryUrlLabel) telemetryUrlLabel.textContent = TELEMETRY_URL || "off";
     if (patchStatusEl) patchStatusEl.textContent = patchStatus;
+    const strip = $("fleetBackendStrip");
+    if (strip) {
+      const shortPatch = (typeof PATCH_URL === "string" && PATCH_URL) ? PATCH_URL.replace(/^https?:\/\//, "").slice(0, 48) : "/patch.json";
+      const shortTel = (typeof TELEMETRY_URL === "string" && TELEMETRY_URL) ? TELEMETRY_URL.replace(/^https?:\/\//, "").slice(0, 40) : "off";
+      strip.textContent = "Backend · patch " + shortPatch + " · telemetry " + shortTel + " · poll " + POLL_MS + "ms";
+    }
     if (telSensors) telSensors.textContent = sensorsArmed ? "armed" : (sensorStatus.audio || "idle");
     if (telSensMic) telSensMic.textContent = sensorStatus.mic;
     if (telSensMotion) telSensMotion.textContent = sensorStatus.motion;
@@ -2463,24 +2845,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const n = nightProgress01();
     if (telNight) telNight.textContent = n.active ? (n.target.toFixed(1) + "%") : "day";
   }
-
-  const strip = $("fleetBackendStrip");
-    if (strip) {
-      const shortPatch = (typeof PATCH_URL === "string" && PATCH_URL) ? PATCH_URL.replace(/^https?:\/\//, "").slice(0, 48) : "/patch.json";
-      const shortTel = (typeof TELEMETRY_URL === "string" && TELEMETRY_URL) ? TELEMETRY_URL.replace(/^https?:\/\//, "").slice(0, 40) : "off";
-      strip.textContent = "Backend · patch " + shortPatch + " · telemetry " + shortTel + " · poll " + POLL_MS + "ms";
-    }
-  }
-  const simImpulseBtn = $("simImpulseBtn");
-  if (simImpulseBtn) {
-    simImpulseBtn.addEventListener("click", function(){
-      noteImpulse(true, false);
-      publishFleetHeartbeat();
-      paintFleetCards();
-      updateTelUI();
-    });
-  }
-
 
   function telemetryPayload(){
     const suddenFreq = !!(geminiAutorouteFlag || suddenState === "rotate" || suddenState === "onset" || soundBurst);
@@ -2605,7 +2969,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       }
     }
     fill(c2, p2, ids[0] ? fleetPeers[ids[0]] : null, "node-2", "waiting for peer tab");
-    fill(c3, p3, ids[1] ? fleetPeers[ids[1]] : null, "node-3", "chair / Sonos research (#18 #39)");
+    fill(c3, p3, ids[1] ? fleetPeers[ids[1]] : null, "node-3", sonosPeer3Fallback());
     const cmp = $("fleetSeedCompare");
     if (cmp) {
       const seeds = [String(seed)].concat(ids.map(function(id){ return String(fleetPeers[id].seed); }));
@@ -2847,10 +3211,17 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     lines.push(row("Motion (web)", orient, orientDetail));
     lines.push(row("SensorKit (native)", "na", "requires iOS app entitlement — web uses mic + Web Audio"));
 
-    // iPhone native Bluetooth = OS system audio route; not Web Bluetooth (no GATT / no sink enum on iOS Safari)
-    lines.push(row("Audio route", "ok", "iPhone native Bluetooth → paired Soundcore (not Web Bluetooth)"));
-    lines.push(row("Soundcore 2 output", "na", "iOS Control Center / Settings → Bluetooth · pair this phone 1:1"));
-    lines.push(row("Fleet", "ok", "2 nodes 1:1 native BT audio · optional chair-mounted 3rd · incoherent TX"));
+    // OS system audio route; not Web Bluetooth (no GATT / no sink enum on iOS Safari)
+    if (sonosSink === "sonos_beam") {
+      lines.push(row("Audio route", "ok", "Sonos AirPlay 2 (OS Control Center) — C1 exception · route=sonos_beam"));
+      lines.push(row("Sonos Beam output", "na", "Control Center AirPlay → Beam · native AVRoutePickerView shell for pick"));
+      lines.push(row("Sonos LAN control", SONOS_URL || sonosSelected ? "ok" : "na",
+        SONOS_URL ? ("bridge " + redactUrlQuery(SONOS_URL)) : (sonosSelected && sonosSelected.host ? ("IP " + sonosSelected.host + " · CORS may block from HTTPS PWA") : "set ?sonos= bridge or speaker IP")));
+    } else {
+      lines.push(row("Audio route", "ok", "iPhone native Bluetooth → paired Soundcore (not Web Bluetooth)"));
+      lines.push(row("Soundcore 2 output", "na", "iOS Control Center / Settings → Bluetooth · pair this phone 1:1"));
+    }
+    lines.push(row("Fleet", "ok", "2 nodes 1:1 native BT · optional Node 3 Sonos AirPlay / chair · incoherent TX"));
     lines.push(row("This phone", "ok", phoneRole === "tx" ? "Blaster / TX" : phoneRole === "rx" ? "Listen (debug)" : "Carrier only"));
     lines.push(row("Algorithm", "ok", algo + (vibAuto ? " · vib auto (" + vibClass + ")" : " · manual")));
     lines.push(row("Hop RNG", "ok", "per-device seed " + seed + " — incoherent"));

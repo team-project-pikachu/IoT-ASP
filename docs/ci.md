@@ -18,7 +18,7 @@ Issue-linked PRs are the intended path for Project 5 Todo work (#12, #16, #17, r
 3. **`pr_issue_ref`** (PR only) — fails if title/body lack an issue ref (`#N` or `Fixes`/`Closes`/`Resolves`/`Related` `#N`).
 4. **`tests`** — `pip install -r requirements-dev.txt` then `python -m pytest tests -q` (converter, fleet log, micDiff, live features, ruleset JSON, deploy workflow, public HTML).
 5. **`mdc check`** — `python3 scripts/mdc_convert.py --check` (Cursor `.mdc` → Claude Code outputs are fresh).
-6. **`e2e smoke`** — Playwright against `public/` (`tests/e2e/run.sh`); informative, not required by the ruleset.
+6. **`e2e smoke`** — Playwright against `public/` (`tests/e2e/run.sh`), including the **MVP field acceptance (#62)** suite; **informative, not required** by the ruleset (**waiver** until `#63` election — see [ISSUE-62](issues/ISSUE-62-mvp-field-acceptance-e2e.md) CI decision). Safari/A2DP 3-phone lab is **not** covered here.
 
 ## Continuous ship
 
@@ -53,10 +53,11 @@ bash scripts/ci_static_gates.sh
 bash scripts/autoroute_dev.sh
 bash scripts/sync_algo_timestore_to_adk.sh --check
 bash scripts/adk_layout_import_smoke.sh
-python3 -m pytest tests/test_deploy_workflow.py tests/test_public_html.py -q
+python3 -m pytest tests/test_deploy_workflow.py tests/test_public_html.py tests/test_issue_62_field_e2e.py -q
+make e2e   # PLAYWRIGHT_BROWSERS_PATH / Chromium; see tests/e2e/run.sh and docs/issues/ISSUE-62-…
 ```
 
-Evidence package: [`.vv/ci/`](../.vv/ci/).
+Evidence package: [`.vv/ci/`](../.vv/ci/). MVP field / e2e: [`.vv/62/`](../.vv/62/).
 
 ## Out of scope
 

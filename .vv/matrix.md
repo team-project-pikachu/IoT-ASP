@@ -20,13 +20,13 @@ Living matrix. Evidence packages land under `.vv/<issue>/`. Do not mark Project 
 
 | Req ID | Statement | Issue(s) | Verify | Validate | Evidence | Status |
 |--------|-----------|----------|--------|----------|----------|--------|
-| C1-BT | Carrier TX = iOS native A2DP only; no Web Bluetooth TX | #12, #9 | Code/docs audit: no `navigator.bluetooth` for TX | Chrome iOS route uses system BT sink | `.vv/12/`, `.vv/9/`, `.vv/64/SOFTWARE-VERIFY.md` | in_progress |
+| C1-BT | Carrier TX = iOS native A2DP only; no Web Bluetooth TX | #12, #9 | Code/docs audit: no `navigator.bluetooth` for TX | Chrome iOS route uses system BT sink | `.vv/12/`, `.vv/9/` | stub |
 | C3-SDD | App is SDD control surface (discover→…→execute) | #12 | UI + autoroute loop documented | Human Hold/Manual can override Gemini | `.vv/12/` | stub |
-| C4-VOL | Default/max UI vol path 100%; clamps `vol_hard_max=100` | #12 | Unit: `validate_patch` accepts vol≤100; rejects >100 | Night curve not battery-duty; SPL still HW-limited | `.vv/12/`, `.vv/64/SOFTWARE-VERIFY.md` | in_progress |
-| C5-120V | Continuous **120 V AC**; telemetry `power=ac120` | #12, #17 | Schema allows `power`; dry-run fixtures use `ac120` | No battery-save caps in autoroute prompts | `.vv/12/`, `.vv/17/`, `.vv/64/SOFTWARE-VERIFY.md` | in_progress |
+| C4-VOL | Default/max UI vol path 100%; clamps `vol_hard_max=100` | #12 | Unit: `validate_patch` accepts vol≤100; rejects >100 | Night curve not battery-duty; SPL still HW-limited | `.vv/12/` | stub |
+| C5-120V | Continuous **120 V AC**; telemetry `power=ac120` | #12, #17 | Schema allows `power`; dry-run fixtures use `ac120` | No battery-save caps in autoroute prompts | `.vv/12/`, `.vv/17/` | stub |
 | C6-LF | Default band 17–23 kHz; gated **10–20 Hz** when `lfDriveCapable` + armed | #12, #16 | Reject/skip LF when gate false; tag `band` | Systems check honesty when HW `na` | `.vv/12/`, `.vv/16/` | stub |
-| SCH1 | Telemetry + patch `schemaVersion: 1` | #12, #17 | JSON schema / dry-run assert | Frontend polls only; no keys in HTML | `.vv/12/`, `.vv/17/`, `.vv/64/SOFTWARE-VERIFY.md` | in_progress |
-| HOLD1 | Hold / Manual freezes remote patch apply | #12 | Flag in telemetry; worker respects hold | UI Hold blocks `/patch.json` apply | `.vv/12/`, `.vv/64/SOFTWARE-VERIFY.md` | in_progress |
+| SCH1 | Telemetry + patch `schemaVersion: 1` | #12, #17 | JSON schema / dry-run assert | Frontend polls only; no keys in HTML | `.vv/12/`, `.vv/17/` | stub |
+| HOLD1 | Hold / Manual freezes remote patch apply | #12 | Flag in telemetry; worker respects hold | UI Hold blocks `/patch.json` apply | `.vv/12/` | stub |
 
 ## Issue #12 — Gemini continuous monitor + audio engineering
 
@@ -66,6 +66,14 @@ Living matrix. Evidence packages land under `.vv/<issue>/`. Do not mark Project 
 |--------|-----------|--------|----------|----------|--------|
 | I13-R1 | Registry interface + seat ladder (subscription-first) | Design doc review checklist | No production non-Gemini calls this wave | `.vv/13/` | stub |
 | I13-R2 | Impl parked; future issue if needed | Design-only evidence | — | `.vv/13/` | stub |
+
+## Issue #62 — M0 field acceptance + Playwright e2e
+
+| Req ID | Statement | Verify | Validate | Evidence | Status |
+|--------|-----------|--------|----------|----------|--------|
+| I62-R1 | Written FA checklist covers A2DP, Signal on, hops, Hold, suddenFreq, night curve, Soundcore roll-off | `docs/field-acceptance-m0.md` present | Owner ticks FA-01…FA-14 on 3 phones | `.vv/62/` | in_progress |
+| I62-R2 | `tests/e2e/run.sh` green; required vs informative decision documented | CI `e2e smoke` + `docs/ci.md` waiver | Safari A2DP not claimed by headless | `.vv/62/EVIDENCE.md` | in_progress |
+| I62-R3 | If promoted: ruleset + `make protect-main` docs sync | N/A until #63 election | — | `docs/branch-protection.md` | stub (waived M0) |
 
 ## Backlog cross-links (not executed this wave)
 

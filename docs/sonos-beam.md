@@ -86,22 +86,23 @@ Apple docs (cite):
 - [ ] sonos-web (or SoCo) usable for grouping/mute without street PII in logs
 - [ ] Atmos: document as **na** for ASP Web Audio AirPlay path
 
-
-
-## Pre-arrival protocol (Balanced PR4 — no HW claim)
-
-Until a Beam Gen 2 is on the bench, treat Node 3 as **research-only**:
-
-1. Keep fleet defaults: nodes 1–2 Soundcore A2DP (C1); node 3 AirPlay enum only.
-2. Run Shared tests: `cd native/IoTASP && swift test`.
-3. Printable first-session checklist: [`native/IoTASP/SYSTEMS-CHECK.md`](../native/IoTASP/SYSTEMS-CHECK.md).
-4. Do **not** mark #39 Done or remove `parked` until AirPlay systems check boxes above are ticked on real hardware.
-
 ## Out of scope
 
 - No street PII; no purchase/pricing claims (listing link only on #39)
 - No Web Bluetooth / BLE GATT as carrier TX
 - No assumption that Sonos cloud Control API is required for Node 3 MVP
+
+## M0 web blaster hooks (#120)
+
+Static PWA (`public/index.html` on the #62 combine lane) adds a **Node 3 Sonos** panel:
+
+- Sink toggle: Soundcore A2DP ↔ `sonos_beam` (`hwCaps.route`; aligns with native `FleetSink.sonosBeamAirPlay`)
+- Discover/list via `?sonos=` LAN bridge (node-sonos-http-api `/zones`) or manual speaker IP
+- Best-effort UPnP SOAP (`RenderingControl` / `AVTransport` on `:1400`) — **usually blocked** from the HTTPS Vercel origin (mixed content + CORS); use a same-LAN HTTP proxy/bridge
+- Blast / impulse / Signal-on call `sonosOnBlast` / `sonosOnHop` when sink is Sonos; Hold / Manual still wins
+- Carrier TX remains **OS AirPlay 2** — this panel does not pick AirPlay in Safari
+
+Field acceptance (#62) stays Soundcore-first; Sonos does not block FA.
 
 ## Related
 

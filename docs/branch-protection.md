@@ -53,6 +53,11 @@ PyYAML **minus an explicit non-required allowlist** (currently `{"e2e smoke"}`, 
 a job without updating the JSON (or vice versa) fails CI — a required context that no job produces would
 otherwise leave PRs permanently un-mergeable, and a new job must be either required or allowlisted.
 
+**#62 decision:** do **not** promote `e2e smoke` to a required context in the M0 field-acceptance shard.
+Safari/Soundcore A2DP proof lives in [field-acceptance-m0.md](field-acceptance-m0.md) / `.vv/62/`;
+ruleset promotion is owned by [#63](https://github.com/team-project-pikachu/IoT-ASP/issues/63) after owner election
+(`make protect-main` + JSON + this doc in the same PR).
+
 ### Trade-off: `required_approving_review_count: 0`
 
 The repository has a single maintainer. GitHub does not let a PR author approve their own PR, so any
