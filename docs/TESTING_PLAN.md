@@ -1,7 +1,7 @@
 # Testing plan — SEBoK Verification & Validation
 
 **Product:** IoT-ASP / hop-ultrasonic  
-**Companion:** [UAT.md](UAT.md) (acceptance) · [PRD.md](PRD.md) · [roadmap.md](roadmap.md) · [vv/README.md](vv/README.md) · [`.vv/matrix.md`](../.vv/matrix.md)
+**Companion:** [UAT.md](UAT.md) (acceptance) · [PRD.md](PRD.md) · [roadmap.md](roadmap.md) · [architecture-pwa.md](architecture-pwa.md) · [test-traceability.md](test-traceability.md) · [vv/README.md](vv/README.md) · [`.vv/matrix.md`](../.vv/matrix.md)
 
 ## SEBoK framing (repo-aligned)
 
