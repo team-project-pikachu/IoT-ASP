@@ -27,6 +27,7 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #18 | [18-node3-chair-infrasound.md](18-node3-chair-infrasound.md) — node 3 chair-taped phone + infrasound LF-accel proxy | parked — priors shipped (`infra_felt`), node not deployed | frontend + backend |
 | #18 native | [18-chair-lf-native.md](18-chair-lf-native.md) — chair profile + LF accel felt proxy | implemented on branch | native |
 | #146 | [146-audio-routes.md](146-audio-routes.md) — A2DP TX + phone mic RX; Sonos AirPlay | implemented on branch | native |
+| #147 | [147-telemetry-bridge.md](147-telemetry-bridge.md) — schemaVersion 1 POST/poll | implemented on branch | native |
 | #19 | [19-notion-hub.md](19-notion-hub.md) — Notion hub page for ASP tooling | hub created 2026-09-08; docs back-linked; optional DB/sync remaining | docs |
 | #20 | [20-timestore.md](20-timestore.md) — timestore: SciPy ≥16-param fit, 0.0006 s quantum, NWS weather prior, cipher tags | implemented on `main` (`timestore.py` + `packages/algo-timestore/`, #30) | backend |
 | #22 | [22-structured-fleet-logs.md](22-structured-fleet-logs.md) — structured fleet telemetry logs (`fleet_log.py`) | implemented on branch — integration hooks pending | backend |

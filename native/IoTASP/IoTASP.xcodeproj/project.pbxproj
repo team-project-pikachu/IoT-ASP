@@ -33,6 +33,8 @@
 		A10000000000000000000037 /* UltrasonicMicMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UltrasonicMicMeter.swift; sourceTree = "<group>"; };
 		A10000000000000000000038 /* UltrasonicMicCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UltrasonicMicCapture.swift; sourceTree = "<group>"; };
 		A10000000000000000000044 /* AudioRouteMatrix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRouteMatrix.swift; sourceTree = "<group>"; };
+		A10000000000000000000045 /* TelemetryBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryBridge.swift; sourceTree = "<group>"; };
+		A2000000000000000000000C /* Wire */ = {isa = PBXGroup; children = ( A10000000000000000000045 /* TelemetryBridge.swift */, ); path = Wire; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -102,6 +104,7 @@
 				A20000000000000000000009 /* Sensors */,
 				A2000000000000000000000A /* Fleet */,
 				A2000000000000000000000B /* Audio */,
+				A2000000000000000000000C /* Wire */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -241,6 +244,7 @@
 				A80000000000000000000041 /* AcousticVibChannel.swift in Sources */,
 				A80000000000000000000042 /* VibChannelPolicy.swift in Sources */,
 				A80000000000000000000043 /* LfAccelProxy.swift in Sources */,
+				A80000000000000000000045 /* TelemetryBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,6 +266,7 @@
 				A80000000000000000000042 /* VibChannelPolicy.swift in Sources */,
 				A80000000000000000000043 /* LfAccelProxy.swift in Sources */,
 				A80000000000000000000044 /* AudioRouteMatrix.swift in Sources */,
+				A80000000000000000000045 /* TelemetryBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,6 +291,7 @@
 		A80000000000000000000037 /* UltrasonicMicMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000037 /* UltrasonicMicMeter.swift */; };
 		A80000000000000000000038 /* UltrasonicMicCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000038 /* UltrasonicMicCapture.swift */; };
 		A80000000000000000000044 /* AudioRouteMatrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000044 /* AudioRouteMatrix.swift */; };
+		A80000000000000000000045 /* TelemetryBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000045 /* TelemetryBridge.swift */; };
 		A80000000000000000000039 /* PermissionSequencer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000039 /* PermissionSequencer.swift */; };
 		A80000000000000000000040 /* PhysicalVibChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000040 /* PhysicalVibChannel.swift */; };
 		A80000000000000000000041 /* AcousticVibChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000041 /* AcousticVibChannel.swift */; };

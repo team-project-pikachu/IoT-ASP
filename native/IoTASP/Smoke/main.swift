@@ -144,6 +144,21 @@ struct IoTASPSmoke {
         check("sonos longform", air.options.contains("longFormAudio") && air.category == "playback")
         check("recover", AudioRouteMatrix.recoverAfterRouteChange(.soundcore2A2DP).contains("phoneSpeaker"))
 
+        // #147 telemetry
+        check("empty url disables POST", TelemetryBridge.shouldPost(telemetryURL: "") == false)
+        check("ws url posts", TelemetryBridge.shouldPost(telemetryURL: "https://example.invalid/ingest"))
+        let nt = NativeTelemetry(deviceId: "node1", ts: "2026-09-08T12:00:00Z", algo: "hop")
+        check("required", TelemetryBridge.requiredOK(nt))
+        let data = try! TelemetryBridge.encode(nt)
+        let obj = try! JSONSerialization.jsonObject(with: data) as! [String: Any]
+        check("schema 1", obj["schemaVersion"] as? Int == 1)
+        let hold = try! TelemetryBridge.applyPatch(data: Data("{\"algo\":\"hop\"}".utf8), holdManual: true)
+        check("hold refuses patch", hold == nil)
+        let okp = try! TelemetryBridge.applyPatch(data: Data("{\"algo\":\"hop\",\"schemaVersion\":1}".utf8), holdManual: false)
+        check("apply hop", okp?.algo == "hop")
+        let bad = try! TelemetryBridge.applyPatch(data: Data("{\"algo\":\"evil\"}".utf8), holdManual: false)
+        check("refuse evil algo", bad == nil)
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()
