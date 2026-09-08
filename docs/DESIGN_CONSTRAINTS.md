@@ -60,6 +60,7 @@ Agent-facing Cursor rules (ops/fleet, algo/telemetry, backend/V&V, prior art): [
 
 ## Downstream docs
 
+- [field-acceptance-m0.md](field-acceptance-m0.md) — M0 3-phone / Soundcore field checklist (C1–C6, #62)
 - [sdd-app-control.md](sdd-app-control.md) — SDD loop via the app
 - [power-fleet.md](power-fleet.md) — 120 V continuous (**C5**)
 - [iphone-dedicated-mode.md](iphone-dedicated-mode.md) — dedicated node checklist

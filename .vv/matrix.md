@@ -67,6 +67,14 @@ Living matrix. Evidence packages land under `.vv/<issue>/`. Do not mark Project 
 | I13-R1 | Registry interface + seat ladder (subscription-first) | Design doc review checklist | No production non-Gemini calls this wave | `.vv/13/` | stub |
 | I13-R2 | Impl parked; future issue if needed | Design-only evidence | — | `.vv/13/` | stub |
 
+## Issue #62 — M0 field acceptance + Playwright e2e
+
+| Req ID | Statement | Verify | Validate | Evidence | Status |
+|--------|-----------|--------|----------|----------|--------|
+| I62-R1 | Written FA checklist covers A2DP, Signal on, hops, Hold, suddenFreq, night curve, Soundcore roll-off | `docs/field-acceptance-m0.md` present | Owner ticks FA-01…FA-14 on 3 phones | `.vv/62/` | in_progress |
+| I62-R2 | `tests/e2e/run.sh` green; required vs informative decision documented | CI `e2e smoke` + `docs/ci.md` waiver | Safari A2DP not claimed by headless | `.vv/62/EVIDENCE.md` | in_progress |
+| I62-R3 | If promoted: ruleset + `make protect-main` docs sync | N/A until #63 election | — | `docs/branch-protection.md` | stub (waived M0) |
+
 ## Backlog cross-links (not executed this wave)
 
 | Issue | Note |

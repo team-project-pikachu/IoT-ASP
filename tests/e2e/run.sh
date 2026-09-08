@@ -5,6 +5,9 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}"
+# @playwright/test@1.56.1 needs chromium / chromium_headless_shell build 1194 under that path.
+# Local Mac: PLAYWRIGHT_BROWSERS_PATH="$HOME/Library/Caches/ms-playwright" make e2e
+# If headless_shell-1194 is missing, tests/e2e/playwright.config.mjs falls back to full Chromium 1194.
 PORT="${E2E_PORT:-8765}"
 cd "$ROOT/tests/e2e"
 

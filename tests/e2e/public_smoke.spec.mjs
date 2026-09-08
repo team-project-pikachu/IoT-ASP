@@ -331,3 +331,104 @@ test.describe("public blaster smoke", () => {
     expect(errors).toEqual([]);
   });
 });
+
+test.describe("MVP field acceptance (#62)", () => {
+  // Chromium can cover software ACs; Safari/A2DP 3-phone lab stays owner-gated (.vv/62/FIELD-PASS.md).
+  const RECORD_KEYS = [
+    "kind", "schemaVersion", "ts", "level", "event", "deviceId", "band", "power", "nightNY",
+    "lfArmed", "lfDriveCapable", "lfGate", "algo", "vibClass", "suddenFreq", "suddenState",
+    "holdManual", "peakHz", "absA", "micEnergy", "impulse", "volBlast", "alarmState", "msg",
+  ];
+
+  test("Soundcore roll-off warning + Systems check honesty row", async ({ page }) => {
+    const errors = await openPage(page);
+    await expect(page.locator("text=Soundcore 2 ultrasonic warning")).toBeVisible();
+    await expect(page.locator("body")).toContainText("BassUp");
+    await expect(page.locator("body")).toContainText("17–23");
+    await page.click("#sysBtn");
+    await page.waitForFunction(() => /Soundcore 2/.test(document.getElementById("sysList")?.textContent || ""), null, { timeout: 20000 });
+    const sys = await page.locator("#sysList").textContent();
+    expect(sys).toMatch(/roll-off|BassUp|12W/i);
+    expect(sys).toMatch(/Night NY/);
+    expect(errors).toEqual([]);
+  });
+
+  test("suddenFreq autorotate updates suddenState + telemetry", async ({ page }) => {
+    const errors = await openPage(page);
+    await page.click("#suddenOn");
+    expect((await state(page)).suddenAuto).toBe(true);
+    expect(["armed", "idle", "rotate", "onset"]).toContain((await state(page)).suddenState);
+    await page.evaluate(() => window.__hop.forceSuddenRotate("e2e-mvp", 19500));
+    await page.waitForFunction(() => {
+      const p = window.__hop.telemetryPayload();
+      return p.suddenFreq === true && (p.suddenState === "rotate" || p.suddenState === "armed");
+    }, null, { timeout: 3000 });
+    const p = await payload(page);
+    expect(p.suddenFreq).toBe(true);
+    expect(["rotate", "armed"]).toContain(p.suddenState);
+    await page.click("#suddenOff");
+    expect((await state(page)).suddenAuto).toBe(false);
+    expect((await payload(page)).suddenState === "idle" || (await state(page)).suddenState === "idle").toBeTruthy();
+    expect(errors).toEqual([]);
+  });
+
+  test("nightNY day vs night via setTestNowMs (America/New_York)", async ({ page }) => {
+    const errors = await openPage(page);
+    // Fixed UTC instants: 2026-09-08 16:00 UTC = 12:00 EDT (day); 2026-09-09 03:00 UTC = 23:00 EDT (night).
+    const dayUtc = Date.UTC(2026, 8, 8, 16, 0, 0);
+    const nightUtc = Date.UTC(2026, 8, 9, 3, 0, 0);
+    await page.evaluate(ms => window.__hop.setTestNowMs(ms), dayUtc);
+    let n = await page.evaluate(() => window.__hop.getNight());
+    expect(n.active).toBe(false);
+    expect(n.nightNYNow).toBe(false);
+    expect((await payload(page)).nightNY).toBe(false);
+    await expect(page.locator("#telNight")).toHaveText("day");
+
+    await page.evaluate(ms => window.__hop.setTestNowMs(ms), nightUtc);
+    n = await page.evaluate(() => window.__hop.getNight());
+    expect(n.active).toBe(true);
+    expect(n.nightNYNow).toBe(true);
+    expect(n.target).toBeGreaterThanOrEqual(0);
+    expect(n.target).toBeLessThanOrEqual(100);
+    expect((await payload(page)).nightNY).toBe(true);
+    await expect(page.locator("#telNight")).not.toHaveText("day");
+
+    // Hold freezes night vol apply; clear inject
+    await page.click("#holdPatchBtn");
+    await page.evaluate(() => window.__hop.setTestNowMs(null));
+    expect(errors).toEqual([]);
+  });
+
+  test("fleet_log JSONL keys match Python RECORD_KEYS order", async ({ page }) => {
+    const errors = await openPage(page);
+    const keys = await page.evaluate(() => window.__hop.fleetLogKeys());
+    expect(keys).toEqual(RECORD_KEYS);
+    await page.click("#simImpulseBtn");
+    const jsonl = await page.evaluate(async () => {
+      let captured = "";
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText = async (t) => { captured = String(t || ""); };
+      }
+      document.getElementById("copyFleetLogBtn")?.click();
+      await new Promise(r => setTimeout(r, 50));
+      return captured;
+    });
+    expect(jsonl.trim().length).toBeGreaterThan(0);
+    const row = JSON.parse(jsonl.trim().split("\n")[0]);
+    expect(Object.keys(row)).toEqual(RECORD_KEYS);
+    expect(row.kind).toBe("fleet_log");
+    expect(row.schemaVersion).toBe(1);
+    expect(errors).toEqual([]);
+  });
+
+  test("Hold / Manual freezes remote patch apply (MVP checklist)", async ({ page }) => {
+    const errors = await openPage(page);
+    expect((await state(page)).holdManual).toBe(false);
+    await page.click("#holdPatchBtn");
+    expect((await state(page)).holdManual).toBe(true);
+    expect((await payload(page)).holdManual).toBe(true);
+    await expect(page.locator("#holdPatchBtn")).toHaveAttribute("aria-pressed", "true");
+    expect(errors).toEqual([]);
+  });
+});
+

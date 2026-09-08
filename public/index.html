@@ -1926,10 +1926,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     } catch (_) { return "wifi"; }
   }
 
+  // Optional e2e clock inject (#62): window.__hop.setTestNowMs(ms) freezes America/New_York night math.
+  var __testNowMs = null;
+  function clockNow(){ return __testNowMs == null ? new Date() : new Date(__testNowMs); }
   function nyMinutesNow(){
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone: NIGHT_TZ, hour: "numeric", minute: "numeric", hour12: false
-    }).formatToParts(new Date());
+    }).formatToParts(clockNow());
     const h = +parts.find(x => x.type === "hour").value;
     const m = +parts.find(x => x.type === "minute").value;
     const hh = h === 24 ? 0 : h;
@@ -2289,7 +2292,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     try {
       const parts = new Intl.DateTimeFormat("en-US", {
         timeZone: "America/New_York", hour: "numeric", hour12: false
-      }).formatToParts(new Date());
+      }).formatToParts(clockNow());
       const h = parseInt((parts.find(p => p.type === "hour") || {}).value, 10) % 24;
       return Number.isFinite(h) && (h >= 22 || h < 7);
     } catch (_) { return false; }
@@ -2409,8 +2412,33 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId }),
-    getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId, suddenAuto, suddenState }),
+    getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips }),
+    // Read-only / inject hooks for Playwright MVP acceptance (#62) — not used by production UI.
+    getNight: () => ({ ...nightProgress01(), nightActive: !!nightActive, nightTargetVol, nightUserOverride: !!nightUserOverride, nightNYNow: nightNYNow() }),
+    setTestNowMs: (ms) => {
+      __testNowMs = (ms == null || ms === "") ? null : Number(ms);
+      if (__testNowMs != null && !Number.isFinite(__testNowMs)) __testNowMs = null;
+      nightTick();
+      updateTelUI();
+      return __testNowMs;
+    },
+    forceSuddenRotate: (reason, peakHz) => {
+      // Deterministic e2e: mutate suddenFreq state without relying on audio spectrum.
+      holdManual = false;
+      if (typeof setSuddenAuto === "function") setSuddenAuto(true);
+      else suddenAuto = true;
+      lastSuddenAt = 0;
+      suddenState = "rotate";
+      if (suddenLive) suddenLive.textContent = "rotate";
+      geminiAutorouteFlag = true;
+      if (typeof flagGeminiAutoroute === "function") {
+        flagGeminiAutoroute(String(reason || "e2e") + (peakHz != null ? (" @ " + Math.round(peakHz) + " Hz") : ""));
+      }
+      if (typeof updateTelUI === "function") updateTelUI();
+      return suddenState;
+    },
+    fleetLogKeys: () => FLEET_LOG_KEYS.slice()
   });
 
   function updateTelUI(){
@@ -2608,7 +2636,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const simImpulseBtn = $("simImpulseBtn");
   if (simImpulseBtn) {
     simImpulseBtn.addEventListener("click", function(){
-      noteImpulse(true, false);
+      // MVP / e2e (#62): Simulate impulse must latch even when Signal/sensors are off.
+      const prevArmed = sensorsArmed;
+      sensorsArmed = true;
+      noteImpulse("simulate", typeof IMPULSE_PEAK_DB === "number" ? IMPULSE_PEAK_DB : 12);
+      sensorsArmed = prevArmed;
       publishFleetHeartbeat();
       paintFleetCards();
       updateTelUI();

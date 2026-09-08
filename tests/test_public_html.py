@@ -97,7 +97,8 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "function copyFleetLogJsonl()" in html
     assert "function fleetLogLineFromTel(" in html
     assert 'id="simImpulseBtn"' in html
-    assert "noteImpulse(true, false)" in html
+    assert 'noteImpulse("simulate"' in html or "noteImpulse('simulate'" in html
+    assert "sensorsArmed = true" in html  # Simulate impulse bypasses Signal-off gate (#62)
     note = _fn_body(html, "function noteImpulse(source, deltaHint){")
     assert "enterExtremeFromBurst(" in note
     assert "blastVolJump(" in note

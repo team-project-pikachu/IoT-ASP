@@ -38,7 +38,7 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #37 | [37-vercel-webhooks.md](37-vercel-webhooks.md) — Vercel webhooks → GitHub notify | implemented on branch (public HTTPS host + secrets owner-gated) | infra |
 | #60 | [60-adk-autoroute-deploy.md](60-adk-autoroute-deploy.md) — ADK Cloud Run / Agent Engine deploy | open — service exists; prod URL owner-gated | backend |
 | #61 | [61-wire-backend-urls.md](61-wire-backend-urls.md) — wire live patch/telemetry URLs for fleet | open — query-param UI; live URLs owner-gated | frontend |
-| #62 | [62-mvp-field-acceptance-e2e.md](62-mvp-field-acceptance-e2e.md) — 3-phone field checklist + Playwright | checklist + local e2e; field lab pending | frontend |
+| #62 | [62-mvp-field-acceptance-e2e.md](62-mvp-field-acceptance-e2e.md) — 3-phone field checklist + Playwright | software ACs + MVP e2e; field lab owner-gated; CI e2e informative | frontend |
 | #63 | [63-main-branch-protection.md](63-main-branch-protection.md) — main ruleset / required checks | open — scripts/docs ready; apply owner-gated | infra |
 | #64 | [64-sebok-vv-mvp-matrix.md](64-sebok-vv-mvp-matrix.md) — SEBoK matrix pass for MVP ship slice | open — `.vv/matrix.md` scaffold | docs |
 | #65 #68 | [65-68-mvp-closed-log.md](65-68-mvp-closed-log.md) — closed-issue log CLI + Actions | implemented on branch | infra + docs |
