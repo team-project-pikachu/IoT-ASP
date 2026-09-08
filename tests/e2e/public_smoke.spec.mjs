@@ -6,7 +6,8 @@ import { test, expect } from "@playwright/test";
 const PORT = process.env.E2E_PORT || "8765";
 test.use({ baseURL: `http://127.0.0.1:${PORT}` });
 
-const LOG_KEYS = ["seq", "ts", "level", "event", "msg", "fields"];
+// `fleet` is a per-record snapshot for Copy fleet_log JSONL (#22); keep exact key order.
+const LOG_KEYS = ["seq", "ts", "level", "event", "msg", "fields", "fleet"];
 
 async function openPage(page) {
   const errors = [];

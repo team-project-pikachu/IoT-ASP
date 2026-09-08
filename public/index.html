@@ -607,11 +607,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
       sessionStorage.setItem("hop.instanceId", instanceId);
     }
+    // Per-tab seed in sessionStorage (incoherent fleet). seedSource uses spec-02
+    // "stored"|"entropy"; mirror hop.seed for reseed assertions / tooling.
     const ss = sessionStorage.getItem("hop.tabSeed");
     const stored = ss ? Math.floor(+ss || 0) : 0;
-    seedSource = stored > 0 ? "session" : "entropy";
+    seedSource = stored > 0 ? "stored" : "entropy";
     seed = stored > 0 ? stored : entropySeed();
     if (!stored) sessionStorage.setItem("hop.tabSeed", String(seed));
+    try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
   } catch (_) {
     deviceId = "dev-" + Math.random().toString(36).slice(2, 10);
     instanceId = "tab-" + Math.random().toString(36).slice(2, 10);
@@ -1105,6 +1108,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       seedSource = "entropy";
       rng = mulberry32(seed >>> 0);
       try { sessionStorage.setItem("hop.tabSeed", String(seed)); } catch (_) {}
+      try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
     }
     lastSuddenAt = now;
     flagGeminiAutoroute(
@@ -1119,12 +1123,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function enterExtremeFromBurst(deltaDb, which){
-    if (!suddenAuto || holdManual || !running) return;
+    // Simulate impulse / telemetry extreme must latch even when audio is not yet running.
+    // Contour jitter still requires a live scheduler (applyExtremeVarianceTick).
+    if (!suddenAuto || holdManual) return;
     soundBurst = true;
     extremeActive = true;
     burstEnergyDelta = deltaDb;
     bandBurst = which || bandBurst || "us";
-    applyExtremeVarianceTick("soundBurst enter");
+    lastBurstAt = performance.now();
+    if (running) applyExtremeVarianceTick("soundBurst enter");
+    else if (typeof updateTelUI === "function") updateTelUI();
   }
 
   function exitExtremeMode(){
@@ -2310,6 +2318,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     seed = entropySeed(); seedSource = "entropy";
     rng = mulberry32(seed >>> 0);
     try { sessionStorage.setItem("hop.tabSeed", String(seed)); } catch (_) {}
+    try { localStorage.setItem("hop.seed", String(seed)); } catch (_) {}
     monLog("seed reseeded → " + seed, "reseed", { seed, reason: reason || "ui" }, "info");
     if (running && ctx && osc) { pending.length = 0; nextHopAt = ctx.currentTime + 0.05; schedule(); }
     updateTelUI();
