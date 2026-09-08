@@ -9,8 +9,10 @@ from typing import Any
 
 from . import gcs_io
 from .clamps import CLAMPS, SCHEMA_VERSION, validate_patch
-from .priors import prior_text
+from .colab_etl import TELEMETRY_FEATURE_COLUMNS
+from .priors import seismo_bundle
 from .sudden_freq import author_sudden_freq_patch, is_sudden_freq_event
+from .vib_anomaly import VIB_QUANTUM, detect_disturbances, detect_from_telemetry_points
 
 ENGINE_ID = os.environ.get("IOT_ASP_GEMINI_ENGINE_ID", "iot-asp-autoroute")
 
@@ -33,6 +35,14 @@ def read_telemetry(node_id: str) -> dict[str, Any]:
     return {"ok": True, "path": latest, "payload": payload}
 
 
+def _latest_hold_manual(node_id: str) -> bool:
+    """True when latest telemetry for node has holdManual set (human freeze)."""
+    latest = read_telemetry(node_id)
+    if not latest.get("ok") or not latest.get("payload"):
+        return False
+    return bool(latest["payload"].get("holdManual"))
+
+
 def write_patch(node_id: str, patch_json: str) -> dict[str, Any]:
     """Validate clamps and write meta/patches/<nodeId>.json.
 
@@ -47,6 +57,14 @@ def write_patch(node_id: str, patch_json: str) -> dict[str, Any]:
         raw = json.loads(patch_json) if isinstance(patch_json, str) else dict(patch_json)
     except json.JSONDecodeError as exc:
         return {"ok": False, "error": f"invalid JSON: {exc}"}
+
+    # Hold / Manual wins: refuse remote patch writes while human freeze is set.
+    if raw.get("holdManual") or _latest_hold_manual(node_id):
+        return {
+            "ok": False,
+            "error": "holdManual — refuse patch",
+            "patch": raw,
+        }
 
     ok, msg, clamped = validate_patch(raw)
     if not ok:
@@ -73,8 +91,8 @@ def list_safety_clamps() -> dict[str, Any]:
 
 
 def seismo_acoustic_priors() -> dict[str, Any]:
-    """Short NS / linearized-acoustic / earthquake-coupling priors for prompts."""
-    return {"text": prior_text(), "keys": ["structure_borne", "linearized_acoustic", "infra_felt", "sudden_freq"]}
+    """NS / linearized-acoustic / seismo-acoustic priors + vib→algo weights + cites."""
+    return seismo_bundle()
 
 
 def colab_handoff_note(node_id: str, feature_hint: str = "spectra+vib") -> dict[str, Any]:
@@ -93,6 +111,11 @@ def colab_handoff_note(node_id: str, feature_hint: str = "spectra+vib") -> dict[
         "gcsPrefix": f"meta/features/{node_id}/",
         "createdAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "auth": "Colab userdata GCP_SA_JSON only — never download SA JSON to Studio",
+        "sharedAnomalyModule": "iot_asp_autoroute.vib_anomaly",
+        "vibQuantumG": VIB_QUANTUM,
+        "sampleHz": 1.0,
+        "telemetryFeatureColumns": list(TELEMETRY_FEATURE_COLUMNS),
+        "notebook": "notebooks/iot_asp_colab_etl.ipynb",
     }
     uri = gcs_io.write_json(f"meta/colab-jobs/{node_id}-latest.json", note)
     return {"ok": True, "uri": uri, "note": note}
@@ -141,6 +164,8 @@ def process_sudden_freq(node_id: str) -> dict[str, Any]:
     if not latest.get("ok") or not latest.get("payload"):
         return {"ok": False, "error": latest.get("error", "no payload")}
     tel = latest["payload"]
+    if tel.get("holdManual"):
+        return {"ok": False, "error": "holdManual — refuse patch", "skipped": True}
     if not is_sudden_freq_event(tel):
         return {"ok": True, "skipped": True, "reason": "not a suddenFreq event"}
     ok, msg, patch = author_sudden_freq_patch(tel)

@@ -2,3 +2,6 @@
 google-adk>=1.0.0,<2
 google-cloud-storage>=2.14.0,<4
 google-genai>=1.0.0,<2
+# Authoritative vib anomaly (browser only beacons; SciPy detects)
+scipy>=1.14.0,<1.18
+numpy>=1.26.0,<3

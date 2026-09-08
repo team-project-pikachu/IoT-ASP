@@ -3,12 +3,12 @@
   "algo": "am_gate",
   "fMin": 17000,
   "fMax": 21000,
-  "vol": 8,
+  "vol": 100,
   "pulseMs": 100,
   "shriekMs": 60,
   "vibThreshold": 0.12,
   "seedAction": "keep",
-  "rationale": "Local mock patch: AM gate at residential-safe gain for scientific tooling dry-run.",
+  "rationale": "Local mock patch: AM gate at max practical Web Audio gain (BT/hardware still limit SPL).",
   "engineId": "iot-asp-autoroute",
   "trigger": "offline-mock"
 }

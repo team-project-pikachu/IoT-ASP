@@ -58,8 +58,13 @@ r = write_patch("node1", json.dumps({
 }))
 print("patch:", r)
 assert r.get("ok"), r
-# UI percent > hard max 20 must refuse (legacy linear 0.5 → 50% also refuses)
-ok, msg, _ = validate_patch({"algo": "hop", "vol": 50, "fMin": 17000, "fMax": 23000})
-assert not ok, msg
+# vol_hard_max == 100 (UI percent). Mid-range OK; >100 must refuse.
+# Legacy linear 0.5 → 50% is accepted (normalize_vol_ui_percent).
+ok50, msg50, clamped50 = validate_patch({"algo": "hop", "vol": 50, "fMin": 17000, "fMax": 23000})
+assert ok50 and clamped50.get("vol") == 50.0, (msg50, clamped50)
+ok_lin, msg_lin, clamped_lin = validate_patch({"algo": "hop", "vol": 0.5, "fMin": 17000, "fMax": 23000})
+assert ok_lin and clamped_lin.get("vol") == 50.0, (msg_lin, clamped_lin)
+ok_hi, msg_hi, _ = validate_patch({"algo": "hop", "vol": 101, "fMin": 17000, "fMax": 23000})
+assert not ok_hi, msg_hi
 print("OK autoroute_dev dry-run")
 PY
