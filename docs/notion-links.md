@@ -25,7 +25,7 @@ Keyword search on 2026-09-07 found **no relevant pages or databases** for IoT-AS
 
 Hub exists; do **not** create a second page. Prefer linking this hub over duplicating. Remaining work is optional (not required to close #19):
 
-- Notion database “ASP docs” (data-source parent; classic `POST /v1/databases` is deprecated)
+- Notion database “ASP docs”: `POST /v1/databases` still creates the **database container** + `initial_data_source` (API 2025-09-03 split); use **data-source** IDs/endpoints for subsequent table/schema ops
 - `scripts/notion_hub_sync.py` (secret **name** `NOTION_TOKEN` only — never invent a value)
 
 Already tracked:

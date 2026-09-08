@@ -31,26 +31,32 @@ workspace page or invent a token.
 | Spec outline for this issue (page sections, public/private split, optional API) | this file, landed on `main` earlier | Status only — hub is now created |
 | Private-study pointer | `docs/STUDY_PRIVATE.md`; gitignored `study/` | Keep site protocol out of the hub |
 | Gemini Enterprise Notion connector (data-store ingest) | Google Cloud Gemini Enterprise docs | Out of scope; not a substitute for a human-readable hub |
-| Notion API: pages parented on `page_id` / `data_source_id`; classic `POST /v1/databases` deprecated as of 2025-09-03 | Context7 `/websites/developers_notion_reference` | Optional DB/sync only; pin `Notion-Version` if a script is added later |
+| Notion API: pages parented on `page_id` / `data_source_id`; `POST /v1/databases` creates container + `initial_data_source`; table/schema ops use data-source endpoints (2025-09-03 split) | Context7 `/websites/developers_notion_reference` | Optional DB/sync only; pin `Notion-Version` if a script is added later |
 
 **Why a hub instead of linking an existing page:** the 2026-09-07 search found none. **Why not a
 database first:** issue #19 asked for a hub page; a database is optional follow-up. **Why not
 `scripts/notion_hub_sync.py` in this PR:** optional; requires `NOTION_TOKEN` (name only in git) and
 must never run in CI.
 
-## Shipped on `main`
+## Shipped / provenance
 
-Verified by reading the files (`origin/main` @ `7eb8caf`) plus the live hub (Notion fetch 2026-09-08):
+**On `origin/main` before this PR** (verified @ `7eb8caf` + live hub fetch 2026-09-08):
 
 | What | Where |
 |------|-------|
 | Hub page (title "IoT-ASP — Adaptive Signal Processing hub"; Live & source / Constraints / Control plane / Science / Edge / Private; no site PII) | [notion.so](https://www.notion.so/IoT-ASP-Adaptive-Signal-Processing-hub-3d5bf46958418109a303eb31342ff50d) |
-| Hub URL in Relevant hits (`notion.so`, no `token` query) | `docs/notion-links.md` § Relevant hits |
-| 2026-09-07 search log kept as history | `docs/notion-links.md` § Search log (2026-09-07) |
-| Knowledge Base back-link to the same URL | `docs/awesome-iot-asp.md` § Knowledge Base |
 | Private-study pointer (companion `IoT-ASP-study`; `study/` gitignored) | `docs/STUDY_PRIVATE.md`; `CLAUDE.md` invariant 7 |
 | Secrets-by-name rule (1Password `dev`, GitHub secrets, Colab `userdata`, Secret Manager) | `CLAUDE.md` invariant 10 |
 | Docs rule: public docs stay generic; site protocol lives in `study/` | `.claude/rules/docs-and-specs.md:16` |
+
+**Introduced by this PR** (absent from base `main` until merge):
+
+| What | Where |
+|------|-------|
+| Hub URL in Relevant hits (`notion.so`, no `token` query) | `docs/notion-links.md` § Relevant hits |
+| 2026-09-07 search log kept as history | `docs/notion-links.md` § Search log (2026-09-07) |
+| Knowledge Base back-link to the same URL | `docs/awesome-iot-asp.md` § Knowledge Base |
+| V&V evidence for public fetch + privacy grep | `.vv/19/notion-hub.md` |
 
 ## Remaining scope
 
@@ -58,8 +64,8 @@ Hub page and repo back-links are done. Optional follow-up only:
 
 1. **Optional database** "ASP docs" with properties `Name` (title), `Area` (select: constraints / control
    plane / science / edge / ops), `Public` (checkbox), `GitHub path` (url), `Issue` (number) — one row per
-   `docs/*.md` and per spec. If created by API, use a **data source** parent (the classic
-   `POST /v1/databases` is deprecated as of API version 2025-09-03).
+   `docs/*.md` and per spec. Create the container with `POST /v1/databases` + `initial_data_source`; use
+   **data-source** endpoints for subsequent table/schema operations (API 2025-09-03 split).
 2. **Optional automation** `scripts/notion_hub_sync.py` (stdlib `urllib`, secret **name** `NOTION_TOKEN`):
    reads `docs/specs/README.md`'s index table and upserts rows into the database via `POST /v1/pages` with
    `parent: {data_source_id}` (or `database_id` on older versions), headers `Authorization: Bearer …` and
@@ -119,6 +125,6 @@ None (docs). `docs/ci.md` § Out of scope excludes heavy crawls; the sync script
 - Context7 `/websites/developers_notion_reference` — Authentication (`Authorization: Bearer`,
   `Notion-Version` header required, example version `2026-03-11`); `POST /v1/pages` (parent `page_id` /
   `database_id` / `data_source_id` / `workspace`; requires Insert Content capability; 403 without it;
-  optional `markdown` body and `allow_async`); `POST /v1/databases` deprecated as of version 2025-09-03.
+  optional `markdown` body and `allow_async`); `POST /v1/databases` creates database container + `initial_data_source`; data-source APIs own subsequent table/schema ops after the 2025-09-03 split.
 - Repo: `docs/notion-links.md`, `docs/awesome-iot-asp.md`, `docs/STUDY_PRIVATE.md`, `.claude/rules/docs-and-specs.md`,
   `CLAUDE.md` (invariants 7, 10).
