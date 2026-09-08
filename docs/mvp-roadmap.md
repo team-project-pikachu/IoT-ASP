@@ -5,6 +5,9 @@ Parked work uses the `parked` label. Feature specs: [`docs/specs/`](specs/README
 Live app: https://hop-ultrasonic-1digital-design.vercel.app/
 **Constraints:** **C1** iOS native A2DP only (no Web Bluetooth TX). **C2** Pi USB-C field node is not MVP web ([#14](https://github.com/team-project-pikachu/IoT-ASP/issues/14)).
 Tracked by [#69](https://github.com/team-project-pikachu/IoT-ASP/issues/69). Closed audit trail: [`mvp-closed-log.md`](mvp-closed-log.md) ([#68](https://github.com/team-project-pikachu/IoT-ASP/issues/68); #65 closed as duplicate).
+
+### Session batch (2026-09-08)
+Chat opened #60–#65, #67–#69 (#65 → dup of #68; #67 closed via [#78](https://github.com/team-project-pikachu/IoT-ASP/pull/78)). Canonical session audit: [`mvp-session-2026-09-08.md`](mvp-session-2026-09-08.md) · PR [#79](https://github.com/team-project-pikachu/IoT-ASP/pull/79).
 ## M0–M5 (README roadmap)
 | Milestone | Pillar | Issues | Specs / notes |
 |-----------|--------|--------|----------------|
