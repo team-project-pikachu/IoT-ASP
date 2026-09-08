@@ -94,7 +94,12 @@ Apple docs (cite):
 
 ## Related
 
-- [iphone-bluetooth.md](iphone-bluetooth.md) — C1 A2DP MVP (nodes 1–2)
+- [iphone-bluetooth.md](iphone-bluetooth.md) — C1 A2DP MVP (nodes 1–2 Soundcore)
+- [hardware/soundcore-2.md](hardware/soundcore-2.md) — Soundcore manufacturer TODO (#43)
 - [native-xcode.md](native-xcode.md) — SensorKit / native shell (#9)
+- [sensorkit-watch.md](sensorkit-watch.md) — iPhone+Watch vib / alarm (#41)
+- [algorithms.md](algorithms.md) — impulse→blast / alarm state machine (#42)
 - [connectivity-wifi.md](connectivity-wifi.md) — Google Home Wi‑Fi
-- Specs index: [specs/README.md](specs/README.md) (Project 5 note for #39)
+- Specs index: [specs/README.md](specs/README.md) (Project 5 notes for #39 / #41 / #42)
+- Native app: [`native/IoTASP/`](../native/IoTASP/) (fleet sink picker includes Sonos AirPlay)
+- Skills: [skills-repo PR #1](https://github.com/team-project-pikachu/skills-repo/pull/1)

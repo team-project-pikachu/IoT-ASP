@@ -30,12 +30,14 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #26 | [26-colab-live-gcs-features.md](26-colab-live-gcs-features.md) — Colab live GCS: accel / gyro / `micDiff` → `meta/features` | implemented on branch (live write pending owner run) | backend |
 | #27 | [27-continuous-ship-dev-test-prod.md](27-continuous-ship-dev-test-prod.md) — continuous ship: GitHub Actions dev → test → prod into Vercel | implemented on branch (secrets not yet set) | infra |
 
-Issues without a spec file: #9 (native SensorKit / Xcode shell — research, see `docs/iphone-bluetooth.md`
-§ Future native shell and the edge spec), #12 #13 #16 #17 (tracking / parent items referenced from
-`docs/ci.md` and spec 26), #37 (Vercel webhooks for hop-ultrasonic — docs + verify stub in
-`docs/vercel-webhooks.md`, complementary to #27), **#39** (Sonos Beam Gen 2 + third iPhone 16 —
-research note [`docs/sonos-beam.md`](../sonos-beam.md); AirPlay 2 TX + SoCo CLI / sonos-web LAN
-control; native AirPlay picker stub `native/ios-sonos-shell/`; parked until HW systems check).
+Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
+[#41](https://github.com/team-project-pikachu/IoT-ASP/issues/41) under `native/IoTASP/`), #12 #13 #16 #17
+(tracking / parent items referenced from `docs/ci.md` and spec 26), #37 (Vercel webhooks for
+hop-ultrasonic — docs + verify stub in `docs/vercel-webhooks.md`, complementary to #27), **#39**
+(Sonos Beam Gen 2 + third iPhone 16 — [`docs/sonos-beam.md`](../sonos-beam.md); AirPlay 2 TX + SoCo /
+sonos-web; parked until HW), **#41** (iOS + watchOS app), **#42** (impulse→blast / alarm reactivity —
+[`docs/algorithms.md`](../algorithms.md)), **#43** (Soundcore 2 manufacturer specs TODO —
+[`docs/hardware/soundcore-2.md`](../hardware/soundcore-2.md)).
 
 Owner surface legend: **frontend** = `public/` (Vercel), **backend** = `services/autoroute-adk/` (GCP,
 independent deploy), **infra** = `.github/`, `scripts/`, `vercel.json`, edge hardware, **docs** = `docs/`,

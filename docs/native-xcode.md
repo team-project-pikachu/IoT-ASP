@@ -26,4 +26,4 @@ Author UX wireframes in **Chrome**; validate HIG on Simulator + device Safari/na
 
 ## Sonos AirPlay shell sketch (#39)
 
-Separate from SensorKit: stub under [`native/ios-sonos-shell/`](../native/ios-sonos-shell/) embeds `AVRoutePickerView` for Beam Gen 2 (Node 3). Docs: [sonos-beam.md](sonos-beam.md). Full `xcodebuild` needs Xcode.app (Command Line Tools alone are insufficient on this Studio).
+Canonical app: [`native/IoTASP/`](../native/IoTASP/) (iOS + Watch) — fleet sink picker includes Soundcore A2DP and Sonos Beam AirPlay. Legacy sketch: [`native/ios-sonos-shell/`](../native/ios-sonos-shell/). Docs: [sonos-beam.md](sonos-beam.md), [sensorkit-watch.md](sensorkit-watch.md). Full `xcodebuild` needs Xcode.app (Command Line Tools alone are insufficient on this Studio). Shared alarm/impulse logic: `swift test` in `native/IoTASP/`.

@@ -138,6 +138,9 @@ Compact JSON heartbeat. Required fields marked ★.
 | `bandBurst` | | string | `lf` \| `us` \| `both` burst classification — #25/#26 |
 | `soundBurst` / `extremeActive` | | bool | Environmental burst detected / sustained extreme shriek mode — #25 |
 | `lfEnergy` / `usEnergy` | | number | LF (<20 Hz proxy) and US (>17 kHz) band energy (dB) — #25 |
+| `impulse` | | bool | Short-rise accel and/or micDiff onset — #42 |
+| `volBlast` | | bool | Alarm blast volume active (jump toward max / night rules) — #42 |
+| `alarmState` | | string | `armed` \| `triggered` \| `sustaining` \| `cleared` — #42 |
 
 Backend enrichment (`fleet_log.enrich_telemetry`) fills `band`, `power`, `nightNY`, `lfArmed`,
 `lfDriveCapable` when the phone omits them, and derives `lfGate = lfArmed ∧ lfDriveCapable ∧ vibClass == infra_felt`.
