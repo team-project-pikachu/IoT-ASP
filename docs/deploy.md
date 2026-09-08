@@ -63,7 +63,7 @@ its own Git checkout, so (1) there is no preview, hence no dev → test stage, (
 ignored (the workflow prints a `::warning`), and (3) without a token the job id cannot be queried. The poll
 therefore does **not** accept "the prod URL passes smoke" — the previous build already does — it accepts only
 "the prod URL serves exactly this checkout": `scripts/deploy_smoke.sh` with `SMOKE_PUBLIC_DIR=public` compares
-the served `ETag` of `/`, `/patch.json` and `/manifest.webmanifest` with the md5 (or sha1) of the local files
+the served `ETag` of every deployable file under `public/` with the md5 (or sha1) of the local files
 (Vercel serves static files with `ETag == md5(content)`; observed 2026-09-08, see Sources) and keeps polling
 until they match, failing after 5 min with nothing marked shipped. The same identity check runs in `test`
 (preview must be this checkout) and in the final production smoke on both paths. The CLI path additionally
@@ -71,8 +71,9 @@ deploys exactly the Actions checkout and prints its URL.
 
 `scripts/deploy_smoke.sh` never follows redirects (`--max-redirs 0`, no `-L`): curl forwards custom `-H`
 headers — unlike `Authorization`/`Cookie` — to every redirect target including other hosts, so following a
-redirect could leak `VERCEL_AUTOMATION_BYPASS_SECRET` off-host. A 3xx is a failure that prints the `Location`
-it refused. The bypass secret is also refused over plaintext `http://` (loopback excepted, for offline tests).
+redirect could leak `VERCEL_AUTOMATION_BYPASS_SECRET` off-host. A 3xx is a failure that prints only the
+redacted `Location` path it refused. The bypass secret is also refused over plaintext `http://` (loopback
+excepted, for offline tests).
 
 ## (b) One-time Vercel setup
 

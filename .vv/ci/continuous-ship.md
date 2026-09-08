@@ -16,7 +16,7 @@ are set. Everything offline is green (see Observed).
 | Jobs `secrets_check` → `gates` → `deploy_dev` (env `dev`) → `test` (env `test`) → `deploy_prod` (env `production`) | `.github/workflows/deploy.yml` |
 | Vercel CLI pinned `vercel@59`; `vercel pull --yes --environment=…`, `vercel build`, `vercel deploy --prebuilt [--prod]` | `.github/workflows/deploy.yml` |
 | Deploy-hook fallback (**`workflow_dispatch` only**; `curl -fsS -X POST`, prints job id + state only, polls ≤ 5 min until prod serves this checkout — `SMOKE_PUBLIC_DIR=public` build identity) | `.github/workflows/deploy.yml` `deploy_prod` |
-| Build identity: served `ETag == md5/sha1(local file)` for `/`, `/patch.json`, `/manifest.webmanifest` (`SMOKE_PUBLIC_DIR`); no redirects (`--max-redirs 0`); bypass secret only over https/loopback | `scripts/deploy_smoke.sh` |
+| Build identity: served `ETag == md5/sha1(local file)` for every deployable file under `public/` (`SMOKE_PUBLIC_DIR`); no redirects (`--max-redirs 0`); bypass secret only over https/loopback | `scripts/deploy_smoke.sh` |
 | Vercel Git auto-deploy for `main` disabled; all original headers preserved | `vercel.json` |
 | Remote smoke: 200, `Hold / Manual` + `holdManual`, `Permissions-Policy` ∋ microphone, `patch.json` `schemaVersion == 1`, manifest `Content-Type` | `scripts/deploy_smoke.sh` |
 | Local secret-name pre-flight + 1Password / `gh secret set` recipe | `scripts/vercel_secrets_check.sh` |

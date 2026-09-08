@@ -239,6 +239,22 @@ test.describe("public blaster smoke", () => {
     expect(errors).toEqual([]);
   });
 
+  test("?patch= relative URL query string is redacted from logs", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", e => errors.push(String(e)));
+    const resp = await page.goto("/?patch=" + encodeURIComponent("patch.json?token=SECRETSIG123"));
+    expect(resp.status()).toBe(200);
+    await page.waitForFunction(() => !!window.__hop);
+    const recs = await log(page);
+    const ready = recs.find(r => r.msg.startsWith("scientific tooling ready"));
+    expect(ready).toBeTruthy();
+    expect(ready.msg).toBe("scientific tooling ready · patch patch.json?[redacted]");
+    expect(JSON.stringify(recs)).not.toContain("SECRETSIG123");
+    expect(JSON.stringify(await payload(page))).not.toContain("SECRETSIG123");
+    await expect(page.locator("#patchUrlLabel")).toHaveText("patch.json?token=SECRETSIG123");
+    expect(errors).toEqual([]);
+  });
+
   test("systems check escapes a reflected ?patch= value (no XSS)", async ({ page }) => {
     const errors = [];
     page.on("pageerror", e => errors.push(String(e)));

@@ -2,7 +2,7 @@
 # Remote smoke test for a deployed public/ build (Vercel dev preview or production).
 # Usage: scripts/deploy_smoke.sh <url>
 # Env:   BYPASS            optional Vercel protection-bypass secret (sent as x-vercel-protection-bypass)
-#        SMOKE_PUBLIC_DIR  optional local public/ dir: every fetched file's ETag must equal the md5 (or
+#        SMOKE_PUBLIC_DIR  optional local public/ dir: every deployable file's ETag must equal the md5 (or
 #                          sha1) of the local copy, i.e. the served build IS this checkout (build identity)
 #        SMOKE_RETRIES     attempts per request (default 5)
 #        SMOKE_SLEEP_S     seconds between attempts (default 6)
@@ -11,7 +11,7 @@
 # Security notes:
 #   * Redirects are NOT followed. curl forwards custom -H headers (unlike Authorization/Cookie) to any
 #     redirect target, including other hosts, so with -L the BYPASS secret could leak off-host. A 3xx is a
-#     failure that prints the Location it refused to follow.
+#     failure that prints only the redacted Location it refused to follow.
 #   * BYPASS is only ever sent over https (loopback excepted, for offline tests).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -31,9 +31,10 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 ok()   { echo "ok: $*"; }
 
 scheme="${URL%%://*}"
+scheme_lc="$(printf '%s' "$scheme" | tr '[:upper:]' '[:lower:]')"
 hostport="${URL#*://}"; hostport="${hostport%%/*}"
 if [[ "$hostport" == \[* ]]; then host="${hostport%%]*}]"; else host="${hostport%%:*}"; fi  # IPv6 [::1]:port safe
-if [[ -n "${BYPASS:-}" && "${scheme,,}" != "https" ]]; then
+if [[ -n "${BYPASS:-}" && "$scheme_lc" != "https" ]]; then
   case "$host" in
     127.0.0.1|localhost|\[::1\]) ;;  # loopback: offline tests only
     *) fail "refusing to send the protection-bypass secret over plaintext ${scheme} to ${host} (use https)" ;;
@@ -68,13 +69,20 @@ identity_check() {
   [[ -f "$local_file" ]] || { echo "identity: local file ${local_file} missing" >&2; return 1; }
   etag="$(header_value "$hdr" "ETag")"
   etag="${etag#W/}"; etag="${etag%\"}"; etag="${etag#\"}"
-  md5="$(md5sum "$local_file" | cut -d' ' -f1)"
-  sha1="$(sha1sum "$local_file" | cut -d' ' -f1)"
+  read -r md5 sha1 < <(python3 - "$local_file" <<'PY'
+import hashlib
+import sys
+
+data = open(sys.argv[1], "rb").read()
+print(hashlib.md5(data).hexdigest(), hashlib.sha1(data).hexdigest())
+PY
+  )
   if [[ -z "$etag" ]]; then
     echo "identity: ${path:-/} served without an ETag; cannot prove the build is this checkout" >&2
     return 1
   fi
-  if [[ "${etag,,}" == "$md5" || "${etag,,}" == "$sha1" ]]; then
+  etag_lc="$(printf '%s' "$etag" | tr '[:upper:]' '[:lower:]')"
+  if [[ "$etag_lc" == "$md5" || "$etag_lc" == "$sha1" ]]; then
     return 0
   fi
   echo "identity: ${path:-/} ETag '${etag}' != local md5 ${md5} (sha1 ${sha1}) — served build is not this checkout (yet)" >&2
@@ -92,7 +100,8 @@ fetch() {
     CODE="$code"
     if [[ "$code" == 3?? ]]; then
       loc="$(header_value "$hdr" "Location")"
-      echo "GET ${URL}${path} -> HTTP ${code}: redirect to '${loc}' not followed (headers are never forwarded off-host)" >&2
+      safe_loc="${loc%%[\?#]*}"
+      echo "GET ${URL}${path} -> HTTP ${code}: redirect to '${safe_loc:-[redacted]}' not followed (headers are never forwarded off-host)" >&2
       return 1
     fi
     if [[ "$code" == "200" ]]; then
@@ -122,7 +131,8 @@ ok "Hold / Manual + holdManual present"
 
 # 3. Permissions-Policy header contains microphone
 pp="$(header_value "$TMP/index.hdr" "Permissions-Policy")"
-[[ "${pp,,}" == *microphone* ]] || fail "Permissions-Policy header missing 'microphone' (got: '${pp}')"
+pp_lc="$(printf '%s' "$pp" | tr '[:upper:]' '[:lower:]')"
+[[ "$pp_lc" == *microphone* ]] || fail "Permissions-Policy header missing 'microphone' (got: '${pp}')"
 ok "Permissions-Policy contains microphone"
 
 # 4. /patch.json → 200 and schemaVersion == 1
@@ -134,11 +144,28 @@ ok "patch.json schemaVersion == 1"
 # 5. /manifest.webmanifest → 200 with Content-Type application/manifest+json
 fetch "/manifest.webmanifest" "$TMP/manifest.hdr" "$TMP/manifest.json" "manifest.webmanifest" || fail "GET ${URL}/manifest.webmanifest -> HTTP ${CODE} (expected 200)"
 ct="$(header_value "$TMP/manifest.hdr" "Content-Type")"
-[[ "${ct,,}" == application/manifest+json* ]] || fail "manifest Content-Type expected application/manifest+json (got: '${ct}')"
+ct_lc="$(printf '%s' "$ct" | tr '[:upper:]' '[:lower:]')"
+[[ "$ct_lc" == application/manifest+json* ]] || fail "manifest Content-Type expected application/manifest+json (got: '${ct}')"
 ok "manifest.webmanifest Content-Type application/manifest+json"
 
 if [[ -n "$PUBLIC_DIR" ]]; then
-  ok "build identity: ETags of /, /patch.json, /manifest.webmanifest match ${PUBLIC_DIR}"
+  identity_index=0
+  while IFS= read -r -d '' local_path; do
+    relative_path="${local_path#"$PUBLIC_DIR"/}"
+    route_path="$relative_path"
+    [[ "$relative_path" == "index.html" ]] && route_path=""
+    url_path="$(python3 - "$route_path" <<'PY'
+from urllib.parse import quote
+import sys
+
+print("/" + quote(sys.argv[1]) if sys.argv[1] else "/")
+PY
+    )"
+    identity_index=$((identity_index + 1))
+    fetch "$url_path" "$TMP/identity-${identity_index}.hdr" "$TMP/identity-${identity_index}.body" "$relative_path" \
+      || fail "GET ${URL}${url_path} -> HTTP ${CODE} (expected 200)"
+  done < <(find "$PUBLIC_DIR" -type f -print0)
+  ok "build identity: ETags of every deployable file under ${PUBLIC_DIR} match"
 fi
 
 echo "OK deploy_smoke ${URL}"

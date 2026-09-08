@@ -238,7 +238,7 @@ def validate_node(node: Any) -> str:
     value could escape those prefixes in the dry-run mirror, so it is refused.
     """
     s = str(node) if node is not None else ""
-    if not NODE_RE.match(s):
+    if NODE_RE.fullmatch(s) is None:
         raise ValueError(f"refuse: node id must match {NODE_RE.pattern!r}, got {s!r}")
     return s
 

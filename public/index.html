@@ -1325,8 +1325,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function escHtml(s){ return String(s).replace(/[<>&"']/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;", "'":"&#39;" }[c])); }
   // Strip the query/fragment of any URL-like token (`https://…?sig=…`, `/patch.json?token=…`) before a message is
   // stored: the ring buffer is shipped on the wire as `logTail` and copied as JSON, and `?patch=` / `?telemetry=`
-  // may be a signed / tokened URL. Plain prose with a "?" is untouched (only tokens starting with `http(s)://` or `/`).
-  const URL_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#]*)[?#][^\s]*/g;
+  // may be a signed / tokened URL. Plain prose with a "?" is untouched (only tokens starting with `http(s)://`, `/`,
+  // or a filename-like relative path).
+  const URL_QUERY_RE = /((?:https?:\/\/|\/|(?:[A-Za-z0-9._~-]+\/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9]+)[^\s?#]*)[?#][^\s]*/g;
   function redactUrlQuery(s){ return String(s).replace(URL_QUERY_RE, "$1?[redacted]"); }
   function monLog(msg, event, fields, level){
     const rec = {

@@ -313,8 +313,8 @@ None. `schemaVersion: 1` unchanged; the smoke test only *reads* `public/patch.js
   with 401 unless `VERCEL_AUTOMATION_BYPASS_SECRET` is set (header `x-vercel-protection-bypass`).
 - **Hook path freshness** (adversarial review, 2026-09-08): the deploy-hook job id is not queryable without a
   token and the previous prod build already passes smoke, so "smoke passes" was a false-green signal. Fixed:
-  the hook path is `workflow_dispatch`-only and its poll requires served `ETag == md5(local file)` for the
-  three smoke paths (`SMOKE_PUBLIC_DIR=public`). If Vercel ever changes its static ETag scheme the check fails
+  the hook path is `workflow_dispatch`-only and its poll requires served `ETag == md5(local file)` for every
+  deployable file under `public/` (`SMOKE_PUBLIC_DIR=public`). If Vercel ever changes its static ETag scheme the check fails
   loudly (md5 and sha1 both tried) — use the CLI path, which deploys exactly the Actions checkout.
 - **Hook fires a Vercel-side build of `main`** (Git integration), not the Actions checkout — so with a
   dispatch `ref` other than `main`, the hook path deploys `main` anyway; the workflow prints a `::warning`

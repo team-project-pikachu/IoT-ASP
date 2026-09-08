@@ -250,7 +250,7 @@ jobs:
         if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true' && github.event_name == 'workflow_dispatch'
         env:
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-          SMOKE_PUBLIC_DIR: public   # build identity: served ETag == md5(local file) for /, /patch.json, /manifest.webmanifest
+          SMOKE_PUBLIC_DIR: public   # build identity: served ETag matches every deployable public/ file
         run: |
           set -uo pipefail
           # The hook cannot be queried without a token, so the ONLY acceptable success signal is that the

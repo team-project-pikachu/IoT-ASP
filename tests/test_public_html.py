@@ -285,10 +285,11 @@ def test_log_never_stores_url_query(html: str) -> None:
 
 def test_redact_regex_semantics() -> None:
     """Mirror of URL_QUERY_RE (kept in sync by test_log_never_stores_url_query) — stdlib re."""
-    rx = re.compile(r"((?:https?://|/)[^\s?#]*)[?#][^\s]*")
+    rx = re.compile(r"((?:https?://|/|(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9]+)[^\s?#]*)[?#][^\s]*")
     red = lambda t: rx.sub(r"\1?[redacted]", t)
     assert red("patch /patch.json?X-Goog-Signature=SECRET123") == "patch /patch.json?[redacted]"
     assert red("https://h.example/p.json?token=T#f") == "https://h.example/p.json?[redacted]"
+    assert red("patch.json?token=SECRET") == "patch.json?[redacted]"
     assert red("what? really") == "what? really"
     assert red("patch /patch.json") == "patch /patch.json"
 

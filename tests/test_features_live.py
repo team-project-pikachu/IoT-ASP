@@ -279,7 +279,10 @@ def test_fl14_guard_refuses_unsafe_segments(bad):
         fl.assert_features_path(bad)
 
 
-@pytest.mark.parametrize("node", ["../patches/x", "node1/../../patches", "a/b", "", " ", "node 1", ".", "..", "nöde"])
+@pytest.mark.parametrize(
+    "node",
+    ["../patches/x", "node1/../../patches", "a/b", "", " ", "node 1", "node1\n", ".", "..", "nöde"],
+)
 def test_fl14_node_validation(node, dry_root):
     with pytest.raises(ValueError, match="node id"):
         fl.validate_node(node)

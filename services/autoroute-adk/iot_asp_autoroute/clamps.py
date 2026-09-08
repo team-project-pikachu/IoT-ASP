@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 ALLOWED_ALGOS = frozenset(
@@ -70,6 +71,8 @@ def validate_patch(patch: dict[str, Any]) -> tuple[bool, str, dict[str, Any]]:
                 v = float(out[key])
             except (TypeError, ValueError):
                 return False, f"{key} not numeric", out
+            if not math.isfinite(v):
+                return False, f"{key} not finite", out
             if v < flo or v > fhi:
                 return False, f"{key}={v} outside [{flo},{fhi}] for band {out.get('band')}", out
             out[key] = v
@@ -84,6 +87,8 @@ def validate_patch(patch: dict[str, Any]) -> tuple[bool, str, dict[str, Any]]:
                 v = float(out[key])
             except (TypeError, ValueError):
                 return False, f"{key} not numeric", out
+            if not math.isfinite(v):
+                return False, f"{key} not finite", out
             if v < lo or v > hi:
                 return False, f"{key}={v} outside [{lo},{hi}]", out
             out[key] = v
@@ -93,6 +98,8 @@ def validate_patch(patch: dict[str, Any]) -> tuple[bool, str, dict[str, Any]]:
             vol = normalize_vol_ui_percent(float(out["vol"]))
         except (TypeError, ValueError):
             return False, "vol not numeric", out
+        if not math.isfinite(vol):
+            return False, "vol not finite", out
         if vol > CLAMPS["vol_hard_max"]:
             return False, f"vol={vol} exceeds hard max {CLAMPS['vol_hard_max']}", out
         if vol > CLAMPS["vol_soft_max"]:

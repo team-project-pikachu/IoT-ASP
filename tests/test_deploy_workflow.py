@@ -73,8 +73,16 @@ GOOD_FILES = {
     "index.html": b"<html><body>Hold / Manual <button id=holdPatchBtn></button> holdManual</body></html>",
     "patch.json": b'{"schemaVersion": 1, "algo": "hop"}',
     "manifest.webmanifest": b'{"name": "hop"}',
+    "apple-touch-icon.png": b"icon-bytes",
+    "README.txt": b"public asset",
 }
-ROUTES = {"/": "index.html", "/patch.json": "patch.json", "/manifest.webmanifest": "manifest.webmanifest"}
+ROUTES = {
+    "/": "index.html",
+    "/patch.json": "patch.json",
+    "/manifest.webmanifest": "manifest.webmanifest",
+    "/apple-touch-icon.png": "apple-touch-icon.png",
+    "/README.txt": "README.txt",
+}
 
 
 class _LoopbackSite:
@@ -100,7 +108,7 @@ class _LoopbackSite:
                         self.end_headers()
                         return
                     self.send_response(302)
-                    self.send_header("Location", redirect_to + known)
+                    self.send_header("Location", redirect_to + known + "?token=secret#fragment")
                     self.end_headers()
                     return
                 name = ROUTES.get(self.path)
@@ -413,6 +421,7 @@ def test_dp15_redirect_never_followed_and_bypass_never_forwarded():
             res = _smoke(hop.url, BYPASS=canary)
         assert res.returncode == 1
         assert "HTTP 302: redirect to" in res.stderr and "not followed" in res.stderr, res.stderr
+        assert "?token=secret" not in res.stderr and "#fragment" not in res.stderr
         assert "FAIL: GET %s -> HTTP 302 (expected 200)" % hop.url in res.stderr
         assert target.requests == [], "redirect target must never be contacted"
         assert canary not in res.stdout + res.stderr
@@ -439,6 +448,7 @@ def test_dp16_build_identity_via_etag(tmp_path: Path):
     for name, body in GOOD_FILES.items():
         (stale / name).write_bytes(body)
     (stale / "index.html").write_bytes(GOOD_FILES["index.html"] + b"<!-- new commit -->")
+    (stale / "apple-touch-icon.png").write_bytes(b"stale-icon")
     with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)") as site:
         good = _smoke(site.url, SMOKE_PUBLIC_DIR=str(same))
         bad = _smoke(site.url, SMOKE_PUBLIC_DIR=str(stale))
@@ -449,6 +459,16 @@ def test_dp16_build_identity_via_etag(tmp_path: Path):
     assert "served build is not this checkout" in bad.stderr, bad.stderr
     assert "build identity mismatch" in bad.stderr
     assert "FAIL: GET %s -> HTTP 200 but build identity mismatch (expected 200)" % site.url in bad.stderr
+    # A stale asset must fail even when the three smoke-route files match.
+    stale_asset = tmp_path / "stale-asset"
+    stale_asset.mkdir()
+    for name, body in GOOD_FILES.items():
+        (stale_asset / name).write_bytes(body)
+    (stale_asset / "apple-touch-icon.png").write_bytes(b"stale-icon")
+    with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)") as site:
+        stale_asset_result = _smoke(site.url, SMOKE_PUBLIC_DIR=str(stale_asset))
+    assert stale_asset_result.returncode == 1
+    assert "apple-touch-icon.png" in stale_asset_result.stderr
     assert missing.returncode == 1 and "is not a directory" in missing.stderr
     # without SMOKE_PUBLIC_DIR the same stale checkout is irrelevant (plain smoke)
     with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)") as site:
