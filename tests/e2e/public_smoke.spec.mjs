@@ -314,10 +314,8 @@ test.describe("public blaster smoke", () => {
     }, null, { timeout: 8000 });
     // Freeze peer heartbeat age by rewriting peer ts far in the past
     await pageA.evaluate(() => {
-      const peers = Object.keys(window.__hop.getState?.() || {});
       // paintFleetCards reads fleetPeers closed over in page; mutate via BC message with old ts
       const ch = new BroadcastChannel("iot-asp-fleet");
-      const st = window.__hop.getState();
       ch.postMessage({
         deviceId: "peer-stale-test",
         instanceId: "tab-stale-peer",

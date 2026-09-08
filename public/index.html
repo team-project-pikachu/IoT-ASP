@@ -2120,7 +2120,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     "lfArmed","lfDriveCapable","lfGate","algo","vibClass","suddenFreq","suddenState","holdManual","peakHz",
     "absA","micEnergy","impulse","volBlast","alarmState","msg"];
   function fleetLogLineFromTel(extra){
-    const tel = typeof telemetryPayload === "function" ? telemetryPayload() : {};
+    const tel = telemetryPayload();
     const row = {
       kind: "fleet_log",
       schemaVersion: SCHEMA_VERSION,
@@ -2134,7 +2134,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       lfArmed: !!tel.lfArmed,
       lfDriveCapable: !!tel.lfDriveCapable,
       lfGate: !!(tel.lfArmed && tel.lfDriveCapable && tel.vibClass === "infra_felt"),
-      algo: tel.algo || (typeof algoWireName === "function" ? algoWireName() : algo),
+      algo: tel.algo || algoWireName(),
       vibClass: tel.vibClass || "none",
       suddenFreq: !!tel.suddenFreq,
       suddenState: tel.suddenState || "idle",
@@ -2294,7 +2294,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function updateTelUI(){
     if (telDevice) telDevice.textContent = deviceId;
     if (telSeed) telSeed.textContent = String(seed);
-    if (telAlgo) telAlgo.textContent = (typeof algoWireName === "function" ? algoWireName() : algo);
+    if (telAlgo) telAlgo.textContent = algoWireName();
     if (telPeak) telPeak.textContent = lastPeakHz != null ? nf(lastPeakHz) : "—";
     if (telAccel) telAccel.textContent = isFinite(accelMag) ? accelMag.toFixed(3) + " g" : "—";
     if (telMic) telMic.textContent = isFinite(acousticEnergy) ? acousticEnergy.toFixed(1) + " dB" : "—";
@@ -2348,7 +2348,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       deviceId,
       ts: new Date().toISOString(),
       seed,
-      algo: typeof algoWireName === "function" ? algoWireName() : algo,
+      algo: algoWireName(),
       peakHz: lastPeakHz,
       suddenFreq,
       soundBurst: !!soundBurst,
@@ -2425,7 +2425,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   function publishFleetHeartbeat(){
     const snap = {
-      deviceId, instanceId, seed, seedSource, algo: (typeof algoWireName === "function" ? algoWireName() : algo),
+      deviceId, instanceId, seed, seedSource, algo: algoWireName(),
       alarmState, impulse: !!impulse, volBlast: !!volBlast, holdManual, ts: Date.now()
     };
     try { localStorage.setItem("hop.fleetLocal", JSON.stringify(snap)); } catch (_) {}
@@ -2441,7 +2441,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       if (idEl) idEl.textContent = deviceId || "local";
     }
     if (localMeta) {
-      localMeta.textContent = "seed " + seed + " · " + (typeof algoWireName === "function" ? algoWireName() : algo)
+      localMeta.textContent = "seed " + seed + " · " + algoWireName()
         + " · alarm " + alarmState
         + (impulse ? " · impulse" : "")
         + (volBlast ? " · blast" : "")
