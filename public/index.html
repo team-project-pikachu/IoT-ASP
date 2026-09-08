@@ -919,9 +919,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (!suddenAuto) {
       suddenState = "idle";
       if (suddenLive) suddenLive.textContent = "off";
+      clearImpulseAlarm("suddenAuto off");
+      setAlarmState("off");
     } else if (suddenLive && suddenState === "idle") {
       suddenLive.textContent = "armed";
       suddenState = "armed";
+      if (alarmState === "off" || alarmState === "cleared") setAlarmState("armed");
     }
   }
 
