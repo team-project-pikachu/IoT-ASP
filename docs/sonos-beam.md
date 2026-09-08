@@ -4,7 +4,7 @@
 **Board:** [Project 5](https://github.com/orgs/team-project-pikachu/projects/5) · issue [#39](https://github.com/team-project-pikachu/IoT-ASP/issues/39).  
 **Formal constraint:** [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) **C1** requires **iOS native Bluetooth A2DP** for carrier TX (not Web Bluetooth). **AirPlay 2 to Beam is a researched exception** — OS-owned route, but **not** currently C1-compliant A2DP; do not treat this doc as revising C1.  
 **Evidence cache:** `.firecrawl/` (gitignored) from Firecrawl search/scrape; Apple API notes via Context7 `/websites/developer_apple_avfaudio` + [Apple Developer Documentation](https://developer.apple.com/documentation/).  
-**Agent skill priors:** [skills-repo PR #1](https://github.com/team-project-pikachu/skills-repo/pull/1) (`awesome-swift-ios` + SoCo CLI + sonos-web) — install via `bearlabs-core@bearlabs` marketplace.
+**Agent skill priors:** vendored in-repo at [`.claude/skills/awesome-swift-ios/`](../.claude/skills/awesome-swift-ios/SKILL.md) and [`.cursor/skills/awesome-swift-ios/`](../.cursor/skills/awesome-swift-ios/SKILL.md) (source [skills-repo PR #1](https://github.com/team-project-pikachu/skills-repo/pull/1)). No personal `bearlabs-core@bearlabs` plugin is required for this repo. SoCo / sonos-web stay LAN-control priors — do not vendor their source here.
 
 ## Fleet role — Node 3
 
@@ -113,4 +113,4 @@ Until a Beam Gen 2 is on the bench, treat Node 3 as **research-only**:
 - [connectivity-wifi.md](connectivity-wifi.md) — Google Home Wi‑Fi
 - Specs index: [specs/README.md](specs/README.md) (Project 5 notes for #39 / #41 / #42)
 - Native app: [`native/IoTASP/`](../native/IoTASP/) (fleet sink picker includes Sonos AirPlay)
-- Skills: [skills-repo PR #1](https://github.com/team-project-pikachu/skills-repo/pull/1)
+- Skills: in-repo [`.claude/skills/awesome-swift-ios/`](../.claude/skills/awesome-swift-ios/SKILL.md) (marketplace source [skills-repo PR #1](https://github.com/team-project-pikachu/skills-repo/pull/1))
