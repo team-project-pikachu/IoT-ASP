@@ -1,17 +1,21 @@
-# IoT-ASP native — iOS + watchOS
+# IoT-ASP native — iPhone node + Watch + macOS command center
 
 Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 
 | Path | Role |
 |------|------|
-| `IoTASPApp/` | **iPhone** primary shell (SwiftUI) |
-| `IoTASPWatch/` | **Apple Watch** companion (Watch Connectivity) |
+| `IoTASPApp/` | **iPhone node** — On/Off + status. Command center is not here. |
+| `IoTASPWatch/` | **Apple Watch** companion (status + Hold) |
+| `IoTASPCommand/` | **macOS command center** — WKWebView of the Vercel blaster |
 | `Shared/` | Alarm state machine, impulse detector, fleet (Soundcore + Sonos), SensorKit gate |
 | `Package.swift` | Shared logic + discoverable XCTest target (`swift test` when the selected toolchain includes XCTest) |
 | `IoTASP.xcodeproj/` | Open in **Xcode.app** to build device/simulator |
 
+Command center (SDD / C3): **https://hop-ultrasonic-1digital-design.vercel.app/** (`public/`). Scheme **IoTASPCommand** loads that URL on Mac.
+
 ## Issues
 
+- Related: [#140](https://github.com/team-project-pikachu/IoT-ASP/issues/140) full CoreMotion suite
 - Related: [#41](https://github.com/team-project-pikachu/IoT-ASP/issues/41) native iOS+Watch
 - Related: [#42](https://github.com/team-project-pikachu/IoT-ASP/issues/42) impulse→blast / alarm
 - Related: [#39](https://github.com/team-project-pikachu/IoT-ASP/issues/39) Sonos Beam Node 3
@@ -24,8 +28,10 @@ Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 | Feature | On-device (with Xcode + device) | Stub / gated |
 |---------|--------------------------------|--------------|
 | Alarm state machine | Runs (unit-tested via SPM) | — |
-| Impulse simulate button | Runs | Real CoreMotion wiring: start in session when `motionArmed` |
-| CoreMotion 1–100 Hz | Code present (`PhoneMotionLogger`) | Hook `onSample` → detector in next pass |
+| Impulse simulate button | Session API only (not on the phone UI) | Real CoreMotion wiring when On |
+| Phone chrome | On / Off + status + Hold | Nest / Glass / Systems stay on the Vercel command center |
+| On | Motion + 48 kHz mic + permission sequence | Backgrounding pauses sensing (#145) |
+| CoreMotion 1–100 Hz | Code present (`PhoneMotionLogger` + `CoreMotionSuite`) | Simulator: availability all-false; pedometer skipped; mag/altimeter optional |
 | AVRoutePicker / A2DP / AirPlay session | Runs on device | Needs full Xcode; CLT-only hosts cannot `xcodebuild` |
 | watchOS UI + impulse/Hold | Runs on Watch simulator/device | WCSession mirror best-effort |
 | SensorKit readers | Compile-time `#if canImport(SensorKit) && ASP_SENSORKIT_ENTITLED` | **Entitlement not granted** — always stub |
@@ -40,7 +46,7 @@ cd native/IoTASP && swift test
 
 # App / Watch (requires Xcode.app)
 open IoTASP.xcodeproj
-# Scheme: IoTASP (iOS) · IoTASPWatch
+# Scheme: IoTASP (iPhone node) · IoTASPWatch · IoTASPCommand (macOS / Vercel)
 ```
 
 Studio note: the installed Command Line Tools may omit XCTest, and `xcodebuild -version` fails when only

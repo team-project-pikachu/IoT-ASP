@@ -28,6 +28,8 @@ tests/e2e/.server.log
 
 # Swift SPM / native compile-check (#41)
 native/**/.build/
+native/**/xcuserdata/
+native/**/*.xcuserstate
 native/**/.swift-build-check.out
 native/**/.swift-build-check.err
 native/**/.swiftpm/
