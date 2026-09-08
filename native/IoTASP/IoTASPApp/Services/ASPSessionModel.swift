@@ -10,7 +10,14 @@ final class ASPSessionModel: ObservableObject {
     @Published var motionArmed = false {
         didSet { syncMotion() }
     }
+    @Published var micArmed = false {
+        didSet { syncMic() }
+    }
+    @Published var micStatus = UltrasonicMicStatus.stub()
     @Published var lastAbsA: Double = 0
+    @Published var lastAbsOmega: Double = 0
+    @Published var motionAvailability = MotionAvailability.simulatorSafe
+    @Published var motionPlanHz: Double = CoreMotionSuite.defaultHz
     @Published var intenseVib = false
     @Published var sessionError: String?
     @Published var alarm = AlarmStateMachine()
@@ -18,6 +25,9 @@ final class ASPSessionModel: ObservableObject {
     private let detector = ImpulseDetector()
     #if canImport(CoreMotion)
     private var motion: PhoneMotionLogger?
+    #endif
+    #if canImport(AVFoundation)
+    private var mic: UltrasonicMicCapture?
     #endif
     private var ticker: AnyCancellable?
     private var pendingImpulse: ImpulseEvent?
@@ -67,7 +77,9 @@ final class ASPSessionModel: ObservableObject {
             logger.onSample = { [weak self] sample in
                 self?.ingest(sample)
             }
-            logger.start(hz: 50)
+            logger.start(hz: CoreMotionSuite.defaultHz)
+            motionAvailability = logger.availability
+            motionPlanHz = logger.activePlan.hz
             motion = logger
         } else {
             motion?.stop()
@@ -76,8 +88,27 @@ final class ASPSessionModel: ObservableObject {
         #endif
     }
 
+    private func syncMic() {
+        #if canImport(AVFoundation)
+        if micArmed {
+            let cap = UltrasonicMicCapture()
+            cap.onMeter = { [weak self] _, _ in
+                self?.micStatus = cap.status
+            }
+            cap.start()
+            mic = cap
+            micStatus = cap.status
+        } else {
+            mic?.stop()
+            mic = nil
+            micStatus.engineRunning = false
+        }
+        #endif
+    }
+
     private func ingest(_ sample: VibSample) {
         lastAbsA = sample.absA
+        lastAbsOmega = sample.absOmega
         intenseVib = detector.intenseVibProxy(absA: sample.absA, lfEnergyProxy: sample.absA)
         if let event = detector.observeAccel(sample) {
             pendingImpulse = event

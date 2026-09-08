@@ -33,9 +33,30 @@ struct ContentView: View {
                 Section("Sensors") {
                     Toggle("Arm CoreMotion 1–100 Hz", isOn: $session.motionArmed)
                     LabeledContent("|a|", value: String(format: "%.3f", session.lastAbsA))
+                    LabeledContent("|ω|", value: String(format: "%.3f", session.lastAbsOmega))
+                    LabeledContent("plan Hz", value: String(format: "%.0f", session.motionPlanHz))
+                    LabeledContent("accel", value: session.motionAvailability.accelerometer ? "yes" : "no")
+                    LabeledContent("gyro", value: session.motionAvailability.gyroscope ? "yes" : "no")
+                    LabeledContent("mag (optional)", value: session.motionAvailability.magnetometer ? "yes" : "no")
+                    LabeledContent("deviceMotion", value: session.motionAvailability.deviceMotion ? "yes" : "no")
+                    LabeledContent("altimeter", value: session.motionAvailability.altimeter ? "yes" : "no")
+                    LabeledContent("pedometer", value: "skip (not hop-vib)")
                     LabeledContent("intense 10–20 Hz proxy", value: session.intenseVib ? "yes" : "no")
                     LabeledContent("SensorKit linked", value: SensorKitGate.isLinked ? "yes" : "no")
                     LabeledContent("SensorKit entitled", value: SensorKitGate.entitlementDeclared ? "yes" : "stub")
+                }
+
+                Section("Near-ultrasonic mic") {
+                    Toggle("Arm 48 kHz mic (AEC/NS/AGC off)", isOn: $session.micArmed)
+                    LabeledContent("preferred Hz", value: String(format: "%.0f", session.micStatus.preferredSampleRate))
+                    LabeledContent("granted Hz", value: String(format: "%.0f", session.micStatus.grantedSampleRate))
+                    LabeledContent("US Nyquist OK", value: session.micStatus.usBandOk ? "yes" : "no")
+                    LabeledContent("AEC off requested", value: session.micStatus.aecOffRequested ? "yes" : "no")
+                    LabeledContent("OS may override", value: session.micStatus.osMayOverride ? "yes (honest)" : "no")
+                    LabeledContent("bandEnergyUs", value: String(format: "%.1f dB", session.micStatus.lastBandEnergyUs))
+                    Text(session.micStatus.note)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
 
                 Section("Route") {
