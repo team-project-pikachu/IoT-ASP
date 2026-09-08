@@ -1,281 +1,338 @@
-"""Nest observations → additive ``schemaVersion: 1`` ASP telemetry.
+"""Map Nest SDM observations onto schemaVersion-1 additive telemetry.
 
-Issue #85 / #86 / #103, spec ``docs/specs/85-nest-google-home-integration.md``.
-Wire authority is ``docs/api-contract.md``; nothing here forks that table.
+Issue #103 / #84 / #86, spec ``docs/specs/103-nest-sdm-continuous.md``.
 
-Design rule: **reuse the wire, do not extend the semantics.** A Nest
-``CameraSound.Sound`` or ``DoorbellChime.Chime`` is an environmental acoustic
-onset observed by a second, independent witness — exactly what the existing
-``soundBurst`` / ``event: "soundBurst"`` / ``vibClass: "acoustic"`` fields
-already mean. So an acoustic Nest event lands on those three existing keys and
-the repo's burst path reacts with no new semantics at all. Everything that is
-genuinely new about Nest is namespaced ``nest*`` and is **optional**:
-``schemaVersion`` stays ``1`` (NEST_DESIGN.md #1).
+This module is the *only* place a Nest event becomes a public wire payload.
+:class:`iot_asp_autoroute.nest.events.NestEvent` may hold ``previewUrl``, a raw
+SDM device resource name, and a device id in memory (the poller needs them to
+call ``devices.get``). None of those leave here. The wire is an allowlist:
+``nestEvent`` values come from :data:`constants.EVENT_WIRE_NAMES`, and the
+device is identified by :func:`device_ref` (truncated SHA-256), never by the
+resource name.
 
-What this module must never do
-------------------------------
-* It never sets ``holdManual``, ``suddenFreq``, ``vol``, or any patch field
-  (``algo``, ``fMin``, ``fMax``, ``pulseMs``, ``shriekMs``, ``vibThreshold``,
-  ``seedAction``, …). It produces an *observation*; patch authorship stays with
-  ``sudden_freq`` / ``tools.write_patch``, which enforce clamps and refuse
-  under Hold / Manual.
-* It never puts a ``previewUrl``, a raw SDM device id, a device resource name
-  or a structure id on the wire. Those are recording URIs and site identifiers
-  (CLAUDE.md #7). The wire carries :func:`device_ref` — ``sha256(device_id)``
-  truncated to 12 hex characters — which is stable, joinable across records,
-  and not reversible to a device id by a reader of the public artifact.
-  ``nestClipAvailable`` reports that a clip *exists* without naming it.
+Unknown event types are ignored (``None``), not passed through under a made-up
+name. Clip-preview URLs become the boolean ``nestHasClip``. Tokens never have a
+field.
 
-Honesty note: SDM never hands a caller audio. ``CameraSound.Sound`` is a
-detection signal carrying only ``eventSessionId`` / ``eventId``
-(https://developers.google.com/nest/device-access/traits/device/camera-sound),
-so ``soundBurst`` here means "Nest reported a sound event", not "this backend
-measured acoustic energy". The measured quantities on the wire
-(``micEnergy``, ``micDiff``, ``bandEnergy*``) still come only from the phones.
-
-stdlib only, no clock of its own (``now`` is injected), no I/O.
+stdlib only. No network, no sleeps, no GCS writes — the poller owns I/O.
 """
 
 from __future__ import annotations
 
 import hashlib
-import math
-import time
-from datetime import datetime, timezone
-from typing import Any, Final, Mapping
+import json
+from collections.abc import Mapping
+from typing import Any, Final
 
+from ...clamps import SCHEMA_VERSION
 from . import constants
-from ..clamps import SCHEMA_VERSION
+from .events import NestEvent, REDACTED, parse_event
 
 __all__ = [
-    "SOURCE_EVENT",
-    "SOURCE_POLL",
-    "TS_FMT",
+    "DEVICE_REF_HEX_LEN",
+    "WIRE_KEYS",
+    "NestWire",
     "device_ref",
-    "device_to_state",
-    "event_to_telemetry",
-    "normalize_ts",
+    "device_type_wire",
+    "event_to_wire",
+    "device_to_wire",
+    "envelope_to_wire",
+    "assert_wire_safe",
 ]
 
-#: UTC ISO-8601 exactly as the rest of the backend stamps it
-#: (``.claude/rules/autoroute-backend.md``).
-TS_FMT: Final[str] = "%Y-%m-%dT%H:%M:%SZ"
+#: Hex length of ``nestDeviceRef``. Same recipe :func:`rate_limit.bucket_ref`
+#: uses for per-device bucket keys, so a health snapshot and a telemetry row
+#: can be joined without ever printing the SDM id.
+DEVICE_REF_HEX_LEN: Final[int] = 12
 
-#: ``nestSource`` values.
-SOURCE_EVENT: Final[str] = "event"
-SOURCE_POLL: Final[str] = "poll"
-SOURCES: Final[frozenset[str]] = frozenset({SOURCE_EVENT, SOURCE_POLL})
-
-#: Length of the truncated ``sha256`` device reference. 12 hex characters is
-#: 48 bits — collision-free for a household fleet, and short enough to read in
-#: a log line.
-DEVICE_REF_LEN: Final[int] = 12
-
-#: Keys this module is forbidden to emit, asserted by ``tests/test_nest_events.py``.
-#: Patch fields plus the three control keys a Nest observation must never touch.
-FORBIDDEN_KEYS: Final[frozenset[str]] = frozenset(
-    {
-        "holdManual",
-        "suddenFreq",
-        "vol",
-        "algo",
-        "fMin",
-        "fMax",
-        "pulseMs",
-        "shriekMs",
-        "vibThreshold",
-        "seedAction",
-        "rationale",
-        "engineId",
-        "priors",
-        "trigger",
-        "nodeId",
-    }
+#: Allowlisted schemaVersion-1 additive keys. Anything not in this tuple is
+#: dropped by :meth:`NestWire.as_dict` and hidden by :meth:`NestWire.__repr__`.
+WIRE_KEYS: Final[tuple[str, ...]] = (
+    "schemaVersion",
+    "nestEvent",
+    "nestDeviceRef",
+    "nestDeviceType",
+    "nestTs",
+    "nestThreadState",
+    "nestAcoustic",
+    "nestHasClip",
+    "nestOnline",
+    "nestRelationType",
+    "nestSource",
 )
 
-#: Existing wire vocabulary reused for an acoustic Nest event (docs/api-contract.md).
-EVENT_SOUND_BURST: Final[str] = "soundBurst"
-VIB_CLASS_ACOUSTIC: Final[str] = "acoustic"
+#: Substrings that must never appear in a wire JSON blob. Documentation
+#: placeholders (``device-id``, ``previewUrl``) are included so a regression
+#: that copies the fixture through is caught in CI.
+_FORBIDDEN_SUBSTRINGS: Final[tuple[str, ...]] = (
+    "previewUrl",
+    "preview_url",
+    "enterprises/",
+    "/devices/",
+    "Bearer ",
+    "Basic ",
+    "ya29.",
+    "access_token",
+    "refresh_token",
+)
 
 
-# ── helpers ──────────────────────────────────────────────────────────────────
+def device_ref(device_id: str | None) -> str:
+    """Truncated SHA-256 of an SDM device id — never the raw id.
 
-
-def _last_segment(value: str) -> str:
-    """Last path segment, so a resource name and a bare id hash identically."""
-    return value.rstrip("/").rsplit("/", 1)[-1]
-
-
-def device_ref(device_id: str) -> str:
-    """Stable, non-reversible wire reference for an SDM device.
-
-    ``sha256(<last path segment of device_id>)`` truncated to
-    :data:`DEVICE_REF_LEN` hex characters. Accepts either a bare device id or a
-    full ``enterprises/{project}/devices/{device-id}`` resource name and yields
-    the same reference for both. Returns ``""`` for an empty or non-string
-    input, so a malformed event produces a missing field rather than the hash
-    of the empty string masquerading as a real device.
+    Empty / non-string input yields ``""`` so callers can omit the field.
     """
-    if not isinstance(device_id, str) or not device_id.strip():
+    if not isinstance(device_id, str) or not device_id:
         return ""
-    segment = _last_segment(device_id.strip())
-    if not segment:
-        return ""
-    return hashlib.sha256(segment.encode("utf-8")).hexdigest()[:DEVICE_REF_LEN]
+    return hashlib.sha256(device_id.encode("utf-8")).hexdigest()[:DEVICE_REF_HEX_LEN]
 
 
-def normalize_ts(value: Any = None, *, now: float | None = None) -> str:
-    """Return UTC ``%Y-%m-%dT%H:%M:%SZ``.
+def device_type_wire(sdm_type: str | None) -> str | None:
+    """Last path segment of an SDM type, when it is a documented type.
 
-    ``value`` is the SDM envelope ``timestamp`` (RFC-3339, e.g.
-    ``"2019-01-01T00:00:01Z"``, sometimes with fractional seconds). When it is
-    absent or unparseable, ``now`` — injected epoch seconds, never an internal
-    clock unless the caller omits it — is used instead.
+    ``sdm.devices.types.CAMERA`` → ``CAMERA``. Unknown / malformed types are
+    ignored rather than passed through — a vendor-added type is a new event
+    class, not something we invent a wire name for.
     """
-    if isinstance(value, str) and value.strip():
-        text = value.strip()
-        if text.endswith("Z"):
-            text = text[:-1] + "+00:00"
-        try:
-            parsed = datetime.fromisoformat(text)
-        except ValueError:
-            parsed = None
-        if parsed is not None:
-            if parsed.tzinfo is None:
-                parsed = parsed.replace(tzinfo=timezone.utc)
-            return parsed.astimezone(timezone.utc).strftime(TS_FMT)
-    epoch = float(now) if isinstance(now, (int, float)) and not isinstance(now, bool) else None
-    if epoch is None or not math.isfinite(epoch):
-        epoch = time.time()
-    return datetime.fromtimestamp(epoch, tz=timezone.utc).strftime(TS_FMT)
+    if not isinstance(sdm_type, str) or not sdm_type:
+        return None
+    known = set(constants.DEVICE_QUOTAS) | set(constants.CAMERA_LIKE_TYPES)
+    if sdm_type not in known:
+        return None
+    label = sdm_type.rsplit(".", 1)[-1]
+    return label or None
 
 
-def _clean_node_id(node_id: Any) -> str:
-    if not isinstance(node_id, str) or not node_id.strip():
-        raise ValueError("node_id is required (the ASP node the Nest device is bound to)")
-    return node_id.strip()
+def _online_from_traits(traits: Mapping[str, Any] | None) -> bool | None:
+    """``True``/``False`` from the Connectivity trait, else ``None``."""
+    if not isinstance(traits, Mapping):
+        return None
+    trait = traits.get(constants.TRAIT_CONNECTIVITY)
+    if not isinstance(trait, Mapping):
+        return None
+    status = trait.get("status")
+    if status == "ONLINE":
+        return True
+    if status == "OFFLINE":
+        return False
+    return None
 
 
-# ── event → telemetry ────────────────────────────────────────────────────────
+class NestWire(dict):
+    """Allowlisted additive telemetry. ``__repr__`` never prints other keys.
+
+    Subclassing ``dict`` keeps ``json.dumps`` working without a default=.
+    Extra keys may be set in memory (a buggy caller) but they cannot reach
+    :meth:`as_dict` or :meth:`__repr__`.
+    """
+
+    def as_dict(self) -> dict[str, Any]:
+        """Stable-order allowlisted payload, omitting ``None`` / ``""``."""
+        out: dict[str, Any] = {}
+        for key in WIRE_KEYS:
+            if key not in self:
+                continue
+            val = self[key]
+            if val is None or val == "":
+                continue
+            out[key] = val
+        return out
+
+    def __repr__(self) -> str:  # noqa: D105 - redaction is the whole point
+        parts = [f"{k}={self[k]!r}" for k in WIRE_KEYS if k in self]
+        return "<NestWire " + " ".join(parts) + ">"
+
+    __str__ = __repr__
 
 
-def event_to_telemetry(
-    ev: Any,
+def _build(
     *,
-    node_id: str,
-    now: float | None = None,
-    source: str = SOURCE_EVENT,
+    nest_event: str | None = None,
+    device_id: str | None = None,
     device_type: str | None = None,
-    connectivity: str | None = None,
-) -> dict[str, Any]:
-    """One :class:`~iot_asp_autoroute.nest.events.NestEvent` → a heartbeat dict.
-
-    ``ev`` is duck-typed (``wire_name``, ``timestamp``, ``device_id``,
-    ``event_session_id``, ``thread_id``, ``thread_state``, ``preview_url``), so
-    this module does not import :mod:`~iot_asp_autoroute.nest.events` and stays
-    testable with a stub. ``device_type`` and ``connectivity`` are supplied by
-    the caller because an SDM **event** envelope carries neither — only the
-    device object from ``devices.list`` / ``devices.get`` does
-    (https://developers.google.com/nest/device-access/api/events). Omitting
-    them omits the corresponding wire fields rather than guessing a type from
-    the event class.
-
-    Emitted keys, all optional except ``schemaVersion`` / ``deviceId`` / ``ts``:
-
-    ``event`` / ``soundBurst`` / ``vibClass`` are the **existing** fields from
-    ``docs/api-contract.md`` and appear only for an acoustic event
-    (:data:`constants.ACOUSTIC_EVENTS`). Everything else is ``nest*``.
-    """
-    node = _clean_node_id(node_id)
-    src = source if source in SOURCES else SOURCE_EVENT
-
-    wire_name = getattr(ev, "wire_name", None)
-    wire_name = wire_name if isinstance(wire_name, str) and wire_name else None
-    is_acoustic = wire_name in constants.ACOUSTIC_EVENTS
-
-    out: dict[str, Any] = {
-        "schemaVersion": SCHEMA_VERSION,
-        "deviceId": node,
-        "ts": normalize_ts(getattr(ev, "timestamp", None), now=now),
-        "nestSource": src,
-    }
-
-    # Existing wire vocabulary — this is how #86/#103 reaches the burst path.
-    if is_acoustic:
-        out["event"] = EVENT_SOUND_BURST
-        out["soundBurst"] = True
-        out["vibClass"] = VIB_CLASS_ACOUSTIC
-
-    if wire_name is not None:
-        out["nestEvent"] = wire_name
-
-    ref = device_ref(getattr(ev, "device_id", "") or "")
+    ts: str | None = None,
+    thread_state: str | None = None,
+    acoustic: bool | None = None,
+    has_clip: bool | None = None,
+    online: bool | None = None,
+    relation_type: str | None = None,
+    source: str,
+) -> NestWire:
+    wire = NestWire()
+    wire["schemaVersion"] = SCHEMA_VERSION
+    wire["nestSource"] = source
+    if nest_event is not None:
+        wire["nestEvent"] = nest_event
+    ref = device_ref(device_id)
     if ref:
-        out["nestDeviceRef"] = ref
-
-    if isinstance(device_type, str) and device_type.strip():
-        out["nestDeviceType"] = device_type.strip()
-    if isinstance(connectivity, str) and connectivity.strip():
-        out["nestConnectivity"] = connectivity.strip()
-
-    session_id = getattr(ev, "event_session_id", None)
-    if isinstance(session_id, str) and session_id:
-        out["nestEventSessionId"] = session_id
-    thread_id = getattr(ev, "thread_id", None)
-    if isinstance(thread_id, str) and thread_id:
-        out["nestEventThreadId"] = thread_id
-    thread_state = getattr(ev, "thread_state", None)
-    if isinstance(thread_state, str) and thread_state:
-        out["nestEventThreadState"] = thread_state
-
-    preview_url = getattr(ev, "preview_url", None)
-    if isinstance(preview_url, str) and preview_url:
-        # The URL itself is a recording URI and stays off the wire; only its
-        # existence is reported.
-        out["nestClipAvailable"] = True
-
-    return out
+        wire["nestDeviceRef"] = ref
+    dtype = device_type_wire(device_type)
+    if dtype:
+        wire["nestDeviceType"] = dtype
+    if isinstance(ts, str) and ts:
+        wire["nestTs"] = ts
+    if thread_state in constants.EVENT_THREAD_STATES:
+        wire["nestThreadState"] = thread_state
+    if acoustic is not None:
+        wire["nestAcoustic"] = bool(acoustic)
+    if has_clip is not None:
+        wire["nestHasClip"] = bool(has_clip)
+    if online is not None:
+        wire["nestOnline"] = bool(online)
+    if relation_type in constants.RELATION_TYPES:
+        wire["nestRelationType"] = relation_type
+    return wire
 
 
-# ── device → private state record ────────────────────────────────────────────
+def event_to_wire(
+    ev: NestEvent | None,
+    *,
+    device_type: str | None = None,
+) -> NestWire | None:
+    """Allowlisted telemetry for one parsed event, or ``None`` to ignore it.
 
+    Ignore rules (negative controls):
 
-def device_to_state(dev: Any) -> dict[str, Any]:
-    """One device → the record written to ``meta/nest/state/<ref>.json``.
-
-    That tree is private (:data:`constants.GCS_NEST_STATE_PREFIX`), but this
-    record is deliberately safe even if it is copied somewhere public: it
-    carries the truncated :func:`device_ref`, the device **type**, the
-    connectivity status and the trait **names** — never the raw device id, the
-    resource name, a structure id, or any trait *value*. Trait values include
-    ``sdm.devices.traits.Info.customName``, a user-chosen label that can name a
-    room or a person (https://developers.google.com/nest/device-access/traits),
-    so no trait payload is copied here.
-
-    ``dev`` is duck-typed against
-    :class:`~iot_asp_autoroute.nest.sdm_client.NestDevice` (``device_id``,
-    ``type``, ``traits``, ``connectivity``, ``is_camera_like``), so this module
-    imports no sibling.
+    * ``ev`` is not a :class:`NestEvent`
+    * ``event_type`` is set but not in :data:`constants.EVENT_WIRE_NAMES`
+      (unknown vendor class — do not invent a ``nestEvent``)
+    * relation ``type`` is not in :data:`constants.RELATION_TYPES`
+    * trait-only envelope with no Connectivity status (nothing to say)
     """
-    traits = getattr(dev, "traits", None)
-    trait_names = sorted(k for k in traits if isinstance(k, str)) if isinstance(traits, Mapping) else []
-    dev_type = getattr(dev, "type", None)
-    dev_type = dev_type if isinstance(dev_type, str) and dev_type else None
-    connectivity = getattr(dev, "connectivity", None)
-    connectivity = connectivity if isinstance(connectivity, str) and connectivity else None
-    camera_like = getattr(dev, "is_camera_like", None)
+    if not isinstance(ev, NestEvent):
+        return None
 
-    state: dict[str, Any] = {
-        "schemaVersion": SCHEMA_VERSION,
-        "nestDeviceRef": device_ref(getattr(dev, "device_id", "") or ""),
-        "nestTraits": trait_names,
-        "nestEventTraits": [t for t in trait_names if t in constants.CAMERA_TRAITS],
-        "nestCameraLike": bool(camera_like)
-        if isinstance(camera_like, bool)
-        else dev_type in constants.CAMERA_LIKE_TYPES,
+    if ev.event_type and ev.wire_name is None:
+        return None
+
+    if ev.is_relation:
+        rel = ev.relation if isinstance(ev.relation, Mapping) else {}
+        rtype = rel.get("type")
+        if rtype not in constants.RELATION_TYPES:
+            return None
+        return _build(
+            device_id=ev.device_id,
+            device_type=device_type,
+            ts=ev.timestamp,
+            relation_type=str(rtype),
+            source="relation",
+        )
+
+    if ev.event_type is None:
+        online = _online_from_traits(ev.traits)
+        if online is None:
+            return None
+        return _build(
+            device_id=ev.device_id,
+            device_type=device_type,
+            ts=ev.timestamp,
+            online=online,
+            source="trait",
+        )
+
+    return _build(
+        nest_event=ev.wire_name,
+        device_id=ev.device_id,
+        device_type=device_type,
+        ts=ev.timestamp,
+        thread_state=ev.thread_state,
+        acoustic=ev.is_acoustic,
+        has_clip=ev.has_clip,
+        online=_online_from_traits(ev.traits),
+        source="event",
+    )
+
+
+def device_to_wire(dev: Any) -> NestWire | None:
+    """Liveness snapshot from a :class:`sdm_client.NestDevice`.
+
+    ``dev`` is duck-typed so this module does not import the client (keeps
+    mapping independently testable). Missing / empty devices are ignored.
+    """
+    if dev is None:
+        return None
+    device_id = getattr(dev, "device_id", None)
+    if not isinstance(device_id, str) or not device_id:
+        return None
+    traits = getattr(dev, "traits", None)
+    return _build(
+        device_id=device_id,
+        device_type=getattr(dev, "type", None),
+        online=_online_from_traits(traits if isinstance(traits, Mapping) else None),
+        source="poll",
+    )
+
+
+def envelope_to_wire(
+    envelope: Any, *, device_type: str | None = None
+) -> NestWire | None:
+    """Parse-then-map. ``None`` for anything that is not a mappable SDM envelope."""
+    return event_to_wire(parse_event(envelope), device_type=device_type)
+
+
+def assert_wire_safe(obj: Any) -> dict[str, Any]:
+    """Return the allowlisted dict, raising ``ValueError`` if PII leaked.
+
+    Used by the poller before every write and by tests as a negative control.
+    """
+    if isinstance(obj, NestWire):
+        payload = obj.as_dict()
+    elif isinstance(obj, Mapping):
+        payload = {k: obj[k] for k in WIRE_KEYS if k in obj and obj[k] not in (None, "")}
+        payload.setdefault("schemaVersion", SCHEMA_VERSION)
+    else:
+        raise ValueError("refuse: wire payload is not a mapping")
+    blob = json.dumps(payload, default=str)
+    for needle in _FORBIDDEN_SUBSTRINGS:
+        if needle in blob:
+            raise ValueError("refuse: wire payload contained a forbidden substring")
+    if REDACTED in blob:
+        # redaction marker means we accidentally serialised a repr, not a field
+        raise ValueError("refuse: wire payload contained a redaction marker")
+    extra = sorted(set(payload) - set(WIRE_KEYS))
+    if extra:
+        raise ValueError(f"refuse: non-allowlisted wire keys {extra}")
+    return payload
+
+
+def main() -> int:
+    """Offline demo: map every fixture, print allowlisted rows, refuse PII."""
+    from pathlib import Path
+
+    fixtures = (
+        Path(__file__).resolve().parents[4] / "tests" / "fixtures" / "nest"
+    )
+    names = (
+        "camera_sound.json",
+        "camera_motion.json",
+        "camera_person.json",
+        "doorbell_chime.json",
+        "clip_preview.json",
+        "trait_update.json",
+        "relation_update.json",
+    )
+    for name in names:
+        path = fixtures / name
+        envelope = json.loads(path.read_text(encoding="utf-8"))
+        wire = envelope_to_wire(envelope)
+        if wire is None:
+            print(f"{name}: ignored")
+            continue
+        safe = assert_wire_safe(wire)
+        print(f"{name}: {safe}")
+        print(f"  repr={wire!r}")
+    unknown = {
+        "eventId": "e",
+        "timestamp": "2019-01-01T00:00:01Z",
+        "resourceUpdate": {
+            "name": "enterprises/project-id/devices/device-id",
+            "events": {"sdm.devices.events.NotAReal.Event": {}},
+        },
     }
-    if dev_type is not None:
-        state["nestDeviceType"] = dev_type
-    if connectivity is not None:
-        state["nestConnectivity"] = connectivity
-    return state
+    assert envelope_to_wire(unknown) is None, "unknown event types must be ignored"
+    print("unknown event: ignored OK")
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI demo
+    raise SystemExit(main())
