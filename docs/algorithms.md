@@ -12,7 +12,7 @@ Primary control: **suddenFreq → Gemini/ADK autorotate** ([autoroute.md](autoro
 |------|----------|-------|------------------|--------|
 | 1 | iPhone 16 ↔ Soundcore 2 | Room A | Acoustic (mic/spectrum) + optional accel | **Active** |
 | 2 | iPhone 16 ↔ Soundcore 2 | Room B | Acoustic + optional accel | **Active** |
-| 3 | Future iPhone (e.g. 14) **taped to a chair** | TBD | **Physical / structure-borne** (linear accel); chair frame → seat → floor | **Parked** |
+| 3 | **Third iPhone 16** ↔ **Sonos Beam Gen 2** (AirPlay) and/or chair-taped sensing | TBD | Physical / AirPlay TX + structure-borne bias | **Research** (#39 / #18) |
 
 Nodes 1–2 blast **incoherently** (independent per-tab RNG). Humans and ambient external sounds are in-scope interferers (details live in the private study repo).
 
@@ -75,18 +75,27 @@ micDiff_band = micEnergy_band − α · outLevel_band
 
 Wire fields: `soundBurst`, `extremeActive`, `micEnergy`, `outLevel`, `micDiff` / `micNet`, `bandBurst`. Evidence: `.vv/burst-shriek.md`.
 
-## Impulse → blast + alarm-system reactivity
+## Impulse → blast / alarm reactivity
 
-**Web stub (issues #42 / #44 / #45; duplicates #46/#47/#50/#51).** Short-rise **impulses** (DeviceMotion accel delta vs EMA baseline, or micDiff burst onset) jump volume toward `VOL_PATCH_MAX` (100) within night / `nightTargetVol` clamps. Hold / Manual wins (disarm + freeze).
+**Web + native (issues #42 / #44 / #45; duplicates #46/#47/#50/#51; native #41).** Security-alarm style — not a gentle ramp.
 
-| `alarmState` | Meaning |
-|--------------|---------|
-| `armed` | Listening; no active blast |
-| `triggered` | Impulse this cycle; blast vol engaged immediately |
-| `sustaining` | Impulse train / still-hot; blast held |
-| `cleared` | Quiet hysteresis (`BURST_QUIET_MS` ≈ 2.5 s) then re-arm |
+| State | Meaning |
+|-------|---------|
+| `armed` | Sensors live; waiting for onset |
+| `triggered` | First short-duration impulse (accel spike and/or `micDiff` onset with short rise time) |
+| `sustaining` | Impulse train / hot micDiff continues; keep blast |
+| `cleared` | Quiet hysteresis met (~**2.5 s**); auto **re-arm** (do not soft-fade on first dip) |
 
-Telemetry (additive, `schemaVersion` stays 1): `impulse`, `volBlast`, `alarmState`. Native mirror: `native/IoTASP/Shared/Alarm/AlarmStateMachine.swift` (stub — not a signed App Store build).
+**Impulse definition:** short rise (≲120 ms) where either (a) `|a|` jumps ≥ onset above EMA baseline, or (b) `micDiff` jumps ≥ ~9 dB above EMA baseline (same family as environmental burst).
+
+**Blast:** set `volBlast=true`, jump UI `vol` toward **100** / `VOL_PATCH_MAX` (night window may cap via `nightTargetVol`; 0.5-step glide only when escalating from quiet under night rules). Prefer extreme / shriek / contour-mirror family while blasting. Hold / Manual disarm → `cleared`, freeze remote + blast (`holdManual` wins).
+
+**Telemetry (additive, schemaVersion 1):** `impulse` (bool), `volBlast` (bool), `alarmState` ∈ `armed`|`triggered`|`sustaining`|`cleared`.
+
+**Surfaces:** Web DeviceMotion+mic (`public/index.html`); native iPhone+Watch [`native/IoTASP/`](../native/IoTASP/) (`Shared/Alarm/AlarmStateMachine.swift`). SensorKit not on web (#9).
+
+**Intense vib:** treat **10–20 Hz** as intense vibrations band for TX gate and/or sensing priority (`infra_felt` / LF). Log **1–100 Hz** accel+gyro on native paths.
+
 
 ## Algorithms
 

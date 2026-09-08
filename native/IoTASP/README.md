@@ -16,7 +16,8 @@ Xcode multi-target app for hop-ultrasonic / IoT-ASP control.
 - Related: [#42](https://github.com/team-project-pikachu/IoT-ASP/issues/42) impulse→blast / alarm
 - Related: [#39](https://github.com/team-project-pikachu/IoT-ASP/issues/39) Sonos Beam Node 3
 - Related: [#9](https://github.com/team-project-pikachu/IoT-ASP/issues/9) SensorKit research (closed; entitlement still parked)
-- TODO Soundcore specs: [#43](https://github.com/team-project-pikachu/IoT-ASP/issues/43) → `docs/hardware/soundcore-2.md`
+- TODO Soundcore specs: [#43](https://github.com/team-project-pikachu/IoT-ASP/issues/43) → `docs/hardware/soundcore-2.md` (dossier: `soundcore-specs.md` / PR #55)
+
 
 ## What runs on-device vs stubbed
 
