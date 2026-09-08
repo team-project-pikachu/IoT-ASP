@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Merge into #109 app Info.plist when wiring CoreMotion + mic. -->
+	<key>NSMotionUsageDescription</key>
+	<string>IoT-ASP logs accelerometer and gyroscope for 1–100 Hz vibration science (intense 10–20 Hz band).</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>IoT-ASP uses the mic for micDiff impulse detection and glass-shatter / sound-burst onset hints (not Web SensorKit).</string>
+</dict>
+</plist>

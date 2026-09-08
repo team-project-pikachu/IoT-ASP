@@ -22,6 +22,7 @@ MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRA
 | Pick BT sink in-app | No | Still limited; system UI |
 | Disable AEC/NS/AGC | Partial (`getUserMedia` constraints) | Stronger `AVAudioSession` / audio unit control |
 | SensorKit | No | Research closed (#9); entitlement parked |
+| CoreMotion + mic | Partial (DeviceMotion / getUserMedia) | M9 stub SPM [`native/IoTASPMotionAudio/`](../native/IoTASPMotionAudio/) (#111) — CI/simulator safe |
 | CoreBluetooth sensors | No | Optional later — **not** carrier TX |
 
 Author UX wireframes in **Chrome**; validate HIG on Simulator + device Safari/native. See [iphone-bluetooth.md](iphone-bluetooth.md), [ux-tooling.md](ux-tooling.md).
