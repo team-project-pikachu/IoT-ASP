@@ -133,6 +133,33 @@ jobs:
       - name: Cursor .mdc → CLAUDE.md / .claude outputs are up to date
         run: python3 scripts/mdc_convert.py --check
 
+  e2e:
+    name: e2e smoke
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/pw-browsers
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/e2e/package-lock.json
+
+      - name: Install Playwright (pinned in tests/e2e/package.json) + Chromium
+        run: |
+          cd tests/e2e
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Playwright smoke against public/ (Hold/Manual, telemetry fields, reseed, watchdog)
+        run: bash tests/e2e/run.sh
+
   pr_issue_ref:
     name: PR must reference an issue
     if: github.event_name == 'pull_request'
