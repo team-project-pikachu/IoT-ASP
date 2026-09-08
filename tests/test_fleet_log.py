@@ -26,12 +26,15 @@ from iot_asp_autoroute.fleet_log import (  # noqa: E402
     RECORD_KEYS,
     aggregate_records,
     demo_fixture,
+    emit_log,
     enrich_telemetry,
     infer_band,
     log_record,
     night_ny,
     read_log_records,
     retention_plan,
+    safe_node,
+    safe_ts,
     scrub_pii,
     write_log_record,
 )
@@ -173,6 +176,18 @@ PII_INPUT_KEYS = [
     "streetAddress", "name", "contactEmail", "phone", "lat", "lon", "gpsFix", "clientIp",
     "transcript", "speechText", "recordingUri", "latitude",
 ]  # fmt: skip
+# Lowercase compound spellings (no separator) — must drop via substring / compound-token match.
+PII_COMPOUND_KEYS = [
+    "emailaddress", "username", "address1", "address2", "phonenumber", "streetaddress",
+    "homeaddress", "ipaddress", "ipaddr", "emailaddr", "fullname", "gpslat", "latlon", "latlng",
+    "gpscoords", "speechtext", "transcription", "recordingurl", "telephone", "cellphone",
+    "geolocation", "location", "zipcode", "postalcode",
+]  # fmt: skip
+# Look-alikes that carry no PII and must survive (audio route / timing keys are plausible telemetry).
+PII_LOOKALIKE_KEYS = [
+    "headphones", "headphoneConnected", "microphoneGain", "earphoneRoute", "latency", "long",
+    "ipc", "filename", "elapsed", "gain", "geminiAutorouteFlag", "records", "recordCount",
+]  # fmt: skip
 
 
 def test_pii_scrub_drops_keys_and_keeps_contract():
@@ -205,6 +220,25 @@ def test_pii_scrub_drops_keys_and_keeps_contract():
     assert "SENTINEL_PII" not in json.dumps(enriched)
     rec = log_record("info", "ingest", enriched, msg=f"dropped={dropped}")
     assert "SENTINEL_PII" not in json.dumps(rec)
+
+
+def test_pii_scrub_compound_lowercase_keys():
+    """Regression: keys that merely *contain* a deny word without a separator must drop too."""
+    for k in PII_COMPOUND_KEYS:
+        assert fleet_log.is_pii_key(k), k
+        assert fleet_log.is_pii_key(k.upper()), k
+    for k in PII_LOOKALIKE_KEYS:
+        assert not fleet_log.is_pii_key(k), k
+    t = {k: "LEAK" for k in PII_COMPOUND_KEYS}
+    t.update({"ts": "2026-01-15T12:00:00Z", "deviceId": "node1", "headphones": True})
+    clean, dropped = scrub_pii(t)
+    assert dropped == sorted(PII_COMPOUND_KEYS)
+    assert "LEAK" not in json.dumps(clean)
+    assert clean["headphones"] is True and clean["ts"] == "2026-01-15T12:00:00Z"
+    enriched = enrich_telemetry(t)
+    assert "LEAK" not in json.dumps(enriched)
+    assert enriched["piiDropped"] == len(PII_COMPOUND_KEYS)
+    assert "LEAK" not in json.dumps(log_record("info", "ingest", t))
 
 
 def test_pii_scrub_api_contract_keys_survive():
@@ -265,7 +299,7 @@ def test_jsonl_round_trip(dry_root):
     recs, skipped = fleet_log.read_log_records_with_stats("node1")
     assert len(recs) == 12 and skipped == 1
     assert not (ROOT / ".autoroute-dry" / "meta" / "logs" / "node1" / "2026-01-15.jsonl").exists()
-    assert write_log_record("../evil", records[0])["path"].startswith("meta/logs/.._evil/")
+    assert write_log_record("../evil", records[0])["path"].startswith("meta/logs/_evil/")
 
 
 def test_write_log_record_never_raises(dry_root, monkeypatch):
@@ -273,6 +307,34 @@ def test_write_log_record_never_raises(dry_root, monkeypatch):
     (dry_root / "file-not-dir").write_text("x", encoding="utf-8")
     res = write_log_record("node1", demo_fixture()[0])
     assert res["ok"] is False and "error" in res
+
+
+def test_jsonl_unicode_line_separators_round_trip(dry_root):
+    """Regression: U+2028 / U+2029 / U+0085 in a string field must not shatter the JSONL line.
+
+    ``str.splitlines()`` treats those code points as line breaks; the writer \\u-escapes them
+    (``ensure_ascii=True``) and the reader splits on ``\\n`` only, so the record survives intact.
+    """
+    weird = ["rot\u2028ate", "on\u2029set", "id\u0085le", "em\u2014dash \u00e9"]
+    records = []
+    for i, state in enumerate(weird):
+        t = {**BASE_TEL, "ts": f"2026-01-15T12:00:0{i}Z", "suddenState": state, "deviceId": f"n\u2028{i}"}
+        rec = log_record("info", "ingest", t, msg=state)
+        assert rec["suddenState"] == state
+        assert write_log_record("node1", rec)["ok"]
+        records.append(rec)
+    f = dry_root / "meta" / "logs" / "node1" / "2026-01-15.jsonl"
+    raw = f.read_bytes()
+    assert raw.isascii(), "records must be \\u-escaped so one record == one \\n line"
+    assert raw.count(b"\n") == 4 and raw.endswith(b"\n")
+    assert len(raw.decode("utf-8").splitlines()) == 4  # nothing left for splitlines() to split on
+    got, skipped = fleet_log.read_log_records_with_stats("node1", "2026-01-15")
+    assert skipped == 0 and got == records
+    assert [r["suddenState"] for r in got] == weird
+    # reader tolerates CRLF and a raw (legacy, unescaped) separator inside a JSON string
+    legacy = '{"kind":"fleet_log","suddenState":"a\u2028b"}\r\n{"kind":"fleet_log","x":1}\n'
+    recs, bad = fleet_log._parse_lines(legacy)
+    assert bad == 0 and [r.get("suddenState", r.get("x")) for r in recs] == ["a\u2028b", 1]
 
 
 # 11. aggregate math
@@ -347,7 +409,7 @@ def test_cli_demo(tmp_path):
     assert out["written"] == 12
     assert (tmp_path / "meta" / "logs" / "node1" / "2026-01-15.jsonl").is_file()
     low = proc.stdout.lower()
-    for tok in sorted(fleet_log.PII_DENY_TOKENS | fleet_log.PII_DENY_EXACT):
+    for tok in sorted(fleet_log.PII_DENY_TOKENS | fleet_log.PII_DENY_EXACT | set(fleet_log.PII_DENY_SUBSTRINGS)):
         assert f'"{tok}"' not in low, tok
     usage = subprocess.run(
         [sys.executable, "-m", "iot_asp_autoroute.fleet_log"],
@@ -388,3 +450,65 @@ def test_negative_controls():
     assert log_record("info", "ingest", {**BASE_TEL, "algo": "bogus_algo"})["algo"] == "bogus_algo"
     assert log_record("info", "ingest", {**BASE_TEL, "vibClass": "weird"})["vibClass"] == "none"
     assert log_record("info", "ingest", {**BASE_TEL, "peakHz": "nan"})["peakHz"] is None
+
+
+# 16. malformed phone values never raise (ingest calls enrich before any write)
+@pytest.mark.parametrize("vib", [5, ["x"], {"a": 1}, 1.5, True, None, b"physical"])
+def test_enrich_non_string_vib_class_never_raises(vib):
+    e = enrich_telemetry({**BASE_TEL, "vibClass": vib})
+    assert e["vibClass"] == "none" and e["lfGate"] is False
+    rec = log_record("info", "ingest", {**BASE_TEL, "vibClass": vib})
+    assert rec["vibClass"] == "none" and list(rec) == RECORD_KEYS
+
+
+def test_enrich_non_string_power_and_band_never_raise():
+    e = enrich_telemetry({**BASE_TEL, "power": {"v": 120}, "band": ["10-20"], "fMin": ["x"]})
+    assert e["power"] == "ac120" and e["band"] == "17-23k"
+    assert enrich_telemetry({"power": "  battery "})["power"] == "battery"
+    assert enrich_telemetry({"power": "   "})["power"] == "ac120"
+    assert enrich_telemetry({"power": 0})["power"] == "ac120"
+
+
+def test_emit_log_never_raises(dry_root):
+    tel = {**BASE_TEL, "vibClass": 5, "power": None, "algo": None}
+    res = emit_log("node1", "info", "ingest", tel, msg="piiDropped=0")
+    assert res["ok"] is True and res["path"] == "meta/logs/node1/2026-01-15.jsonl"
+    got = read_log_records("node1", "2026-01-15")
+    assert len(got) == 1 and got[0]["vibClass"] == "none" and got[0]["algo"] == "hop"
+    bad = emit_log("node1", "fatal", "ingest", tel)  # invalid level → error dict, not ValueError
+    assert bad["ok"] is False and "ValueError" in bad["error"] and bad["path"] is None
+    assert emit_log("node1", "info", "ingest", "not-a-dict")["ok"] is True  # non-dict → defaults
+    assert len(read_log_records("node1")) == 2
+
+
+# 17. object-name safety helpers shared with tools.ingest_telemetry
+@pytest.mark.parametrize(
+    "node,expected",
+    [
+        ("node1", "node1"),
+        ("..", "node1"),
+        (".", "node1"),
+        ("", "node1"),
+        (None, "node1"),
+        ("../patches", "_patches"),
+        ("../../patches/node1", "_.._patches_node1"),  # no '/', not a '.'/'..' segment
+        ("a/b", "a_b"),
+        ("node one", "node_one"),
+        ("..hidden", "hidden"),
+        ("n.1", "n.1"),
+    ],
+)
+def test_safe_node(node, expected):
+    assert safe_node(node) == expected
+    assert "/" not in safe_node(node) and safe_node(node) not in (".", "..")
+    assert fleet_log.record_path(node, "2026-01-15T12:00:00Z") == f"meta/logs/{expected}/2026-01-15.jsonl"
+
+
+def test_safe_ts_normalises_any_wire_ts():
+    now = fleet_log.parse_ts("2026-02-01T00:00:00Z")
+    assert safe_ts("2026-01-15T12:00:00Z") == "2026-01-15T12-00-00Z"
+    assert safe_ts(1768478400000) == "2026-01-15T12-00-00Z"
+    assert safe_ts("2026-01-15T07:00:00-05:00") == "2026-01-15T12-00-00Z"
+    for evil in ("../../patches/node1", "..", "", None, "garbage", {"x": 1}):
+        assert safe_ts(evil, now=now) == "2026-02-01T00-00-00Z", evil
+    assert ":" not in safe_ts("2026-01-15T12:00:00Z") and "/" not in safe_ts("a/b", now=now)

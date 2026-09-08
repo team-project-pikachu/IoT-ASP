@@ -74,8 +74,18 @@ RECORD_KEYS: list[str] = [
     "msg",
 ]
 
-# Keys dropped verbatim (lowercased) and tokens that drop any key containing them.
+# PII denylist (invariant 7: no site PII). Three tiers, all case-insensitive:
+#   * PII_DENY_EXACT      — whole key (lowercased) equals an entry.
+#   * PII_DENY_SUBSTRINGS — long, unambiguous words matched anywhere in the key once
+#                           separators are stripped ("emailaddress", "address1", "gpslat",
+#                           "transcription", "recordingUrl", "ipaddr" all drop).
+#   * PII_DENY_TOKENS     — short words matched only as whole tokens (split on `_`, `-`,
+#                           whitespace and camelCase) so `latency`, `long`, `ipc`, `filename`
+#                           survive; compound lowercase spellings (`username`, `latlng`, …)
+#                           are listed explicitly because they never split.
+# `phone` is a substring match too, except inside `microphone` / `headphone` / `earphone`.
 PII_DENY_EXACT = frozenset({"recordinguri", "recording_uri", "latitude", "longitude"})
+PII_DENY_SUBSTRINGS = ("addr", "street", "email", "transcript", "speech", "recording", "gps")
 PII_DENY_TOKENS = frozenset(
     {
         "address",
@@ -90,11 +100,39 @@ PII_DENY_TOKENS = frozenset(
         "transcript",
         "speech",
         "recording",
+        # compound spellings that never split into tokens
+        "username",
+        "fullname",
+        "firstname",
+        "lastname",
+        "surname",
+        "nickname",
+        "displayname",
+        "realname",
+        "latlon",
+        "latlng",
+        "lonlat",
+        "lnglat",
+        "ipaddr",
+        "ipv4",
+        "ipv6",
+        "geo",
+        "geolocation",
+        "location",
+        "coords",
+        "coordinates",
+        "zip",
+        "zipcode",
+        "postal",
+        "postcode",
+        "postalcode",
     }
 )
+_PHONE_RE = re.compile(r"(?<!micro)(?<!head)(?<!ear)phone")
 
 _FALSE_STRINGS = frozenset({"", "0", "false", "no", "off", "none", "null"})
 _NODE_SAFE = re.compile(r"[^A-Za-z0-9_.-]")
+_FLAT = re.compile(r"[^a-z0-9]+")
 _CAMEL = re.compile(r"([a-z0-9])([A-Z])")
 _ACRONYM = re.compile(r"([A-Z]+)([A-Z][a-z])")
 _tz_warn_emitted = False
@@ -174,8 +212,13 @@ def _key_tokens(key: str) -> list[str]:
 
 
 def is_pii_key(key: Any) -> bool:
+    """True when ``key`` names site PII (exact, substring or whole-token match)."""
     k = str(key)
-    if k.lower() in PII_DENY_EXACT:
+    low = k.lower()
+    if low in PII_DENY_EXACT:
+        return True
+    flat = _FLAT.sub("", low)
+    if any(sub in flat for sub in PII_DENY_SUBSTRINGS) or _PHONE_RE.search(flat):
         return True
     return any(tok in PII_DENY_TOKENS for tok in _key_tokens(k))
 
@@ -208,17 +251,27 @@ def _as_bool(v: Any) -> bool:
     return bool(v)
 
 
+def _vib_class(v: Any) -> str:
+    """``priors.normalize_vib_class`` for any wire value (non-strings → ``none``, never raises)."""
+    return normalize_vib_class(v if isinstance(v, str) else None)
+
+
 def enrich_telemetry(t: dict[str, Any]) -> dict[str, Any]:
-    """Pure: scrub PII, then fill band / power / nightNY / lfArmed / lfDriveCapable / lfGate."""
+    """Pure: scrub PII, then fill band / power / nightNY / lfArmed / lfDriveCapable / lfGate.
+
+    Never raises on malformed phone values: a non-string ``vibClass`` / ``power`` / ``band``
+    is treated as absent (``tools.ingest_telemetry`` calls this before any write).
+    """
     src = t if isinstance(t, dict) else {}
     out, dropped = scrub_pii(src)
     if out.get("band") not in BANDS:
         out["band"] = infer_band(out)
-    out["power"] = out.get("power") or DEFAULT_POWER
+    power = out.get("power")
+    out["power"] = power.strip() if isinstance(power, str) and power.strip() else DEFAULT_POWER
     out["nightNY"] = night_ny(out.get("ts"))
     out["lfArmed"] = _as_bool(out.get("lfArmed", False))
     out["lfDriveCapable"] = _as_bool(out.get("lfDriveCapable", False))
-    out["vibClass"] = normalize_vib_class(out.get("vibClass"))
+    out["vibClass"] = _vib_class(out.get("vibClass"))
     out["lfGate"] = bool(out["lfArmed"] and out["lfDriveCapable"] and out["vibClass"] == "infra_felt")
     if dropped:
         out["piiDropped"] = int(out.get("piiDropped") or 0) + len(dropped)
@@ -286,17 +339,34 @@ def log_record(
     }
 
 
-def _safe_node(node: str) -> str:
-    return _NODE_SAFE.sub("_", str(node or "node1")) or "node1"
+def safe_node(node: Any) -> str:
+    """Object-name-safe node id: ``[A-Za-z0-9_.-]`` only, never ``.``/``..``/empty (→ ``node1``).
+
+    Shared with ``tools.ingest_telemetry`` so a phone-controlled ``deviceId`` can never form a
+    ``..`` path segment under ``meta/telemetry/`` or ``meta/logs/``.
+    """
+    s = _NODE_SAFE.sub("_", str(node or "")).lstrip(".")
+    return s or "node1"
+
+
+_safe_node = safe_node  # backward-compatible private alias
+
+
+def safe_ts(ts: Any, *, now: datetime | None = None) -> str:
+    """Filename-form timestamp (``%Y-%m-%dT%H-%M-%SZ``) from any wire ``ts``; unparseable → now."""
+    dt = parse_ts(ts) or (now or datetime.now(timezone.utc))
+    return dt.astimezone(timezone.utc).strftime(FILE_TS_FMT)
 
 
 def record_path(node: str, ts: Any) -> str:
     dt = parse_ts(ts) or datetime.now(timezone.utc)
-    return f"{LOG_PREFIX}{_safe_node(node)}/{dt.strftime('%Y-%m-%d')}.jsonl"
+    return f"{LOG_PREFIX}{safe_node(node)}/{dt.strftime('%Y-%m-%d')}.jsonl"
 
 
 def _dumps_line(record: dict[str, Any]) -> str:
-    return json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n"
+    # ensure_ascii=True: every non-ASCII code point (incl. U+2028/U+2029/U+0085, which
+    # str.splitlines() treats as line breaks) is \u-escaped, so one record == one '\n' line.
+    return json.dumps(record, ensure_ascii=True, separators=(",", ":")) + "\n"
 
 
 def _dry_root() -> Path:
@@ -344,6 +414,25 @@ def write_log_record(node: str, record: dict[str, Any]) -> dict[str, Any]:
         return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "path": None}
 
 
+def emit_log(
+    node: str,
+    level: str,
+    event: str,
+    telemetry: dict[str, Any],
+    msg: str = "",
+) -> dict[str, Any]:
+    """``write_log_record(node, log_record(...))`` with the record build inside the guard.
+
+    Preferred hook for ``tools.py``: never raises, even on malformed telemetry or a bad
+    ``level`` — returns ``{ok: False, error}`` so observability cannot alter a decision.
+    """
+    try:
+        record = log_record(level, event, telemetry, msg=msg)
+    except Exception as exc:  # noqa: BLE001 - observability must never propagate
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "path": None}
+    return write_log_record(node, record)
+
+
 def _write_live(path: str, lines: str, record: dict[str, Any]) -> dict[str, Any]:  # pragma: no cover - needs GCS
     from google.api_core.exceptions import PreconditionFailed  # type: ignore
     from google.cloud import storage  # type: ignore
@@ -375,7 +464,10 @@ def _write_live(path: str, lines: str, record: dict[str, Any]) -> dict[str, Any]
 def _parse_lines(text: str) -> tuple[list[dict[str, Any]], int]:
     out: list[dict[str, Any]] = []
     skipped = 0
-    for line in text.splitlines():
+    # Split on '\n' only — never str.splitlines(), which also breaks on U+2028/U+2029/U+0085
+    # and would shatter a record whose string fields carry them.
+    for line in text.split("\n"):
+        line = line.rstrip("\r")
         if not line.strip():
             continue
         try:
@@ -392,7 +484,7 @@ def _parse_lines(text: str) -> tuple[list[dict[str, Any]], int]:
 
 def _log_names(node: str, date: str | None) -> list[str]:
     """Object names (``meta/logs/<node>/…jsonl``), ascending; ``.part.jsonl`` included."""
-    prefix = f"{LOG_PREFIX}{_safe_node(node)}/"
+    prefix = f"{LOG_PREFIX}{safe_node(node)}/"
     if gcs_io.is_dry_run():
         root = _dry_root() / prefix
         if not root.is_dir():
