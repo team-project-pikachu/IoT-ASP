@@ -34,3 +34,4 @@ native/**/.swiftpm/
 # Accidental nested worktrees inside the clone (#34)
 /IoT-ASP-wt-*/
 .github/nest.op.env
+.venv-ingest/

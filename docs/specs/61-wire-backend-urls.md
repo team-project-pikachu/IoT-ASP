@@ -1,46 +1,51 @@
-# #61 — Wire live backend URLs for 3-phone fleet
+# #61 — Wire live backend URLs (3-phone fleet)
 
-## Status
+## Status (2026-09-08)
 
-UI affordance for backend patch/telemetry URLs landed with Balanced MVP docs; live URLs remain owner-gated.
+- **PWA:** `?patch=` / `?telemetry=` / `?pollMs=` + empty `BACKEND_*` constants already on `main` (PR #73 UI label).
+- **Ingest packaging:** `services/autoroute-adk/ingest_app.py` + `Dockerfile` + `scripts/deploy_ingest_cloudrun.sh`.
+- **Live service:** `https://iot-asp-ingest-eehtcwqbzq-uc.a.run.app` exists (image tag `:61`) but was **not** phone-ready:
+  1. IAM invoker = `betty@bearresearch.io` only → unauthenticated `sendBeacon` **403**.
+  2. `gcs_io.DRY_ROOT` used `parents[3]` → **500** on import inside `/app` container (fixed in this branch).
 
 ## Goal
 
-Make `BACKEND_TELEMETRY_URL` / patch URL discoverable and settable for the three-phone fleet without baking secrets into the static PWA.
+Point the shipped blaster at a real ingest + patch surface so three phones beacon and hot-apply **without** embedding Vertex/ADK keys.
 
-## Prior art
+## Chosen override path (acceptance #1)
 
-Reuse existing `?patch=` / `?telemetry=` query params and `docs/api-contract.md` rather than inventing a second config channel.
+| Priority | Mechanism | Notes |
+|----------|-----------|--------|
+| 1 | Query `?telemetry=` + `?patch=` (+ optional `?pollMs=`) | Field fleet preferred — no Vercel redeploy |
+| 2 | `BACKEND_BASE_URL` / `BACKEND_PATCH_URL` / `BACKEND_TELEMETRY_URL` in `public/index.html` | Optional bake of **non-secret** HTTPS hosts after stable; keep empty until IAM + health green |
 
-## Shipped on `main`
+Contract: `docs/api-contract.md`. Hot-apply / Hold: `.vv/hot-apply.md`.
 
-Public PWA already accepts optional backend URL query params; this issue tracks wiring them for the field fleet.
+## Deploy + verify (owner / integrator)
 
-## Remaining scope
+```bash
+# From IoT-ASP checkout (ADC + project bear-iot-asp-rec)
+bash scripts/deploy_ingest_cloudrun.sh
+# Expect TELEMETRY_URL=…/ingest PATCH_URL=…/patch.json and healthz HTTP 200
+# Script warns if allUsers run.invoker is missing.
 
-Document operator procedure, confirm URLs against #60 deploy, and verify beacons in field lab (#62).
+# Phone URLs (example — use printed INGEST_URL):
+# https://hop-ultrasonic.vercel.app/?telemetry=https://iot-asp-ingest-….run.app/ingest&patch=https://iot-asp-ingest-….run.app/patch.json&pollMs=3000
+```
 
-## Wire fields
+Do **not** open a separate PR for this shard; fold into the combined M0 MVP PR with #62.
 
-Existing patch/telemetry URL query params only; no secret values in HTML.
+## Field note (acceptance #5)
 
-## Clamps / safety
+Record in `.vv/61/field-note.md` (template below) or as an issue comment after 3-phone run:
 
-Names-only in page source; never embed API keys.
+- 2× TX + optional node-3
+- Query URL used (redact any signed query strings if present)
+- Confirm Hold/Manual freezes apply; heartbeats land under `gs://…/meta/telemetry/<deviceId>/`
 
-## Acceptance tests
+## Out of scope
 
-With URLs set, phones poll patch and emit telemetry; with URLs unset, offline blaster still works.
-
-## CI gate
-
-Static HTML gates (no key patterns); live URL check is manual.
-
-## Risks / HW limits
-
-Mis-pointed URLs fail closed to local/static behavior.
-
-## Sources
-
-- https://github.com/team-project-pikachu/IoT-ASP/issues/61
-- `docs/api-contract.md`
+- Service worker / offline cache of `index.html`
+- Native iOS ingest (#41)
+- Enrichment schema (#22)
+- Sonos / #62 field Playwright promotion (sibling shards)

@@ -120,25 +120,28 @@ adk deploy cloud_run \
   services/autoroute-adk/iot_asp_autoroute
 ```
 
-Optional **ingest** service (telemetry POST target for `?telemetry=`):
+Optional **ingest** service (telemetry POST + patch poll for phones — **#61**):
 
 ```bash
-# Package ingest_main.py + iot_asp_autoroute for Cloud Run / CF Gen2.
+# Cloud Run packaging: ingest_app.py + Dockerfile under services/autoroute-adk/
 # Set IOT_ASP_GCS_BUCKET + ADC/runtime SA. No keys in git.
-# After deploy, give phones: ?telemetry=https://<ingest-host>/
+# Phones sendBeacon without Authorization → --allow-unauthenticated required.
+bash scripts/deploy_ingest_cloudrun.sh
+# Prints TELEMETRY_URL=…/ingest and PATCH_URL=…/patch.json
+# Legacy CF-style stub remains as ingest_main.py (optional).
 ```
 
 Requires ADC (`gcloud auth application-default login`) with quota project `bear-iot-asp-rec`. No API keys in git.
 
 ## Frontend pointing at a new backend
 
-Without redeploying Vercel HTML (if constants already ship empty defaults):
+Without redeploying Vercel HTML (preferred for field trials — constants stay empty):
 
 ```text
-https://<vercel-app>/?telemetry=https://<ingest.run.app>/&patch=https://<cdn-or-signed>/meta/patches/node1.json
+https://<vercel-app>/?telemetry=https://<ingest.run.app>/ingest&patch=https://<ingest.run.app>/patch.json&pollMs=3000
 ```
 
-Or set `BACKEND_BASE_URL` / `BACKEND_TELEMETRY_URL` / `BACKEND_PATCH_URL` near the top of `public/index.html` and redeploy **Vercel only**.
+Or set `BACKEND_BASE_URL` (→ `/ingest` + `/patch.json`) / `BACKEND_TELEMETRY_URL` / `BACKEND_PATCH_URL` near the top of `public/index.html` and redeploy **Vercel only**. Prefer query overrides until Cloud Run IAM allows unauthenticated invoke + `/healthz` is green. Do **not** embed Vertex/ADK keys or signed-URL query strings in HTML.
 
 ## Colab
 

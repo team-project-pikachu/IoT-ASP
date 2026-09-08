@@ -10,12 +10,26 @@ from typing import Any
 PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT", "bear-iot-asp-rec")
 BUCKET = os.environ.get("IOT_ASP_GCS_BUCKET", "")
 DRY_RUN = os.environ.get("IOT_ASP_AUTOROUTE_DRY_RUN", "1") not in ("0", "false", "False")
-DRY_ROOT = Path(
-    os.environ.get(
-        "IOT_ASP_AUTOROUTE_DRY_ROOT",
-        str(Path(__file__).resolve().parents[3] / ".autoroute-dry"),
-    )
-)
+
+
+def _default_dry_root() -> Path:
+    """Resolve dry-run mirror root for both repo checkout and Cloud Run image.
+
+    Repo layout: ``<repo>/services/autoroute-adk/iot_asp_autoroute/gcs_io.py``
+    → ``parents[3]`` is the repo root (``.autoroute-dry``).
+
+    Container layout (``Dockerfile`` copies package to ``/app/iot_asp_autoroute``)
+    → only ``parents[0..1]`` exist; fall back to ``/tmp`` so import never raises
+    ``IndexError`` (live GCS path does not use the dry root when bucket + live).
+    """
+    here = Path(__file__).resolve()
+    try:
+        return here.parents[3] / ".autoroute-dry"
+    except IndexError:
+        return Path(os.environ.get("TMPDIR", "/tmp")) / "iot-asp-autoroute-dry"
+
+
+DRY_ROOT = Path(os.environ.get("IOT_ASP_AUTOROUTE_DRY_ROOT", str(_default_dry_root())))
 
 
 def is_dry_run() -> bool:

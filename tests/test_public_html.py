@@ -138,7 +138,14 @@ def test_backend_url_query_overrides(html: str) -> None:
     assert 'qs.get("patch")' in html or "qs.get('patch')" in html
     assert 'qs.get("telemetry")' in html
     assert 'qs.get("pollMs")' in html
-    assert 'BACKEND_TELEMETRY_URL = ""' in html
+    # #61 — live public URLs may be baked (no keys / no signed query strings).
+    m_tel = re.search(r'const BACKEND_TELEMETRY_URL = "([^"]*)";', html)
+    m_patch = re.search(r'const BACKEND_PATCH_URL = "([^"]*)";', html)
+    assert m_tel and m_patch
+    for label, url in (("telemetry", m_tel.group(1)), ("patch", m_patch.group(1))):
+        assert "?" not in url and "#" not in url, label
+        if url:
+            assert url.startswith("https://"), label
     assert 'TELEMETRY_URL || "off"' in html or "TELEMETRY_URL || 'off'" in html
 
 

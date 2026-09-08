@@ -511,13 +511,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   // ══ backend endpoints (env-like; no Gemini/Vertex keys — poll/apply only) ══
   // Override live targets without redeploying ADK: ?patch= / ?telemetry= / ?pollMs=
-  // Leave telemetry empty for offline; patch defaults to static mock /patch.json
+  // #61 — fleet defaults: public Vercel patch + /api/ingest (GCS via Vercel env; no keys here).
+  // Authenticated Cloud Run twin: https://iot-asp-ingest-eehtcwqbzq-uc.a.run.app (org IAM; not public).
   const SCHEMA_VERSION = 1;
-  const BACKEND_BASE_URL = "";           // e.g. "https://iot-asp-ingest-xxxxx.run.app"
-  const BACKEND_PATCH_URL = "";          // absolute patch URL, or "" → mock / base
-  const BACKEND_TELEMETRY_URL = "";      // absolute ingest URL, or "" → base+/ingest
+  const BACKEND_BASE_URL = "";           // optional shared origin; prefer absolute PATCH/TELEMETRY below
+  const BACKEND_PATCH_URL = "https://hop-ultrasonic-1digital-design.vercel.app/patch.json";
+  const BACKEND_TELEMETRY_URL = "https://hop-ultrasonic-1digital-design.vercel.app/api/ingest";
   const BACKEND_PATCH_PATH = "/patch.json";
-  const BACKEND_TELEMETRY_PATH = "/ingest";
+  const BACKEND_TELEMETRY_PATH = "/api/ingest";
   const BACKEND_POLL_MS_DEFAULT = 3000;
 
   const $ = id => document.getElementById(id);

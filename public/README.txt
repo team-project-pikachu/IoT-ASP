@@ -18,3 +18,10 @@ Fleet (generic)
 
 Band 17–23 kHz. Expect Bluetooth codec + speaker DSP roll-off. Keep output low
 (neighbor-safe; default ~8% Web Audio gain). Hold / Manual freezes remote param patches.
+
+Backend (#61)
+Patch poll: https://hop-ultrasonic-1digital-design.vercel.app/patch.json
+Telemetry:  https://hop-ultrasonic-1digital-design.vercel.app/api/ingest
+Override without redeploy: ?patch=…&telemetry=…&pollMs=3000 on each phone URL.
+Hold / Manual still freezes remote apply. No Vertex keys in the page.
+
