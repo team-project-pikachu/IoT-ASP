@@ -666,6 +666,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let nightActive=false, nightTargetVol=100, nightUserOverride=false, senseStream=null;
   let bandMode="us", lfArmed=false; // TX fixed 17-23k; lfArmed always false (10-20 Hz UI removed)
   const POWER_FLEET = "ac120"; // C5 continuous 120 V AC — not battery-limited
+  // Ring buffer must exist before any boot-time monLog (e.g. setBandMode("us") below) — else TDZ kills button wiring.
+  const LOG_MAX = 200;
+  const records = [];
+  let logSeq = 0;
 
   const LOOKAHEAD=0.25, TICK_MS=40, TRACE_SEC=180, SPAN_LO=8000;
   const nf = n => Math.round(n).toLocaleString("en-US").replace(/,/g," ");
@@ -1858,19 +1862,21 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   // ══ TX band (17–23 kHz only) · platform · night NY · arm sensors · fleet power (C5) ══
   // Browsers do not expose Mac Studio model strings. Best-effort: macOS + desktop → "macos-desktop";
   // upgrade to "mac-studio" only when UA/model hints contain Studio (usually absent).
+  // iPadOS desktop-UA trap: MacIntel + maxTouchPoints>1 (not >0 — Mac desktops must stay macos-desktop).
   function detectPlatform(){
     const ua = String(navigator.userAgent || "");
     const uaData = navigator.userAgentData || null;
     const platformNav = String(navigator.platform || "");
-    const touch = (navigator.maxTouchPoints || 0) > 0;
+    const touchPoints = navigator.maxTouchPoints || 0;
+    const iPadDesktopUA = platformNav === "MacIntel" && touchPoints > 1;
     let os = "unknown", form = "unknown", id = "unknown", label = "unknown";
-    const isIOS = /iPhone|iPad|iPod/.test(ua) || (platformNav === "MacIntel" && touch);
+    const isIOS = /iPhone|iPad|iPod/.test(ua) || iPadDesktopUA;
     const isAndroid = /Android/i.test(ua);
-    const isMac = /Mac OS X|Macintosh/i.test(ua) || /Mac/i.test(platformNav) || (uaData && /macOS/i.test(String(uaData.platform || "")));
+    const isMac = !isIOS && (/Mac OS X|Macintosh/i.test(ua) || /Mac/i.test(platformNav) || (uaData && /macOS/i.test(String(uaData.platform || ""))));
     const isWin = /Windows/i.test(ua) || (uaData && /Windows/i.test(String(uaData.platform || "")));
     const isLinux = /Linux/i.test(ua) && !isAndroid;
     if (isIOS) {
-      os = "ios"; form = /iPad/.test(ua) || (platformNav === "MacIntel" && touch) ? "tablet" : "phone";
+      os = "ios"; form = /iPad/.test(ua) || iPadDesktopUA ? "tablet" : "phone";
       id = form === "tablet" ? "ipad" : "iphone"; label = id;
     } else if (isAndroid) { os = "android"; form = "phone"; id = "android"; label = "android"; }
     else if (isMac) {
@@ -1879,7 +1885,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       id = hint ? "mac-studio" : "macos-desktop"; label = id;
     } else if (isWin) { os = "windows"; form = "desktop"; id = "windows-desktop"; label = id; }
     else if (isLinux) { os = "linux"; form = "desktop"; id = "linux-desktop"; label = id; }
-    else { form = touch ? "mobile" : "desktop"; id = form; label = form; }
+    else { form = touchPoints > 0 ? "mobile" : "desktop"; id = form; label = form; }
     hwCaps.platform = id;
     hwCaps.platformLabel = label + (os !== "unknown" ? (" · " + os) : "");
     hwCaps.formFactor = form;
@@ -1953,7 +1959,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const clamped = Math.min(VOL_PATCH_MAX, Math.max(0, q));
     if (fromNight) nightUserOverride = false;
     vol.value = clamped;
-    vol.dispatchEvent(new Event("input"));
+    try { if (vol && typeof vol.dispatchEvent === "function") vol.dispatchEvent(new Event("input")); } catch(_){}
   }
 
   function nightTick(){
@@ -2142,9 +2148,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   refreshPlatformHints();
   refreshBandUi();
   try { localStorage.setItem("hop.band", "us"); } catch(_){}
-  setBandMode("us");
-
-
+  // Boot setBandMode deferred until after monLog/FLEET_LOG_KEYS init (TDZ otherwise aborts button wiring).
 
   algoHop.addEventListener("click", () => { setVibAuto(false); setAlgo("hop"); });
   algoPulse.addEventListener("click", () => { setVibAuto(false); setAlgo("pulse"); });
@@ -2169,9 +2173,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   // ══ telemetry beacon + param patch poll ═══════════════════════════════
   // ══ structured monitor log (#22) ══════════════════════════════════════
   // Structured, bounded, device-metrics-only monitor log.
-  const LOG_MAX = 200;
-  const records = [];
-  let logSeq = 0;
+  // LOG_MAX / records / logSeq are initialized with band state (before boot setBandMode).
   const LOG_LEVELS = { debug: 1, info: 1, warn: 1, error: 1 };
   // HTML-escape for every string that is concatenated into innerHTML (monitor log lines, systems-check rows).
   function escHtml(s){ return String(s).replace(/[<>&"']/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;", "'":"&#39;" }[c])); }
@@ -2182,26 +2184,29 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const URL_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#]*|(?:[A-Za-z0-9._~-]+\/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9._~-]+)[?#][^\s]*/g;
   function redactUrlQuery(s){ return String(s).replace(URL_QUERY_RE, "$1?[redacted]"); }
   function monLog(msg, event, fields, level){
-    const snap = fleetLogLineFromTel({ event: event ? String(event).slice(0, 32) : "log", msg: "" });
-    const rec = {
-      seq: ++logSeq,
-      ts: new Date().toISOString(),
-      level: LOG_LEVELS[level] ? level : "info",
-      event: event ? String(event).slice(0, 32) : "log",
-      msg: redactUrlQuery(msg).slice(0, 240),
-      fields: fields && typeof fields === "object" ? fields : {},
-      fleet: snap
-    };
-    records.push(rec);
-    while (records.length > LOG_MAX) records.shift();
-    if (!monLogEl) return;
-    const t = rec.ts.slice(11, 19);
-    const safe = escHtml(rec.msg);
-    const line = document.createElement("div");
-    line.className = "line";
-    line.innerHTML = "<span class='hi'>" + t + "</span> " + safe;
-    monLogEl.prepend(line);
-    while (monLogEl.children.length > 40) monLogEl.removeChild(monLogEl.lastChild);
+    try {
+      let snap = null;
+      try { snap = fleetLogLineFromTel({ event: event ? String(event).slice(0, 32) : "log", msg: "" }); } catch (_) {}
+      const rec = {
+        seq: ++logSeq,
+        ts: new Date().toISOString(),
+        level: LOG_LEVELS[level] ? level : "info",
+        event: event ? String(event).slice(0, 32) : "log",
+        msg: redactUrlQuery(msg).slice(0, 240),
+        fields: fields && typeof fields === "object" ? fields : {},
+        fleet: snap
+      };
+      records.push(rec);
+      while (records.length > LOG_MAX) records.shift();
+      if (!monLogEl) return;
+      const t = rec.ts.slice(11, 19);
+      const safe = escHtml(rec.msg);
+      const line = document.createElement("div");
+      line.className = "line";
+      line.innerHTML = "<span class='hi'>" + t + "</span> " + safe;
+      monLogEl.prepend(line);
+      while (monLogEl.children.length > 40) monLogEl.removeChild(monLogEl.lastChild);
+    } catch (_) {}
   }
 
   function copyTextToClipboard(text, okMsg, okFields){
@@ -2283,6 +2288,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   if (copyLogBtn) copyLogBtn.addEventListener("click", copyLogJson);
   const copyFleetLogBtn = $("copyFleetLogBtn");
   if (copyFleetLogBtn) copyFleetLogBtn.addEventListener("click", copyFleetLogJsonl);
+  setBandMode("us"); // safe: logSeq + FLEET_LOG_KEYS initialized
 
   // ══ telemetry enrichment (#22) ════════════════════════════════════════
   function nightNYNow(){
@@ -2414,6 +2420,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   });
 
   function updateTelUI(){
+    try {
     if (telDevice) telDevice.textContent = deviceId;
     if (telSeed) telSeed.textContent = String(seed);
     if (telAlgo) telAlgo.textContent = (typeof algoWireName === "function" ? algoWireName() : algo);
@@ -2466,8 +2473,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (telSensLight) telSensLight.textContent = sensorStatus.ambientLight;
     refreshLfGateUi();
     const n = nightProgress01();
-    if (telNight) telNight.textContent = n.active ? (n.target.toFixed(1) + "%") : "day";
+    if (telNight) telNight.textContent = n.active ? (n.target.toFixed(1) + "%") : "day"
+    } catch(_){}
   }
+
 
   function telemetryPayload(){
     const suddenFreq = !!(geminiAutorouteFlag || suddenState === "rotate" || suddenState === "onset" || soundBurst);
@@ -2560,7 +2569,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const now = Date.now();
     const localMeta = $("fleetLocalMeta");
     const localCard = $("fleetLocal");
-    if (localCard) {
+    if (localCard && typeof localCard.querySelector === "function") {
       const idEl = localCard.querySelector(".id");
       if (idEl) idEl.textContent = deviceId || "local";
     }
@@ -2579,7 +2588,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       return (now - peer.ts) > 8000;
     }
     function fill(card, meta, peer, fallbackId, fallback){
-      if (card) {
+      if (card && typeof card.querySelector === "function") {
         const idEl = card.querySelector(".id");
         if (idEl) idEl.textContent = peer ? peer.deviceId : fallbackId;
       }
