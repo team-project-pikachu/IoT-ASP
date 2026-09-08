@@ -133,6 +133,7 @@ Structured records land in `meta/logs/<deviceId>/<YYYY-MM-DD>.jsonl`; sensor fea
 | `rationale` | | string | Shown in monitor log (no PII) |
 | `engineId` | | string | Default `iot-asp-autoroute` |
 | `trigger` | | string | e.g. `suddenFreq` |
+| `burstBias` | | object | `{"micDiffDb": number \| null, "shriekMsBias": 15}` — present only when an environmental burst (`soundBurst` / `extremeActive` / `micDiff` > 6 dB, never under `holdManual`) biased `algo` → `shriek_chirp`; phones ignore unknown keys — #25 |
 
 **Write:** `gs://<private-bucket>/meta/patches/<deviceId>.json`  
 **Offline mock:** `public/patch.json` on Vercel (no Gemini).

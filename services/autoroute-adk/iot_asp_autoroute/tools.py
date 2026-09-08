@@ -7,9 +7,10 @@ import os
 from datetime import datetime, timezone
 from typing import Any
 
-from . import gcs_io
+from . import fleet_log, gcs_io
 from .clamps import CLAMPS, SCHEMA_VERSION, validate_patch
 from .colab_etl import TELEMETRY_FEATURE_COLUMNS
+from .mic_diff import hw_limits_report as _hw_limits_report
 from .priors import seismo_bundle
 from .sudden_freq import author_sudden_freq_patch, is_sudden_freq_event
 from .vib_anomaly import VIB_QUANTUM, detect_disturbances, detect_from_telemetry_points
@@ -140,6 +141,7 @@ def ingest_telemetry(telemetry_json: str) -> dict[str, Any]:
         tel["audioContextState"] = tel["ctxState"]
     if "suddenFreq" not in tel:
         tel["suddenFreq"] = is_sudden_freq_event(tel)
+    tel = fleet_log.enrich_telemetry(tel)  # #22: PII scrub + band/power/nightNY/lf* tags before any write
 
     node = str(tel.get("deviceId") or tel.get("nodeId") or "node1")
     ts = tel.get("ts") or tel.get("t") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
@@ -150,7 +152,16 @@ def ingest_telemetry(telemetry_json: str) -> dict[str, Any]:
     safe_ts = str(ts).replace(":", "-")
     path = f"meta/telemetry/{node}/{safe_ts}.json"
     uri = gcs_io.write_json(path, tel)
-    out: dict[str, Any] = {"ok": True, "uri": uri, "path": path, "suddenFreq": is_sudden_freq_event(tel)}
+    log = fleet_log.write_log_record(
+        node, fleet_log.log_record("info", "ingest", tel, msg=f"piiDropped={tel.get('piiDropped', 0)}")
+    )
+    out: dict[str, Any] = {
+        "ok": True,
+        "uri": uri,
+        "path": path,
+        "suddenFreq": is_sudden_freq_event(tel),
+        "log": {"ok": log.get("ok"), "path": log.get("path"), "mode": log.get("mode")},
+    }
     return out
 
 
@@ -164,12 +175,70 @@ def process_sudden_freq(node_id: str) -> dict[str, Any]:
     if not latest.get("ok") or not latest.get("payload"):
         return {"ok": False, "error": latest.get("error", "no payload")}
     tel = latest["payload"]
+
+    def _log(level: str, event: str, msg: str = "") -> dict[str, Any]:
+        # #22: one structured record per decision; write_log_record never raises.
+        return fleet_log.write_log_record(node_id, fleet_log.log_record(level, event, tel, msg=msg))
+
     if tel.get("holdManual"):
+        _log("warn", "hold_refuse", "holdManual — refuse patch")
         return {"ok": False, "error": "holdManual — refuse patch", "skipped": True}
     if not is_sudden_freq_event(tel):
+        _log("debug", "skipped", "not a suddenFreq event")
         return {"ok": True, "skipped": True, "reason": "not a suddenFreq event"}
     ok, msg, patch = author_sudden_freq_patch(tel)
     if not ok:
+        _log("error", "patch_refused", msg)
         return {"ok": False, "error": msg}
     written = write_patch(node_id, json.dumps(patch))
+    if written.get("ok"):
+        _log("info", "patch_authored", str(written.get("message") or msg))
+    else:
+        _log("error", "patch_refused", str(written.get("error") or msg))
     return {"ok": written.get("ok"), "author": msg, "result": written}
+
+
+def fleet_log_summary(node_id: str, date: str | None = None) -> dict[str, Any]:
+    """Aggregate the node's structured fleet log for one UTC date (#22).
+
+    Args:
+        node_id: Field node id (e.g. node1).
+        date: YYYY-MM-DD (UTC partition). Defaults to today UTC. A NY night spans two
+            UTC dates — call twice (D and D+1) to cover it.
+
+    Returns:
+        Dict with ok, date, summary (aggregate_records output; count 0 when no records).
+    """
+    day = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    try:
+        records = fleet_log.read_log_records(node_id, day)
+        summary = fleet_log.aggregate_records(records, window_s=300, node=node_id)
+    except Exception as exc:  # noqa: BLE001 - tool must not raise into the agent loop
+        return {"ok": False, "date": day, "error": f"{type(exc).__name__}: {exc}"}
+    return {"ok": True, "date": day, "summary": summary}
+
+
+def live_features(node_id: str, limit: int = 200) -> dict[str, Any]:
+    """Project the last `limit` telemetry points (accel/gyro/micDiff sensors) into meta/features/<nodeId>/<ts>.json (#26).
+
+    Dry-run mirror unless env LIVE_GCS == "1" and IOT_ASP_GCS_BUCKET is set. Never writes meta/patches
+    (features_live.assert_not_patch_path guards every write); shriekBias is a hint, not a patch.
+
+    Args:
+        node_id: Field node id (e.g. node1).
+        limit: Newest telemetry points to consume (objects and .jsonl lines).
+    """
+    from .features_live import run_live
+
+    return run_live(str(node_id), int(limit))
+
+
+def hw_limits_report() -> dict[str, Any]:
+    """HW-limited leftovers for #25 — full AEC, LF mic, LF TX, alpha calibration; never blocks redeploys.
+
+    Returns:
+        Dict with issue, status, blocksRedeploy, nativeCompanionIssue, docs, and the four limits
+        (full_aec, lf_mic, lf_tx, alpha_calibration) pointing at docs/algorithms.md,
+        docs/iphone-bluetooth.md and the native companion path (#9).
+    """
+    return _hw_limits_report()

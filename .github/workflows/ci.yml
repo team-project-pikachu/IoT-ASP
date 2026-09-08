@@ -77,6 +77,13 @@ jobs:
           }
           ok_auth, reason, _ = sudden_freq.author_sudden_freq_patch(tel)
           assert not ok_auth and "holdManual" in reason, (ok_auth, reason)
+          # #22 #25 #26 modules: import + invariant smoke (stdlib / numpy only)
+          from iot_asp_autoroute import fleet_log as fl, features_live as flv, mic_diff as md
+          assert fl.RECORD_KEYS[0] == "kind" and len(fl.RECORD_KEYS) == 21, fl.RECORD_KEYS
+          assert fl.night_ny("2026-01-16T03:00:00Z") is True
+          assert len(flv.SENSOR_COLUMNS) == 18 and flv.MIC_DIFF_ALPHA == 0.85
+          assert md.MIC_DIFF_ALPHA == 0.85 and md.burst_decision(40, hold_manual=True)["extreme"] is False
+          assert md.lf_capability({"lfDriveCapable": True})["lfMic"] is False
           print("clamp/schema/Hold import smoke OK")
           PY
 

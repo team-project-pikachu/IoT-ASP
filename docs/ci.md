@@ -16,6 +16,15 @@ Issue-linked PRs are the intended path for Project 5 Todo work (#12, #16, #17, r
 1. **`autoroute`** — asserts `vol_hard_max == 100` first (legacy “hard max 20” drift), installs `services/autoroute-adk/requirements.txt`, runs `bash scripts/autoroute_dev.sh`, then import smoke for clamps / sudden_freq / Hold refuse.
 2. **`static_gates`** — `bash scripts/ci_static_gates.sh`: Hold/Manual in `public/index.html`, no obvious API-key patterns in HTML, `public/patch.json` `schemaVersion: 1`, clamp constants.
 3. **`pr_issue_ref`** (PR only) — fails if title/body lack an issue ref (`#N` or `Fixes`/`Closes`/`Resolves`/`Related` `#N`).
+4. **`tests`** — `pip install -r requirements-dev.txt` then `python -m pytest tests -q` (converter, fleet log, micDiff, live features, ruleset JSON, deploy workflow, public HTML).
+5. **`mdc check`** — `python3 scripts/mdc_convert.py --check` (Cursor `.mdc` → Claude Code outputs are fresh).
+6. **`e2e smoke`** — Playwright against `public/` (`tests/e2e/run.sh`); informative, not required by the ruleset.
+
+## Required on `main`
+
+The five job `name:` values 1–5 above are the required status checks in the `main-protection` ruleset
+(`.github/rulesets/main-protection.json`, applied with `make protect-main`). Renaming a job requires updating the
+JSON in the same PR — `tests/test_ruleset_json.py` fails otherwise. See [branch-protection.md](branch-protection.md).
 
 ## Local reproduction
 
@@ -29,5 +38,5 @@ Evidence package: [`.vv/ci/`](../.vv/ci/).
 ## Out of scope
 
 - Heavy Firecrawl / link crawls
-- Live GCP / Vertex / Vercel deploy
+- Live GCP / Vertex / Vercel deploy — the Vercel dev → test → prod ship lives in `.github/workflows/deploy.yml` (see [deploy.md](deploy.md), issue #27)
 - Editing SEBoK plan files
