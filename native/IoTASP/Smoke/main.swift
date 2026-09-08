@@ -159,6 +159,11 @@ struct IoTASPSmoke {
         let bad = try! TelemetryBridge.applyPatch(data: Data("{\"algo\":\"evil\"}".utf8), holdManual: false)
         check("refuse evil algo", bad == nil)
 
+        // #142 other sensors
+        check("no fake lux", OtherSensorsGate.ambientLux() == nil)
+        let rows = OtherSensorsGate.table(altimeterHardware: false)
+        check("ambient unavailable", rows.contains(where: { $0.kind == .ambientLight && $0.available == false }))
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

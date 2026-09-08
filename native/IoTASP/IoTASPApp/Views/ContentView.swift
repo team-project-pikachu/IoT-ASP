@@ -59,6 +59,7 @@ struct ContentView: View {
                     LabeledContent("deviceMotion", value: session.motionAvailability.deviceMotion ? "yes" : "no")
                     LabeledContent("altimeter", value: session.motionAvailability.altimeter ? "yes" : "no")
                     LabeledContent("pedometer", value: "skip (not hop-vib)")
+                    LabeledContent("ambient light", value: "unavailable (no public API)")
                     LabeledContent("intense 10–20 Hz proxy", value: session.intenseVib ? "yes" : "no")
                     LabeledContent("SensorKit linked", value: SensorKitGate.isLinked ? "yes" : "no")
                     LabeledContent("SensorKit entitled", value: SensorKitGate.entitlementDeclared ? "yes" : "stub")
