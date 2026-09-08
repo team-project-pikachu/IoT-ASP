@@ -16,6 +16,7 @@
 | Served content | `public/` static PWA; `vercel.json` `cleanUrls`, `trailingSlash: false`, security headers, manifest `Content-Type` |
 | Git integration | connected to `team-project-pikachu/IoT-ASP`, production branch `main`; automatic deploy on push to `main` **disabled by `vercel.json` `git.deploymentEnabled.main: false`** (PR previews for other branches unchanged) |
 | Deploy Hook | **name** `gh-actions-prod`, ref `main` — to be created by an owner (URL is a secret; not recorded) |
+| Webhooks (issue #37) | UI: `https://vercel.com/1digital-design/hop-ultrasonic/settings/webhooks` — create for `deployment.created` / `succeeded` / `error` / `canceled` / `promoted`; secret **name** `VERCEL_WEBHOOK_SECRET` (value never recorded); docs `docs/vercel-webhooks.md` |
 | Deployment Protection | unknown/default; if previews are protected, set `VERCEL_AUTOMATION_BYPASS_SECRET` |
 | Live smoke (read-only) | `bash scripts/deploy_smoke.sh https://hop-ultrasonic-1digital-design.vercel.app` → exit 0 on 2026-09-08 |
 
@@ -28,6 +29,7 @@
 | `VERCEL_PROJECT_ID` | `vercel link` → `.vercel/project.json` `projectId` — `<prj_… placeholder>` (id not invented) | not set |
 | `VERCEL_DEPLOY_HOOK_PROD` | Deploy Hook `gh-actions-prod` URL | not set |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel → Deployment Protection → Protection Bypass for Automation (optional) | not set |
+| `VERCEL_WEBHOOK_SECRET` | Vercel webhook create dialog (shown once) → 1Password `op://dev/VERCEL_WEBHOOK_SECRET/credential` (optional; issue #37) | not set |
 
 Set them with the stdin recipe in `scripts/vercel_secrets_check.sh` / `docs/deploy.md` §c, or
 `scripts/op_secrets_to_gh.sh` (integrator-owned).

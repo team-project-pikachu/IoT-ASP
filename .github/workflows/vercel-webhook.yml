@@ -1,0 +1,55 @@
+# Vercel webhook → GitHub summary (via repository_dispatch)
+#
+# Vercel cannot POST directly into Actions. A public HTTPS receiver verifies
+# x-vercel-signature with secrets.VERCEL_WEBHOOK_SECRET, then fires:
+#   gh api repos/team-project-pikachu/IoT-ASP/dispatches \
+#     -f event_type=vercel-deployment \
+#     -f client_payload[type]=deployment.succeeded \
+#     -f client_payload[url]=https://...
+# See docs/vercel-webhooks.md (issue #37). Never put the webhook secret in
+# client_payload or this file.
+
+name: Vercel webhook notify
+
+on:
+  repository_dispatch:
+    types: [vercel-deployment]
+  workflow_dispatch:
+    inputs:
+      type:
+        description: Simulated Vercel event type (e.g. deployment.succeeded)
+        required: true
+        default: deployment.succeeded
+      url:
+        description: Optional deployment URL (public)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write deployment event summary
+        env:
+          EVENT_TYPE: ${{ github.event.client_payload.type || inputs.type }}
+          DEPLOY_URL: ${{ github.event.client_payload.url || inputs.url }}
+          EVENT_ID: ${{ github.event.client_payload.id || '' }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Vercel deployment notification"
+            echo
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| type | \`${EVENT_TYPE:-unknown}\` |"
+            echo "| url | ${DEPLOY_URL:-_(none)_} |"
+            echo "| id | \`${EVENT_ID:-_(none)_}\` |"
+            echo "| source | \`repository_dispatch\` / \`workflow_dispatch\` |"
+            echo
+            echo "HMAC verify happens **outside** Actions (receiver + \`VERCEL_WEBHOOK_SECRET\`)."
+            echo "Docs: \`docs/vercel-webhooks.md\` · issue #37 · related #27."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "OK vercel-webhook summarize type=${EVENT_TYPE:-unknown}"

@@ -20,6 +20,20 @@ Issue-linked PRs are the intended path for Project 5 Todo work (#12, #16, #17, r
 5. **`mdc check`** — `python3 scripts/mdc_convert.py --check` (Cursor `.mdc` → Claude Code outputs are fresh).
 6. **`e2e smoke`** — Playwright against `public/` (`tests/e2e/run.sh`); informative, not required by the ruleset.
 
+## Continuous ship
+
+After green CI for a push to `main`, `deploy.yml` runs dev → test → production (see
+[deploy.md](deploy.md), issue #27). Missing Vercel secrets produce a notice and skip deployment.
+
+## Vercel deploy notifications (webhooks)
+
+Outbound Vercel **webhooks** (HMAC `x-vercel-signature`, secret name `VERCEL_WEBHOOK_SECRET`) are
+documented in [vercel-webhooks.md](vercel-webhooks.md) (issue #37). Actions receives notifications via
+`repository_dispatch` `vercel-deployment` (`.github/workflows/vercel-webhook.yml`) after an external
+HTTPS receiver verifies the signature — complementary to Deploy Hooks / CLI ship in #27, not a
+substitute. Settings UI:
+<https://vercel.com/1digital-design/hop-ultrasonic/settings/webhooks>.
+
 ## Required on `main`
 
 The five job `name:` values 1–5 above are the required status checks in the `main-protection` ruleset
@@ -39,4 +53,5 @@ Evidence package: [`.vv/ci/`](../.vv/ci/).
 
 - Heavy Firecrawl / link crawls
 - Live GCP / Vertex / Vercel deploy — the Vercel dev → test → prod ship lives in `.github/workflows/deploy.yml` (see [deploy.md](deploy.md), issue #27)
+- Hosting the public HTTPS webhook receiver (stub only: `services/vercel-webhook-receiver/`, docs #37)
 - Editing SEBoK plan files
