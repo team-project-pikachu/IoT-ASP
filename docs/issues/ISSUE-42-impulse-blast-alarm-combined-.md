@@ -1,20 +1,19 @@
-# ISSUE-42 — Impulse→blast + alarm (combined)
+# ISSUE-42 — Impulse→blast + alarm reactivity (web + native)
 
 **Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/42  
-**Classification:** ship / stub iterate (Balanced)  
-**Status:** stubbed
+**Status:** stubbed → working web slice (PR2)
 
 ## Did
 
-- `public/index.html`
-- `docs/algorithms.md`
-- `native/IoTASP/Shared/Alarm/`
+- Web alarm state machine + Simulate impulse button
+- Telemetry: impulse / volBlast / alarmState
+- Native mirror remains in `native/IoTASP/` (stack PR4 deepen)
 
 ## Didn't
 
-- Invent credentials or claim cloud/HW integrations live when gated.
-- Auto-close the GitHub issue (human verifies).
+- Claim signed App Store / live HW
+- SensorKit entitlement
 
 ## Next
 
-- Native Watch path stub only
+- DeviceMotion permission UX on Safari; native CoreMotion already on main via #40
