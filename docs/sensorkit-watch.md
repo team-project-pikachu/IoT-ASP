@@ -5,6 +5,7 @@
 **Primary path:** iPhone native shell [`native/IoTASP/`](../native/IoTASP/) (`IoTASP` target).  
 **Companion:** watchOS (`IoTASPWatch`) — on-wrist impulse / alarm mirror via Watch Connectivity.  
 **Research freeze:** [sensorkit-research-closeout.md](sensorkit-research-closeout.md).
+**M9 stub package:** [`native/IoTASPSensorKit/`](../native/IoTASPSensorKit/) — `make sensorkit-stub-build` (#110).
 
 ## Bands
 
@@ -17,7 +18,7 @@
 
 Apple index: https://developer.apple.com/documentation/sensorkit  
 
-Relevant symbols for vib (names from docs scrape): `SRAccelerometerSensor`, `SRRotationRateSensor`, plus ambient / usage sensors as study design allows. Gate in code: `#if canImport(SensorKit) && ASP_SENSORKIT_ENTITLED` — see `Shared/Sensors/SensorKitGate.swift`. Entitlements file leaves SensorKit keys **commented**.
+Relevant symbols for vib (names from docs scrape): `SRAccelerometerSensor`, `SRRotationRateSensor`, plus ambient / usage sensors as study design allows. Gate in code: `#if canImport(SensorKit) && ASP_SENSORKIT_ENTITLED` — SPM: `native/IoTASPSensorKit` (`SensorKitGate`); app sketch: `Shared/Sensors/SensorKitGate.swift`. Entitlements example leaves SensorKit keys **commented**.
 
 ## Impulse → blast / alarm
 

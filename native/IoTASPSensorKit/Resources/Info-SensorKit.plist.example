@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Privacy / usage strings scaffold for SensorKit-adjacent sensing.
+	  Merge into the #109 app target Info.plist when wiring the shell —
+	  do not invent SensorKit entitlement approvals here.
+	-->
+	<key>NSMotionUsageDescription</key>
+	<string>IoT-ASP logs accelerometer and gyroscope for 1–100 Hz vibration science (intense 10–20 Hz band). SensorKit readers require a separate Apple research entitlement.</string>
+	<key>NSSensorKitUsageDescription</key>
+	<string>IoT-ASP may read SensorKit accelerometer and rotation-rate streams only after Apple research entitlement approval. Default builds use CoreMotion stubs.</string>
+</dict>
+</plist>

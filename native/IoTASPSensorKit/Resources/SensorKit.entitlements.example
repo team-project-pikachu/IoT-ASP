@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  SensorKit research entitlement is NOT granted in this repo.
+	  Do NOT uncomment or set values without a real Apple research-study approval.
+	  Do NOT invent client IDs, provisioning profiles, or entitlement grants.
+
+	  Key: com.apple.developer.sensorkit.reader.allow
+	  Docs: https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.sensorkit.reader.allow
+
+	  When approved, copy into the iOS app target entitlements (owned by #109 shell)
+	  and enable -DASP_SENSORKIT_ENTITLED for that configuration only.
+	-->
+	<!--
+	<key>com.apple.developer.sensorkit.reader.allow</key>
+	<array>
+		<string>SRSensorAccelerometer</string>
+		<string>SRSensorRotationRate</string>
+	</array>
+	-->
+</dict>
+</plist>
