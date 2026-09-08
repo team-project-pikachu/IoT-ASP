@@ -51,10 +51,16 @@ services/autoroute-adk/
     tools.py             # GCS telemetry, patch write, clamps, Colab handoff
     clamps.py
     priors.py
+    timestore.py         # relative import → algo_timestore (ADK-safe)
+    algo_timestore/      # vendored from packages/algo-timestore
     sudden_freq.py       # suddenFreq → autorotate
     gcs_io.py
     dry_run.py
 ```
+
+Timestore packaging: canonical code is `packages/algo-timestore/`; keep the vendor
+copy in sync with `bash scripts/sync_algo_timestore_to_adk.sh` (CI `--check` +
+`scripts/adk_layout_import_smoke.sh`).
 
 ## Tools
 
