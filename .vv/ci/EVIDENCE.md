@@ -36,8 +36,15 @@ On GitHub: open PR with `Fixes #N` → jobs `autoroute`, `static_gates`, `pr_iss
 | Workflow path | `.github/workflows/ci.yml` |
 | PR template | `.github/PULL_REQUEST_TEMPLATE.md` |
 
+## Remote Actions
+
+| Run | SHA | Result |
+|-----|-----|--------|
+| [34172937629](https://github.com/team-project-pikachu/IoT-ASP/actions/runs/34172937629) | `fb73e6d` | **success** (`static_gates` + `autoroute`; `pr_issue_ref` skipped on push) |
+| 34172886782 (CI-only first push) | `29e2c4c` | failure — expected until clamps aligned to `vol_hard_max=100` |
+
 ## Pass/fail
 
 | Req | Status |
 |-----|--------|
-| CI-01 … CI-08 | **PASS** (local gates); remote Actions green deferred to first PR/push |
+| CI-01 … CI-08 | **PASS** (local + remote push on `main`) |
