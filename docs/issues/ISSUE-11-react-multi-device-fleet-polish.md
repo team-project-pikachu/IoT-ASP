@@ -1,19 +1,18 @@
 # ISSUE-11 — React multi-device fleet polish
 
 **Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/11  
-**Classification:** parked React rewrite; **static fleet slice deepened** (Balanced PR2 + PR7)  
+**Classification:** parked React rewrite; **static fleet slice deepened** (Balanced PR2)  
 **Owner surface:** frontend  
 **Canonical spec / ADR:** `docs/specs/10-11-react-rewrite.md`
 
 ## Scope (this pass)
 
-Parked full React rewrite (#10). Static PWA fleet panel: seed compare, peer staleness CSS, backend strip, Simulate impulse.
+Parked full React rewrite (#10). Static PWA fleet panel now has seed compare, peer staleness, impulse/blast badges, Simulate impulse.
 
 ## Did
 
 - `public/index.html` fleet cards + BroadcastChannel heartbeat + seed compare strip
-- PR7: `#fleetBackendStrip`, `.fleet-card.stale`, gyro axes on telemetry (`gx/gy/gz`)
-- Tests: `simImpulseBtn`, `fleetSeedCompare`, `fleetBackendStrip`, `tests/test_api_contract.py`
+- Tests: `simImpulseBtn`, `fleetSeedCompare`, `copyFleetLogBtn`
 
 ## Didn't
 

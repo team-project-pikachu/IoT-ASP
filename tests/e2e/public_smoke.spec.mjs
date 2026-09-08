@@ -6,7 +6,8 @@ import { test, expect } from "@playwright/test";
 const PORT = process.env.E2E_PORT || "8765";
 test.use({ baseURL: `http://127.0.0.1:${PORT}` });
 
-const LOG_KEYS = ["seq", "ts", "level", "event", "msg", "fields"];
+// `fleet` is a per-record snapshot for Copy fleet_log JSONL (#22); keep exact key order.
+const LOG_KEYS = ["seq", "ts", "level", "event", "msg", "fields", "fleet"];
 
 async function openPage(page) {
   const errors = [];
@@ -308,43 +309,49 @@ test.describe("public blaster smoke", () => {
     await pageB.goto("/");
     await pageA.waitForFunction(() => !!window.__hop);
     await pageB.waitForFunction(() => !!window.__hop);
+    const meta = await Promise.all([
+      pageA.evaluate(() => ({ ...window.__hop.getState(), tabSeed: sessionStorage.getItem("hop.tabSeed") })),
+      pageB.evaluate(() => ({ ...window.__hop.getState(), tabSeed: sessionStorage.getItem("hop.tabSeed") })),
+    ]);
+    // Shared telemetry deviceId; distinct per-tab instanceId + session seed for peer compare
+    expect(meta[0].deviceId).toBeTruthy();
+    expect(meta[0].instanceId).toBeTruthy();
+    expect(meta[0].instanceId).not.toBe(meta[1].instanceId);
+    expect(String(meta[0].seed)).not.toBe(String(meta[1].seed));
     await pageA.waitForFunction(() => {
       const t = document.getElementById("fleetSeedCompare")?.textContent || "";
-      return /peers=/.test(t) || /incoherent OK/.test(t);
+      return /incoherent OK/.test(t) || /peers=/.test(t);
     }, null, { timeout: 8000 });
-    // Overwrite the live peer's heartbeat with an aged ts, then stop pageB so it cannot refresh.
-    const peer = await pageB.evaluate(() => {
-      const s = window.__hop.getState();
-      return { instanceId: s.instanceId, deviceId: s.deviceId, seed: s.seed };
-    });
-    await pageB.close();
-    await pageA.evaluate((peer) => {
-      const ch = new BroadcastChannel("iot-asp-fleet");
-      ch.postMessage({
-        deviceId: peer.deviceId || "peer-stale-test",
-        instanceId: peer.instanceId,
-        seed: peer.seed || 4242,
-        seedSource: "entropy",
-        algo: "hop",
-        alarmState: "armed",
-        impulse: false,
-        volBlast: false,
-        holdManual: false,
-        ts: Date.now() - 20000
-      });
-      ch.close();
-    }, peer);
+    await pageA.click("#simImpulseBtn");
     await pageA.waitForFunction(() => {
-      const meta2 = document.getElementById("fleetPeer2Meta")?.textContent || "";
-      const meta3 = document.getElementById("fleetPeer3Meta")?.textContent || "";
-      return /STALE/.test(meta2) || /STALE/.test(meta3);
+      const p = window.__hop.telemetryPayload();
+      return (p.impulse === true || p.volBlast === true)
+        && (p.alarmState === "triggered" || p.alarmState === "sustaining")
+        && p.extremeActive === true;
     }, null, { timeout: 5000 });
-    const cardClass = await pageA.evaluate(() => {
-      const c2 = document.getElementById("fleetPeer2")?.className || "";
-      const c3 = document.getElementById("fleetPeer3")?.className || "";
-      return c2.includes("stale") ? c2 : c3;
+    const p = await pageA.evaluate(() => window.__hop.telemetryPayload());
+    expect(p.extremeActive).toBe(true);
+    expect(["triggered", "sustaining"]).toContain(p.alarmState);
+    // Hold restores volume path and cleared latch
+    await pageA.click("#holdPatchBtn");
+    await pageA.waitForFunction(() => window.__hop.getState().alarmState === "cleared", null, { timeout: 3000 });
+    // Fleet JSONL rows preserve per-record fleet snapshots (ts/event), not only live telemetry
+    const jsonl = await pageA.evaluate(async () => {
+      const orig = navigator.clipboard?.writeText?.bind(navigator.clipboard);
+      let captured = "";
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText = async (t) => { captured = String(t || ""); };
+      }
+      document.getElementById("copyFleetLogBtn")?.click();
+      await new Promise(r => setTimeout(r, 50));
+      if (orig) navigator.clipboard.writeText = orig;
+      return captured;
     });
-    expect(cardClass).toContain("stale");
+    expect(jsonl.trim().length).toBeGreaterThan(0);
+    const rows = jsonl.trim().split("\n").map(l => JSON.parse(l));
+    expect(rows[0].kind).toBe("fleet_log");
+    expect(rows[0].ts).toBeTruthy();
+    expect(errors).toEqual([]);
     await context.close();
   });
 

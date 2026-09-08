@@ -599,6 +599,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
   let pulseMs=120, shriekMs=55;
+  // deviceId: persisted localStorage for telemetry. instanceId + seed: per-tab sessionStorage
+  // so same-origin peer compare does not collide on shared seed / BroadcastChannel identity.
   let deviceId="", instanceId="", seed=0, seedSource="entropy";
   try {
     deviceId = localStorage.getItem("hop.deviceId") || "";
@@ -2220,13 +2222,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const URL_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#]*|(?:[A-Za-z0-9._~-]+\/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9._~-]+)[?#][^\s]*/g;
   function redactUrlQuery(s){ return String(s).replace(URL_QUERY_RE, "$1?[redacted]"); }
   function monLog(msg, event, fields, level){
+    const snap = fleetLogLineFromTel({ event: event ? String(event).slice(0, 32) : "log", msg: "" });
     const rec = {
       seq: ++logSeq,
       ts: new Date().toISOString(),
       level: LOG_LEVELS[level] ? level : "info",
       event: event ? String(event).slice(0, 32) : "log",
       msg: redactUrlQuery(msg).slice(0, 240),
-      fields: fields && typeof fields === "object" ? fields : {}
+      fields: fields && typeof fields === "object" ? fields : {},
+      fleet: snap
     };
     records.push(rec);
     while (records.length > LOG_MAX) records.shift();
@@ -2301,7 +2305,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
   function copyFleetLogJsonl(){
     const lines = records.slice(-50).map(function(r){
-      return JSON.stringify(fleetLogLineFromTel({ event: r.event || "log", msg: r.msg || "" }));
+      const base = (r && r.fleet && typeof r.fleet === "object")
+        ? Object.assign({}, r.fleet)
+        : fleetLogLineFromTel({ event: r.event || "log", msg: r.msg || "" });
+      if (r && r.ts) base.ts = String(r.ts).replace(/\.\d{3}Z$/, "Z");
+      if (r && r.level) base.level = r.level;
+      if (r && r.event) base.event = r.event;
+      if (r && r.msg != null) base.msg = r.msg;
+      const ordered = {};
+      for (let i = 0; i < FLEET_LOG_KEYS.length; i++) ordered[FLEET_LOG_KEYS[i]] = base[FLEET_LOG_KEYS[i]];
+      return JSON.stringify(ordered);
     });
     if (!lines.length) lines.push(JSON.stringify(fleetLogLineFromTel({ event: "export", msg: "empty ring" })));
     copyTextToClipboard(lines.join("\n") + "\n", "fleet_log JSONL copied", { n: lines.length, keys: FLEET_LOG_KEYS.length });
@@ -2602,7 +2615,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       if (idEl) idEl.textContent = deviceId || "local";
     }
     if (localMeta) {
-      localMeta.textContent = "seed " + seed + " · " + algoWireName()
+      localMeta.textContent = "seed " + seed + " · " + (typeof algoWireName === "function" ? algoWireName() : algo)
         + " · alarm " + alarmState
         + (impulse ? " · impulse" : "")
         + (volBlast ? " · blast" : "")

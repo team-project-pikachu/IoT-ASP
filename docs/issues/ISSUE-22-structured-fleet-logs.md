@@ -2,13 +2,13 @@
 
 **Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/22  
 **Classification:** ship / stub iterate (Balanced)  
-**Status:** implemented (stack PR2) + test deepen (stack PR5)
+**Status:** implemented (stack PR2 deepen)
 
 ## Did
 
 - `services/autoroute-adk/iot_asp_autoroute/fleet_log.py` (24 RECORD_KEYS)
 - `tools.ingest_telemetry` / `process_sudden_freq` / `fleet_log_summary` hooks
-- `tests/test_fleet_log.py` — enrich/PII/JSONL + demo fixture / `alarmState` coercion / `fleet_log_demo.sh`
+- `tests/test_fleet_log.py`
 - `scripts/fleet_log_demo.sh` dry-run CLI
 - PWA: Copy fleet_log JSONL (fixed key order mirror)
 

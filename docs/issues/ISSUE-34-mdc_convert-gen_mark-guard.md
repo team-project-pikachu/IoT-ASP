@@ -2,12 +2,12 @@
 
 **Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/34  
 **Classification:** ship / stub iterate (Balanced)  
-**Status:** implemented (stack PR2) + regression coverage retained (stack PR5)
+**Status:** implemented (stack PR2 deepen)
 
 ## Did
 
 - `scripts/mdc_convert.py` — GEN_MARK refuse + nested `IoT-ASP-wt-*` exclude prefixes
-- `tests/test_mdc_convert.py` — refuse / `--force` / long frontmatter / nested worktree skip
+- `tests/test_mdc_convert.py` — incl. nested worktree skip
 - `docs/mdc-conversion.md`
 - `.gitignore` `/IoT-ASP-wt-*/`
 

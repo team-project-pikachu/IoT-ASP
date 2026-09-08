@@ -96,6 +96,27 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "function fleetLogLineFromTel(" in html
     assert 'id="simImpulseBtn"' in html
     assert "noteImpulse(true, false)" in html
+    note = _fn_body(html, "function noteImpulse(source, deltaHint){")
+    assert "enterExtremeFromBurst(" in note
+    assert "blastVolJump(" in note
+    # #54 SM: EMA accel rise (no gravity baseline warm-up vars)
+    assert "accelBaselineReady" not in html
+    assert "ACCEL_BASELINE_WARM_N" not in html
+    assert "accelBaselineSamples" not in html
+    assert "hop.tabSeed" in html
+    assert 'sessionStorage.setItem("hop.tabSeed"' in html
+    assert 'sessionStorage.getItem("hop.tabSeed"' in html
+    # hop.seed may mirror to localStorage for tooling/spec-02 reseed asserts; tab RNG is session-scoped.
+    assert 'localStorage.setItem("hop.seed"' in html
+    hyst = _fn_body(html, "function tickAlarmHysteresis(now, stillHot){")
+    assert "BURST_QUIET_MS" in hyst and "lastImpulseAt" in hyst
+    assert "clearImpulseAlarm(" in hyst
+    assert "function clearImpulseAlarm(" in html
+    assert 'setAlarmState("cleared")' in html or "ALARM_CLEARED_MS" in html
+    mon = _fn_body(html, "function monLog(msg, event, fields, level){")
+    assert "fleet" in mon
+    assert "r.fleet" in _fn_body(html, "function copyFleetLogJsonl(){")
+    assert "d.instanceId === instanceId" in html
     assert "Seed compare" in html
     assert "peerStale" in html
 

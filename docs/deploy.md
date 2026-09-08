@@ -13,7 +13,8 @@ backend deploys independently (CLAUDE.md invariant 11) — nothing in `deploy.ym
 Secrets are referenced **by name only**: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 (CLI path), `VERCEL_DEPLOY_HOOK_PROD` (hook fallback), `VERCEL_AUTOMATION_BYPASS_SECRET` (optional, preview
 protection). Values live in 1Password Environment `dev` and GitHub Actions secrets — never in git, chat,
-or issues. **Status: secrets not set as of 2026-09-08 (issue #27)** — check names with `bash scripts/gh_secrets_names_check.sh` (never prints values). — until an owner sets them every run
+or issues. **Status: secrets not set as of 2026-09-08 (issue #27)** — check names with
+`bash scripts/gh_secrets_names_check.sh` (never prints values). Until an owner sets them, every run
 stops after `gates` with a `::notice` naming the missing secrets.
 
 **Deploy notifications (webhooks)** are separate from Deploy Hooks: Vercel POSTs
