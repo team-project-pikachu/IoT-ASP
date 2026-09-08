@@ -116,8 +116,10 @@ GitHub Actions **cannot** expose a public HTTPS endpoint for Vercel to POST to. 
 2. Workflow [`.github/workflows/vercel-webhook.yml`](../.github/workflows/vercel-webhook.yml)
    listens for that dispatch and writes a job summary (extend later: issue comment, Slack, check run).
 
-Stub receiver sketch (not production-hosted here):
-[`services/vercel-webhook-receiver/README.md`](../services/vercel-webhook-receiver/README.md).
+Runnable receiver (stdlib):
+[`services/vercel-webhook-receiver/`](../services/vercel-webhook-receiver/) —
+`handler.py` (verify + `repository_dispatch`), `server.py` (HTTP listen),
+`notify_once.py` (one-shot CLI). Dry-run with `WEBHOOK_DRY_RUN=1`.
 
 ### 2. Docs-only / manual verify
 
@@ -133,7 +135,7 @@ and GitHub.
 - [ ] Receiver GitHub auth: `GITHUB_TOKEN` or `GH_APP_INSTALLATION_TOKEN` (Contents write on this
       repo only; separate from the Vercel webhook secret — see receiver README)
 - [ ] Public HTTPS endpoint URL configured (or deferred with temporary bin for signature dry-run)
-- [ ] Receiver verifies HMAC before any side effect
+- [x] Receiver verifies HMAC before any side effect (`services/vercel-webhook-receiver/`)
 - [ ] `repository_dispatch` `vercel-deployment` exercised once (Actions run URL recorded in
       `.vv/deploy/VERCEL.md` — no secrets)
 - [ ] Cross-check #27 CLI / Deploy Hook secrets still tracked separately
