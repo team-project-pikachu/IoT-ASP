@@ -11,6 +11,9 @@ final class ASPSessionModel: ObservableObject {
         didSet { syncMotion() }
     }
     @Published var lastAbsA: Double = 0
+    @Published var lastAbsOmega: Double = 0
+    @Published var motionAvailability = MotionAvailability.simulatorSafe
+    @Published var motionPlanHz: Double = CoreMotionSuite.defaultHz
     @Published var intenseVib = false
     @Published var sessionError: String?
     @Published var alarm = AlarmStateMachine()
@@ -67,7 +70,9 @@ final class ASPSessionModel: ObservableObject {
             logger.onSample = { [weak self] sample in
                 self?.ingest(sample)
             }
-            logger.start(hz: 50)
+            logger.start(hz: CoreMotionSuite.defaultHz)
+            motionAvailability = logger.availability
+            motionPlanHz = logger.activePlan.hz
             motion = logger
         } else {
             motion?.stop()
@@ -78,6 +83,7 @@ final class ASPSessionModel: ObservableObject {
 
     private func ingest(_ sample: VibSample) {
         lastAbsA = sample.absA
+        lastAbsOmega = sample.absOmega
         intenseVib = detector.intenseVibProxy(absA: sample.absA, lfEnergyProxy: sample.absA)
         if let event = detector.observeAccel(sample) {
             pendingImpulse = event
