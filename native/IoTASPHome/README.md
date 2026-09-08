@@ -14,7 +14,7 @@ Source: https://developers.home.google.com/apis/ios/get-started (last updated 20
 
 1. Sample App concepts  
 2. Get SDK (SPM / CocoaPods — **not checked in**; use `#if canImport(GoogleHomeSDK)`)  
-3. Set up OAuth (owner: **bettyctai@gmail.com**)  
+3. Set up OAuth (owner: **betty@bearresearch.io**)  
 4. Initialize home  
 5. Integrate APIs (Structure, Device / Camera traits, Automation, Commissioning, …)  
 6. Test → Register / Launch (coming soon per docs)
@@ -48,7 +48,7 @@ bash scripts/home_apis_gcloud_bootstrap.sh --apply # owner confirmation required
 
 ## Secrets
 
-Never commit OAuth client IDs, Nest tokens, or API keys. Reference 1Password `dev` item **names** only. Identity: bettyctai@gmail.com.
+Never commit OAuth client IDs, Nest tokens, or API keys. Reference 1Password `dev` item **names** only. Identity: betty@bearresearch.io.
 
 ## Cross-links
 

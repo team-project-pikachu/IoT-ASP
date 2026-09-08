@@ -276,24 +276,25 @@ When incorporating SciPy, Google ADK, Web Audio, or other libraries into the ASP
 - Do not break C1 native Bluetooth / SDD app control constraints.
 <!-- mdc:end asp-prior-art -->
 
-<!-- mdc:begin no-browser-no-https-browse source=.cursor/rules/no-browser-no-https-browse.mdc sha256=6cd561fcec0f -->
-### No browser automation and no ad-hoc HTTPS page fetch; use local CLI (gh, git, pytest, scripts) only
+<!-- mdc:begin no-browser-no-https-browse source=.cursor/rules/no-browser-no-https-browse.mdc sha256=a27d71a50a48 -->
+### No browser automation and no unapproved ad-hoc HTTPS page fetch; use local CLI; Firecrawl only for approved prior-art/reference ingest
 
-# No browser / no HTTPS browse
+# No browser / no unapproved HTTPS browse
 
-For IoT-ASP agent work: drive the repo with **local CLI and file edits only**. Do not open or automate a browser, and do not fetch web pages as a substitute for CLI.
+For IoT-ASP agent work: drive the repo with **local CLI and file edits** by default. Do not open or automate a browser, and do not fetch web pages as a substitute for CLI.
 
 ## Forbidden
 
 - Browser automation / GUI: Playwright MCP, browser tools, “drive the browser”, GUI GitHub/Vercel/etc.
-- Ad-hoc HTTPS browsing: WebFetch, curl-to-HTML, scraping GitHub UI, Firecrawl (or similar) browse/scrape as workflow
+- **Unapproved** ad-hoc HTTPS browsing: WebFetch, curl-to-HTML, scraping GitHub UI, Firecrawl (or similar) as a general workflow substitute
 
 ## Allowed
 
 - Local CLI: `gh`, `git`, pytest, project scripts, editors/file tools
-- `gh` (and similar CLIs) may use HTTPS under the hood — that is fine; forbid **browser** and **ad-hoc page fetch**, not the `gh` binary
+- `gh` (and similar CLIs) may use HTTPS under the hood — that is fine; forbid **browser** and **unapproved ad-hoc page fetch**, not the `gh` binary
+- **Approved Firecrawl / Context7 ingest** when `.cursor/rules/asp-prior-art.mdc` applies (awesome-list / .gov / USPTO / Nest Device Access reference under `reference/`). Precedence: prior-art Firecrawl path wins for those scopes; this rule still forbids browser login and console/auth-wall scraping.
 
 ## Default
 
-If tempted to open a URL in a browser or fetch HTML over HTTPS → use `gh` / `git` / local files instead. Ask the user only if the CLI cannot satisfy the need.
+If tempted to open a URL in a browser or fetch HTML over HTTPS → use `gh` / `git` / local files instead, unless the prior-art Firecrawl path explicitly covers the fetch. Ask the user only if the CLI cannot satisfy the need.
 <!-- mdc:end no-browser-no-https-browse -->

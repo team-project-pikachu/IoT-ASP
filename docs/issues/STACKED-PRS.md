@@ -27,7 +27,7 @@
 | #61 live backend URLs | Owner publish ingest/patch HTTPS endpoints |
 | #63 ruleset apply | Live `main-protection` already **active** (id `22505825`) — residual: keep JSON ↔ CI names in sync |
 | #64 V&V pass rows | Software rows `in_progress`; `pass` needs field `#62` evidence |
-| M8 #83–#104 | Nest/OAuth/Gemini live: **bettyctai@gmail.com** + 1Password `dev`; no browser agent login |
+| M8 #83–#104 | Nest/OAuth/Gemini live: **betty@bearresearch.io** + 1Password `dev`; no browser agent login |
 
 Status board: [BALANCED-BUILD-STATUS.md](BALANCED-BUILD-STATUS.md).
 
@@ -47,7 +47,7 @@ Logged via `gh` to open PRs/issues + project **5** (no new feature code).
 | Merge stack | `#66`→`#70`(CONFLICTING)→`#71`; ops tip `#75`→`#76`(CONFLICTING)→`#105` |
 | Secrets | `#27` Vercel Actions secrets; webhook deploy config `#59` |
 | GCS | `#26` live Colab GCS (`LIVE_GCS` / bucket / SA) |
-| Nest console | `#83` `#85` `#93` OAuth/Premium — bettyctai@gmail.com |
+| Nest console | `#83` `#85` `#93` OAuth/Premium — betty@bearresearch.io |
 | HW | `#104` ladder, `#39` Beam, `#14` Pi, `#18` chair — parked |
 | Field | `#61` live URLs → `#62` 3-phone acceptance → `#64` V&V pass |
 | De-dupe merges | GEN_MARK `#35` vs `#66`/`#72`; impulse `#54` vs `#66`; closed-log `#73`/`#74`/`#79` |

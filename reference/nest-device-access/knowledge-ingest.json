@@ -4,7 +4,7 @@
   "ownerGatedConsole": {
     "url": "https://console.nest.google.com/device-access/project-list",
     "scraped": false,
-    "reason": "Auth wall / owner-only. Do not scrape login. Owner: bettyctai@gmail.com"
+    "reason": "Auth wall / owner-only. Do not scrape login. Owner: betty@bearresearch.io"
   },
   "endpoint": "https://smartdevicemanagement.googleapis.com/v1",
   "traits": {

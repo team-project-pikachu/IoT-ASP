@@ -40,7 +40,7 @@ public struct NestCameraCatalog: Sendable {
     }
 
     public func snapshotContext(for event: AcousticEventClass) -> CameraSnapshotContext? {
-        guard let cam = devices.first else { return nil }
+        guard let cam = devices.first(where: { $0.supportsSnapshot }) else { return nil }
         return CameraSnapshotContext(cameraId: cam.id, eventClass: event)
     }
 }

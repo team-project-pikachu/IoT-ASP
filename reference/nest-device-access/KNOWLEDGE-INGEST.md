@@ -2,7 +2,7 @@
 
 ## Summary
 
-Firecrawl CLI ingest for M8 Nest cameras + Gemini/ASP acoustic MVP. Pages scraped as markdown; Device Access **console project-list was NOT scraped** (auth wall; owner-gated for `bettyctai@gmail.com`).
+Firecrawl CLI ingest for M8 Nest cameras + Gemini/ASP acoustic MVP. Pages scraped as markdown; Device Access **console project-list was NOT scraped** (auth wall; owner-gated for `betty@bearresearch.io`).
 
 - ExtractedAt: 2026-09-08T05:41:55.795815+00:00
 - Workflow: firecrawl-knowledge-ingest + firecrawl-map + firecrawl-developer-index (CLI stable)
@@ -88,7 +88,7 @@ Flow (docs): Sample App → Get SDK → OAuth → Initialize home → Integrate 
 
 | URL | Status |
 |-----|--------|
-| https://console.nest.google.com/device-access/project-list | **Not scraped** — owner console / auth wall. Document only. Owner: bettyctai@gmail.com |
+| https://console.nest.google.com/device-access/project-list | **Not scraped** — owner console / auth wall. Document only. Owner: betty@bearresearch.io |
 
 ## Developer-index quoted passages
 
@@ -174,7 +174,7 @@ workflow: firecrawl-knowledge-ingest
 url: https://developers.google.com/nest/device-access
 format: markdown+json
 max_pages: 80
-console: skip (owner bettyctai@gmail.com)
+console: skip (owner betty@bearresearch.io)
 ```
 
 ## ASP / M8 wiring notes

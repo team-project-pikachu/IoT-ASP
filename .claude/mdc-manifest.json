@@ -67,11 +67,11 @@
     {
       "alwaysApply": true,
       "cursorType": "always",
-      "description": "No browser automation and no ad-hoc HTTPS page fetch; use local CLI (gh, git, pytest, scripts) only",
+      "description": "No browser automation and no unapproved ad-hoc HTTPS page fetch; use local CLI; Firecrawl only for approved prior-art/reference ingest",
       "globs": [],
       "output": "CLAUDE.md",
       "scope": "",
-      "sha256": "6cd561fcec0f",
+      "sha256": "a27d71a50a48",
       "slug": "no-browser-no-https-browse",
       "source": ".cursor/rules/no-browser-no-https-browse.mdc",
       "target": "claude"

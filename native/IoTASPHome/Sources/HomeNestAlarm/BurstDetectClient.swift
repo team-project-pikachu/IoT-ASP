@@ -1,7 +1,7 @@
 import Foundation
 
 /// Protocol for Gemini Enterprise (gcloud / Vertex) burst + glass-shatter detection.
-/// Live calls are owner-gated (1Password `dev` + bettyctai@gmail.com). Stub never hits network.
+/// Live calls are owner-gated (1Password `dev` + betty@bearresearch.io). Stub never hits network.
 public protocol BurstDetectClient: Sendable {
     func detect(_ features: AcousticEventFeatures) async throws -> AcousticDetectResult
 }

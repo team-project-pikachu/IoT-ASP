@@ -223,5 +223,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Python detect stub smoke
-        run: python3 services/gemini-burst-detect/detect.py
+      - name: Python detect stub pytest
+        run: python3 -m pytest tests/test_gemini_burst_detect.py -q

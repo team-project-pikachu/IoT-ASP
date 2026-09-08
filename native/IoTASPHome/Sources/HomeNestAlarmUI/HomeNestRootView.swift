@@ -53,11 +53,11 @@ public struct HomeNestAlarmFeatureView: View {
                     Button("Simulate sound burst") { Task { await model.simulateSoundBurst() } }
                     Toggle("Hold / Manual", isOn: Binding(
                         get: { model.alarm.holdManual },
-                        set: { model.alarm.setHoldManual($0) }
+                        set: { model.setHoldManual($0) }
                     ))
                 }
                 Section("Owner gate") {
-                    Text("OAuth / Nest premium: bettyctai@gmail.com (do not commit secrets).")
+                    Text("OAuth / Nest premium: betty@bearresearch.io (do not commit secrets).")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -115,15 +115,26 @@ public final class HomeNestSessionModel: ObservableObject {
     }
 
     public func initializeHome() async {
-        let stub = StubHomeStructureClient(isAuthorized: true)
         do {
-            try await stub.initializeHome()
-            cameraIds = try await stub.listCameraDeviceIds()
-            homeAuthorized = true
-            statusMessage = "stub home initialized"
+            // Use the pipeline's HomeStructureClient (factory selects live vs stub).
+            // Demo button may upgrade an unauthorized stub so the UI can list cameras without OAuth.
+            var client = pipeline.home
+            if let stub = client as? StubHomeStructureClient, !stub.isAuthorized {
+                client = StubHomeStructureClient(isAuthorized: true, stubCameraIds: stub.stubCameraIds)
+            }
+            try await client.initializeHome()
+            cameraIds = try await client.listCameraDeviceIds()
+            homeAuthorized = client.isAuthorized
+            statusMessage = "home initialized via pipeline client"
         } catch {
+            homeAuthorized = false
             statusMessage = String(describing: error)
         }
+    }
+
+    public func setHoldManual(_ on: Bool) {
+        alarm.setHoldManual(on)
+        objectWillChange.send()
     }
 
     public func simulateSoundBurst() async {

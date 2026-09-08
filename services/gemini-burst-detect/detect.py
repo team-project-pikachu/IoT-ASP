@@ -1,9 +1,10 @@
 """Gemini Enterprise / Vertex acoustic event detector stub (M8).
 
 Does NOT call paid APIs. Wire live `gcloud ai` / Vertex only after owner auth
-(bettyctai@gmail.com) + 1Password `dev` keys.
+(betty@bearresearch.io) + 1Password `dev` keys.
 
 Event classes: sound_burst | glass_shatter | unknown
+Wire keys match Swift `AcousticDetectResult` (camelCase).
 """
 
 from __future__ import annotations
@@ -31,17 +32,28 @@ class DetectResult:
             "burst": self.burst,
             "eventClass": self.event_class.value,
             "confidence": self.confidence,
-            "escalate_db": self.escalate_db,
+            "escalateDb": self.escalate_db,
         }
+
+
+def _first_present(features: Mapping[str, Any], *keys: str) -> Any:
+    """Return the first key that is present (even if the value is 0/False)."""
+    for key in keys:
+        if key in features:
+            return features[key]
+    return None
 
 
 def detect(features: Mapping[str, Any], *, onset_db: float = 9.0, glass_rise_ms_max: float = 80.0) -> DetectResult:
     """Heuristic stub mirroring native StubBurstDetectClient."""
-    energy = float(features.get("energyDeltaDb") or features.get("energy_delta_db") or 0.0)
-    rise_ms = float(features.get("riseMs") or features.get("rise_ms") or 999.0)
-    hint_raw = str(features.get("eventClassHint") or features.get("event_class_hint") or "unknown")
+    energy_raw = _first_present(features, "energyDeltaDb", "energy_delta_db")
+    energy = 0.0 if energy_raw is None else float(energy_raw)
+    rise_raw = _first_present(features, "riseMs", "rise_ms")
+    rise_ms = 999.0 if rise_raw is None else float(rise_raw)
+    hint_raw = _first_present(features, "eventClassHint", "event_class_hint")
+    hint_str = "unknown" if hint_raw is None else str(hint_raw)
     try:
-        hint = AcousticEventClass(hint_raw)
+        hint = AcousticEventClass(hint_str)
     except ValueError:
         hint = AcousticEventClass.UNKNOWN
 

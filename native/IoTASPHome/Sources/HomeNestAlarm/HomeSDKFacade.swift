@@ -10,7 +10,7 @@ public protocol HomeStructureClient: Sendable {
 }
 
 #if canImport(GoogleHomeSDK)
-// TODO(M8): Wire real GoogleHomeSDK types once SPM/CocoaPods + OAuth (bettyctai@gmail.com) are configured.
+// TODO(M8): Wire real GoogleHomeSDK types once SPM/CocoaPods + OAuth (betty@bearresearch.io) are configured.
 // See https://developers.home.google.com/apis/ios/get-started
 public struct LiveHomeStructureClient: HomeStructureClient {
     public var isAuthorized: Bool = false
@@ -41,7 +41,7 @@ public struct StubHomeStructureClient: HomeStructureClient {
     }
 
     public func initializeHome() async throws {
-        // Owner must complete Google Home Developer Console + OAuth as bettyctai@gmail.com.
+        // Owner must complete Google Home Developer Console + OAuth as betty@bearresearch.io.
         guard isAuthorized else { throw HomeSDKError.unauthorized }
     }
 
