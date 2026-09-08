@@ -6,9 +6,27 @@ Owned files: `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `tests
 
 ## Status
 
-**Spec written 2026-09-08 — code not yet on `main`.** Offline path (dry-run mirror) is fully testable in CI;
-the live GCS write is gated behind Colab `userdata` names and is recorded as `live: PENDING` in
+**Implemented 2026-09-08 on branch `claude/mdc-conversion-features-gu3yzk` (not yet on `main`).**
+`features_live.py`, `tests/test_features_live.py` (26 tests, FL-01 … FL-13), the regenerated notebook
+pair and `.vv/colab-sensors.md` are on the branch; the offline path (dry-run mirror) is fully tested in
+CI. The live GCS write is gated behind Colab `userdata` names and is recorded as `live: PENDING` in
 `.vv/colab-sensors.md` until an owner runs the notebook with `LIVE_GCS=1`.
+
+### Implemented on the branch (differences from the plan below)
+
+| What | Where |
+|------|-------|
+| Constants `SENSOR_COLUMNS` (18), `ALL_COLUMNS`, `MIC_DIFF_ALPHA`, band thresholds, prefixes | `features_live.py` "constants" block |
+| `mic_diff`, `band_burst`, `project_sensor_features`, `normalize_ts` (ISO / epoch s / epoch ms / `T00-00-05Z` object-name style) | `features_live.py` "pure helpers" |
+| `parse_telemetry_objects(names, reader=None, text_reader=None, errors=None)` — `errors` is an optional list that collects `{object, line, error}` for skipped lines (the plan said "counted in `errors`"; a list keeps the function pure) | `features_live.py` |
+| `list_telemetry_names(node)` (dry-run adds `*.jsonl` glob, dedupes) + `latest_points(node, limit)` | `features_live.py` |
+| `build_feature_record` also adds `sampleHz` and `sourceObjects` (sorted source names) — additive | `features_live.py` |
+| `run_live` result adds `written` and `shriekBias` next to the planned keys; explicit `live=True` without `IOT_ASP_GCS_BUCKET` is **downgraded** to the dry-run mirror | `features_live.py` |
+| Live mode forces `gcs_io.DRY_RUN = False` and refreshes `gcs_io.BUCKET` from env for the duration (reads + write), restored afterwards; non-live forces `DRY_RUN = True` | `features_live._gcs_mode` |
+| `demo_points(node, n, seed)` (pure) feeds `_seed_demo`; point 9 carries `soundBurst=True`, `micEnergy=-20` | `features_live.py` |
+| Notebook cell 3 (`from iot_asp_autoroute import features_live`) seeds the mirror with `_seed_demo` when **not** live so the notebook runs offline end-to-end | `notebooks/iot_asp_colab_etl.*` |
+| FL-12 additionally asserts the `.md` python fences equal the `.ipynb` code-cell sources (generated from one cell list) | `tests/test_features_live.py` |
+| FL-09 live branch stubs `features_live.latest_points` so no GCS client is constructed; asserts `gcs_io.DRY_RUN`/`BUCKET` are restored | `tests/test_features_live.py` |
 
 ## Goal
 
@@ -112,8 +130,9 @@ No secret values, no `gs://` bucket names.
 
 ### Integration requests (not owned here)
 
-- `tools.py`: `def live_features(node_id: str, limit: int = 200) -> dict` wrapping `features_live.run_live(node_id, limit)` (dry-run unless env gates live).
-- `docs/api-contract.md`: sensor column rows (table in "Wire fields" below).
+- `tools.py`: `def live_features(node_id: str, limit: int = 200) -> dict` wrapping `features_live.run_live(node_id, limit)` (dry-run unless env gates live) — **open**.
+- `docs/api-contract.md`: sensor column rows — **done** on the branch (rows `ax..gz` … `lfEnergy / usEnergy`, and the
+  `features_live.run_live` → `meta/features/<deviceId>/<ts>.json` note).
 
 ## Wire fields
 
@@ -177,10 +196,10 @@ Features object (`meta/features/<deviceId>/<ts>.json`, additive over `colab_etl.
 | FL-06 | `shriekBias` | true for `soundBurst=True`; true for `extremeActive=True`; true for `micDiff=6.5`; false for `micDiff=5.9` with both flags false |
 | FL-07 | `run_live` dry-run | `monkeypatch` `gcs_io.DRY_RUN=True`, `gcs_io.DRY_ROOT=tmp_path`, `IOT_ASP_AUTOROUTE_DRY_ROOT=tmp_path`, env `LIVE_GCS` unset: after `_seed_demo` + `run_live("node1", 50)`, exactly one file under `tmp_path/meta/features/node1/`, name ends with `.json` and has no `:`; `not (tmp_path/"meta/patches").exists()`; result `ok is True`, `live is False`, `uri.startswith("file://")`, `sourceCount == 12` |
 | FL-08 | Guard | `assert_not_patch_path("meta/patches/node1.json")` raises `ValueError`; `assert_not_patch_path("meta/features/node1/x.json")` does not |
-| FL-09 | Env gate | with `LIVE_GCS=1` but `IOT_ASP_GCS_BUCKET` unset, `run_live(..., write=False)["live"] is False`; with both set and `write=False`, `live is True` and nothing is written |
+| FL-09 | Env gate | with `LIVE_GCS=1` but `IOT_ASP_GCS_BUCKET` unset, `run_live(..., write=False)["live"] is False`; with both set and `write=False` (reads stubbed via `monkeypatch` on `latest_points`), `live is True`, `gcs_io.DRY_RUN` was `False` during the run and restored after, nothing is written; explicit `live=True` without a bucket → `live is False` |
 | FL-10 | No telemetry | `run_live("ghost", write=True)` → `ok is False`, no file created |
 | FL-11 | CLI | `python3 -m iot_asp_autoroute.features_live --node node1 --limit 50 --seed-demo` with `IOT_ASP_AUTOROUTE_DRY_ROOT=<tmp>` exits 0 and prints JSON with `"ok": true` and a `file://` uri (subprocess, `PYTHONPATH=services/autoroute-adk`) |
-| FL-12 | Notebook sync | `.ipynb` parses as JSON with `nbformat == 4`; code-cell sources concatenated contain `userdata.get("GCP_SA_JSON")`, `userdata.get("IOT_ASP_GCS_BUCKET")`, `userdata.get("LIVE_GCS")`, `features_live.run_live(`; do **not** contain `meta/patches`; the `.md` file contains the same three names and `run_live(` |
+| FL-12 | Notebook sync | `.ipynb` parses as JSON with `nbformat == 4`; code-cell sources concatenated contain `userdata.get("GCP_SA_JSON")`, `userdata.get("IOT_ASP_GCS_BUCKET")`, `userdata.get("LIVE_GCS")`, `features_live.run_live(`, `services/autoroute-adk`; do **not** contain `meta/patches` or key-like patterns; the `.md` file contains the same three names and `run_live(`, its ```python fences equal the `.ipynb` code cells in order, and every `.ipynb` markdown cell appears in the `.md` |
 | FL-13 | Constants | `ALL_COLUMNS[:len(TELEMETRY_FEATURE_COLUMNS)] == TELEMETRY_FEATURE_COLUMNS`; `MIC_DIFF_ALPHA == 0.85`; `len(SENSOR_COLUMNS) == 18` |
 
 ## CI gate

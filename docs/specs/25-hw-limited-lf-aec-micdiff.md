@@ -13,8 +13,12 @@ from TX-only pairs, (c) answers "can this fleet do full AEC / LF mic / LF TX?" w
 **no / no / only-if-`lfDriveCapable`**, (d) turns `micDiff` into a clamped burst → `shriek_chirp` bias
 that always yields to Hold / Manual, and (e) exposes the leftover list as a report for the ADK agent.
 
-On this checkout (`4e4f5db`) the module, its tests and `.vv/burst-shriek.md` do not exist yet; the
-public HTML does **not** yet emit `micDiff` / `outLevel` / `soundBurst` / `extremeActive` /
+**Implemented on branch `claude/mdc-conversion-features-gu3yzk` (2026-09-08):**
+`services/autoroute-adk/iot_asp_autoroute/mic_diff.py`, `tests/test_mic_diff.py` (19 tests, MD-01 … MD-17)
+and `.vv/burst-shriek.md` now exist; see *Shipped on `main`* → "This item" and the *Implementation
+deltas* note under *Acceptance tests*. The integrator hooks (§ Remaining scope 4) are still requests.
+
+On the base checkout (`4e4f5db`) the public HTML does **not** yet emit `micDiff` / `outLevel` / `soundBurst` / `extremeActive` /
 `lfEnergy` / `usEnergy` (`grep` over `public/` returns nothing — see *Shipped on main*). The owner's
 Mac clone is described by the issue as ahead ("shipped in public hop UI"); this spec therefore treats
 every burst key as an **optional telemetry input** and computes `micDiff` server-side when absent.
@@ -59,6 +63,21 @@ Verified by reading the files on this checkout (line numbers exact at `4e4f5db`)
 | ADK tool registration pattern (plain functions in `tools=[…]`) | `services/autoroute-adk/iot_asp_autoroute/agent.py:17-25`, `:52-60`; agent instruction already says "Respect Hold/Manual" (`agent.py:44`) |
 | numpy is already a runtime dependency (`vib_anomaly.py`) | `services/autoroute-adk/requirements.txt` (`numpy>=1.26.0,<3`); `vib_anomaly.py:14` |
 | #26 spec expects a `micDiff` helper with α = 0.85 and `shriekBias = soundBurst ∨ extremeActive ∨ micDiff > 6` | `docs/specs/26-colab-live-gcs-features.md:76`, `:81`, `:144`, `:148` |
+
+**This item (branch, 2026-09-08):**
+
+| What | Where |
+|------|-------|
+| Constants `MIC_DIFF_ALPHA = 0.85`, `MIC_DIFF_THR_DB = 6.0`, `ALPHA_RANGE = (0.0, 2.0)`, `MIN_CAL_PAIRS = 3`, `SHRIEK_MS_BIAS = 15`, `BURST_ALGO = "shriek_chirp"` (asserted `in ALLOWED_ALGOS` at `:53`), `MIC_FFT_SIZE`/`TX_FFT_SIZE`/`WEB_SAMPLE_HZ` | `services/autoroute-adk/iot_asp_autoroute/mic_diff.py:37-48` |
+| `mic_diff`, `mic_diff_from_telemetry` (phone `micDiff` wins; missing `outLevel` → passthrough) | `mic_diff.py:79`, `:98` |
+| `calibrate_alpha` — `numpy.linalg.lstsq(out[:, None], mic, rcond=None)`, rank-0 refuse, `[0, 2]` clamp, `< 3` pairs refuse; numpy imported lazily inside the function | `mic_diff.py:126` |
+| `aec_capability` (`fullAEC` hard-coded `False`; UA classified by `_ua_class` `:176`, never echoed) | `mic_diff.py:188` |
+| `lf_capability` (`lfMic` hard-coded `False`; `lfTx = priors.lf_drive_capable`) | `mic_diff.py:214` |
+| `burst_decision`, `burst_decision_from_telemetry`, `apply_burst_bias` (Hold / Manual refuse first; `shriekMs` clamped to `CLAMPS["shriekMs"]`) | `mic_diff.py:263`, `:290`, `:309` |
+| `hw_limits_report` — four limits `full_aec`, `lf_mic`, `lf_tx`, `alpha_calibration` (`_LIMITS` data at `:334`) | `mic_diff.py:377` |
+| `demo()` (seed 25) + `main()` CLI (`--demo` → exit 0; no args → usage on stderr, exit 2) | `mic_diff.py:400`, `:422` |
+| Tests MD-01 … MD-17 | `tests/test_mic_diff.py` |
+| Evidence | `.vv/burst-shriek.md` |
 
 ## Remaining scope
 
@@ -187,6 +206,23 @@ needed except for the CLI test. Run: `python3 -m pytest tests/test_mic_diff.py -
 | MD-16 | CLI demo: `subprocess.run([sys.executable, "-m", "iot_asp_autoroute.mic_diff", "--demo"], cwd="services/autoroute-adk", capture_output=True, env={**os.environ, "IOT_ASP_AUTOROUTE_DRY_RUN": "1"})` → returncode 0, stdout parses as JSON with keys `{"micDiff","calibration","burst","burstHold","aec","lf","report"}`, `out["micDiff"] == 5.5`, `abs(out["calibration"]["alpha"] − 0.85) < 0.1`, `out["burst"]["extreme"] is True`, `out["burstHold"]["reason"] == "holdManual — refuse"`, `out["aec"]["fullAEC"] is False`, `out["lf"]["lfMic"] is False`, `len(out["report"]["limits"]) == 4`; two runs produce byte-identical stdout; no-arg run exits 2 |
 | MD-17 | negative controls: `burst_decision("6.5")` (string) → `extreme True` (numeric coercion) but `burst_decision("abc")["reason"] == "micDiff unavailable"`; `apply_burst_bias(patch, {"extreme": True, "shriekMsBias": 999, "micDiffDb": 9})` → `shriekMs == 120.0` (clamp wins over a bogus bias); `apply_burst_bias({"algo": "hop"}, {})` returns `{"algo": "hop"}`; `lf_capability({"lfDriveCapable": "true"})` (string, not bool) → `lfTx False` (matches `priors.lf_drive_capable` strict `is True`) |
 
+**Implementation deltas (as shipped — the table above remains binding, these are additions):**
+
+- `lf_capability()["reasons"]` carries a **third** `lfMic:` line, `"lfMic: lfEnergy is the LF accelerometer
+  felt proxy, not infrasound capture"`, so the honesty statement is on the wire as well as in the source.
+- `burst_decision_from_telemetry` flag reason is `"soundBurst/extremeActive flag; <underlying micDiff
+  reason>"` (still starts with `"soundBurst/extremeActive flag"`).
+- `apply_burst_bias` always uses the module constant `SHRIEK_MS_BIAS` (15) for both `shriekMs` and
+  `burstBias.shriekMsBias`; a bogus `decision["shriekMsBias"]` is ignored (MD-17).
+- `demo()["burst"]` is the extreme decision for `micEnergy −12 / outLevel −30` (13.5 dB) plus two extra
+  keys `quietMicDiffDb` (5.5) and `quietExtreme` (`False`) documenting the non-extreme case; the top-level
+  demo key set is exactly `{micDiff, calibration, burst, burstHold, aec, lf, report}`.
+- MD-15 subprocess check imports the package first, then diffs `sys.modules` around
+  `import iot_asp_autoroute.mic_diff`, so it stays valid when `google-adk` is installed (the package
+  `__init__` soft-imports `agent` → `tools` → `vib_anomaly` → scipy in that environment).
+- `mic_diff(..., alpha=<non-finite>)` and `burst_decision(..., thr_db=<non-numeric>)` fall back to the
+  module defaults (`0.85`, `6.0`) rather than raising; booleans are never treated as levels.
+
 ## CI gate
 
 - `tests` job (`python3 -m pytest tests -q`) picks up `tests/test_mic_diff.py`; numpy is in
@@ -246,6 +282,13 @@ Additional risks:
   (`getUserMedia` with `echoCancellation:false` still instantiates VPIO system-wide; fix computes
   `willUseEchoCancellation` from constraints); https://github.com/webaudio/web-audio-api/issues/1187
   (Web Audio amplitude drift unless `echoCancellation:false`).
+- Re-verified at implementation time (2026-09-08): Context7 `/websites/numpy_doc_stable` `numpy.linalg.lstsq`
+  ("Residuals are returned as an empty array if the rank of `a` is less than N or M <= N") — basis for
+  the rank-0 refusal; Context7 `/mdn/content` `MediaTrackConstraints.echoCancellation` ("browsers will
+  ignore any constraints they're unfamiliar with") and `MediaTrackSupportedConstraints.echoCancellation`;
+  Firecrawl developer search — webkit/webkit PR #14490 / https://bugs.webkit.org/show_bug.cgi?id=257495
+  ("Set echoCancellation to true if not explicitly set within a getUserMedia call" — WebKit defaults the
+  speech-mode processor **on**, so the page must pass `false` explicitly).
 - GitHub issue #25 (scope, "Do not block public hop redeploys"), #9 (native/Xcode shell), #18
   (phone-speaker LF), #26 (`micDiff`/`shriekBias` consumer) — read via the GitHub connector on 2026-09-08.
 - Repo (file:line cites above): `docs/api-contract.md`, `docs/DESIGN_CONSTRAINTS.md`,

@@ -4,12 +4,14 @@ Issue: https://github.com/team-project-pikachu/IoT-ASP/issues/22 · Milestone: M
 
 ## Status
 
-**Spec — not yet implemented.** Module `services/autoroute-adk/iot_asp_autoroute/fleet_log.py`,
-tests `tests/test_fleet_log.py`, and the integration hooks in `tools.py` do not exist on this checkout.
-The issue body says "Partial: beacon + api-contract fields shipped in public HTML"; on this checkout
-(`origin/main` @ `0625e91`) the beacon does **not** yet emit `band`/`power`/`nightNY`/`lfArmed`/
-`lfDriveCapable` (see *Shipped on main*). The owner's Mac clone may be ahead; this spec treats those
-telemetry keys as **optional inputs** and always derives them server-side, so it is correct either way.
+**Implemented on branch (2026-09-08) — integration hooks pending.** Module
+`services/autoroute-adk/iot_asp_autoroute/fleet_log.py` and `tests/test_fleet_log.py` (37 tests) ship
+on `claude/mdc-conversion-features-gu3yzk`; the `tools.py` hooks (`ingest_telemetry` enrich + log,
+`process_sudden_freq` decision records, `fleet_log_summary` tool) are integrator-owned and requested,
+not yet landed. `docs/api-contract.md` already carries the five telemetry rows and the enrichment
+paragraph. The beacon in `public/index.html` may or may not emit `band`/`power`/`nightNY`/`lfArmed`/
+`lfDriveCapable` depending on checkout; this module treats those keys as **optional inputs** and always
+derives them server-side, so it is correct either way.
 
 ## Goal
 
@@ -25,7 +27,17 @@ PII, date-partitioned JSONL, and a separate aggregate layer with explicit retent
 
 ## Shipped on `main`
 
-Verified by reading the files on this checkout (line numbers are exact):
+Shipped by this item (branch `claude/mdc-conversion-features-gu3yzk`, 2026-09-08):
+
+| What | Where |
+|------|-------|
+| `parse_ts` / `to_wire_ts` / `night_ny` (zoneinfo `America/New_York`, tzdata fallback → `NY_TZ = None`) | `services/autoroute-adk/iot_asp_autoroute/fleet_log.py` (`NY_TZ`, `NIGHT_HOURS`, `parse_ts`, `night_ny`) |
+| `infer_band` (delegates to `clamps.band_limits`), `is_pii_key`, `scrub_pii`, `enrich_telemetry` | same file — `PII_DENY_EXACT`, `PII_DENY_TOKENS`, camelCase/acronym tokeniser `_key_tokens` |
+| `RECORD_KEYS` (21 keys), `log_record`, `record_path`, `write_log_record` (dry-run append / live RMW + `.part.jsonl` fallback), `read_log_records`, `read_log_records_with_stats` | same file |
+| `aggregate_records`, `retention_plan`, `demo_telemetry`, `demo_fixture`, CLI `--demo [--node]` | same file — `main()` |
+| Acceptance tests 1–15 (37 pytest cases) | `tests/test_fleet_log.py` |
+
+Pre-existing on `main` (verified by reading the files; line numbers were exact at spec time):
 
 | What | Where |
 |------|-------|
@@ -42,9 +54,12 @@ Verified by reading the files on this checkout (line numbers are exact):
 | Decision point that will emit a log record (hold refuse / skipped / authored) | `services/autoroute-adk/iot_asp_autoroute/tools.py:157-175` (`process_sudden_freq`) |
 | `is_sudden_freq_event` (used for `suddenFreq` in records) | `services/autoroute-adk/iot_asp_autoroute/sudden_freq.py:42-53` |
 | Phone beacon payload — device metrics only, **no** `band`/`power`/`nightNY`/`lf*` yet | `public/index.html:1332-1360` (`telemetryPayload`), `sendBeacon` at `:1367-1368` |
-| API contract telemetry table lacks rows for the five enrichment fields | `docs/api-contract.md:64-79` |
+| API contract telemetry table now carries the five enrichment rows + `fleet_log.enrich_telemetry` paragraph | `docs/api-contract.md` (telemetry table, "Backend enrichment" paragraph) |
 
 ## Remaining scope
+
+Items 1–2 below are **done** (kept as the normative description of the shipped module; deviations from
+the original draft are marked *as shipped*). Item 3 is open for the integrator.
 
 1. **`fleet_log.py`** (stdlib only; `zoneinfo` for `America/New_York`):
    - `NY_TZ = zoneinfo.ZoneInfo("America/New_York")`; `NIGHT_HOURS = range(22, 24) ∪ range(0, 7)`.
@@ -70,11 +85,14 @@ Verified by reading the files on this checkout (line numbers are exact):
    - `enrich_telemetry(t) -> dict`: pure; never mutates input. Steps: `scrub_pii` → copy → set
      `band = infer_band(t)` (only if absent or not in `{"17-23k","10-20"}`; a valid explicit tag wins),
      `power = t.get("power") or "ac120"`, `nightNY = night_ny(t.get("ts"))` (always recomputed from
-     `ts`; a phone-supplied `nightNY` is advisory only), `lfArmed = bool(t.get("lfArmed", False))`,
-     `lfDriveCapable = bool(t.get("lfDriveCapable", False))`,
+     `ts`; a phone-supplied `nightNY` is advisory only), `lfArmed` / `lfDriveCapable` coerced with
+     `_as_bool` (*as shipped*: strings `"" | "0" | "false" | "no" | "off" | "none" | "null"`,
+     case-insensitive, are `False`; every other value goes through `bool()` — so `1`, `"yes"` → `True`,
+     `None` → `False`, and a phone sending `"false"` is **not** logged as armed),
      `vibClass = priors.normalize_vib_class(t.get("vibClass"))`,
      `lfGate = lfArmed and lfDriveCapable and vibClass == "infra_felt"`,
-     `piiDropped = <count>` (int, only when > 0). Idempotent: `enrich(enrich(t)) == enrich(t)`.
+     `piiDropped = <count>` (int, only when > 0; *as shipped* it adds to any `piiDropped` already on
+     the input so a re-scrub never loses the count). Idempotent: `enrich(enrich(t)) == enrich(t)`.
      `lfGate` is a **log tag**, not a clamp decision; `clamps.validate_patch` and
      `priors.lf_drive_capable` stay authoritative for patches.
    - `log_record(level, event, telemetry, msg="", *, now=None) -> dict` with **fixed key order**
@@ -84,8 +102,12 @@ Verified by reading the files on this checkout (line numbers are exact):
      `vibClass`, `suddenFreq`, `suddenState`, `holdManual`, `peakHz`, `absA`, `micEnergy`, `msg`.
      `level` ∈ `{"debug","info","warn","error"}` else `ValueError`. `ts` = `to_wire_ts(parse_ts(t["ts"]))`
      when parseable, else `to_wire_ts(now or datetime.now(timezone.utc))`. `deviceId` = `deviceId` or
-     `nodeId` or `"node1"`. `algo` = `sudden_freq.normalize_algo(...)`. `suddenFreq` =
-     `sudden_freq.is_sudden_freq_event(enriched)`. `absA` falls back to `a`. Missing numerics → `None`.
+     `nodeId` or `"node1"`. `algo` = `sudden_freq.normalize_algo(...)`. `suddenFreq` (*as shipped*) =
+     `telemetry["suddenFreq"] is True or sudden_freq.is_sudden_freq_event(enriched)` — the record keeps
+     the phone's explicit flag even under `holdManual` (which `is_sudden_freq_event` masks to `False`),
+     because `holdManual` is logged in its own column and the aggregate needs both facts (fixture record
+     `i=7` is sudden **and** held). `absA` falls back to `a`. Missing / non-finite numerics → `None`.
+     `level` is lower-cased before validation (`"INFO"` → `"info"`).
      `msg` is passed through **after** truncation to 240 chars and must not contain dropped PII values
      (callers only ever pass key names/counts). `list(record) == RECORD_KEYS` always.
    - `record_path(node, ts) -> str`: `meta/logs/<node>/<YYYY-MM-DD>.jsonl`, date = **UTC** date of the
@@ -94,7 +116,10 @@ Verified by reading the files on this checkout (line numbers are exact):
      - **dry-run** (`gcs_io.is_dry_run()`): resolve root = `os.environ.get("IOT_ASP_AUTOROUTE_DRY_ROOT")`
        if set **at call time**, else `gcs_io.DRY_ROOT`; `mkdir -p`; open in `"a"` mode, UTF-8, write
        `json.dumps(record, ensure_ascii=False, separators=(",", ":"))` + `"\n"` (no `sort_keys`).
-       `uri = "file://<path>"`, `mode = "append"`.
+       `uri = "file://<path>"`, `mode = "append"`. Any exception (unwritable root, bad record) is
+       returned as `{ok: False, error: "<Type>: <text>", path: None}` — never raised.
+       If `America/New_York` was unavailable at import (`NY_TZ is None`), the **first** write in the
+       process prepends one `warn`/`tz_unavailable` record (module flag `_tz_warn_emitted`).
      - **live GCS** (`google.cloud.storage`, deferred import, ADC only): Cloud Storage objects are
        immutable and there is no append, so the writer does **read-modify-write**:
        `blob.reload()` → `download_as_text()` (or `""` when the blob does not exist, generation `0`) →
@@ -120,10 +145,14 @@ Verified by reading the files on this checkout (line numbers are exact):
      of `window_s` (`floor(epoch / window_s) * window_s`), ascending, `end = start + window_s`, both
      wire strings. `window_s <= 0` → `ValueError`. Pure function; input order irrelevant.
    - `retention_plan() -> dict` (see *Retention / aggregation* below); pure constant data.
-   - CLI: `python3 -m iot_asp_autoroute.fleet_log --demo` → sets `IOT_ASP_AUTOROUTE_DRY_RUN=1` if
-     unset, builds the 12-record fixture (`demo_fixture()`), prints one enriched sample record and the
-     aggregate as JSON, exits 0. `--demo` must not require network, numpy, scipy, or `google-adk`.
-     Running without args prints usage and exits 2.
+   - CLI: `python3 -m iot_asp_autoroute.fleet_log --demo [--node node1]` → sets
+     `IOT_ASP_AUTOROUTE_DRY_RUN=1` if unset (and forces `gcs_io.DRY_RUN = True`), builds the 12-record
+     fixture (`demo_fixture()` over `demo_telemetry()`), appends it to the dry-run root
+     (`IOT_ASP_AUTOROUTE_DRY_ROOT` or repo `.autoroute-dry/`), and prints one JSON object
+     `{"sample": <first record>, "aggregate": <aggregate_records(..., 300)>, "written": 12,
+     "path": "meta/logs/<node>/2026-01-15.jsonl", "retention": {"raw": 30, "aggregates": 365}}`,
+     exit 0. `--demo` requires no network, numpy, scipy, or `google-adk`. Running without `--demo`
+     prints usage to stderr and exits 2.
 2. **`tests/test_fleet_log.py`** — see *Acceptance tests*.
 3. **Integration (integrator-owned files, requested not edited here):**
    - `tools.py::ingest_telemetry`: `tel = fleet_log.enrich_telemetry(tel)` **before** `gcs_io.write_json`,
@@ -134,8 +163,10 @@ Verified by reading the files on this checkout (line numbers are exact):
    - New ADK tool `tools.fleet_log_summary(node_id: str, date: str | None = None) -> dict` →
      `aggregate_records(read_log_records(node_id, date or <today UTC>), node=node_id)` wrapped as
      `{"ok": True, "date": ..., "summary": ...}`; empty → `{"ok": True, "summary": {count: 0 ...}}`.
-   - `docs/api-contract.md`: add five optional telemetry rows (below).
+   - `docs/api-contract.md`: five optional telemetry rows — **already present** on this branch.
    - `ingest_main.py`: no change expected (calls `ingest_telemetry`).
+   - All three hooks must wrap `fleet_log.write_log_record` results, never raise on them, and run
+     **after** the Hold / Manual refuse check (see *Clamps / safety*).
 
 ## Wire fields
 
@@ -189,9 +220,12 @@ by_band, by_level, windows:[{start,end,count,sudden}]}`.
 
 ## Acceptance tests
 
-`tests/test_fleet_log.py` — offline, deterministic, no numpy/scipy import, `tmp_path` +
-`monkeypatch.setenv("IOT_ASP_AUTOROUTE_DRY_ROOT", str(tmp_path))` + `monkeypatch.setenv
-("IOT_ASP_AUTOROUTE_DRY_RUN", "1")`. Run: `python3 -m pytest tests/test_fleet_log.py -q`.
+`tests/test_fleet_log.py` — offline, deterministic, no numpy/scipy import at module level (test 8
+imports `colab_etl` inside the test body only, because `sample_telemetry_fixture` lives there), `tmp_path`
++ `monkeypatch.setenv("IOT_ASP_AUTOROUTE_DRY_ROOT", str(tmp_path))` + `monkeypatch.setenv
+("IOT_ASP_AUTOROUTE_DRY_RUN", "1")` (fixture `dry_root`). The file inserts `services/autoroute-adk` on
+`sys.path` itself (no `conftest.py` on this checkout). Run: `python3 -m pytest tests/test_fleet_log.py -q`
+→ **37 passed** (2026-09-08, Python 3.11).
 
 1. **enrich determinism / purity:** `enrich_telemetry(t)` called twice on the same dict returns equal
    dicts; input dict is unchanged (`copy.deepcopy` compare); `enrich(enrich(t)) == enrich(t)`.
@@ -217,9 +251,14 @@ by_band, by_level, windows:[{start,end,count,sudden}]}`.
    `False`. Bool coercion: `lfArmed: 1` → `True`, `lfArmed: "yes"` → `True`, `None` → `False`.
 8. **PII scrub:** input with keys `streetAddress`, `name`, `contactEmail`, `phone`, `lat`, `lon`,
    `gpsFix`, `clientIp`, `transcript`, `speechText`, `recordingUri`, `latitude`, nested
-   `{"meta": {"homeAddress": "SENTINEL"}}`, all values `"SENTINEL_PII"` → none of those keys exist in
-   the output (nested included), `piiDropped == 13`, every key of
-   `colab_etl.sample_telemetry_fixture()` survives unchanged, and
+   `{"meta": {"homeAddress": "SENTINEL"}}`, plus (*as shipped*) a `logTail` list entry carrying
+   `userName`, all values `"SENTINEL_PII"` → none of those keys exist in the output (nested dicts and
+   lists of dicts included), `piiDropped == 14`, every key of `colab_etl.sample_telemetry_fixture()`
+   survives unchanged (except `nightNY`, which is always recomputed from `ts`), no key in
+   `colab_etl.TELEMETRY_FEATURE_COLUMNS` nor in the `docs/api-contract.md` telemetry table
+   (`lastHopAgeMs`, `ctxResumes`, `watchdogTrips`, `logSeq`, `logTail`, `ax..gz`, `accelAxes`,
+   `gyroAxes`, `outLevel`, `micDiff`, `bandBurst`, `soundBurst`, `extremeActive`, `lfEnergy`,
+   `usEnergy`, …) is flagged by `is_pii_key`, `IPAddress` / `recording_uri` / `longitude` are, and
    `"SENTINEL_PII" not in json.dumps(enriched)` **and** `"SENTINEL_PII" not in json.dumps(log_record(
    "info", "ingest", enriched, msg=f"dropped={dropped}"))`.
 9. **record key order:** `list(log_record("info","ingest",t).keys()) == fleet_log.RECORD_KEYS` and
@@ -233,8 +272,10 @@ by_band, by_level, windows:[{start,end,count,sudden}]}`.
     `list(json.loads(line, object_pairs_hook=OrderedDict))`); `read_log_records("node1",
     "2026-01-15") == fixture_records`; `read_log_records("node1")` returns the same 12;
     `read_log_records("node9") == []`; a hand-appended malformed line `"{not json"` is skipped and
-    the count stays 12; returned `uri` starts with `file://` and `mode == "append"`; nothing is created
-    under the repo `.autoroute-dry/`.
+    the count stays 12 (`read_log_records_with_stats` reports `skipped == 1`); returned `uri` starts
+    with `file://` and `mode == "append"`; nothing is created under the repo `.autoroute-dry/`;
+    `write_log_record("../evil", …)` sanitises the node to `.._evil`; an unwritable dry root yields
+    `{ok: False, error}` without raising.
 11. **aggregate math (12-record fixture, `demo_fixture()`):** node `node1`, ts `2026-01-15T11:55:00Z
     + i·60 s` for `i = 0..11`; `suddenFreq=True` for `i ∈ {1,4,7}`; `holdManual=True` for
     `i ∈ {6,7,8}` with `level="warn"`, else `level="info"`; `algo` cycles `hop, am_gate, burst`;
@@ -249,8 +290,12 @@ by_band, by_level, windows:[{start,end,count,sudden}]}`.
     {"start":"2026-01-15T12:00:00Z","end":"2026-01-15T12:05:00Z","count":5,"sudden":1},
     {"start":"2026-01-15T12:05:00Z","end":"2026-01-15T12:10:00Z","count":2,"sudden":0}]`.
     Shuffling the input (seeded `random.Random(42)`) yields an identical aggregate.
-    `aggregate_records([])` → `count 0`, fractions `0.0`, `first_ts is None`, `windows == []`.
-    `aggregate_records(records, window_s=0)` raises `ValueError`.
+    `aggregate_records([])` → `count 0`, fractions `0.0`, `first_ts is None`, `windows == []`,
+    `node is None` (`node="node2"` argument wins). `aggregate_records(records, window_s=0)` raises
+    `ValueError`. A record with unparseable `ts` counts toward `count` / `by_*` (`"unknown"` bucket)
+    but not toward `windows` / `first_ts`.
+    Fixture records use `event="hold_refuse"` for the three held heartbeats and `event="ingest"`
+    otherwise (`demo_fixture()`); the raw heartbeats are available as `demo_telemetry()`.
 12. **retention_plan():** `plan["raw"]["prefix"] == "meta/logs/"`, `plan["raw"]["days"] == 30`,
     `plan["aggregates"]["prefix"] == "meta/logs-agg/"`, `plan["aggregates"]["days"] == 365`,
     `plan["features"]["prefix"] == "meta/features/"`, `"meta/patches/" not in json.dumps(plan)
@@ -259,13 +304,19 @@ by_band, by_level, windows:[{start,end,count,sudden}]}`.
     `condition.age` matching the above.
 13. **CLI demo:** `subprocess.run([sys.executable, "-m", "iot_asp_autoroute.fleet_log", "--demo"],
     cwd="services/autoroute-adk", env={..., "IOT_ASP_AUTOROUTE_DRY_ROOT": tmp_path})` exits 0,
-    stdout parses as JSON containing `"sample"` (a record with `kind == "fleet_log"`) and
-    `"aggregate"` with `count == 12`; stdout contains no key from the PII deny list.
+    stdout parses as JSON containing `"sample"` (a record with `kind == "fleet_log"` and key order
+    `RECORD_KEYS`), `"aggregate"` with `count == 12`, `"written" == 12`, and the JSONL file exists under
+    `tmp_path`; stdout contains no quoted key from the PII deny list; running without `--demo` exits 2.
 14. **import hygiene:** `sys.modules` after `import iot_asp_autoroute.fleet_log` contains neither
-    `numpy` nor `scipy` nor `google.cloud.storage` (test runs in a fresh subprocess).
+    `numpy` nor `scipy` nor `google.cloud.storage` (test runs in a fresh subprocess). The numpy/scipy
+    assertion is relaxed only when `iot_asp_autoroute.agent` loaded (i.e. `google-adk` is installed and
+    the package `__init__` pulled `tools` → `vib_anomaly`); the CI `tests` job installs
+    `requirements-dev.txt` only, so the strict form runs there.
 15. **Negative controls:** `enrich_telemetry({"holdManual": True, ...})` keeps `holdManual is True`
-    (never rewritten); nonsense keys (`"__proto__"`, `"priors": ["bogus"]`) pass through unchanged
-    (not PII, not our business); `log_record` with `level="INFO"` (uppercase) is normalised to `"info"`.
+    (never rewritten) and the `hold_refuse` record keeps `suddenFreq is True` alongside
+    `holdManual is True`; nonsense keys (`"__proto__"`, `"priors": ["bogus"]`) pass through unchanged
+    (not PII, not our business); `log_record` with `level="INFO"` (uppercase) is normalised to `"info"`;
+    unknown `algo` is kept verbatim, unknown `vibClass` → `"none"`, `peakHz: "nan"` → `None`.
 
 ## CI gate
 
@@ -337,13 +388,18 @@ Colab handoff contract:
 
 ## Sources
 
-- Context7 `/python/cpython` — `zoneinfo.ZoneInfo(key)` (IANA keys, DST/fold handling via `fromutc`),
-  `datetime.astimezone(tz)`, `datetime.fromtimestamp(ts, timezone.utc)`, and the 3.11 note that
-  `datetime.fromisoformat()` parses most ISO-8601 forms.
-- Context7 `/googleapis/python-storage` — `Blob.upload_from_string(data, content_type=…,
-  if_generation_match=…)` ("overwrites existing content by default"), `download_blob_to_file` /
-  `BlobReader` `if_generation_match` download kwargs, and `transfer_manager.upload_many`
-  `skip_if_exists` implemented as `if_generation_match = 0` → `412 Precondition Failed`.
+- Context7 `/python/cpython` (queried 2026-09-08 for the implementation) — `zoneinfo.ZoneInfo(key)`
+  (IANA keys, DST/fold handling via `fromutc`; `ZoneInfoNotFoundError` is a `KeyError` subclass raised
+  when the key is missing → the `NY_TZ = None` fallback), `datetime.astimezone(tz)`,
+  `datetime.fromtimestamp(ts, timezone.utc)`, and `datetime.fromisoformat()` accepting
+  `'2011-11-04T00:05:23Z'` and `+00:00` offsets (3.11+); the module still rewrites a trailing `Z` to
+  `+00:00` so the same code path holds on older parsers.
+- Context7 `/googleapis/python-storage` (queried 2026-09-08) — `Blob.upload_from_string(data,
+  content_type=…, if_generation_match=…)` ("overwrites existing content by default"; `ifGenerationMatch`
+  is appended as a query parameter, value `0` = create-only, exact generation = compare-and-swap),
+  `Blob.generation` (`None` until the resource is loaded — hence `blob.reload()` before reading it),
+  and `DEFAULT_RETRY_IF_GENERATION_SPECIFIED` (library retries are conditional on a generation being
+  specified, which the RMW path always does).
 - https://docs.cloud.google.com/storage/docs/objects — "Objects are immutable, which means that an
   uploaded object cannot change throughout its storage lifetime" (why live mode is read-modify-write).
 - https://docs.cloud.google.com/storage/docs/request-preconditions — `ifGenerationMatch` semantics,
