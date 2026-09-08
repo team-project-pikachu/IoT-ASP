@@ -15,6 +15,9 @@ def resolve_study_root(start: Path | None = None) -> Path | None:
     Order:
     1. ``IOT_ASP_STUDY_ROOT`` (clone of IoT-ASP-study or its ``study/`` subdir)
     2. ``<repo>/study`` when present (gitignored local mirror)
+
+    Stops at the first Git root so an unrelated ancestor ``study/`` is never
+    selected when the configured repository has no local ``study/``.
     """
     env = os.environ.get(_ENV, "").strip()
     if env:
@@ -31,10 +34,9 @@ def resolve_study_root(start: Path | None = None) -> Path | None:
         study = candidate / "study"
         if study.is_dir():
             return study
-        # Stop at filesystem root / unlikely repo boundary
-        if (candidate / ".git").exists() and candidate != here:
-            # checked this repo's study already via parents walk
-            pass
+        # Repository boundary: do not walk into parent clones.
+        if (candidate / ".git").exists() or (candidate / ".git").is_file():
+            break
         if candidate.parent == candidate:
             break
     return None

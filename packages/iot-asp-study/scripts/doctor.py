@@ -15,22 +15,36 @@ from iot_asp_study.schema import validate_sidecar  # noqa: E402
 from iot_asp_study.scrub import scan_paths  # noqa: E402
 
 
+def _public_scan_targets() -> list[Path]:
+    """README/PROVENANCE/scripts plus every file under templates/ (recursive)."""
+    paths = [
+        ROOT / "README.md",
+        ROOT / "PROVENANCE.md",
+        ROOT / "scripts" / "upload_recordings.sh",
+    ]
+    templates = ROOT / "templates"
+    if templates.is_dir():
+        paths.extend(sorted(p for p in templates.rglob("*") if p.is_file()))
+    return paths
+
+
 def main() -> int:
     example = ROOT / "templates" / "sidecar.example.json"
-    payload = json.loads(example.read_text(encoding="utf-8"))
+    if not example.is_file():
+        print(f"FAIL schema: missing fixture {example}", file=sys.stderr)
+        return 1
+    try:
+        payload = json.loads(example.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"FAIL schema: cannot read fixture: {exc}", file=sys.stderr)
+        return 1
     ok, msg = validate_sidecar(payload)
     if not ok:
         print(f"FAIL schema: {msg}", file=sys.stderr)
         return 1
     print(f"OK schema fixture: {msg}")
 
-    public_files = [
-        ROOT / "README.md",
-        ROOT / "PROVENANCE.md",
-        ROOT / "templates" / "PROTOCOL.template.md",
-        ROOT / "templates" / "sidecar.example.json",
-        ROOT / "scripts" / "upload_recordings.sh",
-    ]
+    public_files = _public_scan_targets()
     hits = scan_paths(public_files)
     if hits:
         print("FAIL PII markers in public package files:", file=sys.stderr)

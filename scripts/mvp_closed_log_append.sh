@@ -18,20 +18,41 @@ if [[ ! -f "$LOG" ]]; then
   echo "missing $LOG" >&2
   exit 2
 fi
+
+# Encode pipe characters so Markdown table cells stay intact.
+md_cell() {
+  local s="$1"
+  # Replace | with / — Markdown has no real cell escape; backslash-pipe still splits tables.
+  s="${s//|//}"
+  printf '%s' "$s"
+}
 row_for() {
   local num="$1"
-  gh issue view "$num" -R "$REPO" --json number,title,closedAt,labels,milestone,state,stateReason \
-    --jq '
-      select(.state=="CLOSED") |
-      [
-        (.closedAt // "")[0:10],
-        ("#" + (.number|tostring)),
-        .title,
-        ((.milestone.title) // "-"),
-        (if (.labels|length)==0 then "-" else "`" + ([.labels[].name] | join(",")) + "`" end),
-        (.stateReason // "-")
-      ] | @tsv
-    ' | awk -F'\t' '{printf "| %s | %s | %s | %s | %s | %s |\n", $1, $2, $3, $4, $5, $6}'
+  local tsv
+  tsv="$(
+    gh issue view "$num" -R "$REPO" --json number,title,closedAt,labels,milestone,state,stateReason \
+      --jq '
+        select(.state=="CLOSED") |
+        [
+          (.closedAt // "")[0:10],
+          ("#" + (.number|tostring)),
+          .title,
+          ((.milestone.title) // "-"),
+          (if (.labels|length)==0 then "-" else "`" + ([.labels[].name] | join(",")) + "`" end),
+          (.stateReason // "-")
+        ] | @tsv
+      '
+  )"
+  [[ -n "$tsv" ]] || return 1
+  local d n title mile labels reason
+  IFS=$'\t' read -r d n title mile labels reason <<<"$tsv"
+  printf '| %s | %s | %s | %s | %s | %s |\n' \
+    "$(md_cell "$d")" \
+    "$(md_cell "$n")" \
+    "$(md_cell "$title")" \
+    "$(md_cell "$mile")" \
+    "$(md_cell "$labels")" \
+    "$(md_cell "$reason")"
 }
 header_block() {
   cat <<'EOF'
@@ -46,6 +67,27 @@ EOF
 if [[ "${1:-}" == "--backfill" ]]; then
   tmp="$(mktemp)"
   header_block >"$tmp"
+  while IFS=$'\t' read -r d n title mile labels reason; do
+    printf '| %s | %s | %s | %s | %s | %s |\n' \
+      "$(md_cell "$d")" \
+      "$(md_cell "$n")" \
+      "$(md_cell "$title")" \
+      "$(md_cell "$mile")" \
+      "$(md_cell "$labels")" \
+      "$(md_cell "$reason")"
+  done < <(
+    gh issue list -R "$REPO" --state closed --limit 200 \
+      --json number,title,closedAt,labels,milestone,stateReason \
+      --jq 'sort_by(.closedAt)[] |
+        [
+          (.closedAt // "")[0:10],
+          ("#" + (.number|tostring)),
+          .title,
+          ((.milestone.title) // "-"),
+          (if (.labels|length)==0 then "-" else "`" + ([.labels[].name] | join(",")) + "`" end),
+          (.stateReason // "-")
+        ] | @tsv'
+  ) >>"$tmp"
   gh issue list -R "$REPO" --state closed --limit 200 \
     --json number,title,closedAt,labels,milestone,stateReason \
     --jq 'sort_by(.closedAt)[] |
@@ -63,17 +105,40 @@ bash scripts/mvp_closed_log_append.sh --backfill
   echo "backfilled $LOG"
   exit 0
 NUM="${1:?usage: mvp_closed_log_append.sh <issue-number>|--backfill}"
-ROW="$(row_for "$NUM" || true)"
+ROW="$(row_for "$NUM")"
 if [[ -z "$ROW" ]]; then
   echo "issue #$NUM is not CLOSED or not found" >&2
   exit 1
 if grep -qE "\| #${NUM} \|" "$LOG"; then
   echo "already logged #$NUM"
+  exit 0
+fi
+
+# Insert as the last Markdown table row: discard blank lines immediately
+# before ## Backfill, print the new row, then a blank, then the heading.
 # Insert before the ## Backfill section if present; else append.
 if grep -q '^## Backfill' "$LOG"; then
   awk -v row="$ROW" '
-    /^## Backfill/ && !done { print row; done=1 }
-    { print }
+    /^## Backfill/ && !done {
+      print row
+      print ""
+      print
+      done=1
+      hold=""
+      next
+    }
+    /^[[:space:]]*$/ && !done {
+      hold = hold $0 ORS
+      next
+    }
+    {
+      if (hold != "") { printf "%s", hold; hold="" }
+      print
+    }
+    END {
+      if (hold != "" && !done) printf "%s", hold
+      if (!done) print row
+    }
   ' "$LOG" >"$tmp"
 else
   printf '%s\n' "$ROW" >>"$LOG"

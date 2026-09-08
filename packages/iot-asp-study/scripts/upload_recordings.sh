@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # Upload local MediaRecorder exports to a *private* recordings bucket.
-# Bucket MUST come from the environment — never hardcode a private gs:// URI here.
+# Bucket name from IOT_ASP_GCS_BUCKET (no gs://) — never hardcode a private URI.
 set -euo pipefail
 
 ACCOUNT="${GCLOUD_ACCOUNT:-betty@bearresearch.io}"
-PROJECT="${GCP_PROJECT:-bear-iot-asp-rec}"
-BUCKET="${GCS_BUCKET:?set GCS_BUCKET to gs://YOUR_PRIVATE_BUCKET (from private IoT-ASP-study)}"
+PROJECT="${GOOGLE_CLOUD_PROJECT:-bear-iot-asp-rec}"
+BUCKET_NAME="${IOT_ASP_GCS_BUCKET:?set IOT_ASP_GCS_BUCKET to the private bucket name (no gs://)}"
+# Strip accidental gs:// prefix if an operator pastes a URI.
+BUCKET_NAME="${BUCKET_NAME#gs://}"
+BUCKET_NAME="${BUCKET_NAME%%/*}"
 SRC="${1:?usage: upload_recordings.sh <local-dir> [node1|node2|node3]}"
 NODE="${2:-node1}"
 DAY="$(date -u +%Y%m%d)"
@@ -20,10 +23,8 @@ if [[ ! -d "$SRC" ]]; then
   exit 2
 fi
 
-gcloud config set account "$ACCOUNT" >/dev/null
-gcloud config set project "$PROJECT" >/dev/null
-
-DEST="${BUCKET%/}/${NODE}/${DAY}/"
+DEST="gs://${BUCKET_NAME}/${NODE}/${DAY}/"
 echo "Uploading $SRC -> $DEST (private bucket; public access prevention)"
-gcloud storage cp -r "${SRC%/}/"* "$DEST"
-echo "Done. List with: gcloud storage ls $DEST"
+# Command-scoped flags only — do not mutate the caller's active gcloud config.
+gcloud --account="$ACCOUNT" --project="$PROJECT" storage cp -r "${SRC%/}/"* "$DEST"
+echo "Done. List with: gcloud --account=$ACCOUNT --project=$PROJECT storage ls $DEST"

@@ -24,7 +24,7 @@ separately (or keep a local gitignored `study/`).
 iot_asp_study/          # library (stdlib only)
 templates/              # scrubbed PROTOCOL + sidecar examples (placeholders only)
 scripts/doctor.py       # path + schema + anti-PII checks
-scripts/upload_recordings.sh  # requires GCS_BUCKET env (no hardcoded private URI)
+scripts/upload_recordings.sh  # requires IOT_ASP_GCS_BUCKET name (no gs://; no hardcoded private URI)
 ```
 
 ## Local use
@@ -38,11 +38,11 @@ PYTHONPATH=packages/iot-asp-study python3 -c 'from iot_asp_study import validate
 PYTHONPATH=packages/iot-asp-study python3 packages/iot-asp-study/scripts/doctor.py
 ```
 
-Upload (bucket from env only — never commit a real `gs://` default):
+Upload (shared GCS interface — bucket **name** only; script builds `gs://` internally):
 
 ```bash
-export GCS_BUCKET="gs://YOUR_PRIVATE_BUCKET"
-export GCP_PROJECT="bear-iot-asp-rec"
+export IOT_ASP_GCS_BUCKET="YOUR_PRIVATE_BUCKET"
+export GOOGLE_CLOUD_PROJECT="bear-iot-asp-rec"
 bash packages/iot-asp-study/scripts/upload_recordings.sh ./recordings node1
 ```
 

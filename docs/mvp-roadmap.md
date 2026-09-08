@@ -72,9 +72,11 @@ Native [#41](https://github.com/team-project-pikachu/IoT-ASP/issues/41) and park
 | Closed-issue logging | [#68](https://github.com/team-project-pikachu/IoT-ASP/issues/68) | script + Action (PR branch under rulesets); ~~#65~~ duplicate |
 | MVP roadmap doc | [#69](https://github.com/team-project-pikachu/IoT-ASP/issues/69) | this file |
 ## Post-MVP / research (M6–M7 + parked)
+
+> **#60 note:** milestone label is M6, but **prod ADK deploy remains an MVP web-ship gate** (see close order above and the Supporting MVP table). Do not defer #60 as optional research.
 | Milestone / lane | Issues | Notes |
 |------------------|--------|-------|
-| **M6** — LLM autoroute (Gemini) | [#60](https://github.com/team-project-pikachu/IoT-ASP/issues/60) prod deploy; [#12](https://github.com/team-project-pikachu/IoT-ASP/issues/12)/[#13](https://github.com/team-project-pikachu/IoT-ASP/issues/13)/[#17](https://github.com/team-project-pikachu/IoT-ASP/issues/17) closed; [#24](https://github.com/team-project-pikachu/IoT-ASP/issues/24) ADK 2.x `parked` | [`docs/autoroute.md`](autoroute.md) |
+| **M6** — LLM autoroute (Gemini) | [#60](https://github.com/team-project-pikachu/IoT-ASP/issues/60) **MVP deploy gate** (listed again under Supporting MVP); [#12](https://github.com/team-project-pikachu/IoT-ASP/issues/12)/[#13](https://github.com/team-project-pikachu/IoT-ASP/issues/13)/[#17](https://github.com/team-project-pikachu/IoT-ASP/issues/17) closed; [#24](https://github.com/team-project-pikachu/IoT-ASP/issues/24) ADK 2.x `parked` | [`docs/autoroute.md`](autoroute.md) |
 | **M7** — Edge companions | [#14](https://github.com/team-project-pikachu/IoT-ASP/issues/14)/[#15](https://github.com/team-project-pikachu/IoT-ASP/issues/15) `parked` | C2 Pi USB-C |
 | Node-3 chair / infrasound proxy | [#18](https://github.com/team-project-pikachu/IoT-ASP/issues/18) `parked` | |
 | Notion hub | [#19](https://github.com/team-project-pikachu/IoT-ASP/issues/19) `parked` | |
