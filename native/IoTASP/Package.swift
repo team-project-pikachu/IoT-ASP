@@ -23,10 +23,7 @@ let package = Package(
                 "Fleet/FleetConfig.swift",
             ]
         ),
-        .testTarget(
-            name: "IoTASPSharedTests",
-            dependencies: ["IoTASPShared"],
-            path: "Tests"
-        ),
+        // XCTest requires full Xcode.app. On CLT-only hosts run:
+        //   swift Scripts/alarm_smoke.swift
     ]
 )

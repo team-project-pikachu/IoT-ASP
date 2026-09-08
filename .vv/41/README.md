@@ -1,39 +1,31 @@
-# V&V — native IoTASP (#41)
+# #41 — CLT native compile-check evidence (PR #72)
 
-**Config item:** `native/IoTASP/Package.swift`, `native/IoTASP/IoTASP.xcodeproj/project.pbxproj`
-**Date:** 2026-09-08 (UTC)
-**Revision:** PR #57 revision containing this evidence
+**Date (UTC):** 2026-09-08T05:09:59Z
+**Branch:** `feat/balanced-test-native-ci` (rebased onto `origin/main`)
+**Honesty:** CLT smoke + SPM Shared library build only. No SensorKit entitlement, no Xcode.app app-scheme claim, no device lab.
 
 ## Procedure
 
-```bash
-cd native/IoTASP
-swift Scripts/alarm_smoke.swift
-swift package describe --type json
-swift test --quiet
-cd ../..
-plutil -lint native/IoTASP/IoTASP.xcodeproj/project.pbxproj \
-  native/IoTASP/IoTASPWatch/Info.plist native/IoTASP/IoTASPApp/Info.plist
-```
+1. `bash scripts/native_compile_check.sh`
+2. `python3 -m pytest tests/test_native_compile_check.py tests/test_fleet_log.py -q`
 
 ## Observed results
 
-| Check | Exit | Result |
-|-------|-----:|--------|
-| Alarm smoke | 0 | `alarm_smoke OK`; clear remains observable and retriggers |
-| Package description | 0 | `IoTASPSharedTests` discovered with target type `test` |
-| `swift test --quiet` | 1 | Local Command Line Tools omit `XCTest`; full Xcode toolchain required |
-| Project/plist syntax | 0 | project and both plists `OK` |
-| Watch packaging inspection | 0 | watch-app product type plus `Embed Watch Content` copy phase present |
+### native_compile_check.sh
+
+- **exit_code:** `0` → PASS
+- stdout includes `alarm_smoke OK`, `OK swift build (IoTASPShared)`, `OK native_compile_check`
+- `xcode-select=/Library/Developer/CommandLineTools` — app schemes NOT checked
+
+### pytest
+
+- **exit_code:** `0` → PASS (`71 passed` for fleet_log + native_compile_check)
 
 ## Pass/fail
 
-| Requirement | Status |
-|-------------|--------|
-| Shared state-machine behavior on CLT host | **PASS** |
-| SwiftPM test-target discovery | **PASS** |
-| Xcode project/plist syntax | **PASS** |
-| XCTest execution on this host | **BLOCKED — XCTest absent from selected CLT** |
-| Signed iOS/Watch build and device delivery | **PENDING — Xcode.app + owner signing/device** |
-
-SensorKit entitlement remains intentionally absent; its implementation stays compile-time gated.
+| Check | Result |
+|-------|--------|
+| alarm_smoke.swift | PASS |
+| swift package resolve + swift build Shared | PASS |
+| fail gate on swift build errors (`set -e` + explicit fail) | PASS (present in script) |
+| Xcode.app / SensorKit / App Store claim | N/A (explicitly not claimed) |

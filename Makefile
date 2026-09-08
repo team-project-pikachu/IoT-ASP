@@ -1,5 +1,5 @@
 # IoT-ASP — deterministic local entry points (mirror .github/workflows/ci.yml)
-.PHONY: help deps gates dryrun test mdc mdc-check all e2e protect-main
+.PHONY: help deps gates dryrun test mdc mdc-check native-check all e2e protect-main
 
 PY ?= python3
 
@@ -10,6 +10,7 @@ help:
 	@echo "make test       # pytest tests/"
 	@echo "make mdc        # convert .cursor/rules/*.mdc → CLAUDE.md blocks + .claude/rules + .claude/skills"
 	@echo "make mdc-check  # fail if converted outputs are stale (CI gate)"
+	@echo "make native-check  # CLT swift smoke + SPM resolve (#41; no Xcode.app claim)"
 	@echo "make all        # gates + dryrun + test + mdc-check"
 	@echo "make e2e        # Playwright smoke against public/ (see tests/e2e/)"
 	@echo "make protect-main  # apply .github/rulesets/main-protection.json via gh api (run on a machine with gh)"
@@ -31,6 +32,9 @@ mdc:
 
 mdc-check:
 	$(PY) scripts/mdc_convert.py --check
+
+native-check:
+	bash scripts/native_compile_check.sh
 
 all: gates dryrun test mdc-check
 
