@@ -10,10 +10,12 @@ hardware-limited autorotate. **Cellular** is explicitly deferred.
 This does **not** replace iOS native **A2DP TX** (DESIGN_CONSTRAINTS **C1**).
 Apple Home / Matter remains parked research (issue **#15**).
 
-## Current public app behavior
+## Planned connectivity tagging
 
-When the Network Information API is available, the blaster tags telemetry
-`net=wifi|cellular` (defaults to **wifi** if unknown). That tag is observational
+The public app is expected to tag telemetry with
+`net=wifi|cellular` when the Network Information API is available (defaulting to
+**wifi** if unknown). This is planned behavior; the current telemetry schema
+does not include the tag yet. When implemented, the tag will be observational
 only — carrier audio still exits via OS Bluetooth A2DP.
 
 ## Phasing
