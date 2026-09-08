@@ -19,7 +19,7 @@
 | Motion / orientation | `DeviceMotionEvent` / `DeviceOrientationEvent` + `requestPermission` on iOS WebKit (Chrome iOS included) — see [sensors-chrome-ios.md](sensors-chrome-ios.md) |
 | Latency | Classic A2DP adds tens–hundreds of ms; hop dwell schedules are **soft** — do not assume sample-accurate sync across phones |
 | Volume | App default **100%** Web Audio gain (max practical path). **BT absolute volume + speaker hardware still limit SPL** — raise phone/Soundcore volume separately |
-| Codec | Consumer path is typically **AAC** or **SBC** over BT 5.x; Soundcore 2 + BassUp/DSP → expect **near-ultrasonic roll-off** (`SPEC.md`) |
+| Codec | Consumer path is typically **AAC** or **SBC** over BT 5.x/6.x (revision-dependent); Soundcore 2 + BassUp/DSP → expect **near-ultrasonic roll-off** (`SPEC.md`, [`docs/hardware/soundcore-specs.md`](hardware/soundcore-specs.md) · #43) |
 
 ### Out of scope for Safari MVP
 

@@ -1,22 +1,26 @@
 # Soundcore 2 — manufacturer specs (for HOP fleet)
 
-Captured for the hop-ultrasonic public app. Primary source: Anker Canada product page.
+Captured for the hop-ultrasonic public app. Primary source: Anker / soundcore product + support pages.
+
+**Expanded dossier (issue [#43](https://github.com/team-project-pikachu/IoT-ASP/issues/43)):** [`docs/hardware/soundcore-specs.md`](docs/hardware/soundcore-specs.md) — A3105 details, BT 5.0/6.0 revision note, 2 vs 3 deltas, agent bullets, unknowns.
 
 ## Official claims (Anker / soundcore)
 
 | Spec | Value | Source |
 |------|-------|--------|
-| Model | Soundcore 2 (portable Bluetooth speaker) | [anker.com/ca/products/soundcore-2](https://www.anker.com/ca/products/soundcore-2) |
-| Output power | **12 W** peak (stereo) | Same |
-| Drivers | Dual neodymium drivers + digital signal processor (DSP) | Same |
+| Model | Soundcore 2 (**A3105**) portable Bluetooth speaker | [anker.com/ca/products/soundcore-2](https://www.anker.com/ca/products/soundcore-2), [soundcore.com](https://www.soundcore.com/products/soundcore-2) |
+| Output power | **12 W** peak stereo (**6 W × 2**) | Product pages; [2 vs 3 support](https://service.soundcore.com/article-description/The-Main-Differences-Between-Soundcore-2-and-Soundcore-3-Speaker) |
+| Drivers | Dual neodymium drivers + DSP (+ 1 passive radiator) | Same |
 | Bass | BassUp + patented spiral bass port (low-end emphasis) | Same |
 | Water resistance | **IPX7** | Same |
 | Battery | **5,200 mAh**, up to **24 hours** playtime | Same |
-| Bluetooth | **5.0** (“ultra-stable”, extended range) | Same |
-| Frequency response | **Not listed** on the product page | Same (2026-09-07 scrape) |
-| Codecs | **Not listed** (typical BT speaker: SBC; AAC possible on iOS) | Not on page |
+| Bluetooth | **5.0** (Anker CA) / **6.0** on latest US revision (SN-dependent; no cross-TWS) | CA vs [soundcore.com](https://www.soundcore.com/products/soundcore-2) |
+| App EQ | **None** (Soundcore 2) | Support 2 vs 3 |
+| AUX-in | **Yes** (classic Soundcore 2) | Support 2 vs 3 |
+| Frequency response | **Not listed** on product pages | Scrapes 2026-09-07 / 2026-09-08 |
+| Codecs / max SPL / latency ms | **Not listed** (expect SBC; AAC possible on iOS) | Not on page |
 
-Comparison table on the same page repeats: Output Power 12W · Water IPX7 · Playtime 24 Hours · Bluetooth Version 5.0.
+Comparison table on the Anker CA page repeats: Output Power 12W · Water IPX7 · Playtime 24 Hours · Bluetooth Version 5.0.
 
 ## Relevance to 17–23 kHz ultrasonic carriers
 
@@ -34,9 +38,9 @@ Comparison table on the same page repeats: Output Power 12W · Water IPX7 · Pla
 
 ## Capture method
 
-- Firecrawl CLI scrape of `https://www.anker.com/ca/products/soundcore-2` (2026-09-07).
-- Artifact: `.firecrawl/scrape_-20260907T225729Z.json` (local cache).
-- Manual/datasheet PDF search via Firecrawl returned no additional official FR curve; product page is the authoritative public listing used here.
+- Firecrawl CLI scrapes of Anker CA + soundcore.com Soundcore 2 + support 2 vs 3 (2026-09-07 / 2026-09-08).
+- Artifacts under local `.firecrawl/` (gitignored). Full citations: [`docs/hardware/soundcore-specs.md`](docs/hardware/soundcore-specs.md).
+- No official FR curve / max-SPL / codec list published; product + support pages are the authoritative public listings used here.
 
 ## Feature specs
 

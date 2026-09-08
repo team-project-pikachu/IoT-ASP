@@ -5,7 +5,7 @@ Status · Goal · Shipped on `main` (cited `file:line`) · Remaining scope · Wi
 Acceptance tests · CI gate · Risks / HW limits · Sources (rule: `.claude/rules/docs-and-specs.md`).
 `docs/api-contract.md` is canonical for wire fields; specs link to it and never fork the tables.
 `SPEC.md` (repo root) holds the Soundcore 2 manufacturer limits, the fleet topology, and a short
-pointer to this index.
+pointer to this index. Expanded A2DP hardware dossier: [`docs/hardware/soundcore-specs.md`](../hardware/soundcore-specs.md) (issue #43).
 
 Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2026-09-08 on branch
 `claude/mdc-conversion-features-gu3yzk` (`origin/main` @ `0625e91`).
