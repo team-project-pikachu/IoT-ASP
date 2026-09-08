@@ -1,0 +1,35 @@
+{
+  "featureKeys": [
+    "anomaly",
+    "credentialPolicy",
+    "derived",
+    "deviceId",
+    "engineId",
+    "kind",
+    "live",
+    "micDiffAlpha",
+    "sampleHz",
+    "schemaVersion",
+    "sensorColumns",
+    "sensors",
+    "shriekBias",
+    "sourceCount",
+    "sourceObjects",
+    "telemetry",
+    "ts",
+    "writer"
+  ],
+  "live": false,
+  "node": "node1",
+  "object": "meta/features/node1/2026-09-08T00-00-11Z.json",
+  "ok": true,
+  "seedUris": [
+    "<scrubbed>",
+    "<scrubbed>"
+  ],
+  "seeded": 12,
+  "shriekBias": false,
+  "sourceCount": 12,
+  "uri": "meta/features/node1/<ts>.json",
+  "written": true
+}
