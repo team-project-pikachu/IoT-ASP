@@ -53,6 +53,10 @@
 
 See `docs/sensorkit-entitlement-checklist.md`.
 
+## Full on-device plan
+
+Canonical: [`docs/ios-on-device-verification.md`](../../docs/ios-on-device-verification.md) (#151).
+
 ## Explicit non-claims
 
 - SensorKit entitlement: **not granted**

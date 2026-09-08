@@ -34,6 +34,7 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #148 | [148-sensorkit-checklist.md](148-sensorkit-checklist.md) — Apple grant checklist (unchecked) | implemented on branch | docs |
 | #149 | [149-device-matrix.md](149-device-matrix.md) — iPhone capability matrix (unknown cells) | implemented on branch | docs |
 | #150 | [150-product-tabs.md](150-product-tabs.md) — Nest/Glass tabs, OAuth parked | implemented on branch | native |
+| #151 | [151-on-device-verification.md](151-on-device-verification.md) — human device checklist | implemented on branch | docs |
 | #19 | [19-notion-hub.md](19-notion-hub.md) — Notion hub page for ASP tooling | hub created 2026-09-08; docs back-linked; optional DB/sync remaining | docs |
 | #20 | [20-timestore.md](20-timestore.md) — timestore: SciPy ≥16-param fit, 0.0006 s quantum, NWS weather prior, cipher tags | implemented on `main` (`timestore.py` + `packages/algo-timestore/`, #30) | backend |
 | #22 | [22-structured-fleet-logs.md](22-structured-fleet-logs.md) — structured fleet telemetry logs (`fleet_log.py`) | implemented on branch — integration hooks pending | backend |
