@@ -10,7 +10,7 @@
 <meta name="application-name" content="HOP">
 <meta name="theme-color" content="#141519">
 <meta name="format-detection" content="telephone=no">
-<meta name="description" content="Scientific near-ultrasonic hop / pulse / shriek tooling for multi-node fleets via iPhone native Bluetooth audio (not Web Bluetooth).">
+<meta name="description" content="Scientific near-ultrasonic hop / pulse / shriek tooling (17–23 kHz) for Mac Studio, desktop, and phone fleets via OS system audio to Sonos Beam 2 (not Web Bluetooth).">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>HOP — near-ultrasonic scientific tooling</title>
@@ -230,22 +230,22 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   <section class="syscheck" id="syscheck">
     <div class="plot-head">
-      <p class="legend">Fleet · 2 nodes 1:1 native BT audio · optional chair node</p>
+      <p class="legend">Fleet · Mac Studio / desktop + phones · OS audio → Sonos Beam 2</p>
       <div class="tapbar" style="gap:8px">
         <button type="button" class="tap" id="armSensorsBtn">Arm sensors</button>
         <button type="button" class="tap" id="sysBtn">Systems check</button>
       </div>
     </div>
-    <div class="seg" role="group" aria-label="This phone mode" style="margin-top:10px">
+    <div class="seg" role="group" aria-label="This node mode" style="margin-top:10px">
       <button type="button" id="roleTx" aria-pressed="true">Blaster / TX</button>
       <button type="button" id="roleHop" aria-pressed="false">Carrier only</button>
       <button type="button" id="roleRx" aria-pressed="false">Listen (debug)</button>
     </div>
     <p class="sub" style="margin-top:10px">
-      Open this URL on two phones; each pairs <b>1:1</b> via <b>iPhone native Bluetooth</b>
-      (system audio route — not Web Bluetooth) to its own speaker
-      (e.g. <a href="https://www.anker.com/ca/products/soundcore-2" style="color:var(--uv-hot)">Soundcore 2</a>).
-      Optional third node: phone mounted on a chair for structure-borne / accel-biased sensing.
+      Open this URL on <b>Mac Studio / desktop Safari or Chrome</b> and/or phones. Pair each node
+      <b>1:1</b> via the <b>OS system audio route</b> (macOS Sound / AirPlay / Control Center —
+      <b>not</b> Web Bluetooth) to a <a href="https://www.sonos.com/en-us/shop/beam" style="color:var(--uv-hot)">Sonos Beam&nbsp;(Gen&nbsp;2)</a>.
+      Optional chair-mounted phone for structure-borne / accel sensing.
       Tap <b>Signal on</b> so nodes transmit concurrently — each tab uses an independent RNG (incoherent).
     </p>
     <p class="vibpill">vib class <b id="vibClass">none</b> · algo <b id="algoLive" class="algo-active">hop</b> · auto <b id="vibAutoLive">off</b> · sudden <b id="suddenLive">idle</b></p>
@@ -308,10 +308,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     <div class="grp">
       <p class="legend" id="bandLegend">Band · 17k–23k</p>
       <div class="seg" role="group" aria-label="TX band">
-        <button type="button" id="bandUs" aria-pressed="true">17–23 kHz</button>
-        <button type="button" id="bandLf" aria-pressed="false" title="Hardware-gated; often NA on Soundcore/A2DP">10–20 Hz</button>
+        <button type="button" id="bandUs" aria-pressed="true" disabled>17–23 kHz</button>
       </div>
-      <p class="sub" id="bandGateNote" style="margin-top:8px">LF gated: arm only if Systems check says capable (BT speakers usually na).</p>
+      <p class="sub" id="bandGateNote" style="margin-top:8px">Product band is near-ultrasonic only (10–20 Hz TX removed).</p>
       <div class="row" style="margin-top:10px"><label for="fMin">low</label><input type="range" id="fMin" min="17000" max="23000" step="50" value="17000"><output id="fMinOut">17 000</output></div>
       <div class="row"><label for="fMax">high</label><input type="range" id="fMax" min="17000" max="23000" step="50" value="21000"><output id="fMaxOut">21 000</output></div>
     </div>
@@ -383,7 +382,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       </div>
       <div class="fleet-card" id="fleetPeer3">
         <div class="id">node-3</div>
-        <div class="meta" id="fleetPeer3Meta">chair / Sonos research (#18 #39)</div>
+        <div class="meta" id="fleetPeer3Meta">Mac Studio / Sonos Beam 2 · chair sensing (#18 #39)</div>
       </div>
     </div>
     <p class="sub" id="fleetSeedCompare" style="margin:10px 0 0">Seed compare · —</p>
@@ -397,7 +396,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <p class="legend">Monitor · telemetry beacon (no site PII)</p>
       <p class="legend" id="ctxStateLabel">ctx —</p>
     </div>
-    <p class="sub" style="margin:8px 0 0">Fleet audio: <b>iPhone native Bluetooth</b> → paired Soundcore (OS route). No Web Bluetooth.</p>
+    <p class="sub" style="margin:8px 0 0">Fleet audio: <b>OS system route</b> → <b>Sonos Beam&nbsp;(Gen&nbsp;2)</b> (AirPlay / macOS output). No Web Bluetooth.</p>
     <div class="mon-grid">
       <div>deviceId <b id="telDevice">—</b></div>
       <div>seed <b id="telSeed">—</b></div>
@@ -424,7 +423,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <div>nightNY <b id="telNight">—</b></div>
       <div>hwBand <b id="telHwBand">—</b></div>
       <div>band <b id="telBand">17-23k</b></div>
-      <div>lf <b id="telLf">na</b></div>
+      <div>platform <b id="telPlatform">—</b></div>
+      <div>sink <b id="telSink">sonos-beam-2</b></div>
       <div>power <b id="telPower">ac120</b></div>
       <div>net <b id="telNet">wifi</b></div>
       <div>nest <b id="telNestEvent">—</b></div>
@@ -450,8 +450,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   </div>
 
   <div class="note">
-    <b>Incoherent multi-node fleet.</b> Default: two phones, each paired 1:1 via <b>iPhone native Bluetooth</b>
-    (system audio route to a Soundcore — <b>not</b> Web Bluetooth), transmitting at once.
+    <b>Incoherent multi-node fleet.</b> Default: Mac Studio / desktop and phones, each paired 1:1 via the
+    <b>OS system audio route</b> to a <b>Sonos Beam&nbsp;(Gen&nbsp;2)</b> (AirPlay / Sound settings — <b>not</b> Web Bluetooth), transmitting at once.
     Optional third node may be chair-mounted for accel / structure-borne bias. Schedules are independent per tab
     (<code>Math.random</code>; no shared seed). Listen is optional loopback/debug only.
   </div>
@@ -468,21 +468,27 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   </div>
 
   <div class="note warn">
-    <b>Soundcore 2 ultrasonic warning.</b> Anker lists 12&nbsp;W dual neodymium drivers, BassUp + DSP, IPX7,
-    5&nbsp;200&nbsp;mAh / 24&nbsp;h, Bluetooth&nbsp;5.0 — <b>no frequency-response curve</b> published.
-    BT codecs (SBC/AAC) and speaker DSP will likely crush or erase 17–23&nbsp;kHz carriers. See <code>SPEC.md</code>.
+    <b>Sonos Beam (Gen 2) · max volume without warping.</b> Web Audio → OS default output → Beam.
+    Official Sonos guide lists <b>five Class-D amplifiers</b>, one tweeter + four elliptical midwoofers,
+    adjustable <b>bass / treble / loudness</b>, <b>Trueplay</b>, <b>Speech Enhancement</b>, and <b>Night Sound</b>
+    (<a href="https://www.sonos.com/en-us/guides/beam" style="color:var(--uv-hot)">sonos.com/guides/beam</a>;
+    shop <a href="https://www.sonos.com/en-us/shop/beam" style="color:var(--uv-hot)">sonos.com/shop/beam</a>).
+    Night Sound reduces intensity of loud sounds; Speech Enhancement / Loudness / Trueplay also reshape the curve —
+    for clean scientific TX turn those <b>OFF</b> in the Sonos app, set EQ flat, raise <b>OS + Sonos volume to max</b>,
+    and keep Web Audio at 100% without stacking boosts (avoid &gt;0&nbsp;dBFS digital clipping).
+    Sonos does <b>not</b> publish SPL, wattage, or 17–23&nbsp;kHz FR for Beam Gen 2 — treat ultrasonic as experimental.
   </div>
 
   <div class="note warn hidden" id="warn"></div>
   <div class="note warn hidden" id="micWarn"></div>
 
   <div class="note">
-    <b>iPhone / Chrome iOS / Safari (WebKit).</b> Add to Home Screen for a full-screen app.
-    Tap <b>Arm sensors</b> or <b>Signal on</b> to unlock Web Audio and request mic, DeviceMotion, DeviceOrientation
-    (and Ambient Light if present — often <i>na</i> on iOS Chrome). Use volume buttons — silent switch does not mute Web Audio
-    on modern iOS, but hardware + BT absolute volume still cap SPL. Prefer HTTPS (this Vercel deploy).
-    Fleet power: <b>continuous 120&nbsp;V AC</b> (phones + speakers charging) — Low Power Mode off for dedicated runs.
-    Optional <b>10–20&nbsp;Hz</b> TX is hardware-gated (Soundcore/A2DP usually <i>na</i>; phone speaker may pass).
+    <b>Mac Studio / desktop Safari &amp; Chrome + iPhone (WebKit).</b> Installable as a PWA (manifest
+    <code>display:standalone</code>; Add to Dock / Home Screen where supported). Tap <b>Arm sensors</b> or
+    <b>Signal on</b> to unlock Web Audio and request mic (plus DeviceMotion / DeviceOrientation on phones;
+    Ambient Light often <i>na</i>). Prefer HTTPS (this Vercel deploy). Fleet power: <b>continuous 120&nbsp;V AC</b>.
+    TX band is <b>17–23&nbsp;kHz only</b> (optional 10–20&nbsp;Hz path removed). Max practical level = Web Audio 100%
+    + OS/Sonos volume max + Night Sound / Speech Enhancement / Loudness off (see Beam note above).
   </div>
 
   <div class="note">
@@ -555,9 +561,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const telSensOrient = $("telSensOrient"), telSensLight = $("telSensLight");
   const telNight = $("telNight"), telHwBand = $("telHwBand"), telNet = $("telNet");
   const telNestEvent = $("telNestEvent"), telNestClass = $("telNestClass"), telNestAge = $("telNestAge");
-  const telBand = $("telBand"), telLf = $("telLf"), telPower = $("telPower");
+  const telBand = $("telBand"), telPlatform = $("telPlatform"), telSink = $("telSink"), telPower = $("telPower");
   const armSensorsBtn = $("armSensorsBtn");
-  const bandUsBtn = $("bandUs"), bandLfBtn = $("bandLf"), bandLegend = $("bandLegend"), bandGateNote = $("bandGateNote");
+  const bandUsBtn = $("bandUs"), bandLegend = $("bandLegend"), bandGateNote = $("bandGateNote");
   const monLogEl = $("monLog");
 
   // ══ FSK tone plan ═════════════════════════════════════════════════════
@@ -572,6 +578,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const clean = s => s.toLowerCase().split("").filter(c => ALPHABET.indexOf(c) >= 0).join("");
 
   // ══ state ═════════════════════════════════════════════════════════════
+  // Monitor-log state (#22) lives here, not beside monLog(): boot's setBandMode() logs, and a
+  // `const`/`let` further down leaves these in the temporal dead zone — the script dies there.
+  const LOG_MAX = 200;
+  const records = [];
+  let logSeq = 0;
+  const LOG_LEVELS = { debug: 1, info: 1, warn: 1, error: 1 };
+  const URL_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#]*|(?:[A-Za-z0-9._~-]+\/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9._~-]+)[?#][^\s]*/g;
+  const FLEET_LOG_KEYS = ["kind","schemaVersion","ts","level","event","deviceId","band","power","nightNY",
+    "lfArmed","lfDriveCapable","lfGate","algo","vibClass","suddenFreq","suddenState","holdManual","peakHz",
+    "absA","micEnergy","impulse","volBlast","alarmState","msg"];
   let ctx=null, osc=null, toneGain=null, bus=null, analyser=null, loopAnalyser=null;
   let running=false, glide=false;
   let nextHopAt=0, lastTarget=19000, hopCount=0;
@@ -668,9 +684,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const NEST_URL = sameOriginPath(qs.get("nest"), BACKEND_NEST_PATH);
   const NEST_POLL_MS = Math.max(5000, Math.min(60000, +(qs.get("nestMs") || 15000)));
   const VOL_PATCH_MAX = 100, VOL_STEP = 0.5;
-  const BAND_US_LO = 17000, BAND_US_HI = 23000, BAND_LF_LO = 10, BAND_LF_HI = 20;
+  const BAND_US_LO = 17000, BAND_US_HI = 23000;
   let BAND_ABS_LO = 17000, BAND_ABS_HI = 23000;
-  // Hardware-limited preferred TX band (BT A2DP + Soundcore DSP roll-off) for ultrasonic
+  // Hardware-limited preferred TX band (OS audio + Sonos/BT DSP roll-off) for ultrasonic
   const HW_PREF_FMAX = 20500, HW_PREF_FMIN = 17000;
   const NIGHT_TZ = "America/New_York";
   const NIGHT_START_MIN = 22 * 60; // 22:00
@@ -685,10 +701,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let txOsc=null, txGain=null, txActive=false, txTimer=null, txLoop=false;
   let micStream=null, micAnalyser=null, micData=null, micOn=false, micSr=0, micStartPending=false;
   let sensorsArmed=false, sensorStatus={audio:"idle",mic:"idle",motion:"idle",orientation:"idle",ambientLight:"na"};
-  let hwCaps={sampleRate:0,nyquist:0,prefFMax:HW_PREF_FMAX,rolloffSuspect:true,motionOk:false,micOk:false,route:"a2dp",lfDriveCapable:false};
+  let hwCaps={sampleRate:0,nyquist:0,prefFMax:HW_PREF_FMAX,rolloffSuspect:true,motionOk:false,micOk:false,route:"system",lfDriveCapable:false,platform:"unknown",platformLabel:"—",formFactor:"unknown",audioSink:"sonos-beam-2"};
   let geoAudit={lat:null,lon:null,accuracy:null,source:"none"}; // no street address PII
   let nightActive=false, nightTargetVol=100, nightUserOverride=false, senseStream=null;
-  let bandMode="us", lfArmed=false; // us = 17-23k; lf = 10-20 when capable+armed
+  let bandMode="us", lfArmed=false; // TX fixed 17-23k; lfArmed always false (10-20 Hz UI removed)
   const POWER_FLEET = "ac120"; // C5 continuous 120 V AC — not battery-limited
 
   const LOOKAHEAD=0.25, TICK_MS=40, TRACE_SEC=180, SPAN_LO=8000;
@@ -1218,16 +1234,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function alignTxToBurstBand(which){
-    // Response stays in allowed TX bands; LF only if lfDriveCapable
-    if (which === "lf" || which === "both") {
-      if (hwCaps.lfDriveCapable) {
-        if (bandMode !== "lf") setBandMode("lf", false);
-      } else if (bandMode === "lf") {
-        setBandMode("us", false);
-      }
-    } else if (which === "us") {
-      if (bandMode === "lf") setBandMode("us", false);
-    }
+    // Public TX is ultrasonic-only (17–23 kHz). LF micDiff sensing may still label bandBurst.
+    if (bandMode !== "us") setBandMode("us", false);
   }
 
   function applyExtremeVarianceTick(reason){
@@ -1887,8 +1895,65 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
 
-  // ══ TX band (C6) · night NY · arm sensors · fleet power (C5) ═══════════
-  function bandWireTag(){ return (bandMode === "lf" && lfArmed) ? "10-20" : "17-23k"; }
+  // ══ TX band (17–23 kHz only) · platform · night NY · arm sensors · fleet power (C5) ══
+  // Browsers do not expose Mac Studio model strings. Best-effort: macOS + desktop → "macos-desktop";
+  // upgrade to "mac-studio" only when UA/model hints contain Studio (usually absent).
+  function detectPlatform(){
+    const ua = String(navigator.userAgent || "");
+    const uaData = navigator.userAgentData || null;
+    const platformNav = String(navigator.platform || "");
+    const touch = (navigator.maxTouchPoints || 0) > 0;
+    let os = "unknown", form = "unknown", id = "unknown", label = "unknown";
+    const isIOS = /iPhone|iPad|iPod/.test(ua) || (platformNav === "MacIntel" && touch);
+    const isAndroid = /Android/i.test(ua);
+    const isMac = /Mac OS X|Macintosh/i.test(ua) || /Mac/i.test(platformNav) || (uaData && /macOS/i.test(String(uaData.platform || "")));
+    const isWin = /Windows/i.test(ua) || (uaData && /Windows/i.test(String(uaData.platform || "")));
+    const isLinux = /Linux/i.test(ua) && !isAndroid;
+    if (isIOS) {
+      os = "ios"; form = /iPad/.test(ua) || (platformNav === "MacIntel" && touch) ? "tablet" : "phone";
+      id = form === "tablet" ? "ipad" : "iphone"; label = id;
+    } else if (isAndroid) { os = "android"; form = "phone"; id = "android"; label = "android"; }
+    else if (isMac) {
+      os = "macos"; form = "desktop";
+      const hint = /MacStudio|Mac Studio/i.test(ua);
+      id = hint ? "mac-studio" : "macos-desktop"; label = id;
+    } else if (isWin) { os = "windows"; form = "desktop"; id = "windows-desktop"; label = id; }
+    else if (isLinux) { os = "linux"; form = "desktop"; id = "linux-desktop"; label = id; }
+    else { form = touch ? "mobile" : "desktop"; id = form; label = form; }
+    hwCaps.platform = id;
+    hwCaps.platformLabel = label + (os !== "unknown" ? (" · " + os) : "");
+    hwCaps.formFactor = form;
+    if (!hwCaps.audioSink) hwCaps.audioSink = "sonos-beam-2";
+    if (isMac || form === "desktop") hwCaps.route = "system";
+    else if (isIOS) hwCaps.route = "a2dp";
+    return hwCaps.platform;
+  }
+  function refreshPlatformHints(){
+    detectPlatform();
+    try {
+      const uaData = navigator.userAgentData;
+      if (uaData && typeof uaData.getHighEntropyValues === "function") {
+        uaData.getHighEntropyValues(["architecture","model","platform"]).then(function(v){
+          const arch = String((v && v.architecture) || "").toLowerCase();
+          const model = String((v && v.model) || "");
+          const plat = String((v && v.platform) || "");
+          if (/mac/i.test(plat) || String(hwCaps.platform).indexOf("mac") === 0) {
+            // model is usually empty on desktop Chrome — never invent Mac Studio from arch alone.
+            if (/studio/i.test(model)) {
+              hwCaps.platform = "mac-studio";
+              hwCaps.platformLabel = "mac-studio · macos · " + (arch || "arm");
+            } else if (hwCaps.platform !== "mac-studio") {
+              hwCaps.platform = "macos-desktop";
+              hwCaps.platformLabel = "macos-desktop · " + (arch || "unknown-arch");
+            }
+          }
+          refreshBandUi();
+          if (typeof updateTelUI === "function") updateTelUI();
+        }).catch(function(){});
+      }
+    } catch (_){}
+  }
+  function bandWireTag(){ return "17-23k"; }
 
   function netKind(){
     try {
@@ -1942,54 +2007,42 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (Math.abs(+vol.value - n.target) >= VOL_STEP * 0.49) applyVolUi(n.target, true);
   }
 
-  function refreshLfGateUi(){
-    const cap = !!hwCaps.lfDriveCapable;
-    if (bandLfBtn) {
-      bandLfBtn.disabled = false;
-      bandLfBtn.setAttribute("aria-pressed", String(bandMode === "lf"));
-      bandLfBtn.title = cap ? "LF 10–20 Hz armed path" : "Usually NA on Soundcore/A2DP — confirm phone-speaker experimental";
-    }
-    if (bandUsBtn) bandUsBtn.setAttribute("aria-pressed", String(bandMode === "us"));
-    if (bandLegend) bandLegend.textContent = bandMode === "lf" ? "Band · 10–20 Hz" : "Band · 17k–23k";
+  function refreshBandUi(){
+    lfArmed = false;
+    hwCaps.lfDriveCapable = false;
+    if (bandUsBtn) bandUsBtn.setAttribute("aria-pressed", "true");
+    if (bandLegend) bandLegend.textContent = "Band · 17k–23k";
     if (bandGateNote) {
-      bandGateNote.textContent = cap
-        ? "LF capable (route=" + (hwCaps.route || "?") + "). Arm 10–20 Hz only for experimental LF drive."
-        : "LF na on typical Soundcore/A2DP. Systems check may enable phone-speaker experimental path.";
+      bandGateNote.textContent = "TX " + bandWireTag() + " · " + (hwCaps.platform || "?")
+        + " · sink " + (hwCaps.audioSink || "sonos-beam-2")
+        + " · max clean: OS/Sonos vol max, Night Sound/Speech/Loudness OFF";
     }
     if (telBand) telBand.textContent = bandWireTag();
-    if (telLf) telLf.textContent = cap ? (lfArmed ? "armed" : "capable") : "na";
-    if (telHwBand) telHwBand.textContent = bandMode === "lf" ? "10-20" : (HW_PREF_FMIN + "-" + HW_PREF_FMAX);
+    if (telPlatform) telPlatform.textContent = hwCaps.platform || "—";
+    if (telSink) telSink.textContent = hwCaps.audioSink || "sonos-beam-2";
+    if (telHwBand) telHwBand.textContent = HW_PREF_FMIN + "-" + HW_PREF_FMAX;
     if (telPower) telPower.textContent = POWER_FLEET;
     if (telNet) telNet.textContent = netKind();
     if (telNestEvent) telNestEvent.textContent = nestStatus ? (nestStatus.nestEvent || "none") : "—";
     if (telNestClass) telNestClass.textContent = nestStatus ? (nestStatus.nestBurstClass || "—") : "—";
     if (telNestAge) telNestAge.textContent = nestStatusAt ? (Math.round((Date.now() - nestStatusAt) / 1000) + "s") : "—";
   }
+  const refreshLfGateUi = refreshBandUi; // legacy alias
 
   function setBandMode(mode, force){
-    if (mode === "lf") {
-      if (!hwCaps.lfDriveCapable && !force) {
-        monLog("LF 10–20 Hz blocked — lfDriveCapable=false (BT roll-off). Run Systems check or use phone speaker path.");
-        refreshLfGateUi();
-        return false;
-      }
-      bandMode = "lf";
-      lfArmed = true;
-      BAND_ABS_LO = BAND_LF_LO; BAND_ABS_HI = BAND_LF_HI;
-      fMin.min = BAND_LF_LO; fMin.max = BAND_LF_HI; fMin.step = 0.5;
-      fMax.min = BAND_LF_LO; fMax.max = BAND_LF_HI; fMax.step = 0.5;
-      fMin.value = BAND_LF_LO; fMax.value = BAND_LF_HI;
-    } else {
-      bandMode = "us";
-      lfArmed = false;
-      BAND_ABS_LO = BAND_US_LO; BAND_ABS_HI = BAND_US_HI;
-      fMin.min = BAND_US_LO; fMin.max = BAND_US_HI; fMin.step = 50;
-      fMax.min = BAND_US_LO; fMax.max = BAND_US_HI; fMax.step = 50;
-      fMin.value = BAND_US_LO; fMax.value = Math.min(21000, BAND_US_HI);
-    }
+    // 10–20 Hz TX removed from public UI — always clamp to ultrasonic.
+    if (mode === "lf") monLog("LF 10–20 Hz TX removed — staying on 17–23k");
+    bandMode = "us";
+    lfArmed = false;
+    hwCaps.lfDriveCapable = false;
+    BAND_ABS_LO = BAND_US_LO; BAND_ABS_HI = BAND_US_HI;
+    fMin.min = BAND_US_LO; fMin.max = BAND_US_HI; fMin.step = 50;
+    fMax.min = BAND_US_LO; fMax.max = BAND_US_HI; fMax.step = 50;
+    if (+fMin.value < BAND_US_LO || +fMin.value > BAND_US_HI) fMin.value = BAND_US_LO;
+    if (+fMax.value < BAND_US_LO || +fMax.value > BAND_US_HI) fMax.value = Math.min(21000, BAND_US_HI);
     syncBand();
-    refreshLfGateUi();
-    try { localStorage.setItem("hop.band", bandMode); } catch(_){}
+    refreshBandUi();
+    try { localStorage.setItem("hop.band", "us"); } catch(_){}
     monLog("TX band → " + bandWireTag());
     if (running) { pending.length = 0; nextHopAt = ctx.currentTime + 0.05; schedule(); }
     return true;
@@ -1997,27 +2050,17 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   function evaluateLfCapability(opts){
     opts = opts || {};
-    // Honesty: A2DP/Soundcore typically cannot reproduce 10–20 Hz.
-    // Phone built-in speaker: experimental capable=true after user arm / systems check.
-    const route = opts.route || hwCaps.route || "a2dp";
+    // Public surface no longer arms 10–20 Hz TX. Keep lfDriveCapable=false for wire honesty.
+    const route = opts.route || hwCaps.route || "system";
     hwCaps.route = route;
-    if (opts.forcePhoneSpeaker) {
-      hwCaps.lfDriveCapable = true;
-      hwCaps.rolloffSuspect = false;
-    } else if (route === "phone" || route === "builtin") {
-      hwCaps.lfDriveCapable = true;
-    } else {
-      // a2dp / soundcore default NA
-      hwCaps.lfDriveCapable = false;
-      hwCaps.rolloffSuspect = true;
-    }
+    hwCaps.lfDriveCapable = false;
+    hwCaps.rolloffSuspect = true;
     if (ctx) {
       hwCaps.sampleRate = ctx.sampleRate;
       hwCaps.nyquist = ctx.sampleRate / 2;
-      // sample rate always supports 20 Hz; capability is transducer-limited
     }
-    refreshLfGateUi();
-    return hwCaps.lfDriveCapable;
+    refreshBandUi();
+    return false;
   }
 
   async function armSensors(){
@@ -2074,8 +2117,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     } catch (_) { sensorStatus.ambientLight = "na"; }
 
     sensorsArmed = true;
-    // Default LF gate: A2DP na; user can flip to phone-speaker capable in Systems check
-    evaluateLfCapability({ route: hwCaps.route || "a2dp" });
+    detectPlatform();
+    evaluateLfCapability({ route: hwCaps.route || "system" });
     if (telSensors) telSensors.textContent = "armed";
     if (telSensMic) telSensMic.textContent = sensorStatus.mic;
     if (telSensMotion) telSensMotion.textContent = sensorStatus.motion;
@@ -2136,25 +2179,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   });
   vol.addEventListener("change", () => { nightUserOverride = true; });
   if (bandUsBtn) bandUsBtn.addEventListener("click", () => setBandMode("us"));
-  if (bandLfBtn) bandLfBtn.addEventListener("click", () => {
-    if (!hwCaps.lfDriveCapable) {
-      // experimental override: mark phone-speaker path then arm
-      const ok = confirm("Soundcore/A2DP usually cannot play 10–20 Hz. Switch LF capable to phone-speaker experimental path?");
-      if (!ok) return;
-      evaluateLfCapability({ route: "phone", forcePhoneSpeaker: true });
-    }
-    setBandMode("lf");
-  });
   if (armSensorsBtn) armSensorsBtn.addEventListener("click", () => { armSensors(); });
   setInterval(nightTick, 15000);
   nightTick();
-  refreshLfGateUi();
-  try {
-    if (localStorage.getItem("hop.band") === "lf") {
-      evaluateLfCapability({ route: "phone", forcePhoneSpeaker: true });
-      setBandMode("lf");
-    }
-  } catch(_){}
+  refreshPlatformHints();
+  refreshBandUi();
+  try { localStorage.setItem("hop.band", "us"); } catch(_){}
+  setBandMode("us");
 
 
 
@@ -2181,17 +2212,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   // ══ telemetry beacon + param patch poll ═══════════════════════════════
   // ══ structured monitor log (#22) ══════════════════════════════════════
   // Structured, bounded, device-metrics-only monitor log.
-  const LOG_MAX = 200;
-  const records = [];
-  let logSeq = 0;
-  const LOG_LEVELS = { debug: 1, info: 1, warn: 1, error: 1 };
   // HTML-escape for every string that is concatenated into innerHTML (monitor log lines, systems-check rows).
   function escHtml(s){ return String(s).replace(/[<>&"']/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;", "'":"&#39;" }[c])); }
   // Strip the query/fragment of any URL-like token before a message is stored: the ring buffer is shipped on
   // the wire as `logTail` and copied as JSON, and `?patch=` / `?telemetry=` may be a signed / tokened URL.
   // Matches: `https://…?…`, `/patch.json?…`, and bare relative refs like `patch.json?token=…` (must contain a
   // path segment with a `.`). Plain prose with a "?" (`what? really`) is untouched.
-  const URL_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#]*|(?:[A-Za-z0-9._~-]+\/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9._~-]+)[?#][^\s]*/g;
   function redactUrlQuery(s){ return String(s).replace(URL_QUERY_RE, "$1?[redacted]"); }
   function monLog(msg, event, fields, level){
     const snap = fleetLogLineFromTel({ event: event ? String(event).slice(0, 32) : "log", msg: "" });
@@ -2240,9 +2266,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     copyTextToClipboard(JSON.stringify(records), "log copied", { n: records.length });
   }
   // Fixed-order fleet_log lines (#22 RECORD_KEYS) for Colab / dry-run handoff — browser-side mirror only.
-  const FLEET_LOG_KEYS = ["kind","schemaVersion","ts","level","event","deviceId","band","power","nightNY",
-    "lfArmed","lfDriveCapable","lfGate","algo","vibClass","suddenFreq","suddenState","holdManual","peakHz",
-    "absA","micEnergy","impulse","volBlast","alarmState","msg"];
   function fleetLogLineFromTel(extra){
     const tel = telemetryPayload();
     const row = {
@@ -2306,7 +2329,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       return Number.isFinite(h) && (h >= 22 || h < 7);
     } catch (_) { return false; }
   }
-  function bandTag(){ return (+fMin.value <= 100) ? "10-20" : "17-23k"; }
+  function bandTag(){ return "17-23k"; }
 
   // ══ watchdog (#3) ══
   // 1 s tick: resume a non-running AudioContext; reschedule a stalled hop scheduler.
@@ -2527,19 +2550,22 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       vibClass,
       holdManual,
       band: bandWireTag(),
-      lfDriveCapable: !!hwCaps.lfDriveCapable,
-      lfArmed: !!lfArmed,
+      lfDriveCapable: false,
+      lfArmed: false,
+      platform: hwCaps.platform || "unknown",
+      formFactor: hwCaps.formFactor || "unknown",
+      audioSink: hwCaps.audioSink || "sonos-beam-2",
       power: POWER_FLEET,
       nightNY: !!nightActive,
       nightTargetVol: nightTargetVol,
-      hwBand: bandMode === "lf" ? "10-20" : (HW_PREF_FMIN + "-" + HW_PREF_FMAX),
+      hwBand: HW_PREF_FMIN + "-" + HW_PREF_FMAX,
       lastHopAgeMs: lastHopAgeMs(),
       ctxResumes: ctxResumes || 0,
       watchdogTrips: watchdogTrips || 0,
       logSeq,
       logTail: records.slice(-3),
       net: netKind(),
-      route: hwCaps.route || "a2dp",
+      route: hwCaps.route || "system",
       ax, ay, az
     };
   }
@@ -2603,7 +2629,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       }
     }
     fill(c2, p2, ids[0] ? fleetPeers[ids[0]] : null, "node-2", "waiting for peer tab");
-    fill(c3, p3, ids[1] ? fleetPeers[ids[1]] : null, "node-3", "chair / Sonos research (#18 #39)");
+    fill(c3, p3, ids[1] ? fleetPeers[ids[1]] : null, "node-3", "Mac Studio / Sonos Beam 2 · chair sensing (#18 #39)");
     const cmp = $("fleetSeedCompare");
     if (cmp) {
       const seeds = [String(seed)].concat(ids.map(function(id){ return String(fleetPeers[id].seed); }));
@@ -2645,9 +2671,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   function clampPatch(p){
     const out = Object.assign({}, p);
-    const band = String(out.band || bandWireTag());
-    const lo = (band === "10-20" || +out.fMin <= 100) ? BAND_LF_LO : BAND_US_LO;
-    const hi = (band === "10-20" || +out.fMin <= 100) ? BAND_LF_HI : BAND_US_HI;
+    // Reject legacy "10-20" patches — public TX is ultrasonic only.
+    if (out.band === "10-20" || out.band === "lf") out.band = "17-23k";
+    const lo = BAND_US_LO;
+    const hi = BAND_US_HI;
     if (out.fMin != null) out.fMin = Math.max(lo, Math.min(hi, +out.fMin));
     if (out.fMax != null) out.fMax = Math.max(lo, Math.min(hi, +out.fMax));
     if (out.fMin != null && out.fMax != null && out.fMin > out.fMax) {
@@ -2688,11 +2715,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     }
     const p = clampPatch(raw);
     if (p.band === "10-20" || (p.fMin != null && +p.fMin <= 100)) {
-      if (!hwCaps.lfDriveCapable) evaluateLfCapability({ route: "phone", forcePhoneSpeaker: true });
-      setBandMode("lf", true);
-    } else if (p.band === "17-23k" || (p.fMin != null && +p.fMin >= 1000)) {
-      setBandMode("us");
+      monLog("patch asked for 10-20 — ignored; TX stays 17-23k");
     }
+    setBandMode("us");
     let bandChanged = false;
     if (p.fMin != null) { fMin.value = p.fMin; bandChanged = true; }
     if (p.fMax != null) { fMax.value = p.fMax; bandChanged = true; }
@@ -2824,9 +2849,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const lines = [];
     const secure = window.isSecureContext;
     lines.push(row("HTTPS / secure context", secure ? "ok" : "bad", secure ? "ok" : "required"));
-    lines.push(row("iOS Safari / WebKit", /iPhone|iPad|iPod/.test(navigator.userAgent) ? "ok" : "na",
-      /iPhone|iPad|iPod/.test(navigator.userAgent) ? "iPhone detected" : (navigator.platform || "desktop")));
-    lines.push(row("User agent", "na", (navigator.userAgent.match(/iPhone OS [\\d_]+/) || ["—"])[0].replace(/_/g,".")));
+    detectPlatform();
+    lines.push(row("Platform", "ok", (hwCaps.platform || "?") + " · " + (hwCaps.platformLabel || "")));
+    lines.push(row("Form factor", "ok", hwCaps.formFactor || "?"));
+    lines.push(row("PWA manifest", "ok", "standalone · /manifest.webmanifest"));
 
     await unlockAudio();
     lines.push(row("Web Audio", ctx ? "ok" : "bad", ctx ? ("AudioContext " + ctx.state + " · " + nf(ctx.sampleRate) + " Hz") : "unavailable"));
@@ -2863,11 +2889,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     lines.push(row("Motion (web)", orient, orientDetail));
     lines.push(row("SensorKit (native)", "na", "requires iOS app entitlement — web uses mic + Web Audio"));
 
-    // iPhone native Bluetooth = OS system audio route; not Web Bluetooth (no GATT / no sink enum on iOS Safari)
-    lines.push(row("Audio route", "ok", "iPhone native Bluetooth → paired Soundcore (not Web Bluetooth)"));
-    lines.push(row("Soundcore 2 output", "na", "iOS Control Center / Settings → Bluetooth · pair this phone 1:1"));
-    lines.push(row("Fleet", "ok", "2 nodes 1:1 native BT audio · optional chair-mounted 3rd · incoherent TX"));
-    lines.push(row("This phone", "ok", phoneRole === "tx" ? "Blaster / TX" : phoneRole === "rx" ? "Listen (debug)" : "Carrier only"));
+    // OS system audio route only — not Web Bluetooth (no GATT / no sink enum in Safari)
+    lines.push(row("Audio route", "ok", "OS system output → " + (hwCaps.audioSink || "sonos-beam-2") + " (not Web Bluetooth)"));
+    lines.push(row("Sonos Beam 2", "na", "macOS Sound / AirPlay · pair this node 1:1"));
+    lines.push(row("Beam clean TX", "ok", "Night Sound OFF · Speech Enhancement OFF · Loudness OFF · OS+Sonos vol max"));
+    lines.push(row("Fleet", "ok", "Mac Studio/desktop + phones · Sonos Beam 2 · incoherent TX"));
+    lines.push(row("This node", "ok", phoneRole === "tx" ? "Blaster / TX" : phoneRole === "rx" ? "Listen (debug)" : "Carrier only"));
     lines.push(row("Algorithm", "ok", algo + (vibAuto ? " · vib auto (" + vibClass + ")" : " · manual")));
     lines.push(row("Hop RNG", "ok", "per-device seed " + seed + " — incoherent"));
     lines.push(row("Telemetry", "ok", "deviceId " + deviceId));
@@ -2875,15 +2902,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       "1 s tick · stall > " + Math.round(stallLimitMs()) + " ms · trips " + watchdogTrips +
       " · ctx resumes " + ctxResumes));
     lines.push(row("Patch hold", holdManual ? "bad" : "ok", holdManual ? "manual" : "polling " + PATCH_URL));
-    lines.push(row("Soundcore 2", "na", "12W · BT 5.0 · BassUp/DSP — expect near-ultrasonic roll-off"));
+    lines.push(row("Ultrasonic honesty", "na", "Sonos does not publish 17–23 kHz FR; DSP may crush carriers"));
     lines.push(row("Power fleet", "ok", "continuous 120 V AC (C5) — not battery-limited"));
     lines.push(row("Night NY", nightActive ? "ok" : "na", nightActive ? ("curve → " + nightTargetVol + "%") : "day / outside 22:00–07:00"));
-    // LF 10–20 Hz gate (C6): default A2DP na; offer phone-speaker experimental capable
-    evaluateLfCapability({ route: hwCaps.route || "a2dp" });
-    lines.push(row("LF 10–20 Hz (BT/A2DP)", hwCaps.lfDriveCapable && hwCaps.route !== "a2dp" ? "ok" : "na",
-      "Soundcore/A2DP usually cannot reproduce 10–20 Hz"));
-    lines.push(row("LF phone-speaker path", "na", "Tap 10–20 Hz and confirm to mark lfDriveCapable"));
-    lines.push(row("TX band", "ok", bandWireTag() + (lfArmed ? " armed" : "")));
+    evaluateLfCapability({ route: hwCaps.route || "system" });
+    lines.push(row("LF 10–20 Hz TX", "na", "removed from public UI (was C6)"));
+    lines.push(row("TX band", "ok", bandWireTag()));
     lines.push(row("Net", "ok", netKind() + " (Wi‑Fi now · cellular later)"));
 
     sysList.innerHTML = lines.join("");

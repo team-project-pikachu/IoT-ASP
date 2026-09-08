@@ -1,3 +1,35 @@
+# Fleet audio — Sonos Beam (Gen 2) primary + Soundcore 2 phone BT
+
+Primary public sink for hop-ultrasonic on Mac Studio / desktop: **Sonos Beam (Gen 2)** via
+**OS system audio** (macOS Sound / AirPlay / Control Center). **Not** Web Bluetooth.
+
+## Sonos Beam (Gen 2) — official claims (anti-warp / max clean level)
+
+Sources (2026-09-08 Firecrawl scrape):
+
+- User guide: <https://www.sonos.com/en-us/guides/beam>
+- Product / tech: <https://www.sonos.com/en-us/shop/beam>
+- Night Sound FAQ: <https://faq.sonos.com/nightsound>
+- Speech Enhancement FAQ: <https://faq.sonos.com/tvspeech>
+- EQ / loudness FAQ: <https://faq.sonos.com/eqsettings>
+
+| Spec | Official claim | Implication for HOP |
+|------|----------------|---------------------|
+| Amplifiers | **Five Class-D** digital amplifiers | Plant can be loud; still software-limited by Sonos DSP |
+| Drivers | **One tweeter** + **four elliptical midwoofers** (shop) | No published ultrasonic FR; 17–23 kHz experimental |
+| EQ | Bass, treble, **loudness** adjustable in Sonos app | Loudness warps curve — **OFF** for scientific TX |
+| Trueplay | Room EQ tuning (iOS) | Reshapes response — prefer **OFF** / flat for TX honesty |
+| Speech Enhancement | Clarifies TV dialogue | Dynamic speech DSP — **OFF** for clean carriers |
+| Night Sound | Enhances quiet sounds; **reduces intensity of loud sounds** | Compression / warping at “loud” — **OFF** for max clean TX |
+| SPL / wattage / FR curve | **Not published** on guide/shop pages scraped | Do **not** invent numbers; raise OS + Sonos volume to max instead |
+
+**Max practical level without warping (app policy):** Web Audio / `VOL_PATCH_MAX` = **100%** (C4);
+OS + Sonos volume max; Night Sound / Speech Enhancement / Loudness **OFF**; EQ flat; no stacked boosts above 0 dBFS.
+
+Public TX band is **17–23 kHz only** (optional 10–20 Hz UI removed from the control surface).
+
+---
+
 # Soundcore 2 — manufacturer specs (for HOP fleet)
 
 Captured for the hop-ultrasonic public app. Primary marketing source: Anker Canada product page.
@@ -31,9 +63,9 @@ Comparison table on the Anker CA page repeats: Output Power 12W · Water IPX7 ·
 4. **Physical drivers** in a compact waterproof enclosure rarely reproduce >15–18 kHz at useful SPL even over AUX; over BT the codec is the first hard limit.
 5. **Implication for HOP:** treat Soundcore 2 as a **loud near-field blaster for whatever survives the BT path**, not as a calibrated ultrasonic transducer. Prefer AUX if available for experiments; otherwise expect carriers to collapse. Systems-check in the app surfaces this warning.
 
-## 10–20 Hz LF drive (C6) — gated na
+## 10–20 Hz LF drive (C6) — public UI removed; Soundcore path na
 
-The published FR floor is **70 Hz**. Optional LF drive **10–20 Hz** is below that floor and below typical BT-speaker HPFs / BassUp tuning. On the Soundcore 2 A2DP path LF TX is **na**. Gate with `lfDriveCapable` / user arm; do not claim infrasound playback from this sink. Phone built-in speaker may be a better LF experiment ([#18](https://github.com/team-project-pikachu/IoT-ASP/issues/18), [#25](https://github.com/team-project-pikachu/IoT-ASP/issues/25)).
+The published FR floor is **70 Hz**. Optional LF drive **10–20 Hz** is below that floor and below typical BT-speaker HPFs / BassUp tuning. On the Soundcore 2 A2DP path LF TX is **na**. The public hop-ultrasonic UI no longer offers a 10–20 Hz arm control; telemetry stays `band=17-23k` with `lfArmed`/`lfDriveCapable` false. Do not claim infrasound playback from this sink ([#18](https://github.com/team-project-pikachu/IoT-ASP/issues/18), [#25](https://github.com/team-project-pikachu/IoT-ASP/issues/25)).
 
 ## Volume blast vs rated 12 W (C4)
 
@@ -41,10 +73,12 @@ Default / clamp ceiling is **100% Web Audio** gain (`VOL_PATCH_MAX`). That is **
 
 ## Fleet topology (app requirement)
 
-- **Nodes 1–2:** paired **1:1** iPhone 16 ↔ Soundcore 2 over **iOS native A2DP** (C1).
-- **Optional 3rd node:** phone chair-mounted for structure-borne / accelerometer-biased sensing; audio sink research is Sonos/AirPlay ([#39](https://github.com/team-project-pikachu/IoT-ASP/issues/39)) — not this table.
+- **Mac Studio / desktop:** OS system audio → **Sonos Beam (Gen 2)** (AirPlay / Sound settings).
+- **Phone nodes:** may still pair **1:1** via native Bluetooth A2DP to Soundcore 2 (C1) or AirPlay to Beam.
+- **Optional chair node:** structure-borne / accelerometer-biased sensing ([#39](https://github.com/team-project-pikachu/IoT-ASP/issues/39) / [#120](https://github.com/team-project-pikachu/IoT-ASP/issues/120)).
 - All nodes open the same public URL and may transmit concurrently (incoherent schedules — no shared seed).
 - Algorithms: `hop` / `pulse` / `shriek`, optionally switched by vib class (accel vs acoustic).
+- TX band: **17–23 kHz only**.
 
 ## Capture method
 

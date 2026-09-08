@@ -1,18 +1,18 @@
 # Carrier algorithms (EE first cut)
 
-**Default band:** **17–23 kHz** near-ultrasonic carriers over Web Audio → **iOS native Bluetooth A2DP** (system audio route / Control Center) → Soundcore 2.  
-**Optional band:** **10–20 Hz** LF drive when Systems check sets `lfDriveCapable` **and** the user arms LF ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) **C6**). Most Soundcore/A2DP paths are **na** for 10–20 Hz; phone speaker may be usable. Telemetry tags `band=10-20` or `band=17-23k`.  
+**Default / only public band:** **17–23 kHz** near-ultrasonic carriers over Web Audio → **OS system audio** (macOS Sound / AirPlay / Control Center) → **Sonos Beam (Gen 2)**. Phone nodes may still use BT speakers.  
+**Removed:** optional **10–20 Hz** public TX UI ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) **C6**). Telemetry `band=17-23k`; `lfArmed`/`lfDriveCapable` false on web.  
 **Not** Web Bluetooth (**C1**, [iphone-bluetooth.md](iphone-bluetooth.md)).  
-Expect **AAC/SBC + BassUp/DSP roll-off** on ultrasonic (`SPEC.md`). Default Web Audio out **100%** (**C4**); BT/hardware still limit SPL. Fleet on **continuous 120 V AC** (**C5**, [power-fleet.md](power-fleet.md)).  
+Expect Sonos Night Sound / Speech Enhancement / Loudness / Trueplay and codecs to warp or crush ultrasonics (`SPEC.md`). Default Web Audio out **100%** (**C4**) with OS+Sonos volume max and those DSP features **OFF** for clean TX. Fleet on **continuous 120 V AC** (**C5**, [power-fleet.md](power-fleet.md)).  
 Primary control: **suddenFreq → Gemini/ADK autorotate** ([autoroute.md](autoroute.md)); materials presets in [materials-engineering.md](materials-engineering.md).
 
 ## Fleet topology
 
 | Node | Hardware | Rooms | Vib channel bias | Status |
 |------|----------|-------|------------------|--------|
-| 1 | iPhone 16 ↔ Soundcore 2 | Room A | Acoustic (mic/spectrum) + optional accel | **Active** |
-| 2 | iPhone 16 ↔ Soundcore 2 | Room B | Acoustic + optional accel | **Active** |
-| 3 | **Third iPhone 16** ↔ **Sonos Beam Gen 2** (AirPlay) and/or chair-taped sensing | TBD | Physical / AirPlay TX + structure-borne bias | **Research** (#39 / #18) |
+| 1 | Mac Studio / desktop ↔ Sonos Beam (Gen 2) | Lab | Acoustic (mic/spectrum) | **Active** |
+| 2 | iPhone ↔ Sonos Beam (Gen 2) or BT speaker | Room A/B | Acoustic + optional accel | **Active** |
+| 3 | Phone chair-mounted ± Beam / AirPlay | TBD | Physical / structure-borne bias | **Research** (#39 / #18) |
 
 Nodes 1–2 blast **incoherently** (independent per-tab RNG). Humans and ambient external sounds are in-scope interferers (details live in the private study repo).
 
@@ -31,7 +31,7 @@ Node 3 (parked): mechanical coupling to chair materials dominates free-handheld 
 
 - Consumer BT speakers/mics **high-pass**; Safari cannot cleanly play or capture true infrasound.
 - Proxy: **very-low-frequency linear accelerometer** energy (body/chair coupling) = practical “felt” channel.
-- Optional **10–20 Hz TX**: gated UI path only; fall back to ultrasonic when HW **na** (issue **#18** for full HW / Node-3).
+- Public **10–20 Hz TX UI removed**; sensing may still use LF accel proxy (issue **#18** for full HW / Node-3).
 - Dedicated infrasound mic / geophone = **parked** research (native hardware).
 
 ### Night volume (America/New_York)
@@ -87,7 +87,7 @@ Quick impulses are sharper than the EMA burst onset and react **like a security 
 
 **Blast volume:** jump UI vol toward `VOL_PATCH_MAX` (100) in **0.5** quanta, capped by night `nightTargetVol` when active. **Hold / Manual** refuses blast, clears `impulse`/`volBlast`, and forces `alarmState=cleared`. Sustain while the impulse latch (~700 ms) or burst still-hot continues; clear only after **~2.5 s** quiet (`BURST_QUIET_MS`) — same hysteresis family as extreme exit.
 
-**TX align:** default response band **17–23 kHz**; if `bandBurst` is `lf`/`both` **and** `lfDriveCapable`, may arm **10–20 Hz**. Continuous mic while armed/Signal on.
+**TX align:** response band **17–23 kHz only** (LF micDiff may still label `bandBurst`). Continuous mic while armed/Signal on.
 
 Wire fields: `soundBurst`, `extremeActive`, `impulse`, `volBlast`, `alarmState`, `micEnergy`, `outLevel`, `micDiff` / `micNet`, `bandBurst`. Evidence: `.vv/burst-shriek.md`. Related: #44 #45 #25 #42.
 

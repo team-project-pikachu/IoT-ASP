@@ -136,9 +136,13 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
 
 # ── 4. enrichment literals ───────────────────────────────────────────────────
 def test_enrichment_literals(html: str) -> None:
-    for lit in ('"ac120"', '"America/New_York"', '"10-20"', '"17-23k"', "function nightNYNow("):
+    for lit in ('"ac120"', '"America/New_York"', '"17-23k"', "function nightNYNow("):
         assert lit in html, lit
-    assert "+fMin.value <= 100" in html
+    # Legacy "10-20" may appear only as rejected patch tag — public TX is ultrasonic-only.
+    assert 'bandWireTag(){ return "17-23k"; }' in html.replace(" ", "") or 'return "17-23k"' in html
+    assert 'id="bandLf"' not in html
+    assert "detectPlatform" in html
+    assert "sonos-beam-2" in html
     assert "hour12: false" in html
 
 
@@ -218,9 +222,12 @@ def test_readme_m0_record() -> None:
     live_url = "https://hop-ultrasonic-1digital-design.vercel.app/"
     urls = re.findall(r"https?://[^\s<>\"')]+", txt)
     assert any(u == live_url for u in urls), urls
+    assert "Sonos Beam" in txt
+    assert "Mac Studio" in txt or "desktop" in txt
     assert "iPhone 16" in txt and "iPhone 14" in txt
     assert re.search(r"\b(three|3)\b", txt)
-    assert "native Bluetooth" in txt
+    assert "native" in txt.lower() and ("Bluetooth" in txt or "audio" in txt)
+    assert "17–23" in txt or "17-23" in txt
     assert "@" not in txt, "no emails"
     assert not re.search(r"\b\d{5}\b", txt), "no ZIP-like numbers"
     for m in re.finditer(r"Web Bluetooth", txt):
@@ -253,7 +260,9 @@ def test_banner_lines_well_formed(html: str) -> None:
 # ── 12. size guard ───────────────────────────────────────────────────────────
 def test_size_guard() -> None:
     # Raised 2026-09-08 for fleet cards + impulse/alarm SM (#11/#42/#44/#45).
-    assert HTML_PATH.stat().st_size < 140_000
+    # Raised again 2026-09-08 for the Nest tiles + pollNest guard (#85/#101) landing on top of
+    # the platform/sink tiles from #138 — 140_052 B at the merge, ~10 kB headroom.
+    assert HTML_PATH.stat().st_size < 150_000
 
 
 # ── spec 02: max-entropy seeds ───────────────────────────────────────────────

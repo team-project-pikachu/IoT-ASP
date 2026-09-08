@@ -48,15 +48,15 @@ Agent-facing Cursor rules (ops/fleet, algo/telemetry, backend/V&V, prior art): [
 | Autoroute / night | Do **not** assume brownout or battery-drain caps when setting gain or the 22:00–07:00 America/New_York volume curve |
 | Detail | [power-fleet.md](power-fleet.md), [iphone-dedicated-mode.md](iphone-dedicated-mode.md) |
 
-## C6 — Optional LF drive band 10–20 Hz (hardware-gated)
+## C6 — Public TX band is 17–23 kHz only (LF UI removed)
 
 | Rule | Detail |
 |------|--------|
-| Default TX band | Near-ultrasonic **17–23 kHz** (Soundcore/A2DP path) |
-| Optional | **10–20 Hz** drive when Systems check / capability allows and the user **arms** LF |
-| Honesty | Many BT speakers **cannot** reproduce 10–20 Hz (HPF / BassUp/DSP). Phone built-in speaker may do better. Gate with `lfDriveCapable` / user arm; **skip or fall back** when HW **na** |
-| Telemetry | Tag `band=10-20` when LF active; else `band=17-23k` |
+| Default / only public TX band | Near-ultrasonic **17–23 kHz** (OS audio → Sonos Beam Gen 2 / phone BT) |
+| Removed | Optional **10–20 Hz** arm UI on the public control surface (was hardware-gated) |
+| Telemetry | Web fleet always tags `band=17-23k`; `lfArmed` / `lfDriveCapable` stay **false** |
 | Node-3 / infrasound sensing | LF **accel proxy** remains primary for `infra_felt` (#18); true infrasound mic/geophone parked |
+| Beam clean max | Web Audio 100% + OS/Sonos vol max; Night Sound / Speech Enhancement / Loudness **OFF** ([SPEC.md](../SPEC.md)) |
 
 ## Downstream docs
 
