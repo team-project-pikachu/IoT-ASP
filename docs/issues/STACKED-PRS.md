@@ -12,7 +12,7 @@
 | 6 | 6/9 | `feat/balanced-mvp-roadmap-docs` | `feat/balanced-test-native-ci` | MVP roadmap/closed-log #68/#69 + #61/#62 stubs | https://github.com/team-project-pikachu/IoT-ASP/pull/73 |
 | 7 | 7/9 | `feat/balanced-api-contract-vv` | `feat/balanced-mvp-roadmap-docs` | api-contract + fleet polish + #64 software verify | https://github.com/team-project-pikachu/IoT-ASP/pull/75 |
 | 8 | 8/9 | `feat/balanced-ops-secrets-adk` | `feat/balanced-api-contract-vv` | #27 inventory + #63 status + #60 dry-check | https://github.com/team-project-pikachu/IoT-ASP/pull/76 |
-| 9 | 9/9 | `feat/m8-nest-gemini-home-ios` | `feat/balanced-ops-secrets-adk` | M8 Nest+Gemini+glass shatter + IoTASPHome stub build | _(PR URL after open)_ |
+| 9 | 9/9 | `feat/m8-nest-gemini-home-ios` | `feat/balanced-ops-secrets-adk` | M8 Nest+Gemini+glass shatter + IoTASPHome stub build | https://github.com/team-project-pikachu/IoT-ASP/pull/105 |
 
 ## Owner-gated (blocked)
 
@@ -27,7 +27,7 @@
 | #61 live backend URLs | Owner publish ingest/patch HTTPS endpoints |
 | #63 ruleset apply | Live `main-protection` already **active** (id `22505825`) — residual: keep JSON ↔ CI names in sync |
 | #64 V&V pass rows | Software rows `in_progress`; `pass` needs field `#62` evidence |
-| M8 #83–#99 | Nest/OAuth/Gemini live: **bettyctai@gmail.com** + 1Password `dev`; no browser agent login |
+| M8 #83–#104 | Nest/OAuth/Gemini live: **bettyctai@gmail.com** + 1Password `dev`; no browser agent login |
 
 Status board: [BALANCED-BUILD-STATUS.md](BALANCED-BUILD-STATUS.md).
 
