@@ -1,0 +1,267 @@
+{
+  "infrasound_tight": [
+    {
+      "id": "2608.13853v1",
+      "title": "Altitude-Dependent Near-Source Spectral Filtering of Meteor Infrasound Above 80 km and Consequences for Period-Based Energy Estimates",
+      "published": "2026-08-14",
+      "summary": "Infrasound signal period is widely used as a proxy for source energy in bolide studies, but the reliability of period-yield relations for small, high-altitude regional meteors has not been systematically evaluated. We analyze 90 infrasound detections from well-constrained regional meteoroid events (source altitudes 20-111 km, ranges 47-268 km) and ",
+      "url": "https://arxiv.org/abs/2608.13853v1"
+    },
+    {
+      "id": "2607.21154v1",
+      "title": "Infrasound Newtonian Noise Estimation at the Einstein Telescope Candidate Site Sos Enattos",
+      "published": "2026-07-23",
+      "summary": "We investigate the seasonal variability of atmospheric infrasound and its contribution to Newtonian noise (NN) at the Sos Enattos site, a leading candidate location for the Einstein Telescope (ET). Infrasound data recorded at three stations -- SOE0 (surface), SOE1 ($-84$ m), and SOE3 ($-160$ m) -- are analyzed over multiple seasons to characterize ",
+      "url": "https://arxiv.org/abs/2607.21154v1"
+    },
+    {
+      "id": "2606.19124v1",
+      "title": "Prospects for Observing Gravity-gradient Noise and Earthquake Gravity Signals with CHRONOS",
+      "published": "2026-06-17",
+      "summary": "Ground-based gravitational-wave detectors operating in the sub-Hertz regime are expected to be strongly limited by environmental gravity-gradient fluctuations, commonly referred to as Newtonian Noise (NN). At the same time, this frequency band provides unique opportunities to probe terrestrial gravitational perturbations associated with seismic and",
+      "url": "https://arxiv.org/abs/2606.19124v1"
+    },
+    {
+      "id": "2606.04278v2",
+      "title": "The Role of Source Geometry and Atmospheric Propagation in Global Bolide Infrasound Detectability",
+      "published": "2026-06-02",
+      "summary": "Global infrasound monitoring provides a persistent means of detecting energetic bolide atmospheric entries, complementing optical observations and extending coverage over remote regions. We present a global assessment of the physical factors governing bolide infrasound detectability by correlating 623 bolide events reported by the Center for Near-E",
+      "url": "https://arxiv.org/abs/2606.04278v2"
+    },
+    {
+      "id": "2605.29150v1",
+      "title": "Shock wave formation in the thermosphere by an earthgrazing fireball: Empirical evidence for volatile-enhanced hydrodynamic shielding",
+      "published": "2026-05-27",
+      "summary": "Hydrodynamic shielding is a theoretically well-established but observationally elusive and experimentally difficult-to-replicate phenomenon with implications that extend far beyond meteor physics. Rare earthgrazing meteoroids with infrasound signatures that penetrate to the ground can be used to probe hydrodynamic shielding that leads to strong sho",
+      "url": "https://arxiv.org/abs/2605.29150v1"
+    },
+    {
+      "id": "2605.20455v1",
+      "title": "Benchmarking Cylindrical Blast Wave Theory Against the OSIRIS-REx Sample Return Capsule Reentry",
+      "published": "2026-05-19",
+      "summary": "Weak shock theory based on cylindrical blast waves has been used to interpret meteor infrasound, but it has not been systematically benchmarked against a non-ablating hypersonic source with independently known parameters. The objective of this study is not to propose a new theoretical framework, but to evaluate the operational validity of the exist",
+      "url": "https://arxiv.org/abs/2605.20455v1"
+    },
+    {
+      "id": "2603.22630v1",
+      "title": "Multi-Sensor Trajectory Reconstruction of the 24 April 2025 Alaska Fireball and Implications for Planetary Defense",
+      "published": "2026-03-23",
+      "summary": "On 24 April 2025 at 18:30:57 UTC, a bright daytime fireball over Southcentral Alaska was detected by 37 seismic stations, 16 single infrasound sensors, and four infrasound arrays, yielding 30 ballistic and multiple fragmentation arrivals. The unprecedented density of seismoacoustic coverage enabled detailed reconstruction of the event using acousti",
+      "url": "https://arxiv.org/abs/2603.22630v1"
+    },
+    {
+      "id": "2602.15440v2",
+      "title": "The First Instrumentally Documented Fall of an Iron Meteorite: atmospheric trajectory and ground impact",
+      "published": "2026-02-17",
+      "summary": "Iron meteorite falls are rare compared to stony meteorites, and until recently no iron meteorite had a reliably determined pre-atmospheric orbit. This changed on 2020 November 7, when a bright fireball was observed across Sweden and neighboring regions, with optical, acoustic, and seismic detections extending up to 665 km from the trajectory. After",
+      "url": "https://arxiv.org/abs/2602.15440v2"
+    },
+    {
+      "id": "2602.15262v1",
+      "title": "Multi-Arrival Infrasound from Meteoroids: Fragmentation Signatures versus Propagation Effects in a Fine-Scale Layered Atmosphere",
+      "published": "2026-02-16",
+      "summary": "Infrasonic signatures of meteoroid fragmentation are frequently ambiguous: do multiple arrivals signify a complex breakup or merely the distorting effects of a layered atmosphere? Resolving this ambiguity is critical for accurate energy estimates and source reconstruction. In this study, we address this challenge by analyzing a unique regional data",
+      "url": "https://arxiv.org/abs/2602.15262v1"
+    },
+    {
+      "id": "2602.00421v1",
+      "title": "Observational Evidence for Wind-Driven Low-Pass Filtering of Infrasound at Short Range",
+      "published": "2026-01-31",
+      "summary": "Infrasound from controlled explosions provide a unique opportunity to isolate atmospheric effects on propagation. We report observations from two campaigns in May and October 2024, each featuring 10-ton TNT-equivalent controlled surface chemical explosions recorded by a dense network of 31 single-sensor stations within 23 km. Despite identical sour",
+      "url": "https://arxiv.org/abs/2602.00421v1"
+    },
+    {
+      "id": "2512.03119v1",
+      "title": "An infrasound source analysis of the OSIRIS-REx sample return capsule hypersonic re-entry",
+      "published": "2025-12-02",
+      "summary": "The OSIRIS-REx sample return capsule hypersonic re-entry into the atmosphere is a rare opportunity to test a variety of sonic boom source models since the projectile dimensions are well characterized. While the as-flown flight path is unknown, the predicted flight path enables a rough approximation of the source Mach number and location. Six infras",
+      "url": "https://arxiv.org/abs/2512.03119v1"
+    },
+    {
+      "id": "2510.03655v1",
+      "title": "Effect of a Fine-Scale Layered Structure of the Atmosphere on Infrasound Signals from Fragmenting Meteoroids",
+      "published": "2025-10-04",
+      "summary": "We investigate the influence of a fine-scale (FS) layered structure in the atmosphere on the propagation of infrasound signals generated by fragmenting meteoroids. Using a pseudo-differential parabolic equation (PPE) approach, we model broadband acoustic signals from point sources at altitudes of 35-100 km. The presence of FS fluctuations in the st",
+      "url": "https://arxiv.org/abs/2510.03655v1"
+    },
+    {
+      "id": "2509.01034v1",
+      "title": "Comparison calibration system for digital-output infrasound sensors",
+      "published": "2025-09-01",
+      "summary": "Recent advancements in micro electro-mechanical systems (MEMS) have enabled the application of digital-output MEMS modules in infrasound monitoring. These modules, combining MEMS pressure sensors and microcontrollers, provide timestamped digital pressure data. Compared with conventional analog infrasound sensors, the affordability and compactness o",
+      "url": "https://arxiv.org/abs/2509.01034v1"
+    },
+    {
+      "id": "2506.16099v1",
+      "title": "BLADE: An Automated Framework for Classifying Light Curves from the Center for Near-Earth Object Studies (CNEOS) Fireball Database",
+      "published": "2025-06-19",
+      "summary": "Fireballs (bolides) are high-energy luminous phenomena produced when meteoroids and small asteroids enter Earth's atmosphere at hypersonic speeds, often resulting in fragmentation or complete disintegration accompanied by significant energy release. The resulting bolide light curves capture temporal brightness variations as these objects traverse i",
+      "url": "https://arxiv.org/abs/2506.16099v1"
+    },
+    {
+      "id": "2506.06358v1",
+      "title": "Towards real-time assessment of infrasound event detection capability using deep learning-based transmission loss estimation",
+      "published": "2025-06-03",
+      "summary": "Accurate modeling of infrasound transmission loss is essential for evaluating the performance of the International Monitoring System, enabling the effective design and maintenance of infrasound stations to support compliance of the Comprehensive Nuclear-Test-Ban Treaty. State-of-the-art propagation modeling tools enable transmission loss to be fine",
+      "url": "https://arxiv.org/abs/2506.06358v1"
+    }
+  ],
+  "near_ultrasonic": [
+    {
+      "id": "2603.13847v1",
+      "title": "Sirens' Whisper: Inaudible Near-Ultrasonic Jailbreaks of Speech-Driven LLMs",
+      "published": "2026-03-14",
+      "summary": "Speech-driven large language models (LLMs) are increasingly accessed through speech interfaces, introducing new security risks via open acoustic channels. We present Sirens' Whisper (SWhisper), the first practical framework for covert prompt-based attacks against speech-driven LLMs under realistic black-box conditions using commodity hardware. SWhi",
+      "url": "https://arxiv.org/abs/2603.13847v1"
+    },
+    {
+      "id": "2508.02116v2",
+      "title": "SUAD: Solid-Channel Ultrasound Injection Attack and Defense to Voice Assistants",
+      "published": "2025-08-04",
+      "summary": "As a versatile AI application, voice assistants (VAs) have become increasingly popular, but are vulnerable to security threats. Attackers have proposed various inaudible attacks, but are limited by cost, distance, or LoS. Therefore, we propose \\name~Attack, a long-range, cross-barrier, and interference-free inaudible voice attack via solid channels",
+      "url": "https://arxiv.org/abs/2508.02116v2"
+    },
+    {
+      "id": "2506.08866v1",
+      "title": "SmartAttack: Air-Gap Attack via Smartwatches",
+      "published": "2025-06-10",
+      "summary": "Air-gapped systems are considered highly secure against data leaks due to their physical isolation from external networks. Despite this protection, ultrasonic communication has been demonstrated as an effective method for exfiltrating data from such systems. While smartphones have been extensively studied in the context of ultrasonic covert channel",
+      "url": "https://arxiv.org/abs/2506.08866v1"
+    },
+    {
+      "id": "2404.04769v1",
+      "title": "Safeguarding Voice Privacy: Harnessing Near-Ultrasonic Interference To Protect Against Unauthorized Audio Recording",
+      "published": "2024-04-07",
+      "summary": "The widespread adoption of voice-activated systems has modified routine human-machine interaction but has also introduced new vulnerabilities. This paper investigates the susceptibility of automatic speech recognition (ASR) algorithms in these systems to interference from near-ultrasonic noise. Building upon prior research that demonstrated the abi",
+      "url": "https://arxiv.org/abs/2404.04769v1"
+    },
+    {
+      "id": "2305.10358v2",
+      "title": "NUANCE: Near Ultrasound Attack On Networked Communication Environments",
+      "published": "2023-04-25",
+      "summary": "This study investigates a primary inaudible attack vector on Amazon Alexa voice services using near ultrasound trojans and focuses on characterizing the attack surface and examining the practical implications of issuing inaudible voice commands. The research maps each attack vector to a tactic or technique from the MITRE ATT&CK matrix, covering ent",
+      "url": "https://arxiv.org/abs/2305.10358v2"
+    },
+    {
+      "id": "2208.09764v1",
+      "title": "GAIROSCOPE: Injecting Data from Air-Gapped Computers to Nearby Gyroscopes",
+      "published": "2022-08-21",
+      "summary": "It is known that malware can leak data from isolated, air-gapped computers to nearby smartphones using ultrasonic waves. However, this covert channel requires access to the smartphone's microphone, which is highly protected in Android OS and iOS, and might be non-accessible, disabled, or blocked. In this paper we present `GAIROSCOPE,' an ultrasonic",
+      "url": "https://arxiv.org/abs/2208.09764v1"
+    },
+    {
+      "id": "2108.02148v1",
+      "title": "Pervasive Hand Gesture Recognition for Smartphones using Non-audible Sound and Deep Learning",
+      "published": "2021-08-04",
+      "summary": "Due to the mass advancement in ubiquitous technologies nowadays, new pervasive methods have come into the practice to provide new innovative features and stimulate the research on new human-computer interactions. This paper presents a hand gesture recognition method that utilizes the smartphone's built-in speakers and microphones. The proposed syst",
+      "url": "https://arxiv.org/abs/2108.02148v1"
+    },
+    {
+      "id": "2107.03103v1",
+      "title": "An Ultrasonically Actuated Fine-Needle Creates Cavitation in Bovine Liver",
+      "published": "2021-07-07",
+      "summary": "Ultrasonic cavitation is being used in medical applications as a way to influence matter, such as tissue or drug vehicles, on a micro-scale. Oscillating or collapsing cavitation bubbles provide transient mechanical force fields, which can, e.g., fractionate soft tissue or even disintegrate solid objects such as calculi. Our recent study demonstrate",
+      "url": "https://arxiv.org/abs/2107.03103v1"
+    },
+    {
+      "id": "2103.11261v2",
+      "title": "High Data Rate Near-Ultrasonic Communication with Consumer Devices",
+      "published": "2021-03-20",
+      "summary": "Automating device pairing and credential exchange in consumer devices reduce the time users spend with mundane tasks and improve the user experience. Acoustic communication is gaining traction as a practical alternative to Bluetooth or Wi-Fi because it can enable quick and localized information transfer between consumer devices with built-in hardwa",
+      "url": "https://arxiv.org/abs/2103.11261v2"
+    },
+    {
+      "id": "2012.04770v1",
+      "title": "SonicPACT: An Ultrasonic Ranging Method for the Private Automated Contact Tracing (PACT) Protocol",
+      "published": "2020-12-08",
+      "summary": "Throughout the course of the COVID-19 pandemic, several countries have developed and released contact tracing and exposure notification smartphone applications (apps) to help slow the spread of the disease. To support such apps, Apple and Google have released Exposure Notification Application Programming Interfaces (APIs) to infer device (user) pro",
+      "url": "https://arxiv.org/abs/2012.04770v1"
+    },
+    {
+      "id": "2008.00136v1",
+      "title": "BatNet: Data transmission between smartphones over ultrasound",
+      "published": "2020-08-01",
+      "summary": "In this paper, we present BatNet, a data transmission mechanism using ultrasound signals over the built-in speakers and microphones of smartphones. Using phase shift keying with an 8-point constellation and frequencies between 20--24kHz, it can transmit data at over 600bit/s up to 6m. The target application is a censorship-resistant mesh network. W",
+      "url": "https://arxiv.org/abs/2008.00136v1"
+    },
+    {
+      "id": "2005.00395v1",
+      "title": "POWER-SUPPLaY: Leaking Data from Air-Gapped Systems by Turning the Power-Supplies Into Speakers",
+      "published": "2020-05-01",
+      "summary": "It is known that attackers can exfiltrate data from air-gapped computers through their speakers via sonic and ultrasonic waves. To eliminate the threat of such acoustic covert channels in sensitive systems, audio hardware can be disabled and the use of loudspeakers can be strictly forbidden. Such audio-less systems are considered to be \\textit{audi",
+      "url": "https://arxiv.org/abs/2005.00395v1"
+    },
+    {
+      "id": "1807.07617v1",
+      "title": "SoniControl - A Mobile Ultrasonic Firewall",
+      "published": "2018-07-19",
+      "summary": "The exchange of data between mobile devices in the near-ultrasonic frequency band is a new promising technology for near field communication (NFC) but also raises a number of privacy concerns. We present the first ultrasonic firewall that reliably detects ultrasonic communication and provides the user with effective means to prevent hidden data exc",
+      "url": "https://arxiv.org/abs/1807.07617v1"
+    },
+    {
+      "id": "1803.03422v2",
+      "title": "MOSQUITO: Covert Ultrasonic Transmissions between Two Air-Gapped Computers using Speaker-to-Speaker Communication",
+      "published": "2018-03-09",
+      "summary": "In this paper we show how two (or more) airgapped computers in the same room, equipped with passive speakers, headphones, or earphones can covertly exchange data via ultrasonic waves. Microphones are not required. Our method is based on the capability of a malware to exploit a specific audio chip feature in order to reverse the connected speakers f",
+      "url": "https://arxiv.org/abs/1803.03422v2"
+    },
+    {
+      "id": "1803.05987v2",
+      "title": "Enhanced navigation systems in GPS denied environments for visually impaired people: A Survey",
+      "published": "2018-03-08",
+      "summary": "Although outdoor navigation systems are mostly dependent on GPS, indoor systems have to rely upon different techniques for localizing the user, due to unavailability of GPS signals in indoor environments. Over the past decade various indoor navigation systems have been developed. In this paper an overview of some existing indoor navigation systems ",
+      "url": "https://arxiv.org/abs/1803.05987v2"
+    }
+  ],
+  "vibrometry": [
+    {
+      "id": "2605.13482v3",
+      "title": "Site-selective preparation of two-dimensional dipolar quantum gases in an optical beat-note lattice",
+      "published": "2026-05-13",
+      "summary": "High-resolution microscopy of two-dimensional dipolar quantum gases requires selecting individual atomic layers, a task complicated for strongly magnetic lanthanide atoms by the limited applicability of standard magnetic-gradient techniques. We present an all-optical method for the deterministic spatial selection of single- and bilayer samples of c",
+      "url": "https://arxiv.org/abs/2605.13482v3"
+    },
+    {
+      "id": "2404.18972v1",
+      "title": "Impact of whole-body vibrations on electrovibration perception varies with target stimulus duration",
+      "published": "2024-04-29",
+      "summary": "This study explores the impact of whole-body vibrations induced by external vehicle perturbations, such as aircraft turbulence, on the perception of electrovibration displayed on touchscreens. Electrovibration holds promise as a technology for providing tactile feedback on future touchscreens, addressing usability challenges in vehicle cockpits. Ho",
+      "url": "https://arxiv.org/abs/2404.18972v1"
+    },
+    {
+      "id": "2209.03083v1",
+      "title": "Interactive Visual Analysis of Structure-borne Noise Data",
+      "published": "2022-09-07",
+      "summary": "Numerical simulation has become omnipresent in the automotive domain, posing new challenges such as high-dimensional parameter spaces and large as well as incomplete and multi-faceted data. In this design study, we show how interactive visual exploration and analysis of high-dimensional, spectral data from noise simulation can facilitate design imp",
+      "url": "https://arxiv.org/abs/2209.03083v1"
+    },
+    {
+      "id": "2207.05234v4",
+      "title": "Tailoring Structure-borne Sound Through Bandgap Engineering in Phononic Crystals and Metamaterials: A Comprehensive Review",
+      "published": "2022-07-12",
+      "summary": "In solid state physics, a bandgap (BG) refers to a range of energies where no electronic states can exist. This concept was extended to classical waves, spawning the entire fields of photonic and phononic crystals where BGs are frequency (or wavelength) intervals where wave propagation is prohibited. For elastic waves, BGs are found in periodically",
+      "url": "https://arxiv.org/abs/2207.05234v4"
+    },
+    {
+      "id": "2201.06295v1",
+      "title": "Analytical Research on a Locally Resonant Periodic Foundation for Mitigating Structure-Borne Vibrations from Subway",
+      "published": "2022-01-17",
+      "summary": "Filtering properties of locally resonant periodic foundations (LRPFs) have inspired an innovative direction towards the mitigation of structural vibrations. To mitigate the structure-borne vibrations from subways, this study proposes an LRPF equipped with a negative stiffness device connecting the resonator and primary structure. The proposed LRPF ",
+      "url": "https://arxiv.org/abs/2201.06295v1"
+    },
+    {
+      "id": "1103.4935v2",
+      "title": "Electronic Structures, Born Effective Charges and Spontaneous Polarization in Magnetoelectric Gallium Ferrite",
+      "published": "2011-03-25",
+      "summary": "We present a theoretical study of the structure-property correlation in gallium ferrite, based on the first principles calculations followed by a subsequent comparison with the experiments. Local spin density approximation (LSDA+U) of the density functional theory has been used to calculate the ground state structure, electronic band structure, den",
+      "url": "https://arxiv.org/abs/1103.4935v2"
+    },
+    {
+      "id": "0905.1251v2",
+      "title": "Dynamic effective mass of granular media and the attenuation of structure-borne sound",
+      "published": "2009-05-08",
+      "summary": "We report an experimental and theoretical investigation of the frequency-dependent effective mass, $\\tilde{M}(\u03c9)$, of loose granular particles which occupy a rigid cavity to a given filling fraction, the remaining volume being air of differing humidities. This allow us to study the mechanisms of elastic response and attenuation of acoustic modes in",
+      "url": "https://arxiv.org/abs/0905.1251v2"
+    }
+  ]
+}

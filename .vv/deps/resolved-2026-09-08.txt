@@ -1,0 +1,5 @@
+google-adk==1.39.1
+google-genai==2.22.0
+google-cloud-storage==3.13.1
+scipy==1.18.1
+numpy==2.5.3

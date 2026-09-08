@@ -2,7 +2,7 @@
 
 **Pull date:** 2026-09-07  
 **GCP project:** `bear-iot-asp-rec` (project number `1062135198697`)  
-**Account:** `betty@bearresearch.io` (via `gcloud`)
+**Account:** `betty@bearresearch.io` (via `gcloud`; Chrome iOS → active Google account = this org account)
 
 ## Gemini / Discovery Engine app (created)
 
@@ -27,8 +27,9 @@ curl -sS -H "Authorization: Bearer $TOKEN" -H "x-goog-user-project: bear-iot-asp
 
 ## Hybrid autoroute (v0)
 
-Phones post compact telemetry → private GCS → **ADK agent** (Vertex Gemini) authors JSON param patches → nodes poll/apply.  
-**One Gemini Enterprise seat** drives continuous monitor + audio-engineering control. Safari tabs do **not** call Gemini directly (respects **5 seats**).
+**Primary loop:** sudden-frequency detection on-device → local rotate + telemetry → private GCS → **ADK agent** (Vertex Gemini) authors JSON param patches → nodes poll/apply (**autorotate the noises**).  
+**One Gemini Enterprise seat** drives continuous monitor + audio-engineering control. Safari tabs do **not** call Gemini directly (respects **5 seats**).  
+Carrier audio out remains **iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md)).
 
 See [adk-autoroute.md](adk-autoroute.md), [autoroute.md](autoroute.md), [colab-gemini-pipeline.md](colab-gemini-pipeline.md).
 
@@ -67,6 +68,8 @@ See **[notion-links.md](notion-links.md)** for the 2026-09-07 workspace search l
 ## Related
 
 - [docs/autoroute.md](autoroute.md) — telemetry + patch schema + clamps  
+- [docs/gcp-recordings.md](gcp-recordings.md) — private GCS layout (public ops; no keys)  
+- [docs/iphone-dedicated-mode.md](iphone-dedicated-mode.md) — Chrome iOS org account + Hold checklist  
 - [docs/notion-links.md](notion-links.md) — Notion search hits / hub follow-up  
 - [docs/physics.md](physics.md) — NS / seismo-acoustic priors  
 - [docs/awesome-iot-asp.md](awesome-iot-asp.md)

@@ -64,7 +64,7 @@ services/autoroute-adk/
 | `write_patch` | Validate clamps → write `meta/patches/<nodeId>.json` (`schemaVersion: 1`) |
 | `ingest_telemetry` | Store heartbeat / suddenFreq beacon |
 | `list_safety_clamps` | Expose band/gain/duty limits to the model |
-| `seismo_acoustic_priors` | Short NS / linearized-acoustic / earthquake-coupling priors |
+| `seismo_acoustic_priors` | NS / linearized-acoustic / seismo priors + vib→algo weights + literature IDs; LF 10–20 Hz gated by `lfDriveCapable` |
 | `colab_handoff_note` | Emit a Colab ETL job note (spectra/vib features) for Gemini seat analysis |
 
 ## Gemini Enterprise pairing

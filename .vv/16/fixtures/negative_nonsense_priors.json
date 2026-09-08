@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "deviceId": "node1",
+  "ts": "2026-09-08T00:00:03Z",
+  "algo": "hop",
+  "peakHz": 20000,
+  "suddenFreq": true,
+  "absA": 0.05,
+  "micEnergy": 0.04,
+  "vibClass": "not_a_real_vib_class",
+  "priors": ["asdf_bogus_prior", "navier_stokes_full_cfd_on_phone", "made_up_doi"],
+  "vol": 100,
+  "fMin": 17000,
+  "fMax": 23000,
+  "pulseMs": 80,
+  "shriekMs": 50,
+  "holdManual": false,
+  "lfDriveCapable": false,
+  "suddenState": "rotate",
+  "geminiAutorouteFlag": true,
+  "event": "suddenFreq"
+}

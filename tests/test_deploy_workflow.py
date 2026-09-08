@@ -73,6 +73,8 @@ GOOD_FILES = {
     "index.html": b"<html><body>Hold / Manual <button id=holdPatchBtn></button> holdManual</body></html>",
     "patch.json": b'{"schemaVersion": 1, "algo": "hop"}',
     "manifest.webmanifest": b'{"name": "hop"}',
+    "apple-touch-icon.png": b"\x89PNG\r\n\x1a\nicon-v1",
+    "README.txt": b"public assets\n",
 }
 ROUTES = {"/": "index.html", "/patch.json": "patch.json", "/manifest.webmanifest": "manifest.webmanifest"}
 
@@ -90,27 +92,38 @@ class _LoopbackSite:
                 pass
 
             def do_GET(self):
+                raw = self.path.split("?", 1)[0]
                 site.requests.append({"path": self.path, "headers": {k.lower(): v for k, v in self.headers.items()}})
                 if redirect_to is not None:
                     # Only redirect known routes, and build Location from the constant route key —
                     # never from the raw request path (CodeQL py/http-response-splitting).
-                    known = {route: route for route in ROUTES}.get(self.path)
+                    known = {route: route for route in ROUTES}.get(raw)
                     if known is None:
                         self.send_response(404)
                         self.end_headers()
                         return
                     self.send_response(302)
-                    self.send_header("Location", redirect_to + known)
+                    # Include a query on purpose so smoke must redact it from CI output.
+                    self.send_header("Location", redirect_to + known + "?sig=SHOULD_NOT_LOG")
                     self.end_headers()
                     return
-                name = ROUTES.get(self.path)
-                if name is None:
+                if raw == "/":
+                    name = "index.html"
+                else:
+                    name = raw.lstrip("/")
+                if name not in site.files:
                     self.send_response(404)
                     self.end_headers()
                     return
                 body = site.files[name]
                 self.send_response(200)
-                self.send_header("Content-Type", "application/manifest+json" if name.endswith("webmanifest") else "text/html")
+                if name.endswith("webmanifest"):
+                    ctype = "application/manifest+json"
+                elif name.endswith(".png"):
+                    ctype = "image/png"
+                else:
+                    ctype = "text/html"
+                self.send_header("Content-Type", ctype)
                 self.send_header("ETag", '"%s"' % hashlib.md5(body).hexdigest())
                 if permissions_policy is not None:
                     self.send_header("Permissions-Policy", permissions_policy)
@@ -413,6 +426,8 @@ def test_dp15_redirect_never_followed_and_bypass_never_forwarded():
             res = _smoke(hop.url, BYPASS=canary)
         assert res.returncode == 1
         assert "HTTP 302: redirect to" in res.stderr and "not followed" in res.stderr, res.stderr
+        assert "SHOULD_NOT_LOG" not in res.stdout + res.stderr, res.stderr
+        assert "?[redacted]" in res.stderr, res.stderr
         assert "FAIL: GET %s -> HTTP 302 (expected 200)" % hop.url in res.stderr
         assert target.requests == [], "redirect target must never be contacted"
         assert canary not in res.stdout + res.stderr
@@ -448,8 +463,17 @@ def test_dp16_build_identity_via_etag(tmp_path: Path):
     assert bad.returncode == 1
     assert "served build is not this checkout" in bad.stderr, bad.stderr
     assert "build identity mismatch" in bad.stderr
-    assert "FAIL: GET %s -> HTTP 200 but build identity mismatch (expected 200)" % site.url in bad.stderr
     assert missing.returncode == 1 and "is not a directory" in missing.stderr
+    # icon-only drift must also fail (false-green class when only the three HTML/JSON hashes matched)
+    icon_stale = tmp_path / "icon_stale"
+    icon_stale.mkdir()
+    for name, body in GOOD_FILES.items():
+        (icon_stale / name).write_bytes(body)
+    (icon_stale / "apple-touch-icon.png").write_bytes(b"\x89PNG\r\n\x1a\nicon-v2-DIFFERENT")
+    with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)") as site:
+        icon_bad = _smoke(site.url, SMOKE_PUBLIC_DIR=str(icon_stale))
+    assert icon_bad.returncode == 1
+    assert "apple-touch-icon.png" in icon_bad.stderr or "served build is not this checkout" in icon_bad.stderr, icon_bad.stderr
     # without SMOKE_PUBLIC_DIR the same stale checkout is irrelevant (plain smoke)
     with _LoopbackSite(GOOD_FILES, permissions_policy="microphone=(self)") as site:
         assert _smoke(site.url).returncode == 0

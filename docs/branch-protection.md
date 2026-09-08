@@ -1,6 +1,6 @@
 # Branch protection for `main` — ruleset `main-protection`
 
-Issue: https://github.com/team-project-pikachu/IoT-ASP/issues/27 (milestone M5)  
+Issue: https://github.com/team-project-pikachu/IoT-ASP/issues/27 (milestone M5)
 Owned files: `.github/rulesets/main-protection.json`, `scripts/gh_protect_main.sh`,
 `tests/test_ruleset_json.py`, this doc. `make protect-main` wraps the script.
 

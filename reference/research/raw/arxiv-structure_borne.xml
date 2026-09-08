@@ -1,0 +1,330 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/6DIAKUddu2HC2UyP5ihFjkm5d6s</id>
+  <title>arXiv Query: search_query=all:"structure-borne" OR all:"structure borne" OR all:vibration OR all:building&amp;id_list=&amp;start=0&amp;max_results=12</title>
+  <updated>2026-09-07T23:11:00Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22structure-borne%22+OR+(all:%22structure+borne%22+OR+(all:vibration+OR+all:building))&amp;start=0&amp;max_results=12&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>12</opensearch:itemsPerPage>
+  <opensearch:totalResults>123799</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05399v1</id>
+    <title>From Interpretability Methods to Interpretable Models</title>
+    <updated>2026-09-04T17:46:33Z</updated>
+    <link href="https://arxiv.org/abs/2609.05399v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05399v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>More than a decade in, explainable AI (XAI) for computer vision has assembled a mature toolbox: attribution, feature visualization, concept-based, and circuit-based methods. Yet almost all of the field's effort has gone into building and comparing these methods, and little into the question they were meant to answer---how interpretable are our models, and are we making progress as they evolve? We argue for shifting the field's focus from methods to models, along two complementary lines. One is already within reach: existing tools let us characterize and compare what different models represent and compute. The other is harder, and largely neglected: whether a model can actually be understood by the humans who rely on it---the independent evaluators on whom trust and certification depend, not the experts confirming what they already expect. It can only be measured, not inferred. We review why the toolbox is mature enough to support both, survey the thin body of work comparing models, draw a parallel to systems neuroscience, and close with a model-centric XAI agenda.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.HC" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T17:46:33Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Julien Colin</name>
+    </author>
+    <author>
+      <name>Nuria Oliver</name>
+    </author>
+    <author>
+      <name>Thomas Serre</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05395v1</id>
+    <title>Multi-Step Tool-Calling over Korean Open Public APIs: A Benchmark and a Data-Synthesis Recipe</title>
+    <updated>2026-09-04T17:44:52Z</updated>
+    <link href="https://arxiv.org/abs/2609.05395v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05395v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Data-sovereignty regulations increasingly require public institutions to deploy open-source, on-premise LLM agents that chain multiple tool-calls across live government APIs. However, open-source models consistently underperform in this multi-step setting, and no existing benchmark measures the gap. We introduce the Korean Open Public API Benchmark (KOPA-Bench), comprising 145 real-world tasks. To close this gap, we present EDGE, an Execution-grounded Dynamic Graph for tool-calling data synthEsis driven by live execution. EDGE builds a graph of how each tool's output can feed another's input, keeps only the links that succeed when actually called against the live APIs, and traverses these verified links to synthesize executable multi-step trajectories. Fine-tuned via GRPO on the resulting dataset, our 9B model nearly matches the untuned 27B model from the same family, improving substantially not only on KOPA-Bench but also on the BFCL benchmark.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T17:44:52Z</published>
+    <arxiv:comment>30 pages, 7 figures, 26 tables. Accepted to EMNLP 2026 Industry Track</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Dain Kim</name>
+    </author>
+    <author>
+      <name>Eungi Cho</name>
+    </author>
+    <author>
+      <name>Kyumin Kim</name>
+    </author>
+    <author>
+      <name>Shinyeong Noh</name>
+    </author>
+    <author>
+      <name>Kyuseong Lim</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05380v1</id>
+    <title>Propagation Model for SSC attacks: Why SBOM (tools) don't tell the whole truth</title>
+    <updated>2026-09-04T17:31:30Z</updated>
+    <link href="https://arxiv.org/abs/2609.05380v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05380v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Ensuring security of software supply chains (SSC) is indispensable in today's world of modern software practices. SBOM (tools) have been introduced as relevant building blocks to ensure the transparency of SSCs. However they have serious limitations in practices as their vulnerability detection and interpretation capacity is not sufficient to explain exploitability effects that can propagte through the whole chain. To address this gap, we propose a propagation-centred approach to SSC security and introduce a four-stage propagation model. We empirically evaluate four open-source SBOM tools against each stage using three projects and Log4j vulnerability as our test case. Our results show that current SBOM tools systematically support only Stage 1 (Structural Exposure) and Stage 2 (Vulnerability Class Presence) while Stage 3 (Code Reachability) and Stage 4 (Taint Path Analysis) require capabilities absent from the SBOM ecosystem. We argue that putting propagation effects at the centre of SSC security research is essential to prevent cyber risk evolving into systemic risks. Our research findings contribute to a future research and design of modern SSC security tools.</summary>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T17:31:30Z</published>
+    <arxiv:primary_category term="cs.CR"/>
+    <arxiv:journal_ref>In: Afzal, Z., Kochberger, P., Atli, B., Asplund, M. (eds) Availability, Reliability and Security. ARES 2026 International Workshops. ARES 2026. Lecture Notes in Computer Science, vol 16901. Springer, Cham</arxiv:journal_ref>
+    <author>
+      <name>Ljubica Grgic</name>
+    </author>
+    <author>
+      <name>Lazar Maksimovic</name>
+    </author>
+    <author>
+      <name>Pavel Laskov</name>
+    </author>
+    <arxiv:doi>10.1007/978-3-032-35579-9_30</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1007/978-3-032-35579-9_30" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05378v1</id>
+    <title>Full-field laser-Doppler-vibrometry FRF dataset for a four-bolt aluminum plate under bolt-torque variation</title>
+    <updated>2026-09-04T17:28:51Z</updated>
+    <link href="https://arxiv.org/abs/2609.05378v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05378v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The dataset described in this article was constructed using the results of laser Doppler vibrometry experiments conducted on an aluminum plate having four bolts. The database captures the variation in the vibration characteristics of the plate as a function of changes in tightening torque on the bolts. In total, there were 18 different states for the tightening torque, ranging from a situation where all bolts are tightened to all bolts being loose. Other possible combinations include states with varying torque applied to just one bolt, and those involving multiple loose bolts. Data consist of 1,836 files exported from Polytec PSV-500, categorized as amplitude and phase data, for frequency ranges spanning 1 Hz to 51,200 Hz at intervals of 1 Hz. The identified zones were analyzed at 51 scan points for all states of torque. Supporting documents included specifications of the test plate, scan point and torque state information, selected resonance peaks tables, measured frequencies for seven resonance groups, correlation values for all FRF, visualizations, and code scripts.</summary>
+    <category term="eess.SP" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="eess.SY" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T17:28:51Z</published>
+    <arxiv:primary_category term="eess.SP"/>
+    <author>
+      <name>Berkay Kullukcu</name>
+    </author>
+    <author>
+      <name>Dina Hannebauer</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05370v1</id>
+    <title>When LLM Decompilers Recompile More and Preserve Less</title>
+    <updated>2026-09-04T17:16:18Z</updated>
+    <link href="https://arxiv.org/abs/2609.05370v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05370v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Decompilation recovers high-level source from compiled machine code and serves as a foundation for security tasks such as vulnerability detection and malware analysis. Traditional decompilers like Ghidra and Hex-Rays expose whatever they cannot resolve as visible placeholders and often emit pseudocode that will not compile or execute; LLM-based decompilers produce clean, idiomatic C and are now judged almost entirely by recompilability and re-executability: whether the output builds and passes its shipped input/output tests. We show that these metrics can reward the wrong path: a function may recompile and pass every shipped test yet diverge on other legitimate inputs, and a disclosed vulnerability may disappear from the recompiled code with no visible trace of the crash. Neither failure is caught by existing suites.
+  To address this gap, we propose Decompile-Diverge, a behavioral comparison oracle not relying on fixed or hand-crafted tests: for each function it synthesizes a driver, grows a fuzzing corpus from the reference, and reruns the decompiled code on the same inputs to detect changes in the function's behavior. Across eight systems in nine configurations on established LLM decompilation corpora, candidates that pass every shipped test still diverge from the original on our input corpus: 4.9% overall, and as many as 13% for a single system. On 300 real GitHub library functions and 287 CVE-grounded functions, recompilability and behavioral agreement can come apart: the strongest refinement LLM lifts Ghidra's build rate from 75% to 90%, while its Matched rate falls from 74% to 62%; on disclosed vulnerabilities, up to one tenth exhibit Crash Absence in its output. Source-level analysis traces this divergence to introduced fields, types, callees, and guards that replace the visible unknowns traditional tools leave behind.</summary>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T17:16:18Z</published>
+    <arxiv:primary_category term="cs.CR"/>
+    <author>
+      <name>Chang Liu</name>
+    </author>
+    <author>
+      <name>Edward Raff</name>
+    </author>
+    <author>
+      <name>Kristopher Micinski</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05335v1</id>
+    <title>The History Is the Detector: Executing CVE Patch History, End-to-End</title>
+    <updated>2026-09-04T16:40:22Z</updated>
+    <link href="https://arxiv.org/abs/2609.05335v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05335v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Public vulnerability databases collect rich information about known software flaws, including their weakness types, affected components, and related patches. Fixing commits provide the exact code changes that removed these flaws. While these records capture why the original code was unsafe, they are documented mainly for human inspection rather than automated reuse. Consequently, the same unsafe conditions may still exist elsewhere in code without a known advisory, leaving much of this detection knowledge unused.
+  We present BUGSTONE-E2E, a framework that transforms vulnerability history into executable detection rules and validates their findings. First, BUGSTONE-E2E mines reusable rules from verified fixing commits, capturing scan anchors, fix semantics, and CVE provenance and organizing them by CWE and language. Second, detection follows a funnel-shaped pipeline: early stages process a large pool of candidates using lightweight analysis, while later stages apply increasingly capable and expensive models to a shrinking set of targets. Specifically, BUGSTONE-E2E first enumerates call sites matching rule anchors using Tree-sitter, then removes benign sites using lightweight heuristics without LLM calls. Next, LLM-based agents inspect the remaining candidates guided by the rule. Following this inspection, the system re-triages surviving candidates and builds runtime verifications, then generates scope-checked patches validated via two-sided differential tests. Using 19,325 high-severity CVEs from 2022 to 2026, BUGSTONE-E2E identifies 2,710 fixing commits and constructs 1,033 detection rules across 56 CWE families, packaged into 172 skills. When applied across 14 programs, it produced runtime evidence for 644 findings. These results demonstrate that CVE history can be turned into an executable workflow, transforming past vulnerabilities into reproducible detection and repair.</summary>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T16:40:22Z</published>
+    <arxiv:primary_category term="cs.CR"/>
+    <author>
+      <name>Qiushi Wu</name>
+    </author>
+    <author>
+      <name>Kevin Eykholt</name>
+    </author>
+    <author>
+      <name>Youngja Park</name>
+    </author>
+    <author>
+      <name>Xiaokui Shu</name>
+    </author>
+    <author>
+      <name>Dhilung Kirat</name>
+    </author>
+    <author>
+      <name>Douglas Lee Schales</name>
+    </author>
+    <author>
+      <name>Ian Molloy</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05318v1</id>
+    <title>Optimal Rates for Agentic Networked Information Aggregation</title>
+    <updated>2026-09-04T16:12:16Z</updated>
+    <link href="https://arxiv.org/abs/2609.05318v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05318v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Building on the pioneering paper of Kearns, Roth, and Ryu (SODA'26), we study information aggregation in a networked learning model. The model captures a central pattern in agentic AI: each agent sees only part of the data and passes on only its own conclusion. Their model considers a linear regression problem with the mean squared error (MSE) loss. Agents sit in a DAG and each sees only a subset of the features and its parents' predictions, fits a linear predictor, and passes only its prediction forward. The benchmark is the full-feature learner that sees all raw features. A path of depth $D$ is $M$-covered if every block of $M$ consecutive agents collectively sees all raw features. Kearns, Roth, and Ryu proved that the excess mean squared error of the last agent on such a path is $O(M/\sqrt D)$, and gave a cyclic instance with excess error $Ω(M/D)$ for $D&lt;M^2$.
+  We close this gap: the correct rate is constant up to depth $M^2$, and $Θ(M^2/D)$ beyond it. We first give a sharper analysis of the cyclic instance and improve its lower bound to $Ω(\sqrt{M/D})$ for $D&lt;M^2$. We then construct, for every depth $D\ge M^2$, an $M$-covered path of depth $D$ with excess error $Ω(M^2/D)$. The same instance gives the constant lower bound for all $D &lt; M^2$. We also show that for any fixed distribution the excess error contracts geometrically along the path, ruling out any single instance that witnesses any polynomial lower bound at every depth.
+  Finally, we prove the same optimal rate for logistic classification in the logit-passing model of Bateni et al., which considers the binary cross-entropy (BCE) loss. The same improved upper bound of $O(M^2/D)$ holds, and we transfer all the regression lower bounds by showing that on those examples the logistic path follows the least-squares path up to rescaling.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.GT" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="econ.TH" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T16:12:16Z</published>
+    <arxiv:comment>Initial version submitted to SODA 2027 on July 9, 2026</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>MohammadHossein Bateni</name>
+    </author>
+    <author>
+      <name>Zahra Hadizadeh</name>
+    </author>
+    <author>
+      <name>MohammadTaghi Hajiaghayi</name>
+    </author>
+    <author>
+      <name>Mahdi JafariRaviz</name>
+    </author>
+    <author>
+      <name>Shayan Taherijam</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05314v1</id>
+    <title>Large Language Models for HVAC Operations in Building Energy Systems: A Critical Review of Methods, Applications, and Deployment Readiness</title>
+    <updated>2026-09-04T16:08:05Z</updated>
+    <link href="https://arxiv.org/abs/2609.05314v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05314v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Building automation systems generate rich sensor data yet remain insight-poor because heterogeneous point naming, missing metadata, and fragmented documentation obstruct their operational use. This systematic review analyses and codes 66 peer-reviewed studies on large language models (LLMs) for HVAC operations published between 2023 and March 2026. Each study is classified across five application families and three LLM method families and assessed for evidence realism, deployment readiness, and the responsibility boundary between the LLM and physical HVAC decisions. The corpus is concentrated in building energy modelling (BEM, 32 of 66 papers), while load forecasting remains too sparse for subfield-level conclusions. Only four studies reach pilot-level evidence, and none reports sustained operational deployment. No study was classified as ready-now for industry adoption; three were near-term and 63 research-only. Nevertheless, several bounded, human-in-the-loop uses merit near-term trials, including point-name normalisation, document-grounded operator support, BEM workflow assistance, and advisory interfaces around physics-based controllers. Conventional machine learning (ML), model predictive control (MPC), reinforcement learning (RL) and ontology-based tools remain more adopted for high-frequency control, short-horizon numerical forecasting, and well-posed ontology mapping, while autonomous agentic operation and unvalidated occupant proxies remain research-stage. Current evidence therefore supports LLMs primarily as semantic and workflow layers rather than autonomous HVAC controllers. Future work should prioritise field-validated benchmarks, orchestration evaluation under operational constraints, and LLM-MPC/RL architectures with bounded latency and verifiable safety properties.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="eess.SY" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T16:08:05Z</published>
+    <arxiv:comment>38 pages, 9 figures, 16 tables. Submitted to Energy and Buildings</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Alexander Neubauer</name>
+    </author>
+    <author>
+      <name>Tianzhen Hong</name>
+    </author>
+    <author>
+      <name>Han Li</name>
+    </author>
+    <author>
+      <name>Mengbo Yu</name>
+    </author>
+    <author>
+      <name>Amin Darbandi</name>
+    </author>
+    <author>
+      <name>Yannick Fürst</name>
+    </author>
+    <author>
+      <name>Martin Kriegel</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05285v1</id>
+    <title>Rapid quenching and early gas depletion in the core of a galaxy protocluster at z=2.2</title>
+    <updated>2026-09-04T15:40:39Z</updated>
+    <link href="https://arxiv.org/abs/2609.05285v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05285v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Understanding how galaxy evolution is affected in forming high-z overdensities is a major open question in modern astrophysics. Here, we present the average properties of the quiescent galaxy population recently identified in the core of the Spiderweb protocluster at z = 2.16. By stacking observations from the Hubble Space Telescope (HST; F160W imaging and G141 grism spectroscopy), the James Webb Space Telescope (JWST; PaBeta narrowband imaging), and the Atacama Large Millimeter/submillimeter Array (ALMA; 1.2 mm dust continuum imaging), we constrained their ensemble star formation history (SFH), residual dust-obscured star formation, and cold gas mass, respectively. The inferred average SFH indicates steady stellar mass growth, with progenitor SFRs consistent with those of massive Halpha emitters (HAEs) in the same structure. This is followed by rapid quenching, on average 500 Myr prior to observation. No significant age differences are found between active galactic nucleus (AGN) hosts and non-AGN systems. We find weak PaBeta emission for 80% of the sample, yet with dust-obscured star formation rates consistent with quiescence in all but one source (ID 443) excluded from the sample. Our galaxies remain individually and globally undetected in the dust continuum, yielding an average gas fraction fgas= Mmol/Mstar&lt;7%, consistent with previously reported gas depletion trends with stellar mass observed in neighboring HAEs. We thus find the Spiderweb protocluster to host a sizable population of gas-depleted, massive quenched galaxies in its core, likely descending from main-sequence galaxy progenitors and building the first elements of the red sequence in this high-z forming cluster.</summary>
+    <category term="astro-ph.GA" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T15:40:39Z</published>
+    <arxiv:comment>16 pages (of which 2 pages for Appendices), 9 Figures, 4 Tables. A&amp;A in press</arxiv:comment>
+    <arxiv:primary_category term="astro-ph.GA"/>
+    <author>
+      <name>C. D'Eugenio</name>
+    </author>
+    <author>
+      <name>H. Dannerbauer</name>
+    </author>
+    <author>
+      <name>A. Naufal</name>
+    </author>
+    <author>
+      <name>J. M. Pérez-Martínez</name>
+    </author>
+    <author>
+      <name>Y. Koyama</name>
+    </author>
+    <author>
+      <name>P. G. Pérez-González</name>
+    </author>
+    <author>
+      <name>Y. H. Zhang</name>
+    </author>
+    <author>
+      <name>T. Kodama</name>
+    </author>
+    <author>
+      <name>K. Daikuhara</name>
+    </author>
+    <arxiv:doi>10.1051/0004-6361/202661445</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1051/0004-6361/202661445" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05284v1</id>
+    <title>GUT: Quantifying and Optimizing the Reasoning Uncertainty of LLMs via Graph Complexity</title>
+    <updated>2026-09-04T15:40:12Z</updated>
+    <link href="https://arxiv.org/abs/2609.05284v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05284v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recent years have witnessed great advances in the reasoning ability of Large Language Models (LLMs). However, the reasoning processes of LLMs often exhibit uncertainty, where LLMs often produce a proliferation of divergent branches at each reasoning step even when fed the same prompting inputs, and certain branches exhibit evidently incredible, even nonsensical, reasoning chains and results. In this paper, we propose the Graph-complexity-based UncerTainty (GUT) method for investigating the reasoning uncertainty of LLMs. The key idea of GUT is to characterize the potential branches of each reasoning chain with a directed acyclic graph, thereby ensuring that all potential branches are comprehensively covered within the graph space. Building upon this recognition, we further build two modules of GUT, that is, a Quantification (GUT-Q) module and an Optimization (GUT-O) module, for quantifying and reducing the reasoning uncertainty of LLMs, respectively. GUT-Q measures LLM reasoning uncertainty by approximating the reasoning space complexity with graph complexity. GUT-O implements uncertainty optimization by treating negative uncertainty as the reward function in reinforcement learning. Experimental results conducted on four LLMs and five datasets validate the effectiveness of GUT.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T15:40:12Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Shuang Liang</name>
+    </author>
+    <author>
+      <name>Xin-Yu Hu</name>
+    </author>
+    <author>
+      <name>Xiang-Jun Ou</name>
+    </author>
+    <author>
+      <name>Shao-Qun Zhang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05253v1</id>
+    <title>GLASS: Graph-Language Alignment with Spherical Scoring for Transferable Graph-Level Anomaly Detection</title>
+    <updated>2026-09-04T15:16:16Z</updated>
+    <link href="https://arxiv.org/abs/2609.05253v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05253v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We introduce GLASS, a framework for graph-level anomaly detection (GLAD) that achieves robust cross-domain transferability through graph-language alignment on the unit hypersphere. GLASS builds a unified representation space by aligning a structure-aware graph encoder with an instruction-aware text embedding via a multi-slice soft cosine objective. Our framework serializes local, global, and semantic graph properties into a compact Graph Descriptor Prompt (GraphDP), creating a text bridge that enables domain-agnostic anomaly scoring. By enforcing multi-scale consistency through Matryoshka representation slices, the model captures anomalous deviations at multiple levels of granularity. For scoring, we formulate anomaly detection as density estimation on the aligned hypersphere and introduce Spherical Multi-Modal Scoring (SMS), which instantiates von Mises-Fisher kernel density estimators in both graph and text embedding spaces. This probabilistic formulation recovers angular k-nearest-neighbor scoring as a high-concentration limiting case and provides a principled fusion of structural and semantic anomaly signals. The shared text embedding space further serves as a cross-domain bridge: by encoding a target domain's GraphDP without target-domain training data, GLASS performs zero-shot anomaly detection, and with only a handful of normal examples, few-shot adaptation via reference-set calibration. Across twelve benchmarks and three meta-domains, GLASS obtains the best average AUROC and rank compared with recent advanced GLAD baselines and enables effective cross-domain transfer.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T15:16:16Z</published>
+    <arxiv:comment>Preprint. This work and project were done in Apr. 2026. This work was included in Xudong Wang's Ph.D. thesis (Defense Passed on 13 Apr. 2026), "Principled and Effective Graph Representation Learning with Application to Anomaly Detection," deposited with The Chinese University of Hong Kong, Shenzhen Library</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Xudong Wang</name>
+    </author>
+    <author>
+      <name>Chris Ding</name>
+    </author>
+    <author>
+      <name>Tongxin Li</name>
+    </author>
+    <author>
+      <name>Jicong Fan</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2609.05233v1</id>
+    <title>Hessian-based molecular conformation augmentation for a scalable and efficient strategy of machine learning interatomic potentials</title>
+    <updated>2026-09-04T15:00:27Z</updated>
+    <link href="https://arxiv.org/abs/2609.05233v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2609.05233v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>While machine-learning interatomic potentials (MLIPs) have successfully learned potential energy surfaces (PES) and atomic forces, many practical applications, such as vibrational analysis and transition state search, rely heavily on the PES Hessian. Yet, standard MLIPs tend to be trained on energy and forces alone, leaving Hessian information largely unexploited. Meanwhile, existing methods that explicitly incorporate the Hessian into training objectives require architectural modifications and introduce significant computational and memory overheads due to higher-order backpropagation. To address these limitations, we propose two Hessian-derived data augmentation schemes: isotropic Gaussian displacement (\textbf{UniAug}) and normal mode-weighted displacement (\textbf{ModeAug}). Both methods utilize simple Taylor expansions, achieving effective augmentation without altering training objectives or extending the autograd graph. This allows seamless, plug-and-play integration with existing architectures and training pipelines. Comprehensive evaluations across non-equilibrium and equilibrium datasets demonstrate that our approach enhances model accuracy while providing practical, task-specific guidelines.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.chem-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-09-04T15:00:27Z</published>
+    <arxiv:comment>45 pages including Supporting Information, with 6 figures and 9 tables in the main text</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Bumju Kwak</name>
+    </author>
+    <author>
+      <name>Jeonghee Jo</name>
+    </author>
+  </entry>
+</feed>

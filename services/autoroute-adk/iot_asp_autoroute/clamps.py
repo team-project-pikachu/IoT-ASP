@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 ALLOWED_ALGOS = frozenset(
-    {"hop", "am_gate", "shriek_chirp", "shriek_sweep", "burst", "infra_mod"}
+    {
+        "hop",
+        "am_gate",
+        "shriek_chirp",
+        "shriek_sweep",
+        "burst",
+        "infra_mod",
+        "cry_mirror",
+        "siren_mirror",
+        "death_metal_mirror",
+    }
 )
 
 # Dual TX bands (C6): default ultrasonic; optional LF when patch/telemetry band=10-20.
@@ -70,6 +81,8 @@ def validate_patch(patch: dict[str, Any]) -> tuple[bool, str, dict[str, Any]]:
                 v = float(out[key])
             except (TypeError, ValueError):
                 return False, f"{key} not numeric", out
+            if not math.isfinite(v):
+                return False, f"{key} not finite", out
             if v < flo or v > fhi:
                 return False, f"{key}={v} outside [{flo},{fhi}] for band {out.get('band')}", out
             out[key] = v
@@ -84,15 +97,20 @@ def validate_patch(patch: dict[str, Any]) -> tuple[bool, str, dict[str, Any]]:
                 v = float(out[key])
             except (TypeError, ValueError):
                 return False, f"{key} not numeric", out
+            if not math.isfinite(v):
+                return False, f"{key} not finite", out
             if v < lo or v > hi:
                 return False, f"{key}={v} outside [{lo},{hi}]", out
             out[key] = v
 
     if "vol" in out and out["vol"] is not None:
         try:
-            vol = normalize_vol_ui_percent(float(out["vol"]))
+            raw_vol = float(out["vol"])
         except (TypeError, ValueError):
             return False, "vol not numeric", out
+        if not math.isfinite(raw_vol):
+            return False, "vol not finite", out
+        vol = normalize_vol_ui_percent(raw_vol)
         if vol > CLAMPS["vol_hard_max"]:
             return False, f"vol={vol} exceeds hard max {CLAMPS['vol_hard_max']}", out
         if vol > CLAMPS["vol_soft_max"]:

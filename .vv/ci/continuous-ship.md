@@ -1,9 +1,9 @@
 # Continuous-ship evidence — Deploy: dev → test → prod (issue #27)
 
 **Config item:** `.github/workflows/deploy.yml` + `vercel.json` (`git.deploymentEnabled.main: false`) +
-`scripts/deploy_smoke.sh` + `scripts/vercel_secrets_check.sh` + `tests/test_deploy_workflow.py`  
-**Docs:** `docs/deploy.md`, `docs/specs/27-continuous-ship-dev-test-prod.md`  
-**Date:** 2026-09-08 (UTC)  
+`scripts/deploy_smoke.sh` + `scripts/vercel_secrets_check.sh` + `tests/test_deploy_workflow.py`
+**Docs:** `docs/deploy.md`, `docs/specs/27-continuous-ship-dev-test-prod.md`
+**Date:** 2026-09-08 (UTC)
 **Status:** `secrets not set as of 2026-09-08 (issue #27)` — no live Actions deploy run exists yet;
 `deploy.yml` only fires from the default branch after merge, and the deploy jobs skip until the secrets below
 are set. Everything offline is green (see Observed).
@@ -84,3 +84,11 @@ python3 -m pytest tests -q
 | DP-01 … DP-17 (offline) | **PASS** (local) |
 | Review findings (header diagnostic, redirect/bypass leak, hook false-green) | **FIXED** — regression tests DP-14 … DP-17 |
 | Live dev → test → prod run | **PENDING** — blocked on secrets (owner action, `docs/deploy.md` §b–d) |
+
+## Trigger-SHA invariant
+
+Every checkout in `gates`, `deploy_dev`, `test`, and `deploy_prod` uses
+the run-level `DEPLOY_REF`. A `workflow_run` computes it from
+`github.event.workflow_run.head_sha`, so all gates and deployments use
+the exact commit CI tested. A manual dispatch uses its requested `ref`,
+or `main` when that input is empty.

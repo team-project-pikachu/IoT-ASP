@@ -79,7 +79,9 @@ SENSOR_COLUMNS: tuple[str, ...] = (
     "ctxResumes",
     "watchdogTrips",
 )
-ALL_COLUMNS: tuple[str, ...] = TELEMETRY_FEATURE_COLUMNS + SENSOR_COLUMNS
+ALL_COLUMNS: tuple[str, ...] = tuple(
+    dict.fromkeys(TELEMETRY_FEATURE_COLUMNS + SENSOR_COLUMNS)
+)
 
 MIC_DIFF_ALPHA = 0.85
 BAND_LF_THR_DB = -60.0
@@ -238,7 +240,8 @@ def validate_node(node: Any) -> str:
     value could escape those prefixes in the dry-run mirror, so it is refused.
     """
     s = str(node) if node is not None else ""
-    if not NODE_RE.match(s):
+    # fullmatch: re.match + $ still accepts a trailing newline ("node1\n").
+    if not NODE_RE.fullmatch(s):
         raise ValueError(f"refuse: node id must match {NODE_RE.pattern!r}, got {s!r}")
     return s
 

@@ -228,7 +228,7 @@ test.describe("public blaster smoke", () => {
     expect(recs.length).toBeGreaterThan(0);
     const ready = recs.find(r => r.msg.startsWith("scientific tooling ready"));
     expect(ready).toBeTruthy();
-    expect(ready.msg).toBe("scientific tooling ready · patch /patch.json?[redacted]");
+    expect(ready.msg).toBe("scientific tooling ready · patch /patch.json?[redacted] · poll 3000ms (hot-apply)");
     expect(JSON.stringify(recs)).not.toContain("SECRETSIG123");
     expect(JSON.stringify(await payload(page))).not.toContain("SECRETSIG123");
     // the poll still targets the full URL (app behaviour unchanged) — only the log copy is scrubbed
@@ -236,6 +236,22 @@ test.describe("public blaster smoke", () => {
     await page.waitForTimeout(2500);                        // a beacon tick + a poll → more log lines
     expect(JSON.stringify(await log(page))).not.toContain("SECRETSIG123");
     expect(JSON.stringify((await payload(page)).logTail)).not.toContain("SECRETSIG123");
+    expect(errors).toEqual([]);
+  });
+
+  test("bare relative ?patch= query is redacted in the log ring buffer", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", e => errors.push(String(e)));
+    const resp = await page.goto("/?patch=" + encodeURIComponent("patch.json?token=SECRETREL456"));
+    expect(resp.status()).toBe(200);
+    await page.waitForFunction(() => !!window.__hop);
+    const recs = await log(page);
+    const ready = recs.find(r => r.msg.startsWith("scientific tooling ready"));
+    expect(ready).toBeTruthy();
+    expect(ready.msg).toContain("patch.json?[redacted]");
+    expect(JSON.stringify(recs)).not.toContain("SECRETREL456");
+    expect(JSON.stringify(await payload(page))).not.toContain("SECRETREL456");
+    await expect(page.locator("#patchUrlLabel")).toHaveText("patch.json?token=SECRETREL456");
     expect(errors).toEqual([]);
   });
 

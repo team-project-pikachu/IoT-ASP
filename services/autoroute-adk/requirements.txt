@@ -1,7 +1,10 @@
 # Pin ranges — no @latest. ADK optional for dry-run (stdlib path).
-google-adk>=1.0.0,<2
-google-cloud-storage>=2.14.0,<4
-google-genai>=1.0.0,<2
+# Audit: 2026-09-08 — see docs/dependencies.md and .vv/deps/
+# google-adk stays on major 1 (2.x agent API breaking — #24).
+# google-genai major 2 is required by google-adk>=1.36 (PyPI metadata).
+google-adk>=1.39.1,<2
+google-cloud-storage>=3.13.0,<4
+google-genai>=2.22.0,<3
 # Authoritative vib anomaly (browser only beacons; SciPy detects)
-scipy>=1.14.0,<1.18
-numpy>=1.26.0,<3
+scipy>=1.14.0,<1.19
+numpy>=2.0.0,<3

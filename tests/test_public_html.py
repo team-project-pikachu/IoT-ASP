@@ -44,7 +44,7 @@ def test_invariant_literals(html: str) -> None:
     for lit in ("Hold / Manual", "holdManual", "holdPatchBtn"):
         assert lit in html, lit
     assert re.search(r"const SCHEMA_VERSION = 1;", html)
-    assert re.search(r"const VOL_PATCH_MAX = 12,", html), "VOL_PATCH_MAX drift (owner decision, see spec 01)"
+    assert re.search(r"const VOL_PATCH_MAX = 100,", html), "VOL_PATCH_MAX must match clamps.py hard max (C4)"
     assert "BAND_ABS_LO = 17000, BAND_ABS_HI = 23000" in html
 
 
@@ -278,17 +278,20 @@ def test_log_never_stores_url_query(html: str) -> None:
     for m in re.finditer(r"monLog\([^\n]*", html):
         line = m.group(0)
         assert "+ PATCH_URL" not in line and "+ TELEMETRY_URL" not in line, line
-    assert 'monLog("scientific tooling ready · patch " + redactUrlQuery(PATCH_URL));' in html
+    assert 'monLog("scientific tooling ready · patch " + redactUrlQuery(PATCH_URL) + " · poll " + POLL_MS + "ms (hot-apply)");' in html
     # the debug hook and the payload still expose the ring buffer only through copies
     assert "records.slice(-3)" in _fn_body(html, "function telemetryPayload(){")
 
 
 def test_redact_regex_semantics() -> None:
     """Mirror of URL_QUERY_RE (kept in sync by test_log_never_stores_url_query) — stdlib re."""
-    rx = re.compile(r"((?:https?://|/)[^\s?#]*)[?#][^\s]*")
+    rx = re.compile(
+        r"((?:https?://|/)[^\s?#]*|(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9._~-]+)[?#][^\s]*"
+    )
     red = lambda t: rx.sub(r"\1?[redacted]", t)
     assert red("patch /patch.json?X-Goog-Signature=SECRET123") == "patch /patch.json?[redacted]"
     assert red("https://h.example/p.json?token=T#f") == "https://h.example/p.json?[redacted]"
+    assert red("ready patch.json?token=SECRET") == "ready patch.json?[redacted]"
     assert red("what? really") == "what? really"
     assert red("patch /patch.json") == "patch /patch.json"
 

@@ -1,0 +1,100 @@
+{
+  "issue": 16,
+  "title": "NS / seismo-acoustic priors wire-up",
+  "ranAt": "2026-09-08T00:20:18Z",
+  "revisionHint": "git rev-parse HEAD at evidence write time",
+  "checks": [
+    {
+      "check": "REQ-16-01-tool-weights",
+      "pass": true,
+      "detail": "keys=['citations', 'docs', 'honesty', 'keys', 'lfBandHz', 'materialChannelBias', 'text', 'usBandHz', 'weights']"
+    },
+    {
+      "check": "REQ-16-02-citations",
+      "pass": true,
+      "detail": "n=6 ids=['arxiv:2307.01775', 'arxiv:2509.17986', 'arxiv:2211.03647', 'doi:10.1121/1.5063819', 'doi:10.1121/10.0003509', 'pmid:27780424']"
+    },
+    {
+      "check": "REQ-16-03-prior-coeffs",
+      "pass": true,
+      "detail": "classes=['acoustic', 'infra_felt', 'none', 'physical']"
+    },
+    {
+      "check": "REQ-16-04-neg-nonsense-keys",
+      "pass": true,
+      "detail": "filtered=['sudden_freq']"
+    },
+    {
+      "check": "REQ-16-05-physical-author",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "check": "REQ-16-06-physical-algo",
+      "pass": true,
+      "detail": "algo=burst preferred=('burst', 'shriek_chirp', 'am_gate')"
+    },
+    {
+      "check": "REQ-16-07-physical-band-us",
+      "pass": true,
+      "detail": "band=17-23k fMin=17000.0"
+    },
+    {
+      "check": "REQ-16-08-structure-prior",
+      "pass": true,
+      "detail": "priors=['sudden_freq', 'linearized_acoustic', 'navier_stokes_constraint', 'structure_borne']"
+    },
+    {
+      "check": "REQ-16-09-infra-capable-author",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "check": "REQ-16-10-lf-gated-when-capable",
+      "pass": true,
+      "detail": "band=10-20 f=[10.0,20.0] algo=infra_mod lf=True"
+    },
+    {
+      "check": "REQ-16-11-infra-mod-weight",
+      "pass": true,
+      "detail": "algo=infra_mod weights={'infra_mod': 0.63, 'am_gate': 0.42, 'burst': 0.35}"
+    },
+    {
+      "check": "REQ-16-12-infra-prior-key",
+      "pass": true,
+      "detail": "priors=['sudden_freq', 'linearized_acoustic', 'navier_stokes_constraint', 'infra_felt']"
+    },
+    {
+      "check": "REQ-16-13-infra-incapable-author",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "check": "REQ-16-14-lf-blocked-when-incapable",
+      "pass": true,
+      "detail": "band=17-23k lfCapable=False"
+    },
+    {
+      "check": "REQ-16-15-neg-author",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "check": "REQ-16-16-neg-fallback-vib-none",
+      "pass": true,
+      "detail": "algo=am_gate (bogus vibClass \u2192 none weights)"
+    },
+    {
+      "check": "REQ-16-17-neg-no-bogus-in-priors",
+      "pass": true,
+      "detail": "priors=['sudden_freq', 'linearized_acoustic', 'navier_stokes_constraint']"
+    },
+    {
+      "check": "REQ-16-18-literature-on-patch",
+      "pass": true,
+      "detail": "literature=['arxiv:2307.01775', 'arxiv:2509.17986', 'arxiv:2211.03647', 'doi:10.1121/1.5063819']"
+    }
+  ],
+  "pass": true,
+  "failCount": 0
+}

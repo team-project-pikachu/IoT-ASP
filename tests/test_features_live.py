@@ -279,7 +279,7 @@ def test_fl14_guard_refuses_unsafe_segments(bad):
         fl.assert_features_path(bad)
 
 
-@pytest.mark.parametrize("node", ["../patches/x", "node1/../../patches", "a/b", "", " ", "node 1", ".", "..", "nöde"])
+@pytest.mark.parametrize("node", ["../patches/x", "node1/../../patches", "a/b", "", " ", "node 1", ".", "..", "nöde", "node1\n", "node1\r"])
 def test_fl14_node_validation(node, dry_root):
     with pytest.raises(ValueError, match="node id"):
         fl.validate_node(node)
@@ -525,8 +525,10 @@ def test_fl16_assert_features_path_resolves_under_dry_root(dry_root):
 
 
 def test_fl13_constants():
-    assert fl.ALL_COLUMNS[: len(TELEMETRY_FEATURE_COLUMNS)] == TELEMETRY_FEATURE_COLUMNS
-    assert fl.ALL_COLUMNS[len(TELEMETRY_FEATURE_COLUMNS):] == fl.SENSOR_COLUMNS
+    expected_columns = tuple(
+        dict.fromkeys(TELEMETRY_FEATURE_COLUMNS + fl.SENSOR_COLUMNS)
+    )
+    assert fl.ALL_COLUMNS == expected_columns
     assert fl.MIC_DIFF_ALPHA == 0.85
     assert len(fl.SENSOR_COLUMNS) == 18
     assert len(set(fl.ALL_COLUMNS)) == len(fl.ALL_COLUMNS)

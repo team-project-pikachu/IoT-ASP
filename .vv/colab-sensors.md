@@ -118,3 +118,13 @@ From Colab: open `notebooks/iot_asp_colab_etl.ipynb`, add `userdata` secrets **n
 |-----|--------|
 | CS-01 … CS-09 (offline path) | **PASS** (local, 2026-09-08, re-run after review fixes) |
 | Live GCS write | **PENDING** — owner runs the notebook with `LIVE_GCS=1`; record the `gs://` object name (bucket redacted) here |
+
+## Frontend / ETL alignment
+
+The shared fixture covers accel axes, gyro angular velocity,
+`micDiff = micEnergy - 0.85 * outLevel`, LF/US energy, `bandBurst`,
+`soundBurst`, and `extremeActive`. Feature documents retain those
+values alongside `lastHopAgeMs`, `ctxResumes`, and `watchdogTrips`, so
+the browser and Colab paths use one `schemaVersion: 1` vocabulary.
+`shriekBias` remains a feature hint only: ADK owns clamping and patch
+writes, and Hold / Manual always wins.

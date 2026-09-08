@@ -66,7 +66,7 @@ Bluetooth A2DP** to its own Soundcore 2 (C1). Optional third role: chair-mounted
 | `public/README.txt` — live URL + three-phone fleet, no PII | `public/README.txt:3-5` |
 | `tests/test_public_html.py` (48 cases, stdlib) · `tests/e2e/{package.json,run.sh,public_smoke.spec.mjs,.gitignore}` (9 Playwright tests) | see *Acceptance tests* |
 
-Unchanged: `SCHEMA_VERSION = 1` (`:444`), `VOL_PATCH_MAX = 12, BAND_ABS_LO = 17000, BAND_ABS_HI = 23000` (`:534`),
+Unchanged: `SCHEMA_VERSION = 1` (`:444`), `VOL_PATCH_MAX = 100, BAND_ABS_LO = 17000, BAND_ABS_HI = 23000` (`:534`),
 `clampPatch()` (`:1549`), `applyPatch`/`pollPatch` Hold short-circuits (`:1564-1565`, `:1598-1599`), slider `max="60"`
 (`:344`), every pre-existing element id, no `navigator.bluetooth`. Size after change: 83 843 bytes (< 120 000 guard).
 
@@ -93,7 +93,7 @@ that revision):
 | `updateTelUI()` fills the Monitor grid | `public/index.html:1315-1330` |
 | `telemetryPayload()` — device metrics only; **no** `band`/`power`/`nightNY`/`lf*`/log fields yet | `public/index.html:1332-1360` |
 | `beaconTelemetry()` → `navigator.sendBeacon` / `fetch keepalive`; every 2 s | `public/index.html:1362-1373`, `:1456` |
-| `clampPatch()` with phone-side `VOL_PATCH_MAX = 12` | `public/index.html:522`, `:1375-1388` (vol clamp at `:1382`) |
+| `clampPatch()` with phone-side `VOL_PATCH_MAX = 100` | `public/index.html:522`, `:1375-1388` (vol clamp at `:1382`) |
 | `applyPatch()` (schemaVersion additive, `seedAction: "reseed"` path) | `public/index.html:1390-1427` (reseed `:1409-1414`) |
 | Monitor section, `mon-grid` cells `telDevice … telSudden`, `#monLog` | `public/index.html:351-369` |
 | Systems-check section + `systemsCheck()` rows (`Hop RNG`, `Telemetry`, `Patch hold`) | `public/index.html:224-243`, `:1498-1554` (RNG row `:1548`) |
@@ -248,7 +248,7 @@ No patch fields change. `seedSource` is UI/debug only and **not** on the wire.
 
 ## Clamps / safety
 
-- `VOL_PATCH_MAX = 12` (`:522`), `BAND_ABS_LO/HI`, `clampPatch()` and the `Hold / Manual` short-circuits are **not
+- `VOL_PATCH_MAX = 100` (`:522`), `BAND_ABS_LO/HI`, `clampPatch()` and the `Hold / Manual` short-circuits are **not
   modified**. `SCHEMA_VERSION = 1` unchanged. No `navigator.bluetooth` anywhere (C1). No key-like strings
   (`AIza…`, `sk-…`, `PRIVATE KEY`, `*_API_KEY=`, `apiKey:`) — the structured log must never store a URL query string
   (`?patch=` / `?telemetry=` may be a signed or tokened URL, see `docs/api-contract.md:28`): `fields` are
@@ -259,13 +259,9 @@ No patch fields change. `seedSource` is UI/debug only and **not** on the wire.
   a crafted `?patch=` value renders as text. Static test `test_systems_check_rows_escaped`; e2e test 9.
 - `lfArmed`/`lfDriveCapable` are hard-coded `false` on the web fleet; the backend LF gate (`priors.lf_drive_capable`)
   therefore never opens from a browser heartbeat.
-- **Known clamp drift — owner decision, not changed here:** `docs/api-contract.md:77` says vol "UI percent 0–12";
-  `docs/api-contract.md:128` says "soft ≤12, hard refuse >20"; `clamps.py:20-21` is `vol_soft_max == vol_hard_max ==
-  100.0`; the phone clamp `VOL_PATCH_MAX = 12` (`:522`); the slider max is `60` (`:344`); the mock `patch.json` sends
-  `vol: 100` (clamped to 12 on the phone). Four different ceilings coexist. This spec preserves all of them and adds
-  a static test that asserts `VOL_PATCH_MAX = 12` **as-is** so any change is deliberate. Recommended resolution
-  (for the owner): pick one number, update `api-contract.md` rows + `clamps.py` + `VOL_PATCH_MAX` + slider in one PR
-  referencing #1, and update the test constant then.
+- **C4 resolved:** phone clamp `VOL_PATCH_MAX = 100` matches `clamps.py` (`vol_soft_max == vol_hard_max == 100.0`)
+  and `docs/api-contract.md` UI percent 0–100. Static test asserts `const VOL_PATCH_MAX = 100,`. Slider `max="60"`
+  remains a UI convenience ceiling below the patch hard max.
 - PII: `logTail.msg` is backend/UI-authored text truncated to 240 chars; `fields` never contain UA strings, URLs,
   geolocation, or names. Telemetry stays "device metrics only" (`public-frontend.md:31`).
 
@@ -283,7 +279,7 @@ spec 03 tests 10-11 (committed dwell 60 s kept while sliders dropped to 1 s, 0 t
 `public/README.txt` from the repo root resolved relative to the test file):
 
 1. Literals present: `Hold / Manual`, `holdManual`, `holdPatchBtn`, `SCHEMA_VERSION = 1` (regex `const SCHEMA_VERSION = 1;`),
-   `VOL_PATCH_MAX = 12` (regex `const VOL_PATCH_MAX = 12,`).
+   `VOL_PATCH_MAX = 100` (regex `const VOL_PATCH_MAX = 100,`).
 2. New ids present as `id="…"`: `copyLogBtn`, `reseedBtn`, `telHopAge`, `telResumes`, `telWatchdog`; existing ids
    still present: `telDevice`, `telSeed`, `telAlgo`, `telPeak`, `telAccel`, `telMic`, `telVib`, `telHold`,
    `telSudden`, `monLog`, `sysList`, `sysBtn`, `vol`, `fMin`, `fMax`.

@@ -1,0 +1,3 @@
+# Pin ranges — no @latest. Package-local; does not touch services/autoroute-adk.
+numpy>=1.26.0,<3
+scipy>=1.14.0,<1.19

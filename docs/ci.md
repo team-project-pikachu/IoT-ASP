@@ -20,6 +20,17 @@ Issue-linked PRs are the intended path for Project 5 Todo work (#12, #16, #17, r
 5. **`mdc check`** — `python3 scripts/mdc_convert.py --check` (Cursor `.mdc` → Claude Code outputs are fresh).
 6. **`e2e smoke`** — Playwright against `public/` (`tests/e2e/run.sh`); informative, not required by the ruleset.
 
+## Continuous ship
+
+After green CI for a push to `main`, `deploy.yml` runs dev → test →
+production. It re-runs static, autoroute, clamp, and pytest gates,
+builds a Vercel preview, smoke-tests that exact preview, then promotes
+production. Every checkout uses one `DEPLOY_REF`:
+`workflow_run.head_sha` for CI-triggered runs, or the requested dispatch
+ref (default `main`) for manual runs. Missing Vercel secrets produce a
+notice and skip deployment; see [deploy.md](deploy.md) for setup,
+fallback, rollback, and environment protection.
+
 ## Required on `main`
 
 The five job `name:` values 1–5 above are the required status checks in the `main-protection` ruleset
@@ -31,6 +42,7 @@ JSON in the same PR — `tests/test_ruleset_json.py` fails otherwise. See [branc
 ```bash
 bash scripts/ci_static_gates.sh
 bash scripts/autoroute_dev.sh
+python3 -m pytest tests/test_deploy_workflow.py tests/test_public_html.py -q
 ```
 
 Evidence package: [`.vv/ci/`](../.vv/ci/).

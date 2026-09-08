@@ -22,6 +22,7 @@ sys.path.insert(0, str(PKG_DIR))
 
 from iot_asp_autoroute import clamps, priors  # noqa: E402
 from iot_asp_autoroute import mic_diff as md  # noqa: E402
+from iot_asp_autoroute import sudden_freq  # noqa: E402
 
 IOS_SAFARI_UA = (
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 "
@@ -474,10 +475,13 @@ def test_md18_apply_burst_bias_refuses_out_of_policy_base():
         {"algo": "hop", "shriekMs": -100},
         {"algo": "hop", "shriekMs": 0},
         {"algo": "hop", "shriekMs": "abc"},
+        {"algo": "hop", "shriekMs": float("nan")},
+        {"algo": "hop", "shriekMs": float("inf")},
         {"algo": "evil", "shriekMs": 50},
         {"algo": "hop", "fMin": 22000, "fMax": 18000, "shriekMs": 50},
         {"algo": "hop", "pulseMs": 5000, "shriekMs": 50},
         {"algo": "hop", "vol": 101, "shriekMs": 50},
+        {"algo": "hop", "vol": float("nan")},
     ]
     for patch in bad_patches:
         ok_in, msg_in, _ = clamps.validate_patch(patch)
@@ -541,3 +545,29 @@ def test_md19_spec_sections_and_prior_art():
     assert "docs/PRIOR_ART.md" in prior and "features_live.py" in prior
     # The spec documents the refuse-never-rewrite contract of apply_burst_bias.
     assert "burst_bias_eligibility" in text and "MD-18" in text and "MD-19" in text
+
+
+def test_sound_burst_makes_contour_mirrors_rankable():
+    regular = priors.preferred_algos("physical", top_n=8)
+    burst = priors.preferred_algos("physical", top_n=8, sound_burst=True)
+    mirrors = {"cry_mirror", "siren_mirror", "death_metal_mirror"}
+    assert mirrors.isdisjoint(regular)
+    assert mirrors <= set(burst)
+
+
+@pytest.mark.parametrize("state", ["extreme", "burst"])
+def test_sudden_state_uses_burst_routing(state: str):
+    ok, _, patch = sudden_freq.author_sudden_freq_patch(
+        {
+            "deviceId": "node1",
+            "suddenState": state,
+            "algo": "hop",
+            "vibClass": "physical",
+            "vol": 50,
+        }
+    )
+    assert ok is True
+    assert patch["trigger"] == "soundBurst"
+    assert patch["algo"] in priors.preferred_algos(
+        "physical", sound_burst=True
+    )

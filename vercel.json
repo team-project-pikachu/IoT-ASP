@@ -17,6 +17,12 @@
       "headers": [
         { "key": "Content-Type", "value": "application/manifest+json" }
       ]
+    },
+    {
+      "source": "/patch.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }
+      ]
     }
   ]
 }

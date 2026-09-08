@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .timestore import autoroute_timestore_prior
+
 # Prompt blurbs (keys must stay in sync with VIB_ALGO_WEIGHTS / CITATIONS usage).
 PRIORS: dict[str, str] = {
     "structure_borne": (
@@ -33,10 +35,39 @@ PRIORS: dict[str, str] = {
         "params (algo cycle + dwell/pulse/shriek jitter) then author a clamped "
         "GCS patch for the node."
     ),
+    "sound_burst": (
+        "Environmental burst from micDiff in LF (<20 Hz) and/or US (>17 kHz) "
+        "only — not mid-band speech/music. Formula: micDiff = micEnergy − α·outLevel "
+        "(best-effort self-TX rejection; full AEC limited on iOS Chrome). "
+        "While micDiff stays above a rolling baseline (hysteresis quiet window to exit), "
+        "keep extreme shriek_chirp / shriek_sweep / burst + clamped dwell/vol/seed variance. "
+        "bandBurst=lf|us|both; TX response 17–23 kHz default, 10–20 Hz only if lfDriveCapable. "
+        "Hold/Manual freezes. Not on-device CFD."
+    ),
     "navier_stokes_constraint": (
         "Do NOT claim full Navier–Stokes / CFD on-device. Use linearized acoustics "
         "and coupling analogies as soft priors only (docs/physics.md)."
     ),
+}
+
+# Soft multipliers when telemetry.soundBurst is true (bias shriek + contour-mirrors).
+SOUND_BURST_ALGO_BIAS: dict[str, float] = {
+    "shriek_chirp": 1.85,
+    "shriek_sweep": 1.65,
+    "burst": 1.75,
+    "cry_mirror": 1.70,
+    "siren_mirror": 1.68,
+    "death_metal_mirror": 1.72,
+    "am_gate": 0.75,
+    "hop": 0.35,
+    "infra_mod": 0.55,
+}
+
+# Burst-only baseline makes contour mirrors eligible before their bias is applied.
+SOUND_BURST_MIRROR_BASELINE: dict[str, float] = {
+    "cry_mirror": 0.30,
+    "siren_mirror": 0.30,
+    "death_metal_mirror": 0.30,
 }
 
 # Real IDs only — mirrored from reference/LITERATURE.md § NS / seismo-acoustic.
@@ -158,14 +189,22 @@ def normalize_vib_class(vib_class: str | None) -> str:
 def vib_algo_weights(
     vib_class: str | None,
     material_preset: str | None = None,
+    *,
+    sound_burst: bool = False,
 ) -> dict[str, float]:
-    """Return algo→weight map for vib class, optionally scaled by material preset."""
+    """Return algo→weight map for vib class, optionally scaled by material + soundBurst."""
     vib = normalize_vib_class(vib_class)
     weights = dict(VIB_ALGO_WEIGHTS[vib])
     preset = (material_preset or "").strip().lower()
     bias = MATERIAL_CHANNEL_BIAS.get(preset, {}).get(vib, 1.0)
     if bias != 1.0:
         weights = {a: w * bias for a, w in weights.items()}
+    if sound_burst:
+        for algo, baseline in SOUND_BURST_MIRROR_BASELINE.items():
+            weights.setdefault(algo, baseline * bias)
+        weights = {
+            a: w * SOUND_BURST_ALGO_BIAS.get(a, 1.0) for a, w in weights.items()
+        }
     return weights
 
 
@@ -174,9 +213,10 @@ def preferred_algos(
     material_preset: str | None = None,
     *,
     top_n: int = 3,
+    sound_burst: bool = False,
 ) -> tuple[str, ...]:
     """Ordered preferred wire-algos (highest weight first)."""
-    weights = vib_algo_weights(vib_class, material_preset)
+    weights = vib_algo_weights(vib_class, material_preset, sound_burst=sound_burst)
     ranked = sorted(weights.items(), key=lambda kv: (-kv[1], kv[0]))
     return tuple(a for a, _ in ranked[:top_n])
 
@@ -185,9 +225,11 @@ def next_algo_weighted(
     current: str | None,
     vib_class: str | None,
     material_preset: str | None = None,
+    *,
+    sound_burst: bool = False,
 ) -> str:
     """Rotate within preferred set for vib class (deterministic)."""
-    preferred = preferred_algos(vib_class, material_preset)
+    preferred = preferred_algos(vib_class, material_preset, sound_burst=sound_burst)
     if not preferred:
         return "hop"
     cur = (current or "hop").strip()
@@ -220,9 +262,12 @@ def prior_keys_for_event(
     vib_class: str | None,
     *,
     lf_capable: bool = False,
+    sound_burst: bool = False,
 ) -> list[str]:
     vib = normalize_vib_class(vib_class)
     keys = ["sudden_freq", "linearized_acoustic", "navier_stokes_constraint"]
+    if sound_burst:
+        keys.insert(0, "sound_burst")
     if vib == "physical":
         keys.append("structure_borne")
     if vib == "infra_felt" or lf_capable:
@@ -287,6 +332,7 @@ def seismo_bundle() -> dict[str, Any]:
         "citations": CITATIONS,
         "lfBandHz": list(LF_BAND_HZ),
         "usBandHz": list(US_BAND_HZ),
+        "timestore": autoroute_timestore_prior(),
         "honesty": (
             "LF accel is a felt proxy; true infrasound mic/TX requires lfDriveCapable. "
             "No full NS/CFD on-phone."
