@@ -77,6 +77,7 @@ Compact JSON heartbeat. Required fields marked ★.
   "impulse": false,
   "volBlast": false,
   "alarmState": "armed",
+  "eventClass": "none",
   "audioContextState": "running",
   "materialPreset": "table",
   "fMin": 17000,
@@ -127,6 +128,7 @@ Compact JSON heartbeat. Required fields marked ★.
 | `impulse` | | bool | Short micDiff rise/peak or accel spike detected (latched briefly) — #44 |
 | `volBlast` | | bool | Alarm blast: vol jumped toward max within night/Hold rules — #44 #45 |
 | `alarmState` | | string | `armed` \| `triggered` \| `sustaining` \| `cleared` \| `off` — #45 |
+| `eventClass` | | string | `none` \| `sound_burst` \| `glass_shatter` \| `CameraSound` (SDM CameraSound trait stub) — #101; drives louder alarm via `alarmState`/`volBlast` |
 | `audioContextState` / `ctxState` | | string | Either key |
 | `vol` | | number | **UI percent 0–100** (matches slider max); legacy linear ≤1 accepted by ingest/author |
 | `holdManual` | | bool | If true, backend must refuse patches |
