@@ -53,7 +53,6 @@ from ..clamps import SCHEMA_VERSION, validate_patch
 from ..sudden_freq import author_sudden_freq_patch
 from . import constants
 from .detector import (
-    LABEL_SOUND_BURST,
     AcousticEvidence,
     BurstClassification,
     GeminiEnterpriseDetector,
@@ -61,8 +60,6 @@ from .detector import (
     offline_classify,
 )
 
-#: Confidence at or above which a glass-shatter label may blast the volume.
-BLAST_CONFIDENCE_MIN: float = 0.6
 #: Shriek dwell (ms) requested on a confirmed burst. Inside the documented 20–120 clamp.
 BURST_SHRIEK_MS: float = 110.0
 

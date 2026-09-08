@@ -86,6 +86,11 @@ LABELS: Final[frozenset[str]] = frozenset({LABEL_GLASS_SHATTER, LABEL_SOUND_BURS
 SOURCE_GEMINI: Final[str] = "gemini_enterprise"
 SOURCE_OFFLINE: Final[str] = "offline_heuristic"
 
+#: Confidence at or above which a `glass_shatter` label may blast the volume toward max.
+#: Single source of truth — `reactive.py` previously carried an unused duplicate of this
+#: number, which could have drifted from the value actually enforced here.
+BLAST_CONFIDENCE_MIN: Final[float] = 0.6
+
 #: micDiff (dB) above which the phone's own mic corroborates an environmental onset.
 #: 6.0 dB is the threshold already used by `mic_diff.burst_decision` — reused, not
 #: re-invented, so the two paths cannot drift.
@@ -216,7 +221,7 @@ def escalation_hint(cls: BurstClassification, *, hold_manual: bool = False) -> d
     """
     if hold_manual:
         return {}
-    if cls.label == LABEL_GLASS_SHATTER and cls.confidence >= 0.6:
+    if cls.label == LABEL_GLASS_SHATTER and cls.confidence >= BLAST_CONFIDENCE_MIN:
         return {"alarmState": "triggered", "volBlast": True, "trigger": "nest_glass_shatter"}
     if cls.label == LABEL_SOUND_BURST and cls.corroborated:
         return {"alarmState": "triggered", "volBlast": False, "trigger": "nest_sound_burst"}
