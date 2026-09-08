@@ -1,6 +1,6 @@
 # Balanced stacked PRs
 
-**Election:** 2 = Balanced. Merge **bottom-up**: #57 → #66 → #70 → #71 → #72 → #73 → #75 → #76 (PR numbers filled after open).
+**Election:** 2 = Balanced. Merge **bottom-up**: #57 → #66 → #70 → #71 → #72 → #73 → #75 → #76.
 
 | # | Position | Branch | Base | Focus | URL |
 |--:|----------|--------|------|-------|-----|
@@ -10,8 +10,8 @@
 | 4 | 4/8 | `feat/balanced-native-hw-research` | `feat/balanced-colab-vercel-ops` | #41/#39/#43/#14/#15/#18 research deepen | https://github.com/team-project-pikachu/IoT-ASP/pull/71 |
 | 5 | 5/8 | `feat/balanced-test-native-ci` | `feat/balanced-native-hw-research` | Tests deepen #22/#26/#34 + CLT native compile-check #41 | https://github.com/team-project-pikachu/IoT-ASP/pull/72 |
 | 6 | 6/8 | `feat/balanced-mvp-roadmap-docs` | `feat/balanced-test-native-ci` | MVP roadmap/closed-log #68/#69 + #61/#62 stubs | https://github.com/team-project-pikachu/IoT-ASP/pull/73 |
-| 7 | 7/8 | `feat/balanced-api-contract-vv` | `feat/balanced-mvp-roadmap-docs` | api-contract + fleet polish + #64 software verify | _(pending PR)_ |
-| 8 | 8/8 | `feat/balanced-ops-secrets-adk` | `feat/balanced-api-contract-vv` | #27 inventory + #63 status + #60 dry-check | _(pending PR)_ |
+| 7 | 7/8 | `feat/balanced-api-contract-vv` | `feat/balanced-mvp-roadmap-docs` | api-contract + fleet polish + #64 software verify | https://github.com/team-project-pikachu/IoT-ASP/pull/75 |
+| 8 | 8/8 | `feat/balanced-ops-secrets-adk` | `feat/balanced-api-contract-vv` | #27 inventory + #63 status + #60 dry-check | https://github.com/team-project-pikachu/IoT-ASP/pull/76 |
 
 ## Owner-gated (blocked)
 
