@@ -13,9 +13,12 @@ Print / tick during lab (Safari + native A2DP only — C1):
 3. [ ] Mode Blaster/TX · Signal on · hops incoherent (independent seeds)
 4. [ ] Hold / Manual freezes patch apply
 5. [ ] Simulate impulse (web) → volBlast / alarm armed→triggered→sustaining
-6. [ ] Copy fleet_log JSONL → keys match Python `RECORD_KEYS` (#22)
-7. [ ] Optional live backend: `?patch=` + `?telemetry=` (#61) — skip if URLs unset
-8. [ ] No API keys visible in page source / Network (names only)
+6. [ ] `suddenFreq` rotation observed (onset→rotate / telemetry `suddenFreq` / `suddenState`)
+7. [ ] Night-curve honesty: outside 22:00–07:00 America/New_York `nightNY` inactive; inside window vol target follows night curve (or documented override)
+8. [ ] Soundcore roll-off warning visible (near-ultrasonic / BassUp DSP honesty in UI + Systems check)
+9. [ ] Copy fleet_log JSONL → keys match Python `RECORD_KEYS` (#22)
+10. [ ] Optional live backend: `?patch=` + `?telemetry=` (#61) — skip if URLs unset
+11. [ ] No API keys visible in page source / Network (names only)
 
 ## Local e2e
 
