@@ -1863,7 +1863,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const uaData = navigator.userAgentData || null;
     const platformNav = String(navigator.platform || "");
     const touch = (navigator.maxTouchPoints || 0) > 0;
-    let os = "unknown", form = "unknown", id = "unknown", label = "unknown";
+    let os = "unknown", form, id, label;
     const isIOS = /iPhone|iPad|iPod/.test(ua) || (platformNav === "MacIntel" && touch);
     const isAndroid = /Android/i.test(ua);
     const isMac = /Mac OS X|Macintosh/i.test(ua) || /Mac/i.test(platformNav) || (uaData && /macOS/i.test(String(uaData.platform || "")));
@@ -1908,7 +1908,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
             }
           }
           refreshBandUi();
-          if (typeof updateTelUI === "function") updateTelUI();
+          updateTelUI();
         }).catch(function(){});
       }
     } catch (_){}
