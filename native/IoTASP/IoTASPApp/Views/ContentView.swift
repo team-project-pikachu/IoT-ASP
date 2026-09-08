@@ -40,6 +40,10 @@ struct ContentView: View {
                     LabeledContent("arm physical", value: session.arming.physical ? "yes" : "no")
                     LabeledContent("arm acoustic", value: session.arming.acoustic ? "yes" : "no")
                     LabeledContent("vibClass", value: session.vibClass)
+                    LabeledContent("lfEnergy (felt proxy)", value: String(format: "%.1f dB", session.lfEnergyDb))
+                    Text(LfAccelProxy.honesty)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
 
                 Section("Sensors") {

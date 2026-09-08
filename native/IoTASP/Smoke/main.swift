@@ -124,6 +124,18 @@ struct IoTASPSmoke {
         check("disarm physical", cls == "acoustic")
         check("unknown preset", VibChannelPolicy.unknownPresetFallsBack("granite") == .handheld)
 
+        // #18 chair LF proxy
+        check("chair arming", ChairNodeProfile.arming.physical && !ChairNodeProfile.arming.acoustic)
+        check("honesty", LfAccelProxy.honesty.contains("felt proxy"))
+        let lf = LfAccelProxy()
+        var felt = false
+        for i in 0..<200 {
+            let a = 0.04 + 0.02 * sin(Double(i) / 8.0)
+            if lf.observe(absA: a) == "infra_felt" { felt = true }
+        }
+        check("slow sway can infra_felt", felt || lf.lfEnergyDb > -120)
+        check("thump not infra", LfAccelProxy().observe(absA: 1.5) == nil)
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

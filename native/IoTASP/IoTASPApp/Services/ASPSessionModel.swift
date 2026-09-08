@@ -37,6 +37,8 @@ final class ASPSessionModel: ObservableObject {
     }
     @Published var arming: VibArming = VibArming.defaults(for: .table)
     @Published var vibClass: String = "none"
+    @Published var lfEnergyDb: Double = -120
+    private let lfProxy = LfAccelProxy()
     @Published var lastPhysicalEvent: String = "none"
     @Published var shakeCount: Int = 0
     #if canImport(CoreMotion)
@@ -179,11 +181,21 @@ final class ASPSessionModel: ObservableObject {
         let phys = physicalVib.observe(absA: sample.absA, armed: arming.physical)
         lastPhysicalEvent = phys.rawValue
         shakeCount = physicalVib.shakeCount
-        vibClass = VibChannelPolicy.classify(
-            physical: phys,
-            acoustic: AcousticVibEvent(rawValue: lastAcousticEvent) ?? .none,
-            arming: arming
-        )
+        if let infra = lfProxy.observe(absA: sample.absA) {
+            lfEnergyDb = lfProxy.lfEnergyDb
+            if materialPreset == .chair, arming.physical, phys == .none {
+                vibClass = infra
+            }
+        } else {
+            lfEnergyDb = lfProxy.lfEnergyDb
+        }
+        if vibClass != "infra_felt" {
+            vibClass = VibChannelPolicy.classify(
+                physical: phys,
+                acoustic: AcousticVibEvent(rawValue: lastAcousticEvent) ?? .none,
+                arming: arming
+            )
+        }
         if phys == .shakeHop || phys == .shakeReseed {
             pendingImpulse = ImpulseEvent(fromAccel: true, fromMicDiff: false, riseMs: 40)
         }

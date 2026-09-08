@@ -29,6 +29,7 @@
 		A10000000000000000000040 /* PhysicalVibChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhysicalVibChannel.swift; sourceTree = "<group>"; };
 		A10000000000000000000041 /* AcousticVibChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcousticVibChannel.swift; sourceTree = "<group>"; };
 		A10000000000000000000042 /* VibChannelPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VibChannelPolicy.swift; sourceTree = "<group>"; };
+		A10000000000000000000043 /* LfAccelProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LfAccelProxy.swift; sourceTree = "<group>"; };
 		A10000000000000000000037 /* UltrasonicMicMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UltrasonicMicMeter.swift; sourceTree = "<group>"; };
 		A10000000000000000000038 /* UltrasonicMicCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UltrasonicMicCapture.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -121,6 +122,7 @@
 				A10000000000000000000040 /* PhysicalVibChannel.swift */,
 				A10000000000000000000041 /* AcousticVibChannel.swift */,
 				A10000000000000000000042 /* VibChannelPolicy.swift */,
+				A10000000000000000000043 /* LfAccelProxy.swift */,
 			);
 			path = Sensors;
 			sourceTree = "<group>";
@@ -235,6 +237,7 @@
 				A80000000000000000000040 /* PhysicalVibChannel.swift in Sources */,
 				A80000000000000000000041 /* AcousticVibChannel.swift in Sources */,
 				A80000000000000000000042 /* VibChannelPolicy.swift in Sources */,
+				A80000000000000000000043 /* LfAccelProxy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -254,6 +257,7 @@
 				A80000000000000000000040 /* PhysicalVibChannel.swift in Sources */,
 				A80000000000000000000041 /* AcousticVibChannel.swift in Sources */,
 				A80000000000000000000042 /* VibChannelPolicy.swift in Sources */,
+				A80000000000000000000043 /* LfAccelProxy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +285,7 @@
 		A80000000000000000000040 /* PhysicalVibChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000040 /* PhysicalVibChannel.swift */; };
 		A80000000000000000000041 /* AcousticVibChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000041 /* AcousticVibChannel.swift */; };
 		A80000000000000000000042 /* VibChannelPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000042 /* VibChannelPolicy.swift */; };
+		A80000000000000000000043 /* LfAccelProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000043 /* LfAccelProxy.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
