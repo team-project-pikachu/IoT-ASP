@@ -42,6 +42,10 @@ echo "# host: CLT-or-Xcode (xcodebuild intentionally not required for this gate)
     exit 1
   fi
   echo "OK swift build (IoTASPShared)"
+  if ! swift run -c release IoTASPSmoke; then
+    echo "FAIL: IoTASPSmoke" >&2
+    exit 1
+  fi
 )
 
 # 3) Honesty: do not claim app-scheme compile without Xcode.app
