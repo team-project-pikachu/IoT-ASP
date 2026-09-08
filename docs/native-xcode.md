@@ -11,7 +11,7 @@ MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRA
 | Host | What works | What does not |
 |------|------------|---------------|
 | macOS + **Xcode.app** | `open native/IoTASP/IoTASP.xcodeproj` · device/simulator | — |
-| macOS **CLT only** (this Studio default) | `cd native/IoTASP && swift test` (Shared SPM) | `xcodebuild` / Simulator |
+| macOS **CLT only** (this Studio default) | `bash scripts/native_compile_check.sh` / `make native-check` · `swift Scripts/alarm_smoke.swift` · SPM Shared build | `xcodebuild` / Simulator |
 | Linux / CI | Shared Swift tests if toolchain present | iOS/Watch app targets |
 
 ## Entitlement / capability honesty

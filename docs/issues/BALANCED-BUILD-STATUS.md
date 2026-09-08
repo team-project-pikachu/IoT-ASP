@@ -1,7 +1,7 @@
 # Balanced build status — open issues
 
 **Election:** 2 = Balanced (stub-first iterate).
-**Branch:** `chore/balanced-issue-stubs`
+**Branch tip:** `feat/balanced-test-native-ci` (stack PR5; base PR4 `feat/balanced-native-hw-research`)
 **Date:** 2026-09-08
 
 | Issue | Classification | Title | Key paths |
@@ -20,26 +20,26 @@
 | #15 | parked ADR+ | Apple Home / HomeKit / Matter | `docs/specs/14-15-21-23-edge-integrations.md` + `docs/issues/ISSUE-15-*` |
 | #18 | parked ADR+ | Node-3 chair + infrasound proxy | `docs/specs/18-node3-chair-infrasound.md` + `docs/issues/ISSUE-18-*` |
 | #19 | parked stub | Notion hub | `docs/specs/19-notion-hub.md` + `docs/issues/ISSUE-19-*` |
-| #22 | implemented+wired | Structured fleet logs | `services/autoroute-adk/iot_asp_autoroute/fleet_log.py`, `tests/test_fleet_log.py`, `docs/specs/22-structured-fleet-logs.md` |
+| #22 | implemented+tests | Structured fleet logs | `fleet_log.py`, `tests/test_fleet_log.py`, `scripts/fleet_log_demo.sh` |
 | #24 | parked stub | google-adk / google-genai 2.x | `docs/specs/24-adk-2x-migration.md` + `docs/issues/ISSUE-24-*` |
 | #25 | parked stub | HW-limited LF/AEC micDiff | `docs/specs/25-hw-limited-lf-aec-micdiff.md` + `docs/issues/ISSUE-25-*` |
-| #26 | fixture+dry-run | Colab live GCS features | `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `notebooks/iot_asp_colab_etl.md`, `scripts/colab_live_gcs.sh` |
-| #27 | docs+name-check | Vercel Actions secrets | `docs/deploy.md`, `.vv/deploy/VERCEL.md`, `scripts/vercel_secrets_check.sh` |
-| #34 | implemented+wt-guard | mdc_convert GEN_MARK guard | `scripts/mdc_convert.py`, `tests/test_mdc_convert.py`, `docs/mdc-conversion.md` |
+| #26 | fixture+dry-run+tests | Colab live GCS features | `features_live.py`, `colab_gcs_fixture.sh`, `colab_etl_dry_run.py`, fixtures |
+| #27 | docs+name-check | Vercel Actions secrets | `docs/deploy.md`, `vercel_secrets_check.sh` (+ Development item title note) |
+| #34 | implemented+tests | mdc_convert GEN_MARK guard | `scripts/mdc_convert.py`, `tests/test_mdc_convert.py` |
 | #39 | parked research+ | Sonos Beam Gen 2 sink | `docs/sonos-beam.md` + `docs/issues/ISSUE-39-*` |
-| #41 | stub+checklist | Native iOS + watchOS | `native/IoTASP/`, `native/README.md`, `docs/native-xcode.md` |
-| #42 | web slice | Impulse→blast + alarm (combined) | `public/index.html`, `docs/algorithms.md`, `native/IoTASP/Shared/Alarm/` |
-| #43 | docs+native align | Soundcore manufacturer specs | `docs/hardware/soundcore-specs.md`, `docs/hardware/soundcore-2.md` |
-| #44 | web slice | Web PWA impulse→blast | `public/index.html`, `tests/test_public_html.py` |
-| #45 | web slice | Web PWA alarm reactivity | `public/index.html`, `docs/algorithms.md` |
-| #46 | duplicate | dup of #44 | see #44 |
-| #47 | duplicate | dup of #45 | see #45 |
-| #48 | duplicate | dup of #41 | see #41 |
-| #49 | duplicate | dup of #43 | see #43 |
-| #50 | duplicate | dup of #44 | see #44 |
-| #51 | duplicate | dup of #45 | see #45 |
-| #52 | duplicate | dup of #41 | see #41 |
-| #53 | duplicate | dup of #43 | see #43 |
+| #41 | stub+CLT check | Native iOS + watchOS | `native/IoTASP/`, `scripts/native_compile_check.sh`, `make native-check` |
+| #42 | web slice | Impulse→blast + alarm (combined) | `public/index.html`, `docs/algorithms.md` |
+| #43 | docs+native align | Soundcore manufacturer specs | `docs/hardware/soundcore-specs.md` |
+| #44 | web slice (canon) | Web PWA impulse→blast | merged intent → #42; dups #46/#50 closed |
+| #45 | web slice (canon) | Web PWA alarm reactivity | merged intent → #42; dups #47/#51 closed |
+| #46–#53 | closed dups | Point to #41/#42/#43/#44/#45 | `docs/issues/ISSUE-4{6-9}-*` / `ISSUE-5{0-3}-*` |
+| #60 | stub | ADK Cloud Run / Agent Engine | `docs/issues/ISSUE-60-*` (PR6) |
+| #61 | stub+qs | Wire live backend URLs | query `?patch=` / `?telemetry=` already; live URLs owner-gated |
+| #62 | stub | Field acceptance + e2e promote | `tests/e2e/` + checklist (PR6) |
+| #63 | stub | Main branch protection ruleset | `docs/branch-protection.md` |
+| #64 | stub | SEBoK V&V MVP pass matrix | `.vv/matrix.md` |
+| #68 | docs | Closed-issue logging | `docs/mvp-closed-log.md` (PR6) |
+| #69 | docs | MVP feature roadmap | `docs/mvp-roadmap.md` (PR6) |
 
 ## Summary
 - **Implemented / docs shipped:** #1 (already), #22 (extended), #26 dry-run (live pending), #27 docs, #34 GEN_MARK, #43 Soundcore docs.
@@ -51,6 +51,11 @@
 - PR #35 — same #34 GEN_MARK guard (landed here too for Balanced PR).
 - PR #40 — Sonos #39 docs (this branch includes `docs/sonos-beam.md` + shell stub).
 - PR #36 — ADK vendor (orthogonal; not forced here).
+- **Implemented / docs shipped:** #1, #22 (+PR5 tests), #26 dry-run (+PR5 tests), #27 docs, #34, #41 CLT gate, #43.
+- **Working stubs:** #11 static fleet, #42/#44/#45 impulse+alarm web, #39 Sonos ADR.
+- **Parked ADR-only:** #2–#8, #10, #14, #15, #18, #19, #24, #25.
+- **Duplicates #46–#53:** closed on GitHub; notes remain for pointers.
+- **Blocked on owner secrets / HW:** #27, #26 live, #41 SensorKit, #60/#61 live URLs, Beam/Pi/HomeKit.
 
 ## Stacked PRs
 
