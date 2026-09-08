@@ -90,8 +90,15 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "accelBaselineReady" in html
     assert "ACCEL_BASELINE_WARM_N" in html
     assert "hop.tabSeed" in html
+    assert 'sessionStorage.setItem("hop.tabSeed"' in html
+    assert 'localStorage.setItem("hop.seed"' not in html
+    assert "accelBaselineSamples" in html
     assert "volBeforeBlast" in html
-    assert "burstHot" in _fn_body(html, "function alarmTick(now){")
+    tick = _fn_body(html, "function alarmTick(now){")
+    assert "burstHot" in tick and "soundBurst" in tick and "lastBurstAt" in tick
+    assert 'alarmState === "cleared"' in tick
+    mon = _fn_body(html, "function monLog(msg, event, fields, level){")
+    assert "fleet" in mon
     assert "r.fleet" in _fn_body(html, "function copyFleetLogJsonl(){")
     assert "d.instanceId === instanceId" in html
     assert "Seed compare" in html

@@ -267,15 +267,18 @@ test.describe("public blaster smoke", () => {
     await pageB.goto("/");
     await pageA.waitForFunction(() => !!window.__hop);
     await pageB.waitForFunction(() => !!window.__hop);
-    const ids = await Promise.all([
-      pageA.evaluate(() => window.__hop.getState().deviceId),
-      pageB.evaluate(() => window.__hop.getState().deviceId),
+    const meta = await Promise.all([
+      pageA.evaluate(() => ({ ...window.__hop.getState(), tabSeed: sessionStorage.getItem("hop.tabSeed") })),
+      pageB.evaluate(() => ({ ...window.__hop.getState(), tabSeed: sessionStorage.getItem("hop.tabSeed") })),
     ]);
-    // Same deviceId (localStorage) but distinct instanceId so BroadcastChannel peers appear
-    expect(ids[0]).toBeTruthy();
+    // Shared telemetry deviceId; distinct per-tab instanceId + session seed for peer compare
+    expect(meta[0].deviceId).toBeTruthy();
+    expect(meta[0].instanceId).toBeTruthy();
+    expect(meta[0].instanceId).not.toBe(meta[1].instanceId);
+    expect(String(meta[0].seed)).not.toBe(String(meta[1].seed));
     await pageA.waitForFunction(() => {
       const t = document.getElementById("fleetSeedCompare")?.textContent || "";
-      return /peers=/.test(t) || /incoherent OK/.test(t) || /CHECK shared seeds/.test(t);
+      return /incoherent OK/.test(t) || /peers=/.test(t);
     }, null, { timeout: 8000 });
     await pageA.click("#simImpulseBtn");
     await pageA.waitForFunction(() => {
@@ -287,6 +290,25 @@ test.describe("public blaster smoke", () => {
     const p = await pageA.evaluate(() => window.__hop.telemetryPayload());
     expect(p.extremeActive).toBe(true);
     expect(["triggered", "sustaining"]).toContain(p.alarmState);
+    // Hold restores volume path and cleared latch
+    await pageA.click("#holdPatchBtn");
+    await pageA.waitForFunction(() => window.__hop.getState().alarmState === "cleared", null, { timeout: 3000 });
+    // Fleet JSONL rows preserve per-record fleet snapshots (ts/event), not only live telemetry
+    const jsonl = await pageA.evaluate(async () => {
+      const orig = navigator.clipboard?.writeText?.bind(navigator.clipboard);
+      let captured = "";
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText = async (t) => { captured = String(t || ""); };
+      }
+      document.getElementById("copyFleetLogBtn")?.click();
+      await new Promise(r => setTimeout(r, 50));
+      if (orig) navigator.clipboard.writeText = orig;
+      return captured;
+    });
+    expect(jsonl.trim().length).toBeGreaterThan(0);
+    const rows = jsonl.trim().split("\n").map(l => JSON.parse(l));
+    expect(rows[0].kind).toBe("fleet_log");
+    expect(rows[0].ts).toBeTruthy();
     expect(errors).toEqual([]);
     await context.close();
   });
