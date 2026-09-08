@@ -210,7 +210,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 .fleet-card .id{font:600 11px/1.3 var(--mono);color:var(--ink);word-break:break-all}
 .fleet-card .meta{font:400 11px/1.45 var(--mono);color:var(--dim);margin-top:6px}
 .fleet-card.local{border-color:var(--lime)}
-.fleet-card.stale{border-color:var(--amber);opacity:.85}
 @media (max-width:520px){.fleet-grid{grid-template-columns:1fr}}
 
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
@@ -388,7 +387,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       </div>
     </div>
     <p class="sub" id="fleetSeedCompare" style="margin:10px 0 0">Seed compare · —</p>
-    <p class="sub" id="fleetBackendStrip" style="margin:6px 0 0">Backend · patch — · telemetry off · poll —</p>
     <div class="tapbar" style="margin-top:10px">
       <button type="button" class="tap" id="simImpulseBtn">Simulate impulse</button>
     </div>
@@ -397,6 +395,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   <section class="mon" id="monitor">
     <div class="plot-head">
       <p class="legend">Monitor · telemetry beacon (no site PII)</p>
+
+    <p class="sub" id="fleetBackendStrip" style="margin:6px 0 0">Backend · patch — · telemetry off · poll —</p>
+
       <p class="legend" id="ctxStateLabel">ctx —</p>
     </div>
     <p class="sub" style="margin:8px 0 0">Fleet audio: <b>iPhone native Bluetooth</b> → paired Soundcore (OS route). No Web Bluetooth.</p>
@@ -593,9 +594,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let lastImpulseAt = 0, alarmClearedAt = 0;
   let prevMicDiffSample = -120, accelEma = 0;
   let ax=0, ay=0, az=0;
+  let accelMag=0, lfMag=0, acousticEnergy=-120;
   let gx=0, gy=0, gz=0, absOmega=0, gyroSampled=false;
   const DEG_TO_RAD = Math.PI / 180;
-  let accelMag=0, lfMag=0, acousticEnergy=-120;
+
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
   let pulseMs=120, shriekMs=55;
@@ -908,7 +910,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (algoSiren) algoSiren.setAttribute("aria-pressed", String(a === "siren"));
     if (algoMetal) algoMetal.setAttribute("aria-pressed", String(a === "metal"));
     if (algoLive) algoLive.textContent = algoWireName();
-    updateTelUI();
+    if (typeof updateTelUI === "function") updateTelUI();
     try { localStorage.setItem("hop.algo", a); } catch(_){}
     // Reschedule cleanly from now
     if (running && ctx && osc){
@@ -979,7 +981,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     geminiAutorouteFlag = true;
     if (geminiFlagLive) geminiFlagLive.textContent = "pending";
     if (typeof monLog === "function") monLog("gemini autoroute flag · " + reason);
-    updateTelUI();
+    if (typeof updateTelUI === "function") updateTelUI();
   }
 
   function autorotateOnSudden(reason, peakHz){
@@ -1245,7 +1247,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       monLog("extreme · " + algoWireName() + " · micDiff " + micDiff.toFixed(1)
         + " · " + bandBurst);
     }
-    updateTelUI();
+    if (typeof updateTelUI === "function") updateTelUI();
   }
 
   function enterExtremeFromBurst(deltaDb, which){
@@ -1273,7 +1275,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       if (suddenLive) suddenLive.textContent = "armed";
     }
     if (typeof monLog === "function") monLog("extreme off · micDiff quiet " + (BURST_QUIET_MS/1000) + "s");
-    updateTelUI();
+    if (typeof updateTelUI === "function") updateTelUI();
   }
 
   function detectSoundBurst(an, data, fromMic){
@@ -1349,50 +1351,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       soundBurst = false;
       if (bandBurst !== "none" && (now - lastBurstAt) > BURST_QUIET_MS) bandBurst = "none";
     }
-    alarmTick(now);
-  }
-
-  function blastVolJump(){
-    if (holdManual) return;
-    let next = VOL_PATCH_MAX;
-    if (nightActive) next = Math.min(nightTargetVol, VOL_PATCH_MAX);
-    applyVolUi(next, false);
-    volBlast = true;
-  function clearAlarm(reason){
-    impulse = false;
-    volBlast = false;
-    alarmQuietSince = 0;
-    lastImpulseAt = 0;
-    alarmState = "cleared";
-    if (typeof monLog === "function" && reason) monLog("alarm cleared · " + reason);
-  function noteImpulse(fromAccel, fromMic){
-    impulse = true;
-    lastImpulseAt = performance.now();
-    if (alarmState === "cleared" || alarmState === "armed") alarmState = "triggered";
-    else alarmState = "sustaining";
-    blastVolJump();
-    // Same full response path as micDiff onset: extreme shriek/contour family (#44/#45)
-    if (!extremeActive) enterExtremeFromBurst(IMPULSE_ACCEL_DELTA, bandBurst || "us");
-    else applyExtremeVarianceTick(fromAccel && fromMic ? "impulse accel+mic" : (fromAccel ? "impulse accel" : "impulse mic"));
-    if (typeof monLog === "function") {
-      monLog("impulse · " + (fromAccel ? "accel" : "") + (fromAccel && fromMic ? "+" : "") + (fromMic ? "micDiff" : "")
-        + " → " + alarmState);
-    }
-    updateTelUI();
-  function alarmTick(now){
-    const t = now || performance.now();
-    if (alarmState !== "triggered" && alarmState !== "sustaining") return;
-    const quiet = (t - lastImpulseAt) > 80;
-    if (!quiet) {
-      alarmState = "sustaining";
-      volBlast = true;
-      alarmQuietSince = 0;
-      return;
-    if (!alarmQuietSince) alarmQuietSince = t;
-    if ((t - alarmQuietSince) >= BURST_QUIET_MS) {
-      volBlast = false;
-      alarmState = "cleared";
-    } else {
     tickAlarmHysteresis(now, stillHot || onset || micImpulse);
   }
 
@@ -1405,24 +1363,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   window.addEventListener("devicemotion", e => {
-    const a = e.acceleration || e.accelerationIncludingGravity;
-    if (a) {
-      ax = a.x || 0; ay = a.y || 0; az = a.z || 0;
-      const mag = Math.hypot(ax, ay, az);
-      accelMag = 0.85 * accelMag + 0.15 * mag;
-      const emaA = 0.9 * accelBaseline + 0.1 * mag;
-      const dA = mag - accelBaseline;
-      accelBaseline = emaA;
-      if (dA >= IMPULSE_ACCEL_DELTA) noteImpulse(true, false);
-    }
-    // DeviceMotionEvent.rotationRate is deg/s — convert to rad/s for contract/ETL (#26)
-    const rr = e.rotationRate;
-    if (rr && (rr.alpha != null || rr.beta != null || rr.gamma != null)) {
-      gx = (rr.alpha || 0) * DEG_TO_RAD;
-      gy = (rr.beta || 0) * DEG_TO_RAD;
-      gz = (rr.gamma || 0) * DEG_TO_RAD;
-      absOmega = 0.85 * absOmega + 0.15 * Math.hypot(gx, gy, gz);
-      gyroSampled = true;
+    // Prefer linear acceleration; if only gravity-inclusive is available, warm a multi-sample
+    // baseline before any impulse→blast path (stationary ~9.8 must not false-trigger).
+    const linear = e.acceleration;
+    const a = (linear && (linear.x != null || linear.y != null || linear.z != null))
+      ? linear : e.accelerationIncludingGravity;
     if (!a) return;
     ax = a.x || 0; ay = a.y || 0; az = a.z || 0;
     const mag = Math.hypot(ax, ay, az);
@@ -1446,6 +1391,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     else if (vibClass === "physical" || vibClass === "infra_felt"){
       if (accelMag < thr * 0.4) updateVibClass(acousticEnergy > -55 ? "acoustic" : "none");
     }
+    // DeviceMotionEvent.rotationRate is deg/s — convert to rad/s for contract/ETL (#26)
+        const rr = e.rotationRate;
+        if (rr && (rr.alpha != null || rr.beta != null || rr.gamma != null)) {
+          gx = (rr.alpha || 0) * DEG_TO_RAD;
+          gy = (rr.beta || 0) * DEG_TO_RAD;
+          gz = (rr.gamma || 0) * DEG_TO_RAD;
+          absOmega = 0.85 * absOmega + 0.15 * Math.hypot(gx, gy, gz);
+          gyroSampled = true;
+        }
+    
   }, { passive:true });
 
   // ══ graph ═════════════════════════════════════════════════════════════
@@ -2449,7 +2404,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState, impulse, volBlast, deviceId, instanceId }),
     getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId }),
     getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
@@ -2457,7 +2411,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function updateTelUI(){
     if (telDevice) telDevice.textContent = deviceId;
     if (telSeed) telSeed.textContent = String(seed);
-    if (telAlgo) telAlgo.textContent = algoWireName();
+    if (telAlgo) telAlgo.textContent = (typeof algoWireName === "function" ? algoWireName() : algo);
     if (telPeak) telPeak.textContent = lastPeakHz != null ? nf(lastPeakHz) : "—";
     if (telAccel) telAccel.textContent = isFinite(accelMag) ? accelMag.toFixed(3) + " g" : "—";
     if (telMic) telMic.textContent = isFinite(acousticEnergy) ? acousticEnergy.toFixed(1) + " dB" : "—";
@@ -2510,14 +2464,32 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (telNight) telNight.textContent = n.active ? (n.target.toFixed(1) + "%") : "day";
   }
 
+  const strip = $("fleetBackendStrip");
+    if (strip) {
+      const shortPatch = (typeof PATCH_URL === "string" && PATCH_URL) ? PATCH_URL.replace(/^https?:\/\//, "").slice(0, 48) : "/patch.json";
+      const shortTel = (typeof TELEMETRY_URL === "string" && TELEMETRY_URL) ? TELEMETRY_URL.replace(/^https?:\/\//, "").slice(0, 40) : "off";
+      strip.textContent = "Backend · patch " + shortPatch + " · telemetry " + shortTel + " · poll " + POLL_MS + "ms";
+    }
+  }
+  const simImpulseBtn = $("simImpulseBtn");
+  if (simImpulseBtn) {
+    simImpulseBtn.addEventListener("click", function(){
+      noteImpulse(true, false);
+      publishFleetHeartbeat();
+      paintFleetCards();
+      updateTelUI();
+    });
+  }
+
+
   function telemetryPayload(){
     const suddenFreq = !!(geminiAutorouteFlag || suddenState === "rotate" || suddenState === "onset" || soundBurst);
-    const payload = {
+    return {
       schemaVersion: SCHEMA_VERSION,
       deviceId,
       ts: new Date().toISOString(),
       seed,
-      algo: algoWireName(),
+      algo: typeof algoWireName === "function" ? algoWireName() : algo,
       peakHz: lastPeakHz,
       suddenFreq,
       soundBurst: !!soundBurst,
@@ -2525,6 +2497,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       impulse: !!impulse,
       volBlast: !!volBlast,
       alarmState: effectiveAlarmState(),
+      ...(gyroSampled ? { gx, gy, gz, absOmega } : {}),
       bandBurst: bandBurst || "none",
       soundBurstMeta: {
         energyDelta: burstEnergyDelta,
@@ -2541,7 +2514,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         : ((soundBurst || extremeActive) ? "soundBurst" : (suddenFreq ? "suddenFreq" : undefined)),
       absA: accelMag,
       a: accelMag,
-      ax, ay, az,
       micEnergy: Math.round((isFinite(acousticEnergy) ? acousticEnergy : -120) * 10) / 10,
       outLevel: Math.round((isFinite(outLevel) ? outLevel : -120) * 10) / 10,
       micDiff: Math.round((isFinite(micDiff) ? micDiff : -120) * 10) / 10,
@@ -2570,19 +2542,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       logTail: records.slice(-3),
       net: netKind(),
       route: hwCaps.route || "a2dp",
-      impulse: !!impulse,
-      volBlast: !!volBlast,
-      alarmState
       ax, ay, az
     };
-    if (gyroSampled) {
-      payload.absOmega = absOmega;
-      payload.omega = absOmega;
-      payload.gx = gx;
-      payload.gy = gy;
-      payload.gz = gz;
-    }
-    return payload;
   }
 
   const fleetPeers = {};
@@ -2599,7 +2560,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   function publishFleetHeartbeat(){
     const snap = {
-      deviceId, instanceId, seed, seedSource, algo: algoWireName(),
+      deviceId, instanceId, seed, seedSource, algo: (typeof algoWireName === "function" ? algoWireName() : algo),
       alarmState, impulse: !!impulse, volBlast: !!volBlast, holdManual, ts: Date.now()
     };
     try { localStorage.setItem("hop.fleetLocal", JSON.stringify(snap)); } catch (_) {}
@@ -2632,8 +2593,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       if (card) {
         const idEl = card.querySelector(".id");
         if (idEl) idEl.textContent = peer ? peer.deviceId : fallbackId;
-        card.classList.toggle("stale", !!(peer && peerStale(peer)));
-        if (!peer) card.classList.remove("stale");
       }
       if (meta) {
         if (!peer) { meta.textContent = fallback; return; }
@@ -2655,12 +2614,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       cmp.textContent = "Seed compare · local=" + seed
         + (peerN ? (" · peers=" + ids.map(function(id){ return fleetPeers[id].seed; }).join(",")) : " · no peers")
         + (unique.length === seeds.length && peerN > 0 ? " · incoherent OK" : (peerN ? " · CHECK shared seeds" : " · open a 2nd tab to compare"));
-    }
-    const strip = $("fleetBackendStrip");
-    if (strip) {
-      const shortPatch = (typeof PATCH_URL === "string" && PATCH_URL) ? PATCH_URL.replace(/^https?:\/\//, "").slice(0, 48) : "/patch.json";
-      const shortTel = (typeof TELEMETRY_URL === "string" && TELEMETRY_URL) ? TELEMETRY_URL.replace(/^https?:\/\//, "").slice(0, 40) : "off";
-      strip.textContent = "Backend · patch " + shortPatch + " · telemetry " + shortTel + " · poll " + POLL_MS + "ms";
     }
   }
   const simImpulseBtn = $("simImpulseBtn");

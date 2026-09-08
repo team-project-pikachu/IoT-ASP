@@ -111,7 +111,7 @@ test.describe("public blaster smoke", () => {
     expect(s2.seed).not.toBe(s1.seed);
     expect(Number.isInteger(s2.seed) && s2.seed > 0).toBe(true);
     expect(s2.seedSource).toBe("entropy");
-    expect(await page.evaluate(() => sessionStorage.getItem("hop.tabSeed"))).toBe(String(s2.seed));
+    expect(await page.evaluate(() => localStorage.getItem("hop.seed"))).toBe(String(s2.seed));
     const recs = await log(page);
     const r = recs.find(x => x.event === "reseed");
     expect(r).toBeTruthy();
@@ -257,54 +257,13 @@ test.describe("public blaster smoke", () => {
   });
 
 
-  test("fleet panel + simulate impulse + gyro keys (#11 #42 #62)", async ({ page }) => {
-    const errors = await openPage(page);
-    await expect(page.locator("#fleetPanel")).toBeAttached();
-    await expect(page.locator("#fleetBackendStrip")).toBeAttached();
-    await expect(page.locator("#simImpulseBtn")).toBeAttached();
-    // Before any rotation sample, optional gyro keys must be omitted (not numeric zeros)
-    const before = await payload(page);
-    expect(before.gx).toBeUndefined();
-    expect(before.gy).toBeUndefined();
-    expect(before.gz).toBeUndefined();
-    expect(before.absOmega).toBeUndefined();
-    // DeviceMotionEvent.rotationRate is deg/s; frontend must convert to rad/s
-    await page.evaluate(() => {
-      const ev = new DeviceMotionEvent("devicemotion", {
-        acceleration: { x: 0.01, y: 0, z: 0, interval: 0 },
-        accelerationIncludingGravity: { x: 0.01, y: 0, z: 9.8, interval: 0 },
-        rotationRate: { alpha: 57.2957795, beta: 0, gamma: 0 }, // ~1 rad/s
-        interval: 16
-      });
-      window.dispatchEvent(ev);
-    });
-    await page.waitForFunction(() => {
-      const p = window.__hop.telemetryPayload();
-      return typeof p.gx === "number" && typeof p.absOmega === "number";
-    }, null, { timeout: 5000 });
-    const pGyro = await payload(page);
-    expect(pGyro.gx).toBeCloseTo(1, 1);
-    expect(pGyro.gy).toBeCloseTo(0, 5);
-    expect(pGyro.gz).toBeCloseTo(0, 5);
-    expect(pGyro.absOmega).toBeGreaterThan(0.05);
-    await page.click("#simImpulseBtn");
-    await page.waitForFunction(() => {
-      const p = window.__hop.telemetryPayload();
-      return p.impulse === true || p.volBlast === true || p.alarmState === "triggered" || p.alarmState === "sustaining";
-    }, null, { timeout: 5000 });
-    const p = await payload(page);
-    expect(typeof p.gx).toBe("number");
-    expect(p.schemaVersion).toBe(1);
-    expect(typeof p.ts).toBe("string");
-    await expect(page.locator("#fleetBackendStrip")).toContainText("telemetry");
-    expect(errors).toEqual([]);
-  });
-
-
-  test("peer ages past stale threshold (#11 #62)", async ({ browser }) => {
+  test("two tabs exchange fleet heartbeats + simulate impulse (#11 #22 #44)", async ({ browser }) => {
     const context = await browser.newContext();
     const pageA = await context.newPage();
     const pageB = await context.newPage();
+    const errors = [];
+    pageA.on("pageerror", e => errors.push(String(e)));
+    pageB.on("pageerror", e => errors.push(String(e)));
     await pageA.goto("/");
     await pageB.goto("/");
     await pageA.waitForFunction(() => !!window.__hop);

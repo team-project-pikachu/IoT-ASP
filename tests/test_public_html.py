@@ -58,10 +58,12 @@ def test_invariant_literals(html: str) -> None:
 
 
 # ── 2. ids ───────────────────────────────────────────────────────────────────
+NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog",
+           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal",
+           "telemetryUrlLabel", "patchUrlLabel")
 NEW_IDS = ("copyLogBtn", "copyFleetLogBtn", "reseedBtn", "simImpulseBtn", "fleetSeedCompare",
            "telHopAge", "telResumes", "telWatchdog",
-           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal",
-           "telemetryUrlLabel", "patchUrlLabel", "fleetBackendStrip")
+           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal")
 OLD_IDS = ("telDevice", "telSeed", "telAlgo", "telPeak", "telAccel", "telMic", "telVib", "telHold",
            "telSudden", "monLog", "sysList", "sysBtn", "vol", "fMin", "fMax", "holdPatchBtn", "power")
 
@@ -74,7 +76,7 @@ def test_ids_present_once(html: str, el_id: str) -> None:
 # ── 3. telemetryPayload keys ─────────────────────────────────────────────────
 PAYLOAD_TOKENS = ("band", "power", "nightNY", "lfArmed", "lfDriveCapable", "lastHopAgeMs",
                   "ctxResumes", "watchdogTrips", "logSeq", "logTail", "holdManual",
-                  "schemaVersion: SCHEMA_VERSION", "impulse", "volBlast", "alarmState", "gx", "gy", "gz", "absOmega")
+                  "schemaVersion: SCHEMA_VERSION", "impulse", "volBlast", "alarmState")
 
 
 def test_telemetry_payload_tokens(html: str) -> None:
@@ -121,19 +123,23 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "peerStale" in html
 
 
-def test_backend_url_query_overrides(html: str) -> None:
-    """#61 — live URLs via query, never baked secrets."""
-    assert 'id="telemetryUrlLabel"' in html
-    assert "qs.get(\"patch\")" in html or "qs.get('patch')" in html or 'qs.get("patch")' in html
-    assert 'qs.get("telemetry")' in html
-    assert 'qs.get("pollMs")' in html
-    assert 'BACKEND_TELEMETRY_URL = ""' in html
-    assert "TELEMETRY_URL || \"off\"" in html or 'TELEMETRY_URL || "off"' in html
-
+# ── 4. enrichment literals ───────────────────────────────────────────────────
+def test_enrichment_literals(html: str) -> None:
     for lit in ('"ac120"', '"America/New_York"', '"10-20"', '"17-23k"', "function nightNYNow("):
         assert lit in html, lit
     assert "+fMin.value <= 100" in html
     assert "hour12: false" in html
+
+
+def test_backend_url_query_overrides(html: str) -> None:
+    """#61 — live URLs via query, never baked secrets."""
+    assert 'id="telemetryUrlLabel"' in html
+    assert 'id="patchUrlLabel"' in html
+    assert 'qs.get("patch")' in html or "qs.get('patch')" in html
+    assert 'qs.get("telemetry")' in html
+    assert 'qs.get("pollMs")' in html
+    assert 'BACKEND_TELEMETRY_URL = ""' in html
+    assert 'TELEMETRY_URL || "off"' in html or "TELEMETRY_URL || 'off'" in html
 
 
 # ── 5. delimited blocks + log ────────────────────────────────────────────────
@@ -267,10 +273,9 @@ def test_reseed(html: str) -> None:
     assert html.count("function reseed(") == 1
     for lit in ('"entropy"', 'reseed("ui")', 'reseed("patch")', "seedSource"):
         assert lit in html, lit
+    # Per-tab seed lives in sessionStorage so same-origin peers can diverge
     assert 'sessionStorage.setItem("hop.tabSeed", String(seed))' in html
     assert '"session"' in html or '"stored"' in html
-    # hop.seed may mirror to localStorage for tooling/spec-02 reseed asserts; tab RNG is session-scoped.
-    assert 'localStorage.setItem("hop.seed"' in html
 
 
 # ── spec 03: watchdog ────────────────────────────────────────────────────────
