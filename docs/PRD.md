@@ -1,14 +1,16 @@
 # IoT-ASP / hop-ultrasonic — Product Requirements Document (PRD)
 
+**TL;DR:** Phones hop near-ultrasound (17–23 kHz) over **native A2DP** to Soundcore. Browser polls patches; Gemini/ADK stays on the backend. Ship by surface (iOS → macOS → Nest → Sonos) with Platform first. Never invent OAuth/SensorKit secrets.
+
 **Status:** living · **Aligned to:** [roadmap.md](roadmap.md) · [UAT.md](UAT.md) · [TESTING_PLAN.md](TESTING_PLAN.md)  
-**Board:** [Project 5](https://github.com/orgs/team-project-pikachu/projects/5)  
+**Board:** [Project 5](https://github.com/orgs/team-project-pikachu/projects/5) · **Index:** [README.md](README.md)  
 **Issue titles:** `{Surface}: …` (`iOS:` · `macOS:` · `Nest:` · `Sonos:` · `Platform:` / `ADK:` / `Agentic:`)
 
 ## 1. Vision / problem
 
-Near-ultrasonic **hop fleet** for scientific / ASP (adaptive signal processing) experiments: multiple iPhones TX through system Bluetooth A2DP (Soundcore primary), optional Mac Studio + Sonos Beam Gen 2 routing, with a **decoupled** control plane (telemetry → GCP/ADK → clamped `patch.json`) and optional Nest camera / glass-shatter product story.
+**What:** Multi-phone hop fleet for ASP experiments — TX via system Bluetooth A2DP (Soundcore primary), optional Mac Studio + Sonos Beam, decoupled control plane (telemetry → GCP/ADK → clamped `patch.json`), optional Nest glass/burst story.
 
-**Problem:** Browser and OS limits fragment sensing and TX (no Web Bluetooth for carrier audio; SensorKit entitlement-gated; Nest OAuth owner-gated). Product work must stay honest about hardware and never invent secrets.
+**Why it’s hard:** No Web Bluetooth for carrier audio; SensorKit and Nest OAuth are owner-gated. Stay honest about HW; never invent secrets.
 
 ## 2. Goals & non-goals
 
@@ -94,4 +96,4 @@ See [roadmap.md](roadmap.md). Short form: **Platform → macOS → iOS → Nest 
 
 ## Related
 
-- Constraints: [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) · Index: [awesome-iot-asp.md](awesome-iot-asp.md) · SEBoK guide: [vv/README.md](vv/README.md)
+- Constraints: [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) · Index: [README.md](README.md) · SEBoK guide: [vv/README.md](vv/README.md)

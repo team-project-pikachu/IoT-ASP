@@ -20,6 +20,8 @@ Issue-linked PRs are the intended path for Project 5 Todo work (#12, #16, #17, r
 5. **`mdc check`** — `python3 scripts/mdc_convert.py --check` (Cursor `.mdc` → Claude Code outputs are fresh).
 6. **`e2e smoke`** — Playwright against `public/` (`tests/e2e/run.sh`); informative, not required by the ruleset.
 
+**Docs analyzer** (separate workflow `.github/workflows/docs-analyzer.yml`): inventories `docs/**/*.md`, fails on broken relative links; warns on orphans, large files, missing TL;DR, long paragraphs. Local: `make docs-analyze`. Not a required main check on day one.
+
 ## Continuous ship
 
 After green CI for a push to `main`, `deploy.yml` runs dev → test →

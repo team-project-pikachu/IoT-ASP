@@ -133,4 +133,4 @@ NEST_DA_OWNER_ACCOUNT=$(op read "op://dev/IoT-ASP Nest Device Access/NEST_DA_OWN
 
 Related: [`nest-device-access.md`](nest-device-access.md) ·
 [`gemini-enterprise.md`](gemini-enterprise.md) ·
-[`specs/85-nest-google-home-integration.md`](specs/85-nest-google-home-integration.md)
+issue [#85](https://github.com/team-project-pikachu/IoT-ASP/issues/85)
