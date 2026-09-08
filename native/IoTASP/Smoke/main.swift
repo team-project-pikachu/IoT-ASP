@@ -184,6 +184,11 @@ struct IoTASPSmoke {
         ProductTabHooks.demoWithoutNestTokens(alarm: a, event: .sound_burst)
         check("hold wins nest demo", a.state == .cleared)
 
+        // #25 native AEC honesty (issue stays open)
+        check("no full AEC", NativeAECHonesty.fullAEC == false)
+        check("no lf mic", NativeAECHonesty.lfMic == false)
+        check("alpha 0.85", NativeAECHonesty.alpha == 0.85)
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

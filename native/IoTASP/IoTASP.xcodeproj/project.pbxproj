@@ -33,6 +33,7 @@
 		A10000000000000000000037 /* UltrasonicMicMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UltrasonicMicMeter.swift; sourceTree = "<group>"; };
 		A10000000000000000000038 /* UltrasonicMicCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UltrasonicMicCapture.swift; sourceTree = "<group>"; };
 		A10000000000000000000044 /* AudioRouteMatrix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRouteMatrix.swift; sourceTree = "<group>"; };
+		A10000000000000000000050 /* NativeAECHonesty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAECHonesty.swift; sourceTree = "<group>"; };
 		A10000000000000000000045 /* TelemetryBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryBridge.swift; sourceTree = "<group>"; };
 		A10000000000000000000046 /* OtherSensorsGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherSensorsGate.swift; sourceTree = "<group>"; };
 		A10000000000000000000047 /* BackgroundSensingPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundSensingPolicy.swift; sourceTree = "<group>"; };
@@ -153,6 +154,7 @@
 				A10000000000000000000037 /* UltrasonicMicMeter.swift */,
 				A10000000000000000000038 /* UltrasonicMicCapture.swift */,
 				A10000000000000000000044 /* AudioRouteMatrix.swift */,
+				A10000000000000000000050 /* NativeAECHonesty.swift */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -258,6 +260,7 @@
 				A80000000000000000000047 /* BackgroundSensingPolicy.swift in Sources */,
 				A80000000000000000000048 /* SensorKitReaderMap.swift in Sources */,
 				A80000000000000000000049 /* ProductTabHooks.swift in Sources */,
+				A80000000000000000000050 /* NativeAECHonesty.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +287,7 @@
 				A80000000000000000000047 /* BackgroundSensingPolicy.swift in Sources */,
 				A80000000000000000000048 /* SensorKitReaderMap.swift in Sources */,
 				A80000000000000000000049 /* ProductTabHooks.swift in Sources */,
+				A80000000000000000000050 /* NativeAECHonesty.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -308,6 +312,7 @@
 		A80000000000000000000037 /* UltrasonicMicMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000037 /* UltrasonicMicMeter.swift */; };
 		A80000000000000000000038 /* UltrasonicMicCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000038 /* UltrasonicMicCapture.swift */; };
 		A80000000000000000000044 /* AudioRouteMatrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000044 /* AudioRouteMatrix.swift */; };
+		A80000000000000000000050 /* NativeAECHonesty.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000050 /* NativeAECHonesty.swift */; };
 		A80000000000000000000045 /* TelemetryBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000045 /* TelemetryBridge.swift */; };
 		A80000000000000000000046 /* OtherSensorsGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000046 /* OtherSensorsGate.swift */; };
 		A80000000000000000000047 /* BackgroundSensingPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000047 /* BackgroundSensingPolicy.swift */; };
