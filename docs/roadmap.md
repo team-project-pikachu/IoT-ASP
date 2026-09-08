@@ -3,7 +3,12 @@
 Canonical product plan. **Milestones = OS/product surface.** **Labels = work category.**  
 Legacy M0–M9 numbers are closed or renamed — do not open parallel taxonomies.
 
-**Board:** [Project 5](https://github.com/orgs/team-project-pikachu/projects/5) · **Closed log:** [mvp-closed-log.md](mvp-closed-log.md)
+**Board:** [Project 5](https://github.com/orgs/team-project-pikachu/projects/5) · **Closed log:** [mvp-closed-log.md](mvp-closed-log.md)  
+**PRD:** [PRD.md](PRD.md) · **UAT:** [UAT.md](UAT.md) · **Testing (SEBoK V&V):** [TESTING_PLAN.md](TESTING_PLAN.md)
+
+### Issue title convention
+
+`{Surface}: <short description>` — prefixes `iOS:` · `macOS:` · `Nest:` · `Sonos:` · `Platform:` / `ADK:` / `Agentic:`. Do not use `M0:`–`M9:` in new titles.
 
 ## Milestones (live)
 
