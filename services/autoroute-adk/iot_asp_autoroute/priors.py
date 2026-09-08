@@ -324,11 +324,14 @@ def duty_bias_for_vib(vib_class: str | None) -> dict[str, float]:
 
 def seismo_bundle() -> dict[str, Any]:
     """Full payload for ADK tool `seismo_acoustic_priors`."""
+    from . import vib_channel_select as vcs
+
     return {
         "text": prior_text(),
         "keys": list(PRIORS.keys()),
         "weights": VIB_ALGO_WEIGHTS,
         "materialChannelBias": MATERIAL_CHANNEL_BIAS,
+        "materialChannelSelect": vcs.vib_channel_select_bundle(),
         "citations": CITATIONS,
         "lfBandHz": list(LF_BAND_HZ),
         "usBandHz": list(US_BAND_HZ),
@@ -337,5 +340,10 @@ def seismo_bundle() -> dict[str, Any]:
             "LF accel is a felt proxy; true infrasound mic/TX requires lfDriveCapable. "
             "No full NS/CFD on-phone."
         ),
-        "docs": ["docs/physics.md", "docs/algorithms.md", "reference/LITERATURE.md"],
+        "docs": [
+            "docs/physics.md",
+            "docs/algorithms.md",
+            "docs/specs/04-06-vibration-channels.md",
+            "reference/LITERATURE.md",
+        ],
     }

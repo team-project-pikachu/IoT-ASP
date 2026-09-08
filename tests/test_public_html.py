@@ -76,7 +76,8 @@ def test_ids_present_once(html: str, el_id: str) -> None:
 # ── 3. telemetryPayload keys ─────────────────────────────────────────────────
 PAYLOAD_TOKENS = ("band", "power", "nightNY", "lfArmed", "lfDriveCapable", "lastHopAgeMs",
                   "ctxResumes", "watchdogTrips", "logSeq", "logTail", "holdManual",
-                  "schemaVersion: SCHEMA_VERSION", "impulse", "volBlast", "alarmState")
+                  "schemaVersion: SCHEMA_VERSION", "impulse", "volBlast", "alarmState",
+                  "materialPreset")
 
 
 def test_telemetry_payload_tokens(html: str) -> None:
@@ -195,15 +196,19 @@ def test_html_parses_single_script(html: str) -> None:
     p = _Counter()
     p.feed(html)
     p.close()
-    assert p.tags.get("script") == 1
+    # Inline IIFE + #5 acoustic-vib-energy.js + #6 vib-channel-select.js
+    n_script = p.tags.get("script") or 0
+    assert n_script >= 1
+    src_tags = re.findall(r"<script\b[^>]*\bsrc=", html, flags=re.I)
+    inline = n_script - len(src_tags)
+    assert inline == 1, "exactly one inline <script> body"
+    assert 'src="/acoustic-vib-energy.js"' in html
+    assert 'src="/vib-channel-select.js"' in html
     for t in ("html", "head", "body", "main"):
         assert p.tags.get(t) == 1, t
     assert len(p.ids) == len(set(p.ids)), "duplicate element ids"
-    for el_id in NEW_IDS:
-        assert el_id in p.ids
 
 
-# ── 8. README (M0 record, no PII) ────────────────────────────────────────────
 def test_readme_m0_record() -> None:
     txt = README_PATH.read_text(encoding="utf-8")
     # exact equality against extracted URL tokens — never a substring/`in` test on a URL literal
@@ -249,7 +254,8 @@ def test_banner_lines_well_formed(html: str) -> None:
 # ── 12. size guard ───────────────────────────────────────────────────────────
 def test_size_guard() -> None:
     # Raised 2026-09-08 for fleet cards + impulse/alarm SM (#11/#42/#44/#45).
-    assert HTML_PATH.stat().st_size < 140_000
+    # Raised again for M3 vib union (#4+#5+#6) on feat/m3-vibration-response.
+    assert HTML_PATH.stat().st_size < 160_000
 
 
 # ── spec 02: max-entropy seeds ───────────────────────────────────────────────
@@ -378,6 +384,37 @@ def test_systems_check_rows_escaped(html: str) -> None:
     assert "const safe = escHtml(rec.msg);" in html
     # innerHTML sinks: every string concatenated into sysList / monLog lines is escaped
     assert html.count("sysList.innerHTML") == 2
+
+
+
+
+# ── #4 physical vib (DeviceMotion) ───────────────────────────────────────────
+def test_physical_vib_devicemotion(html: str) -> None:
+    """docs/specs/04-06-vibration-channels.md acceptance 1–2, 4–5 (#4 physical)."""
+    assert html.count('addEventListener("devicemotion"') == 1
+    assert "DeviceMotionEvent.requestPermission" in html
+    assert "e.acceleration || e.accelerationIncludingGravity" in html
+    assert "9.80665" in html
+    assert "forceHopFromShake" in html
+    assert "shakeCount" in html
+    assert "thr * 3" in html or "thr*3" in html
+    assert "MS2_TO_G" in html
+    for lit in ("Hold / Manual", "holdManual", "holdPatchBtn"):
+        assert lit in html, lit
+
+
+
+
+# ── M3 vib integration (#4+#5+#6) ─────────────────────────────────────────────
+def test_m3_vib_channel_integration(html: str) -> None:
+    assert "forceHopFromShake" in html
+    assert "tickAcousticVibEnergy" in html
+    assert "refreshChannelArms" in html
+    assert 'id="materialPreset"' in html
+    # Exactly one arming declaration pair (owned by #6)
+    assert html.count("armPhysical = true, armAcoustic = true") == 1
+    assert html.count("let armAcoustic") == 0
+    assert "resetAcousticVibEnergy" in html
 
 
 def test_impulse_alarm_and_fleet_stub(html: str) -> None:

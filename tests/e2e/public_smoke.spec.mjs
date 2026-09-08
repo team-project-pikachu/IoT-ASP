@@ -330,4 +330,30 @@ test.describe("public blaster smoke", () => {
     expect(await page.locator("#monLog img").count()).toBe(0);
     expect(errors).toEqual([]);
   });
+
+  test("#4 synthetic DeviceMotion flips vibClass to physical", async ({ page }) => {
+    const errors = await openPage(page);
+    await page.click("#vibAutoOn");
+    // Strong linear accel (m/s²); handler converts to g. EMA needs a few samples.
+    await page.evaluate(() => {
+      for (let i = 0; i < 8; i++) {
+        window.dispatchEvent(new DeviceMotionEvent("devicemotion", {
+          acceleration: { x: 0, y: 0, z: 30, interval: null },
+          accelerationIncludingGravity: { x: 0, y: 0, z: 30, interval: null },
+          rotationRate: { alpha: null, beta: null, gamma: null },
+          interval: 16
+        }));
+      }
+    });
+    await page.waitForFunction(() => {
+      const s = window.__hop.getState();
+      const p = window.__hop.telemetryPayload();
+      return s.vibClass === "physical" && p.vibClass === "physical";
+    }, null, { timeout: 2000 });
+    const p = await payload(page);
+    expect(p.vibClass).toBe("physical");
+    expect(typeof p.absA).toBe("number");
+    expect(p.absA).toBeGreaterThan(0.5); // ~3 g after /9.80665, EMA warm
+    expect(errors).toEqual([]);
+  });
 });

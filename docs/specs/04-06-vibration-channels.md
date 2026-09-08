@@ -84,7 +84,7 @@ section (rule: `.claude/rules/public-frontend.md`), additive under `schemaVersio
      `armPhysical` is true → `shakeCount++`, force one immediate hop (`pending.length = 0; nextHopAt =
      ctx.currentTime + 0.05; schedule()`), and every 4th shake calls `reseed("shake")` (spec 02).
      Debounced ≥ 300 ms like `routeFromVib`.
-3. **Acoustic channel (#5):** promote the existing `> -55 dB` rule to a burst detector: keep a 1 s rolling
+3. **Acoustic channel (#5):** ~~promote~~ **shipped in `feat/5-acoustic-vib`**: burst detector: keep a 1 s rolling
    median of `acousticEnergy`; `acousticBurst = acousticEnergy − median ≥ 12 dB` (same 12 dB margin the
    sudden-freq detector uses at `:745`). A burst sets `vibClass = "acoustic"` (if armed) and, when #25's
    `micDiff` is available, uses `micDiff` instead of `micEnergy` so the phone's own carrier does not
@@ -177,3 +177,32 @@ Browser (`tests/e2e/public_smoke.spec.mjs`): 9. dispatching a synthetic `devicem
   `clamps.py`, `vib_anomaly.py`, `public/index.html` (`origin/main` @ `0625e91`, lines cited above).
 - Literature (from `reference/LITERATURE.md`, mirrored in `priors.CITATIONS`): PMID 27780424 (human–seat
   coupling), arXiv:2211.03647 (seismo-acoustic coupling analogy).
+
+## Prior art
+
+- **hop-ultrasonic** (`hop-ultrasonic/public/index.html`): Listen/`getUserMedia` with AEC/NS/AGC off, `AnalyserNode` fftSize 16384, US-band `meanBandDb` → `acousticEnergy`, vib class `acoustic` when `> -55 dB`, `routeFromVib` → pulse/hop. IoT-ASP inherited that surface; #5 replaces the absolute threshold with a rolling-median burst (12 dB, same margin as sudden-freq onset).
+- **#25 micDiff / soundBurst**: environmental extreme path (`detectSoundBurst`) remains separate; #5 *consumes* `micDiff` when present so self-TX does not own the acoustic vib class.
+- **Backend**: no new wire keys — `micEnergy` / `vibClass` already in `docs/api-contract.md`; material bias stays in `priors.MATERIAL_CHANNEL_BIAS` (#6).
+
+shared `vib_channel_select` (Python + `public/vib-channel-select.js`), `materialPreset` `<select>`,
+`materialPreset`. Soft bias `MATERIAL_CHANNEL_BIAS` unchanged.
+keep #6 `refreshChannelArms` / `setMaterialPreset` and #4 `forceHopFromShake` / `MS2_TO_G`.
+without `materialPreset` or channel-arming UI.
+   (`MATERIAL_CHANNEL_BIAS`, shipped) and as an arming UI (`materialPreset` on the wire, not shipped):
+   | Setup | Prefer | `materialPreset` |
+| Beacon: `absA`/`a: accelMag`, `micEnergy: acousticEnergy`, `vibThreshold: vibSens/10`, `vibClass`, `holdManual` — **no `materialPreset`** (`grep -n materialPreset public/index.html` → no match on `origin/main`) | `public/index.html:1332-1359` |
+| Wire rows `absA`/`a`, `micEnergy`, `vibThreshold`, `vibClass` (`none \| physical \| acoustic \| infra_felt`), `materialPreset` (sample payload `"table"`) | `docs/api-contract.md:52`, `:74-79` |
+| Patch author reads `telemetry["materialPreset"]`, feeds it to the weighted rotate and echoes it in the patch | `services/autoroute-adk/iot_asp_autoroute/sudden_freq.py:76-78`, `:128-129` |
+   `armAcoustic` is false. A `materialPreset` `<select>` (`handheld | table | chair | speaker`, persisted
+   as `hop.materialPreset`) sets the arming defaults from the table in *Goal* and is emitted in telemetry.
+4. **Telemetry:** emit `materialPreset` (string) and reuse existing names for everything else. `absA`
+   already consume `materialPreset`. Add a negative-control test that an unknown preset (`"granite"`)
+6. **Docs:** README's vibration-policy table gains the `materialPreset` column above and links here.
+| `materialPreset` | telemetry | `handheld \| table \| chair \| speaker` — documented, **not yet emitted** |
+  "local suddenFreq rotate may continue"); remote patches carrying `vibThreshold`/`materialPreset`
+3. `materialPreset` appears in `telemetryPayload()` body once the block lands (assert presence); the
+8. `author_sudden_freq_patch({... "materialPreset": "table", "vibClass": "physical", "suddenFreq": True})` → `ok` and `patch["materialPreset"] == "table"`; with `holdManual: True` → refused.
+
+## M3 integration
+
+Branch `feat/m3-vibration-response` merges worktrees #6→#4→#5. Single `armPhysical`/`armAcoustic` owned by `#6` `refreshChannelArms`.
