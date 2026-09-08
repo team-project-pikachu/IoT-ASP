@@ -133,3 +133,7 @@ writes, and Hold / Manual always wins.
 
 - Added `scripts/colab_live_gcs.sh` (dry-run default; refuses `LIVE_GCS=1` without `IOT_ASP_GCS_BUCKET`).
 - **Live URI evidence still PENDING** — owner Colab run with userdata names only.
+
+## Dry-run fixture (Balanced PR3)
+
+`bash scripts/colab_gcs_fixture.sh --check` vs `fixtures/colab_gcs/`. Live remains PENDING.

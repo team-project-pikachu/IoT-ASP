@@ -23,8 +23,8 @@
 | #22 | implemented+wired | Structured fleet logs | `services/autoroute-adk/iot_asp_autoroute/fleet_log.py`, `tests/test_fleet_log.py`, `docs/specs/22-structured-fleet-logs.md` |
 | #24 | parked stub | google-adk / google-genai 2.x | `docs/specs/24-adk-2x-migration.md` + `docs/issues/ISSUE-24-*` |
 | #25 | parked stub | HW-limited LF/AEC micDiff | `docs/specs/25-hw-limited-lf-aec-micdiff.md` + `docs/issues/ISSUE-25-*` |
-| #26 | stubbed-live | Colab live GCS features | `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `notebooks/iot_asp_colab_etl.md`, `scripts/colab_live_gcs.sh` |
-| #27 | docs-only | Vercel Actions secrets | `docs/deploy.md`, `.vv/deploy/VERCEL.md`, `scripts/vercel_secrets_check.sh` |
+| #26 | fixture+dry-run | Colab live GCS features | `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `notebooks/iot_asp_colab_etl.md`, `scripts/colab_live_gcs.sh` |
+| #27 | docs+name-check | Vercel Actions secrets | `docs/deploy.md`, `.vv/deploy/VERCEL.md`, `scripts/vercel_secrets_check.sh` |
 | #34 | implemented+wt-guard | mdc_convert GEN_MARK guard | `scripts/mdc_convert.py`, `tests/test_mdc_convert.py`, `docs/mdc-conversion.md` |
 | #39 | parked stub | Sonos Beam Gen 2 sink | `docs/specs/39-sonos-beam-sink.md` + `docs/issues/ISSUE-39-*` |
 | #41 | stubbed | Native iOS + watchOS | `docs/specs/41-native-ios-watchos.md`, `native/IoTASP/`, `.vv/41/README.md` |
