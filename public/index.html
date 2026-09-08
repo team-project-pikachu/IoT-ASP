@@ -1142,7 +1142,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function noteImpulse(source, deltaHint){
     // armed→triggered→sustaining + blast; Hold wins.
     if (!suddenAuto || holdManual) return false;
-    if (!running && !sensorsArmed) return false;
+    // Explicit UI / e2e simulate must latch before Start (enterExtremeFromBurst already allows idle audio).
+    const isSim = source === "simulate" || source === true;
+    if (!running && !sensorsArmed && !isSim) {
+  
+      return false;
+    }
     const now = performance.now();
     const train = impulse && (now - lastImpulseAt) < IMPULSE_LATCH_MS;
     lastImpulseAt = now;
@@ -2608,7 +2613,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const simImpulseBtn = $("simImpulseBtn");
   if (simImpulseBtn) {
     simImpulseBtn.addEventListener("click", function(){
-      noteImpulse(true, false);
+  
+      const ok = noteImpulse("simulate", IMPULSE_PEAK_DB);
+  
       publishFleetHeartbeat();
       paintFleetCards();
       updateTelUI();
