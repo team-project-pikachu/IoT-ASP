@@ -1165,6 +1165,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     }
   }
 
+  // Call-site aliases (Hold button + 200ms ticker use these names)
+  function clearAlarm(reason){ clearImpulseAlarm(reason); }
+  function alarmTick(now){ tickAlarmHysteresis(now, false); }
+
   function detectMicImpulse(diffNow, delta, rise){
     // Rise-time or peak vs EMA (stricter than BURST_ONSET).
     if (!isFinite(diffNow) || diffNow <= -80) return false;

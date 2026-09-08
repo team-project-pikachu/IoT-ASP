@@ -49,6 +49,8 @@ def test_invariant_literals(html: str) -> None:
     for lit in ("function blastVolJump(", "function noteImpulse(", "alarmState", "volBlast", "IMPULSE_RISE_DB"):
         assert lit in html, lit
     assert "function effectiveAlarmState(" in html
+    assert "function clearAlarm(" in html
+    assert "function alarmTick(" in html
     assert "alarmState: effectiveAlarmState()" in html
     assert "accelRawPrev" not in html
     assert "micEnergy_band" not in html  # keep subtract in JS netMicDiff only
