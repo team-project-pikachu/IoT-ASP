@@ -370,7 +370,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
 
   <section class="fleet" id="fleetPanel" aria-label="Fleet nodes">
-    <p class="legend">Fleet · this tab + peers (stub — not React)</p>
+    <p class="legend">Fleet · this tab + peers (stub — not React · #11)</p>
     <p class="sub" style="margin:8px 0 0">Same-origin tabs advertise over <code>BroadcastChannel</code>. Other phones stay placeholders until native/#10.</p>
     <div class="fleet-grid">
       <div class="fleet-card local" id="fleetLocal">
@@ -385,6 +385,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         <div class="id">node-3</div>
         <div class="meta" id="fleetPeer3Meta">chair / Sonos research (#18 #39)</div>
       </div>
+    </div>
+    <p class="sub" id="fleetSeedCompare" style="margin:10px 0 0">Seed compare · —</p>
+    <div class="tapbar" style="margin-top:10px">
+      <button type="button" class="tap" id="simImpulseBtn">Simulate impulse</button>
     </div>
   </section>
 
@@ -429,6 +433,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     </div>
     <div class="tapbar" style="margin-top:10px">
       <button type="button" class="tap" id="copyLogBtn">Copy log JSON</button>
+      <button type="button" class="tap" id="copyFleetLogBtn">Copy fleet_log JSONL</button>
       <button type="button" class="tap" id="reseedBtn">Reseed</button>
     </div>
     <div class="mon-log" id="monLog" aria-live="polite"></div>
@@ -2073,16 +2078,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     while (monLogEl.children.length > 40) monLogEl.removeChild(monLogEl.lastChild);
   }
 
-  function copyLogJson(){
-    const json = JSON.stringify(records);
-    const done = () => monLog("log copied", "ui", { n: records.length }, "info");
+  function copyTextToClipboard(text, okMsg, okFields){
+    const done = () => monLog(okMsg, "ui", okFields || {}, "info");
     const fallback = () => {
       try {
         const ta = document.createElement("textarea");
-        ta.value = json; ta.readOnly = true;
+        ta.value = text; ta.readOnly = true;
         ta.style.position = "fixed"; ta.style.opacity = "0"; ta.style.left = "-9999px";
         document.body.appendChild(ta);
-        ta.select(); ta.setSelectionRange(0, json.length);
+        ta.select(); ta.setSelectionRange(0, text.length);
         try { document.execCommand("copy"); } catch (_) {}
         document.body.removeChild(ta);
       } catch (_) {}
@@ -2090,12 +2094,60 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     };
     try {
       if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
-        navigator.clipboard.writeText(json).then(done, fallback);
+        navigator.clipboard.writeText(text).then(done, fallback);
       } else fallback();
     } catch (_) { fallback(); }
   }
+  function copyLogJson(){
+    copyTextToClipboard(JSON.stringify(records), "log copied", { n: records.length });
+  }
+  // Fixed-order fleet_log lines (#22 RECORD_KEYS) for Colab / dry-run handoff — browser-side mirror only.
+  const FLEET_LOG_KEYS = ["kind","schemaVersion","ts","level","event","deviceId","band","power","nightNY",
+    "lfArmed","lfDriveCapable","lfGate","algo","vibClass","suddenFreq","suddenState","holdManual","peakHz",
+    "absA","micEnergy","impulse","volBlast","alarmState","msg"];
+  function fleetLogLineFromTel(extra){
+    const tel = typeof telemetryPayload === "function" ? telemetryPayload() : {};
+    const row = {
+      kind: "fleet_log",
+      schemaVersion: SCHEMA_VERSION,
+      ts: (tel.ts || new Date().toISOString()).replace(/\.\d{3}Z$/, "Z"),
+      level: "info",
+      event: (extra && extra.event) || "beacon",
+      deviceId: tel.deviceId || deviceId || "local",
+      band: tel.band || bandTag(),
+      power: tel.power || "ac120",
+      nightNY: !!tel.nightNY,
+      lfArmed: !!tel.lfArmed,
+      lfDriveCapable: !!tel.lfDriveCapable,
+      lfGate: !!(tel.lfArmed && tel.lfDriveCapable && tel.vibClass === "infra_felt"),
+      algo: tel.algo || (typeof algoWireName === "function" ? algoWireName() : algo),
+      vibClass: tel.vibClass || "none",
+      suddenFreq: !!tel.suddenFreq,
+      suddenState: tel.suddenState || "idle",
+      holdManual: !!holdManual,
+      peakHz: tel.peakHz == null ? null : tel.peakHz,
+      absA: tel.absA == null ? null : tel.absA,
+      micEnergy: tel.micEnergy == null ? null : tel.micEnergy,
+      impulse: !!impulse,
+      volBlast: !!volBlast,
+      alarmState: alarmState,
+      msg: (extra && extra.msg) || ""
+    };
+    const ordered = {};
+    for (let i = 0; i < FLEET_LOG_KEYS.length; i++) ordered[FLEET_LOG_KEYS[i]] = row[FLEET_LOG_KEYS[i]];
+    return ordered;
+  }
+  function copyFleetLogJsonl(){
+    const lines = records.slice(-50).map(function(r){
+      return JSON.stringify(fleetLogLineFromTel({ event: r.event || "log", msg: r.msg || "" }));
+    });
+    if (!lines.length) lines.push(JSON.stringify(fleetLogLineFromTel({ event: "export", msg: "empty ring" })));
+    copyTextToClipboard(lines.join("\n") + "\n", "fleet_log JSONL copied", { n: lines.length, keys: FLEET_LOG_KEYS.length });
+  }
   const copyLogBtn = $("copyLogBtn");
   if (copyLogBtn) copyLogBtn.addEventListener("click", copyLogJson);
+  const copyFleetLogBtn = $("copyFleetLogBtn");
+  if (copyFleetLogBtn) copyFleetLogBtn.addEventListener("click", copyFleetLogJsonl);
 
   // ══ telemetry enrichment (#22) ════════════════════════════════════════
   function nightNYNow(){
@@ -2358,6 +2410,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function paintFleetCards(){
+    const now = Date.now();
     const localMeta = $("fleetLocalMeta");
     const localCard = $("fleetLocal");
     if (localCard) {
@@ -2366,24 +2419,53 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     }
     if (localMeta) {
       localMeta.textContent = "seed " + seed + " · " + (typeof algoWireName === "function" ? algoWireName() : algo)
-        + " · alarm " + alarmState + (holdManual ? " · HOLD" : "");
+        + " · alarm " + alarmState
+        + (impulse ? " · impulse" : "")
+        + (volBlast ? " · blast" : "")
+        + (holdManual ? " · HOLD" : "");
     }
     const ids = Object.keys(fleetPeers).sort();
     const p2 = $("fleetPeer2Meta"), p3 = $("fleetPeer3Meta");
     const c2 = $("fleetPeer2"), c3 = $("fleetPeer3");
+    function peerStale(peer){
+      if (!peer || !peer.ts) return true;
+      return (now - peer.ts) > 8000;
+    }
     function fill(card, meta, peer, fallbackId, fallback){
       if (card) {
         const idEl = card.querySelector(".id");
         if (idEl) idEl.textContent = peer ? peer.deviceId : fallbackId;
       }
       if (meta) {
-        meta.textContent = peer
-          ? ("seed " + peer.seed + " · " + (peer.algo || "—") + " · alarm " + (peer.alarmState || "—"))
-          : fallback;
+        if (!peer) { meta.textContent = fallback; return; }
+        const age = peer.ts ? Math.max(0, Math.round((now - peer.ts) / 1000)) : "?";
+        meta.textContent = "seed " + peer.seed + " · " + (peer.algo || "—")
+          + " · alarm " + (peer.alarmState || "—")
+          + (peer.impulse ? " · impulse" : "")
+          + (peer.volBlast ? " · blast" : "")
+          + (peerStale(peer) ? " · STALE " + age + "s" : " · " + age + "s");
       }
     }
     fill(c2, p2, ids[0] ? fleetPeers[ids[0]] : null, "node-2", "waiting for peer tab");
     fill(c3, p3, ids[1] ? fleetPeers[ids[1]] : null, "node-3", "chair / Sonos research (#18 #39)");
+    const cmp = $("fleetSeedCompare");
+    if (cmp) {
+      const seeds = [String(seed)].concat(ids.map(function(id){ return String(fleetPeers[id].seed); }));
+      const unique = Array.from(new Set(seeds));
+      const peerN = ids.length;
+      cmp.textContent = "Seed compare · local=" + seed
+        + (peerN ? (" · peers=" + ids.map(function(id){ return fleetPeers[id].seed; }).join(",")) : " · no peers")
+        + (unique.length === seeds.length && peerN > 0 ? " · incoherent OK" : (peerN ? " · CHECK shared seeds" : " · open a 2nd tab to compare"));
+    }
+  }
+  const simImpulseBtn = $("simImpulseBtn");
+  if (simImpulseBtn) {
+    simImpulseBtn.addEventListener("click", function(){
+      noteImpulse(true, false);
+      publishFleetHeartbeat();
+      paintFleetCards();
+      updateTelUI();
+    });
   }
 
   function beaconTelemetry(){

@@ -2,13 +2,14 @@
 
 **Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/34  
 **Classification:** ship / stub iterate (Balanced)  
-**Status:** implemented
+**Status:** implemented (stack PR2 deepen)
 
 ## Did
 
-- `scripts/mdc_convert.py`
-- `tests/test_mdc_convert.py`
+- `scripts/mdc_convert.py` — GEN_MARK refuse + nested `IoT-ASP-wt-*` exclude prefixes
+- `tests/test_mdc_convert.py` — incl. nested worktree skip
 - `docs/mdc-conversion.md`
+- `.gitignore` `/IoT-ASP-wt-*/`
 
 ## Didn't
 
@@ -17,4 +18,4 @@
 
 ## Next
 
-- Overlaps open PR #35 — same acceptance
+- Merge after CI green; overlaps historical PR #35 acceptance

@@ -412,6 +412,27 @@ def test_long_frontmatter_gen_mark_not_misclassified(tmp_path):
     assert mdc.main(["--root", str(root), "--check"]) == 0
 
 
+def test_nested_worktree_prefix_excluded(tmp_path):
+    """Accidental nested IoT-ASP-wt-* checkouts must not become mdc sources (#34)."""
+    root = tmp_path / "wt-skip"
+    (root / ".cursor" / "rules").mkdir(parents=True)
+    (root / ".cursor" / "rules" / "keep_me.mdc").write_text(
+        "---\ndescription: keep\nalwaysApply: false\n---\n# Keep\n",
+        encoding="utf-8",
+    )
+    nested = root / "IoT-ASP-wt-webhook-notify" / ".cursor" / "rules"
+    nested.mkdir(parents=True)
+    (nested / "leak_me.mdc").write_text(
+        "---\ndescription: leak\nalwaysApply: false\n---\n# Leak\n",
+        encoding="utf-8",
+    )
+    cfg = mdc.load_config(root, None)
+    srcs = [mdc._rel(root, p) for p in mdc.discover_sources(root, cfg)]
+    assert any(s.endswith("keep_me.mdc") for s in srcs)
+    assert not any("leak_me.mdc" in s for s in srcs)
+    assert not any("IoT-ASP-wt-" in s for s in srcs)
+
+
 def test_repo_itself_is_up_to_date():
     """The live repo must pass the CI gate (no .mdc committed here; outputs consistent)."""
     assert mdc.main(["--root", str(ROOT), "--check"]) == 0

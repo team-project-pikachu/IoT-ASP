@@ -49,7 +49,8 @@ def test_invariant_literals(html: str) -> None:
 
 
 # ── 2. ids ───────────────────────────────────────────────────────────────────
-NEW_IDS = ("copyLogBtn", "reseedBtn", "telHopAge", "telResumes", "telWatchdog",
+NEW_IDS = ("copyLogBtn", "copyFleetLogBtn", "reseedBtn", "simImpulseBtn", "fleetSeedCompare",
+           "telHopAge", "telResumes", "telWatchdog",
            "telImpulse", "telVolBlast", "telAlarm", "fleetLocal")
 OLD_IDS = ("telDevice", "telSeed", "telAlgo", "telPeak", "telAccel", "telMic", "telVib", "telHold",
            "telSudden", "monLog", "sysList", "sysBtn", "vol", "fMin", "fMax", "holdPatchBtn", "power")
@@ -74,6 +75,19 @@ def test_telemetry_payload_tokens(html: str) -> None:
     # device metrics only
     for bad in ("userAgent", "geolocation", "location.", "navigator.language"):
         assert bad not in body, bad
+
+
+def test_fleet_log_export_and_impulse_sim(html: str) -> None:
+    assert "const FLEET_LOG_KEYS = [" in html
+    assert '"impulse","volBlast","alarmState","msg"' in html.replace(" ", "") or (
+        "impulse" in html and "volBlast" in html and "alarmState" in html and "FLEET_LOG_KEYS" in html
+    )
+    assert "function copyFleetLogJsonl()" in html
+    assert "function fleetLogLineFromTel(" in html
+    assert 'id="simImpulseBtn"' in html
+    assert "noteImpulse(true, false)" in html
+    assert "Seed compare" in html
+    assert "peerStale" in html
 
 
 # ── 4. enrichment literals ───────────────────────────────────────────────────
