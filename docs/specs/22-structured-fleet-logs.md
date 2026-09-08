@@ -33,7 +33,7 @@ Shipped by this item (branch `claude/mdc-conversion-features-gu3yzk`, 2026-09-08
 |------|-------|
 | `parse_ts` / `to_wire_ts` / `night_ny` (zoneinfo `America/New_York`, tzdata fallback → `NY_TZ = None`) | `services/autoroute-adk/iot_asp_autoroute/fleet_log.py` (`NY_TZ`, `NIGHT_HOURS`, `parse_ts`, `night_ny`) |
 | `infer_band` (delegates to `clamps.band_limits`), `is_pii_key`, `scrub_pii`, `enrich_telemetry` | same file — `PII_DENY_EXACT`, `PII_DENY_TOKENS`, camelCase/acronym tokeniser `_key_tokens` |
-| `RECORD_KEYS` (21 keys), `log_record`, `record_path`, `write_log_record` (dry-run append / live RMW + `.part.jsonl` fallback), `read_log_records`, `read_log_records_with_stats` | same file |
+| `RECORD_KEYS` (24 keys), `log_record`, `record_path`, `write_log_record` (dry-run append / live RMW + `.part.jsonl` fallback), `read_log_records`, `read_log_records_with_stats` | same file |
 | `aggregate_records`, `retention_plan`, `demo_telemetry`, `demo_fixture`, CLI `--demo [--node]` | same file — `main()` |
 | Acceptance tests 1–15 (37 pytest cases) | `tests/test_fleet_log.py` |
 
@@ -96,7 +96,7 @@ the original draft are marked *as shipped*). Item 3 is open for the integrator.
      `lfGate` is a **log tag**, not a clamp decision; `clamps.validate_patch` and
      `priors.lf_drive_capable` stay authoritative for patches.
    - `log_record(level, event, telemetry, msg="", *, now=None) -> dict` with **fixed key order**
-     (`RECORD_KEYS`, 21 keys):
+     (`RECORD_KEYS`, 24 keys):
      `kind="fleet_log"`, `schemaVersion=1` (imported from `clamps.SCHEMA_VERSION`), `ts`, `level`,
      `event`, `deviceId`, `band`, `power`, `nightNY`, `lfArmed`, `lfDriveCapable`, `lfGate`, `algo`,
      `vibClass`, `suddenFreq`, `suddenState`, `holdManual`, `peakHz`, `absA`, `micEnergy`, `msg`.
