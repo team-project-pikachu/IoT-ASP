@@ -93,6 +93,9 @@ import random
 import re
 import time
 from dataclasses import dataclass
+import math
+import time
+from datetime import datetime, timezone
 from typing import Any, Callable, Final, Iterable, Mapping
 
 from .. import gcs_io
@@ -200,6 +203,78 @@ def assert_not_patch_path(object_name: str) -> None:
         _guard(object_name)
     except ValueError as exc:  # re-typed, message preserved verbatim
         raise PatchWriteRefused(str(exc)) from None
+
+
+#: Vocabulary the existing burst path already understands (docs/api-contract.md).
+#: a8942cf narrowed mapping to the Nest fragment (``WIRE_KEYS``), which carries
+#: ``nestAcoustic`` but not ``event`` / ``soundBurst`` / ``vibClass``. ``reactive.py``
+#: reads ``soundBurst`` and ``vibClass`` (reactive.py:82,85), so without this
+#: translation an acoustic Nest event never reaches the alarm — the whole of #85/#103.
+#: These are the values reactive.py itself seeds (reactive.py:132-134), not a guess.
+EVENT_SOUND_BURST: Final[str] = "soundBurst"
+VIB_CLASS_ACOUSTIC: Final[str] = "acoustic"
+SOURCE_EVENT: Final[str] = "event"
+SOURCE_LIST: Final[str] = "list"
+SOURCE_GET: Final[str] = "get"
+
+
+def normalize_ts(value: Any = None, *, now: float | None = None) -> str:
+    """Return UTC ``%Y-%m-%dT%H:%M:%SZ``; re-homed from mapping (removed by a8942cf).
+
+    ``value`` is the SDM envelope ``timestamp`` (RFC-3339, sometimes fractional).
+    When absent or unparseable, ``now`` — injected epoch seconds — is used.
+    """
+    if isinstance(value, str) and value.strip():
+        text = value.strip()
+        if text.endswith("Z"):
+            text = text[:-1] + "+00:00"
+        try:
+            parsed = datetime.fromisoformat(text)
+        except ValueError:
+            parsed = None
+        if parsed is not None:
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    epoch = float(now) if isinstance(now, (int, float)) and not isinstance(now, bool) else None
+    if epoch is None or not math.isfinite(epoch):
+        epoch = time.time()
+    return datetime.fromtimestamp(epoch, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def wire_to_telemetry(
+    wire: Any,
+    *,
+    node_id: str,
+    now: float,
+    source: str = SOURCE_EVENT,
+    timestamp: Any = None,
+) -> dict[str, Any] | None:
+    """Nest fragment → a full schemaVersion-1 telemetry row, or ``None`` to ignore.
+
+    mapping owns *what Nest may contribute* (the allowlist); this owns *what the
+    poller emits*. The fragment is copied through ``as_dict()`` so only allowlisted
+    keys survive, then the row is completed with the fleet identity the poller holds
+    and — for an acoustic event — the existing burst vocabulary the repo already
+    reacts to, so Nest adds a second witness without adding new semantics.
+    """
+    if wire is None:
+        return None
+    fragment = wire.as_dict() if hasattr(wire, "as_dict") else dict(wire)
+    out: dict[str, Any] = {
+        "schemaVersion": constants.SCHEMA_VERSION
+        if hasattr(constants, "SCHEMA_VERSION")
+        else fragment.get("schemaVersion", 1),
+        "deviceId": node_id,
+        "ts": normalize_ts(timestamp, now=now),
+    }
+    if fragment.get("nestAcoustic"):
+        out["event"] = EVENT_SOUND_BURST
+        out["soundBurst"] = True
+        out["vibClass"] = VIB_CLASS_ACOUSTIC
+    out.update(fragment)
+    out["nestSource"] = source
+    return out
 
 
 #: Patch-authoring and control keys the poller may never emit. a8942cf replaced
@@ -707,15 +782,15 @@ class NestPoller:
             result["events"] += 1
             device_id = getattr(event, "device_id", "") or ""
             known = self._devices.get(device_id)
-            telemetry = mapping.event_to_wire(
-                event,
+            wire = mapping.event_to_wire(event, device_type=_device_type(known))
+            telemetry = wire_to_telemetry(
+                wire,
                 node_id=self._node_id,
                 now=float(self._wall_clock()),
-                source=mapping.SOURCE_EVENT,
-                device_type=_device_type(known),
-                connectivity=_connectivity(known),
+                source=SOURCE_EVENT,
+                timestamp=getattr(event, "timestamp", None),
             )
-            if self._emit(telemetry):
+            if telemetry is not None and self._emit(telemetry):
                 result["telemetry"] += 1
         if ack_ids:
             self._puller.acknowledge(ack_ids)
@@ -785,7 +860,7 @@ class NestPoller:
         telemetry: dict[str, Any] = {
             "schemaVersion": state.get("schemaVersion"),
             "deviceId": self._node_id,
-            "ts": mapping.normalize_ts(None, now=float(self._wall_clock())),
+            "ts": normalize_ts(None, now=float(self._wall_clock())),
             "nestSource": mapping.SOURCE_POLL,
         }
         for key in ("nestDeviceRef", "nestDeviceType", "nestConnectivity"):
