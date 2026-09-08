@@ -1,7 +1,7 @@
 # #64 — Software-only verify evidence (Balanced PR7)
 
 **Date (UTC):** 2026-09-08T05:11:54Z
-**Revision:** `19d7908` (feat/balanced-api-contract-vv tip at evidence capture)
+**Revision:** `be6eceb` (feat/balanced-api-contract-vv tip at evidence capture)
 **Honesty:** marks **CI-verifiable** procedures only. Does **not** claim matrix `pass` for field lab / HW rows.
 
 ## Observed command results
