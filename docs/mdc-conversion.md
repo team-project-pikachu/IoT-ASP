@@ -76,6 +76,26 @@ git add .cursor/rules CLAUDE.md SPEC.md .claude && git commit -m "Convert Cursor
 
 Commit the `.mdc` sources too; CI (`mdc check` job) then guarantees the generated outputs never drift.
 
+## Prior art (checked 2026-09-08 via Firecrawl developer search)
+
+| Tool | What it does | Why not used here |
+|------|--------------|-------------------|
+| [rulesync](https://github.com/dyoshikawa/rulesync) (Node) | Canonical `.rulesync/` source generating rules/MCP/commands for many agents; `convert --from cursor --to claudecode` | Node toolchain in a Python-first repo with no root `package.json` (Vercel static); makes `.rulesync/` the source of truth rather than the `.mdc` files Cursor edits; its issue #1515 shows Manual / Agent-Requested activation semantics are dropped |
+| [cursor2claude](https://github.com/hcastro/cursor2claude) (Node) | Scans `.cursor/rules/**`, inlines or imports into a single `CLAUDE.md` | Single-file output only: no `.claude/rules` `paths:` scoping, no skills, no `SPEC.md` routing, no CI `--check` |
+| rule-porter (Cursor forum CLI) | `.mdc` → `CLAUDE.md` / `AGENTS.md` / Copilot | Same single-file limitation; unmaintained fork risk |
+| [Pluribus](https://github.com/caioribeiroclw-pixel/pluribus), [Heymark](https://github.com/MosslandOpenDevs/heymark) | One canonical context → many agent formats | Introduce a new canonical format; we want `.mdc` to stay canonical for Cursor |
+| bringyour.ai migrate | Paid one-shot migration incl. MCP config | Paid, one-shot, writes to `~/.claude` |
+| ai-nexus (listed in awesome-claude-code #878) | Rules across Claude Code / Cursor / Codex from one source | Introduces its own source of truth; not evaluated beyond the listing |
+
+Awesome-lists checked: [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code),
+[awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules),
+[awesome-cursor-rules-mdc](https://github.com/sanjeed5/awesome-cursor-rules-mdc) (rule content, not converters).
+
+Kept the stdlib converter because it (a) treats the `.mdc` files as the single source of truth, (b) maps all
+four Cursor activation types including Agent-Requested → skills, (c) routes product-spec rules into `SPEC.md`,
+(d) runs as a network-free CI gate on Python 3.12 with zero dependencies. If a maintained tool later covers
+those four points, swap it in and delete `scripts/mdc_convert.py`.
+
 ## Tests
 
 `tests/test_mdc_convert.py` — parser edge cases (CSV / list / inline-list / unquoted `*` globs, `True`

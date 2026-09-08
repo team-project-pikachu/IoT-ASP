@@ -83,6 +83,13 @@ Toolchain: Python 3.11+ (3.12 in CI), stdlib-first. `google-adk` is optional for
 
 ## Working conventions
 
+- **Prior-art check before building anything.** Search, in this order, and record the result in the spec's
+  "Prior art" section: (1) this repo (`rg`, `git log -S`, all `origin/*` branches); (2) the owner's Mac clone
+  state described in the GitHub issues (it is usually ahead of `origin/main`); (3) the org's other repos;
+  (4) awesome-lists at https://github.com/topics/awesome-list (awesome-claude-code, awesome-cursorrules,
+  awesome-actions, awesome-vercel, awesome-observability); (5) Context7 / Firecrawl developer search for an
+  OSS tool or official integration. Reuse or adapt when a maintained tool fits; build only when it does not,
+  and say why (dependency policy, determinism, missing semantics). Register: `docs/PRIOR_ART.md`.
 - **Branches:** `claude/<topic>-<id>` for Claude sessions; Cursor works on the owner's Mac clone at
   `/Users/machine/apps/IoT-ASP`. Expect the Mac to be ahead of `origin/main`; keep edits additive and in
   clearly delimited blocks to minimise merge conflicts.
