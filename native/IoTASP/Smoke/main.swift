@@ -64,6 +64,23 @@ struct IoTASPSmoke {
         let vib = sample.vibSample()
         check("vib absA", abs(vib.absA - sample.absA) < 1e-12)
 
+        // #141 ultrasonic mic meter
+        check("sr 48k", UltrasonicMicMeter.preferredSampleRate == 48_000)
+        check("alpha", UltrasonicMicMeter.micDiffAlpha == 0.85)
+        check("nyquist 48k", UltrasonicMicMeter.usBandFullyNyquist(sampleRate: 48_000))
+        check("nyquist 44.1k", UltrasonicMicMeter.usBandFullyNyquist(sampleRate: 44_100) == false)
+        check("micDiff", abs(UltrasonicMicMeter.micDiff(micEnergyDb: -20, outLevelDb: -30) - 5.5) < 1e-9)
+        var spec = [Double](repeating: -90, count: 1024)
+        let bw = UltrasonicMicMeter.binWidthHz(sampleRate: 48_000)
+        let i20k = Int((20_000 / bw).rounded(.down))
+        spec[i20k] = -40
+        let us = UltrasonicMicMeter.bandEnergyUs(spectrumDb: spec, sampleRate: 48_000)
+        check("bandEnergyUs uses 20 kHz bin", us > -90)
+        check("empty spectrum floor", UltrasonicMicMeter.bandEnergyUs(spectrumDb: [], sampleRate: 48_000) == -120)
+        check("aec off preferred", UltrasonicMicMeter.preferEchoCancellationOff)
+        let stub = UltrasonicMicStatus.stub()
+        check("stub not running", stub.engineRunning == false && stub.grantedSampleRate == 0)
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

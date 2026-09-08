@@ -29,6 +29,14 @@
 - [ ] Magnetometer / altimeter: **yes** only if hardware bit is true — no fake values
 - [ ] Sample rate request in 1–100 Hz (`plan Hz`)
 
+## Near-ultrasonic mic (#141)
+
+- [ ] Arm mic: preferred 48000 Hz vs **granted** Hz shown
+- [ ] US Nyquist OK only if granted ≥ 46 kHz
+- [ ] AEC/NS/AGC off **requested** (measurement mode); note OS may override
+- [ ] Simulator: stub note, no crash
+- [ ] Do not claim calibrated 17–23 kHz SPL
+
 ## Alarm / impulse
 
 - [ ] Simulate impulse → `triggered` / `volBlast`

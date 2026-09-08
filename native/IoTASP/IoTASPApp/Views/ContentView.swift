@@ -46,6 +46,19 @@ struct ContentView: View {
                     LabeledContent("SensorKit entitled", value: SensorKitGate.entitlementDeclared ? "yes" : "stub")
                 }
 
+                Section("Near-ultrasonic mic") {
+                    Toggle("Arm 48 kHz mic (AEC/NS/AGC off)", isOn: $session.micArmed)
+                    LabeledContent("preferred Hz", value: String(format: "%.0f", session.micStatus.preferredSampleRate))
+                    LabeledContent("granted Hz", value: String(format: "%.0f", session.micStatus.grantedSampleRate))
+                    LabeledContent("US Nyquist OK", value: session.micStatus.usBandOk ? "yes" : "no")
+                    LabeledContent("AEC off requested", value: session.micStatus.aecOffRequested ? "yes" : "no")
+                    LabeledContent("OS may override", value: session.micStatus.osMayOverride ? "yes (honest)" : "no")
+                    LabeledContent("bandEnergyUs", value: String(format: "%.1f dB", session.micStatus.lastBandEnergyUs))
+                    Text(session.micStatus.note)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+
                 Section("Route") {
                     RoutePickerRepresentable()
                         .frame(height: 44)

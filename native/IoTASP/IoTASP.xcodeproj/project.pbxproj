@@ -25,6 +25,8 @@
 		A10000000000000000000034 /* FleetConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FleetConfig.swift; sourceTree = "<group>"; };
 		A10000000000000000000035 /* ASPAudioSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASPAudioSession.swift; sourceTree = "<group>"; };
 		A10000000000000000000036 /* CoreMotionSuite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreMotionSuite.swift; sourceTree = "<group>"; };
+		A10000000000000000000037 /* UltrasonicMicMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UltrasonicMicMeter.swift; sourceTree = "<group>"; };
+		A10000000000000000000038 /* UltrasonicMicCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UltrasonicMicCapture.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -123,7 +125,11 @@
 		};
 		A2000000000000000000000B /* Audio */ = {
 			isa = PBXGroup;
-			children = ( A10000000000000000000035 /* ASPAudioSession.swift */, );
+			children = (
+				A10000000000000000000035 /* ASPAudioSession.swift */,
+				A10000000000000000000037 /* UltrasonicMicMeter.swift */,
+				A10000000000000000000038 /* UltrasonicMicCapture.swift */,
+			);
 			path = Audio;
 			sourceTree = "<group>";
 		};
@@ -215,6 +221,8 @@
 				A80000000000000000000034 /* FleetConfig.swift in Sources */,
 				A80000000000000000000035 /* ASPAudioSession.swift in Sources */,
 				A80000000000000000000036 /* CoreMotionSuite.swift in Sources */,
+				A80000000000000000000037 /* UltrasonicMicMeter.swift in Sources */,
+				A80000000000000000000038 /* UltrasonicMicCapture.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -229,6 +237,7 @@
 				A80000000000000000000031 /* ImpulseDetector.swift in Sources */,
 				A80000000000000000000034 /* FleetConfig.swift in Sources */,
 				A80000000000000000000036 /* CoreMotionSuite.swift in Sources */,
+				A80000000000000000000037 /* UltrasonicMicMeter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -250,6 +259,8 @@
 		A80000000000000000000034 /* FleetConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000034 /* FleetConfig.swift */; };
 		A80000000000000000000035 /* ASPAudioSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000035 /* ASPAudioSession.swift */; };
 		A80000000000000000000036 /* CoreMotionSuite.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000036 /* CoreMotionSuite.swift */; };
+		A80000000000000000000037 /* UltrasonicMicMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000037 /* UltrasonicMicMeter.swift */; };
+		A80000000000000000000038 /* UltrasonicMicCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000038 /* UltrasonicMicCapture.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */

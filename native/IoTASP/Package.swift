@@ -16,6 +16,7 @@ let package = Package(
             exclude: [
                 // iOS-only (CoreMotion / AVFoundation / SensorKit). CLT macOS cannot link them.
                 "Audio/ASPAudioSession.swift",
+                "Audio/UltrasonicMicCapture.swift",
                 "Sensors/SensorKitGate.swift",
                 "Sensors/PhoneMotionLogger.swift",
             ]

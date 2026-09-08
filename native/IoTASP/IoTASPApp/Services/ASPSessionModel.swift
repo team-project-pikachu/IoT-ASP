@@ -10,6 +10,10 @@ final class ASPSessionModel: ObservableObject {
     @Published var motionArmed = false {
         didSet { syncMotion() }
     }
+    @Published var micArmed = false {
+        didSet { syncMic() }
+    }
+    @Published var micStatus = UltrasonicMicStatus.stub()
     @Published var lastAbsA: Double = 0
     @Published var lastAbsOmega: Double = 0
     @Published var motionAvailability = MotionAvailability.simulatorSafe
@@ -21,6 +25,9 @@ final class ASPSessionModel: ObservableObject {
     private let detector = ImpulseDetector()
     #if canImport(CoreMotion)
     private var motion: PhoneMotionLogger?
+    #endif
+    #if canImport(AVFoundation)
+    private var mic: UltrasonicMicCapture?
     #endif
     private var ticker: AnyCancellable?
     private var pendingImpulse: ImpulseEvent?
@@ -77,6 +84,24 @@ final class ASPSessionModel: ObservableObject {
         } else {
             motion?.stop()
             motion = nil
+        }
+        #endif
+    }
+
+    private func syncMic() {
+        #if canImport(AVFoundation)
+        if micArmed {
+            let cap = UltrasonicMicCapture()
+            cap.onMeter = { [weak self] _, _ in
+                self?.micStatus = cap.status
+            }
+            cap.start()
+            mic = cap
+            micStatus = cap.status
+        } else {
+            mic?.stop()
+            mic = nil
+            micStatus.engineRunning = false
         }
         #endif
     }
