@@ -4,7 +4,7 @@ Canonical product plan. **Milestones = OS/product surface.** **Labels = work cat
 Legacy M0–M9 numbers are closed or renamed — do not open parallel taxonomies.
 
 **Board:** [Project 5](https://github.com/orgs/team-project-pikachu/projects/5) · **Closed log:** [mvp-closed-log.md](mvp-closed-log.md)  
-**PRD:** [PRD.md](PRD.md) · **UAT:** [UAT.md](UAT.md) · **Testing (SEBoK V&V):** [TESTING_PLAN.md](TESTING_PLAN.md)
+**PRD:** [PRD.md](PRD.md) · **UAT:** [UAT.md](UAT.md) · **Testing (SEBoK V&V):** [TESTING_PLAN.md](TESTING_PLAN.md) · **PWA architecture:** [architecture-pwa.md](architecture-pwa.md) · **Traceability:** [test-traceability.md](test-traceability.md)
 
 ### Issue title convention
 

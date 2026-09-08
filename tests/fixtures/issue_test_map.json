@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "repo": "team-project-pikachu/IoT-ASP",
+  "generatedFor": "closed-first PWA/platform traceability",
+  "phases": {
+    "macos_pwa": "macOS / Mac Studio — public Vercel PWA",
+    "platform_agentic": "Platform / Agentic / ADK",
+    "drivers": "area:drivers — Soundcore / audio honesty",
+    "tooling": "Repo tooling / CI / docs automation",
+    "parked_docs": "Parked research closed as docs-only"
+  },
+  "closed": [
+    {
+      "issue": 1,
+      "title": "M0: Public Vercel hop blaster (shipped/in progress)",
+      "phase": "macos_pwa",
+      "tests": [
+        "tests/test_public_html.py::test_invariant_literals",
+        "tests/test_public_html.py::test_ids_present_once",
+        "tests/test_public_html.py::test_html_parses_single_script",
+        "tests/test_public_html.py::test_readme_m0_record",
+        "tests/test_public_html.py::test_no_web_bluetooth",
+        "tests/test_public_html.py::test_no_key_patterns",
+        "tests/test_pwa_phase_macos.py::test_vercel_json_patch_no_store",
+        "tests/test_pwa_phase_macos.py::test_pwa_manifest",
+        "tests/e2e/public_smoke.spec.mjs::loads, ids exist, no page errors"
+      ]
+    },
+    {
+      "issue": 42,
+      "title": "Impulse→blast + alarm reactivity (web + native)",
+      "phase": "macos_pwa",
+      "tests": [
+        "tests/test_public_html.py::test_impulse_alarm_and_fleet_stub",
+        "tests/test_public_html.py::test_fleet_log_export_and_impulse_sim",
+        "tests/e2e/public_smoke.spec.mjs::two tabs exchange fleet heartbeats + simulate impulse"
+      ],
+      "duplicates": [44, 45, 46, 47, 50, 51]
+    },
+    {
+      "issue": 44,
+      "title": "Web PWA: impulse → blast volume (micDiff/accel)",
+      "phase": "macos_pwa",
+      "aliasOf": 42,
+      "tests": [
+        "tests/test_public_html.py::test_impulse_alarm_and_fleet_stub"
+      ]
+    },
+    {
+      "issue": 45,
+      "title": "Web PWA: alarm-system reactivity (armed→triggered→sustaining→cleared)",
+      "phase": "macos_pwa",
+      "aliasOf": 42,
+      "tests": [
+        "tests/test_public_html.py::test_impulse_alarm_and_fleet_stub"
+      ]
+    },
+    {
+      "issue": 46,
+      "title": "Impulse → blast volume (web + native)",
+      "phase": "macos_pwa",
+      "aliasOf": 42,
+      "tests": [
+        "tests/test_public_html.py::test_impulse_alarm_and_fleet_stub"
+      ]
+    },
+    {
+      "issue": 47,
+      "title": "Alarm-system reactivity (armed→triggered→sustaining→cleared)",
+      "phase": "macos_pwa",
+      "aliasOf": 42,
+      "tests": [
+        "tests/test_public_html.py::test_impulse_alarm_and_fleet_stub"
+      ]
+    },
+    {
+      "issue": 50,
+      "title": "Impulse → blast volume (web + native)",
+      "phase": "macos_pwa",
+      "aliasOf": 42,
+      "tests": [
+        "tests/test_public_html.py::test_impulse_alarm_and_fleet_stub"
+      ]
+    },
+    {
+      "issue": 51,
+      "title": "Alarm-system reactivity (armed→triggered→sustaining→cleared)",
+      "phase": "macos_pwa",
+      "aliasOf": 42,
+      "tests": [
+        "tests/test_public_html.py::test_impulse_alarm_and_fleet_stub"
+      ]
+    },
+    {
+      "issue": 12,
+      "title": "LLM autoroute: Gemini continuous monitor + audio engineering",
+      "phase": "platform_agentic",
+      "tests": [
+        "tests/test_agent_import.py",
+        "tests/test_pwa_phase_macos.py::test_hold_manual_and_no_browser_keys",
+        "tests/test_public_html.py::test_hold_manual_short_circuits_preserved",
+        "scripts/autoroute_dev.sh"
+      ]
+    },
+    {
+      "issue": 13,
+      "title": "Autoroute multi-LLM registry (post-Gemini)",
+      "phase": "platform_agentic",
+      "tests": [
+        "tests/test_pwa_phase_macos.py::test_architecture_doc_present"
+      ],
+      "notes": "Design sketch; prod non-Gemini parked"
+    },
+    {
+      "issue": 37,
+      "title": "Vercel webhooks for hop-ultrasonic deploy notifications",
+      "phase": "platform_agentic",
+      "tests": [
+        "tests/test_vercel_webhook.py",
+        "tests/test_vercel_webhook_receiver.py"
+      ]
+    },
+    {
+      "issue": 17,
+      "title": "Colab + Gemini Enterprise data processing pipeline",
+      "phase": "platform_agentic",
+      "tests": [
+        "tests/test_colab_gcs_fixture.py"
+      ]
+    },
+    {
+      "issue": 43,
+      "title": "Soundcore 2 manufacturer specs (A2DP fleet constraints)",
+      "phase": "drivers",
+      "tests": [
+        "tests/test_soundcore_specs.py"
+      ],
+      "duplicates": [49, 53]
+    },
+    {
+      "issue": 49,
+      "title": "Anker Soundcore manufacturer specs (fleet A2DP nodes)",
+      "phase": "drivers",
+      "aliasOf": 43,
+      "tests": [
+        "tests/test_soundcore_specs.py"
+      ]
+    },
+    {
+      "issue": 53,
+      "title": "Anker Soundcore manufacturer specs (fleet A2DP nodes)",
+      "phase": "drivers",
+      "aliasOf": 43,
+      "tests": [
+        "tests/test_soundcore_specs.py"
+      ]
+    },
+    {
+      "issue": 34,
+      "title": "mdc_convert: refuse overwrite of hand-written .claude/rules without GEN_MARK",
+      "phase": "tooling",
+      "tests": [
+        "tests/test_mdc_convert.py"
+      ]
+    },
+    {
+      "issue": 65,
+      "title": "Automate closed-issue → docs/mvp-closed-log.md append",
+      "phase": "tooling",
+      "tests": [
+        "tests/test_mvp_closed_log.py"
+      ]
+    },
+    {
+      "issue": 67,
+      "title": "Vendor IoT-ASP-study as public-safe packages/iot-asp-study",
+      "phase": "tooling",
+      "tests": [
+        "tests/test_iot_asp_study.py"
+      ]
+    },
+    {
+      "issue": 9,
+      "title": "SensorKit / native iOS shell + edge companions (research)",
+      "phase": "parked_docs",
+      "tests": [
+        "tests/test_native_compile_check.py"
+      ],
+      "notes": "Research closed; impl → #41"
+    },
+    {
+      "issue": 48,
+      "title": "iOS app + Apple Watch companion (Xcode targets)",
+      "phase": "parked_docs",
+      "aliasOf": 41,
+      "tests": [
+        "tests/test_native_compile_check.py"
+      ],
+      "notes": "Duplicate of open #41"
+    },
+    {
+      "issue": 52,
+      "title": "iOS app + Apple Watch companion (Xcode targets)",
+      "phase": "parked_docs",
+      "aliasOf": 41,
+      "tests": [
+        "tests/test_native_compile_check.py"
+      ],
+      "notes": "Duplicate of open #41"
+    },
+    {
+      "issue": 16,
+      "title": "Navier–Stokes / seismo-acoustic priors for vib→algorithm routing",
+      "phase": "parked_docs",
+      "tests": [
+        "tests/test_pwa_phase_macos.py::test_traceability_covers_all_closed_issues"
+      ],
+      "notes": "Docs/evidence closeout"
+    },
+    {
+      "issue": 19,
+      "title": "Notion hub page for ASP tooling (if missing)",
+      "phase": "parked_docs",
+      "tests": [
+        "tests/test_pwa_phase_macos.py::test_architecture_doc_present"
+      ],
+      "notes": "Docs parked"
+    },
+    {
+      "issue": 20,
+      "title": "Timestore SciPy ≥16-param + Fairfax weather + ciphers",
+      "phase": "parked_docs",
+      "tests": [
+        "tests/test_features_live.py"
+      ],
+      "notes": "packages/algo-timestore"
+    },
+    {
+      "issue": 21,
+      "title": "Google Home Wi-Fi autorotate now; cellular later",
+      "phase": "parked_docs",
+      "tests": [
+        "tests/test_pwa_phase_macos.py::test_architecture_doc_present"
+      ],
+      "notes": "Parked research → docs/connectivity-wifi.md"
+    },
+    {
+      "issue": 23,
+      "title": "AI Edge Portal optional packaging",
+      "phase": "parked_docs",
+      "tests": [
+        "tests/test_pwa_phase_macos.py::test_architecture_doc_present"
+      ],
+      "notes": "Parked → docs/ai-edge-portal.md"
+    },
+    {
+      "issue": 106,
+      "title": "Session worklog 2026-09-08 — Balanced stack + MVP study + M8 Nest + ops",
+      "phase": "tooling",
+      "tests": [
+        "tests/test_mvp_closed_log.py",
+        "tests/test_pwa_phase_macos.py::test_traceability_doc_present"
+      ]
+    }
+  ],
+  "openNextWave": [
+    {"issue": 61, "title": "macOS: Wire live BACKEND_TELEMETRY_URL + patch URL for fleet", "phase": "macos_pwa"},
+    {"issue": 62, "title": "macOS: MVP field acceptance — 3-phone checklist + Playwright e2e", "phase": "macos_pwa"},
+    {"issue": 3, "title": "macOS: Continuous polling & monitoring (3-phone fleet)", "phase": "macos_pwa"},
+    {"issue": 64, "title": "Platform: SEBoK V&V — pass matrix rows for MVP ship slice", "phase": "platform_agentic"},
+    {"issue": 60, "title": "ADK: Autoroute production Cloud Run / Agent Engine deploy", "phase": "platform_agentic"},
+    {"issue": 153, "title": "Platform: SEBoK UAT evidence pack", "phase": "platform_agentic"}
+  ]
+}
