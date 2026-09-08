@@ -183,3 +183,10 @@ instead. `scripts/ci_static_gates.sh` greps tracked files for real-looking ids a
 No audio or video is transcribed, stored publicly, or fed to a model from this repo. What crosses the
 wire from a Nest observation is an **event class** (`sound`, `motion`, `person`, `chime`,
 `clip_preview`) and a timestamp — not content.
+
+---
+
+## 8. M8 platform matrix
+
+Delivery surfaces × Nest hardware × SDM / ASP event classes (stub vs live gates):  
+[`docs/specs/100-platform-matrix.md`](specs/100-platform-matrix.md) (issue [#100](https://github.com/team-project-pikachu/IoT-ASP/issues/100)).

@@ -44,6 +44,14 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #65 #68 | [65-68-mvp-closed-log.md](65-68-mvp-closed-log.md) — closed-issue log CLI + Actions | implemented on branch | infra + docs |
 | #69 | [69-mvp-roadmap.md](69-mvp-roadmap.md) — durable MVP milestone → issue roadmap | implemented on branch | docs |
 
+## M8 Nest / glass shatter (docs wave)
+
+| Issue(s) | Spec | Status | Owner surface |
+|----------|------|--------|---------------|
+| #100 | [100-platform-matrix.md](100-platform-matrix.md) — Vercel / iOS / Playground × Nest hardware × SDM events | docs matrix shipped; live cells owner-gated | docs |
+
+Related open issues (separate PRs): #98 E2E acceptance · #99 privacy/consent · #93 OAuth consent (parked).
+
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
 tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items referenced from
 `docs/ci.md` and spec 26).
