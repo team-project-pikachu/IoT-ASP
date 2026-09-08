@@ -15,7 +15,7 @@
 | #7 | parked stub | RLHF positive loop | `docs/specs/07-08-rlhf-loops.md` + `docs/issues/ISSUE-07-*` |
 | #8 | parked stub | RLHF negative loop | `docs/specs/07-08-rlhf-loops.md` + `docs/issues/ISSUE-08-*` |
 | #10 | parked stub | React / React Strict DOM rewrite | `docs/specs/10-11-react-rewrite.md` + `docs/issues/ISSUE-10-*` |
-| #11 | static deepen | React multi-device fleet polish | `docs/specs/10-11-react-rewrite.md` + `docs/issues/ISSUE-11-*` |
+| #11 | static M0 done; React deferred | React multi-device fleet polish | static fleet on `main` (#66); React waits on #10 — `docs/specs/10-11-react-rewrite.md` + `docs/issues/ISSUE-11-*` |
 | #14 | parked stub | Raspberry Pi 5 field node | `docs/specs/14-15-21-23-edge-integrations.md` + `docs/issues/ISSUE-14-*` |
 | #15 | parked stub | Apple Home / HomeKit / Matter | `docs/specs/14-15-21-23-edge-integrations.md` + `docs/issues/ISSUE-15-*` |
 | #18 | parked stub | Node-3 chair + infrasound proxy | `docs/specs/18-node3-chair-infrasound.md` + `docs/issues/ISSUE-18-*` |
