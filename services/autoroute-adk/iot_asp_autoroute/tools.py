@@ -13,6 +13,7 @@ from .colab_etl import TELEMETRY_FEATURE_COLUMNS
 from .mic_diff import hw_limits_report as _hw_limits_report
 from .priors import seismo_bundle
 from .sudden_freq import author_sudden_freq_patch, is_sudden_freq_event
+from .timestore import autoroute_telemetry_stamp
 from .vib_anomaly import VIB_QUANTUM, detect_disturbances, detect_from_telemetry_points
 
 ENGINE_ID = os.environ.get("IOT_ASP_GEMINI_ENGINE_ID", "iot-asp-autoroute")
@@ -142,6 +143,7 @@ def ingest_telemetry(telemetry_json: str) -> dict[str, Any]:
     if "suddenFreq" not in tel:
         tel["suddenFreq"] = is_sudden_freq_event(tel)
     tel = fleet_log.enrich_telemetry(tel)  # #22: PII scrub + band/power/nightNY/lf* tags before any write
+    tel["timestore"] = autoroute_telemetry_stamp()
 
     node = str(tel.get("deviceId") or tel.get("nodeId") or "node1")
     ts = tel.get("ts") or tel.get("t") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")

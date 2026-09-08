@@ -53,6 +53,9 @@ jobs:
       - name: Run scripts/autoroute_dev.sh
         run: bash scripts/autoroute_dev.sh
 
+      - name: Run timestore SciPy simulation
+        run: python packages/algo-timestore/scripts/sim_fit.py
+
       - name: Import / schema smoke (clamps, sudden_freq, priors)
         run: |
           PYTHONPATH=services/autoroute-adk python - <<'PY'
@@ -66,6 +69,8 @@ jobs:
           assert out.get("schemaVersion") == 1
           bundle = priors.seismo_bundle()
           assert isinstance(bundle, dict) and bundle
+          assert bundle["timestore"]["fitParams"] >= 16
+          assert bundle["timestore"]["quantumS"] == 0.0006
           tel = {
               "schemaVersion": 1,
               "suddenFreq": True,

@@ -17,6 +17,7 @@ services/autoroute-adk/
     tools.py
     clamps.py
     priors.py
+    timestore.py      # shared circle/quantum prior + telemetry stamp adapter
     sudden_freq.py    # suddenFreq → autorotate
     gcs_io.py
     dry_run.py
@@ -31,6 +32,8 @@ bash scripts/autoroute_dev.sh
 ```
 
 Writes mocked telemetry + `meta/patches/<nodeId>.json` under `.autoroute-dry/`.
+Persisted telemetry includes the standalone algo-timestore sidecar, and the
+autoroute prior bundle exposes its circle/quantum context.
 
 ## Live ADK (ADC)
 
