@@ -8,7 +8,7 @@
 | 2 | 2/6 | `feat/balanced-shippable-slices` | `chore/balanced-issue-stubs` | #34/#22/#11/#42/#44/#45 shippable deepen | https://github.com/team-project-pikachu/IoT-ASP/pull/66 |
 | 3 | 3/6 | `feat/balanced-colab-vercel-ops` | `feat/balanced-shippable-slices` | #26 dry-run→fixture + #27 names-only ops | https://github.com/team-project-pikachu/IoT-ASP/pull/70 |
 | 4 | 4/6 | `feat/balanced-native-hw-research` | `feat/balanced-colab-vercel-ops` | #41/#39/#43/#14/#15/#18 research deepen | https://github.com/team-project-pikachu/IoT-ASP/pull/71 |
-| 5 | 5/6 | `feat/balanced-test-native-ci` | `feat/balanced-native-hw-research` | Tests deepen #22/#26/#34 + CLT native compile-check #41 | _(PR URL after open)_ |
+| 5 | 5/6 | `feat/balanced-test-native-ci` | `feat/balanced-native-hw-research` | Tests deepen #22/#26/#34 + CLT native compile-check #41 | https://github.com/team-project-pikachu/IoT-ASP/pull/72 |
 | 6 | 6/6 | `feat/balanced-mvp-roadmap-docs` | `feat/balanced-test-native-ci` | MVP roadmap/closed-log #68/#69 + #61/#62 stubs | _(PR URL after open)_ |
 
 ## Owner-gated (blocked)
