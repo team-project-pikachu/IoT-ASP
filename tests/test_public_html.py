@@ -113,7 +113,8 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "function copyFleetLogJsonl()" in html
     assert "function fleetLogLineFromTel(" in html
     assert 'id="simImpulseBtn"' in html
-    assert "noteImpulse(true, false)" in html
+    assert 'noteImpulse("simulate"' in html or "noteImpulse('simulate'" in html
+    assert "sensorsArmed = true" in html  # Simulate impulse bypasses Signal-off gate (#62)
     note = _fn_body(html, "function noteImpulse(source, deltaHint){")
     assert "enterExtremeFromBurst(" in note
     assert "blastVolJump(" in note
@@ -258,7 +259,6 @@ def test_banner_lines_well_formed(html: str) -> None:
 # ── 12. size guard ───────────────────────────────────────────────────────────
 def test_size_guard() -> None:
     # Raised 2026-09-08 for fleet cards + impulse/alarm SM (#11/#42/#44/#45).
-    # Raised again for Sonos Node 3 panel + LAN/UPnP hooks (#120).
     assert HTML_PATH.stat().st_size < 160_000
 
 

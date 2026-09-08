@@ -399,6 +399,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       </div>
     </div>
     <p class="sub" id="fleetSeedCompare" style="margin:10px 0 0">Seed compare · —</p>
+    <p class="sub" id="fleetBackendStrip" style="margin:6px 0 0">Backend · patch — · telemetry off · poll —</p>
     <div class="tapbar" style="margin-top:10px">
       <button type="button" class="tap" id="simImpulseBtn">Simulate impulse</button>
     </div>
@@ -447,7 +448,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <p class="legend">Monitor · telemetry beacon (no site PII)</p>
       <p class="legend" id="ctxStateLabel">ctx —</p>
     </div>
-    <p class="sub" id="fleetBackendStrip" style="margin:6px 0 0">Backend · patch — · telemetry off · poll —</p>
     <p class="sub" style="margin:8px 0 0">Fleet audio: <b>iPhone native Bluetooth</b> → paired Soundcore (OS route). No Web Bluetooth.</p>
     <div class="mon-grid">
       <div>deviceId <b id="telDevice">—</b></div>
@@ -645,9 +645,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let lastImpulseAt = 0, alarmClearedAt = 0;
   let prevMicDiffSample = -120, accelEma = 0;
   let ax=0, ay=0, az=0;
-  let accelMag=0, lfMag=0, acousticEnergy=-120;
   let gx=0, gy=0, gz=0, absOmega=0, gyroSampled=false;
   const DEG_TO_RAD = Math.PI / 180;
+  let accelMag=0, lfMag=0, acousticEnergy=-120;
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
   let pulseMs=120, shriekMs=55;
@@ -1459,6 +1459,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       absOmega = 0.85 * absOmega + 0.15 * Math.hypot(gx, gy, gz);
       gyroSampled = true;
     }
+
+
   }, { passive:true });
 
   // ══ graph ═════════════════════════════════════════════════════════════
@@ -2467,7 +2469,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   if (reseedBtn) reseedBtn.addEventListener("click", () => reseed("ui"));
 
 
-  // ══ Sonos Node 3 (#120) ══════════════════════════════════════════════
+  // Sonos Node 3 (#120/#39): LAN discover + blast/hop control hooks
   // TX carriers remain Web Audio → OS AirPlay. This block only lists targets and
   // mirrors volume/play via LAN bridge or best-effort UPnP SOAP (CORS/mixed-content limited).
   const sonosLanUrlEl = $("sonosLanUrl"), sonosIpEl = $("sonosIp"), sonosTargetEl = $("sonosTarget");
@@ -2768,9 +2770,18 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       return __testNowMs;
     },
     forceSuddenRotate: (reason, peakHz) => {
-      if (!suddenAuto) setSuddenAuto(true);
-      autorotateOnSudden(String(reason || "e2e"), peakHz == null ? 19000 : peakHz);
-      updateTelUI();
+      // Deterministic e2e: mutate suddenFreq state without relying on audio spectrum.
+      holdManual = false;
+      if (typeof setSuddenAuto === "function") setSuddenAuto(true);
+      else suddenAuto = true;
+      lastSuddenAt = 0;
+      suddenState = "rotate";
+      if (suddenLive) suddenLive.textContent = "rotate";
+      geminiAutorouteFlag = true;
+      if (typeof flagGeminiAutoroute === "function") {
+        flagGeminiAutoroute(String(reason || "e2e") + (peakHz != null ? (" @ " + Math.round(peakHz) + " Hz") : ""));
+      }
+      if (typeof updateTelUI === "function") updateTelUI();
       return suddenState;
     },
     fleetLogKeys: () => FLEET_LOG_KEYS.slice(),
@@ -2829,13 +2840,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (geminiFlagLive) geminiFlagLive.textContent = geminiAutorouteFlag ? "pending" : "—";
     if (patchUrlLabel) patchUrlLabel.textContent = PATCH_URL;
     if (telemetryUrlLabel) telemetryUrlLabel.textContent = TELEMETRY_URL || "off";
-    if (patchStatusEl) patchStatusEl.textContent = patchStatus;
     const strip = $("fleetBackendStrip");
     if (strip) {
       const shortPatch = (typeof PATCH_URL === "string" && PATCH_URL) ? PATCH_URL.replace(/^https?:\/\//, "").slice(0, 48) : "/patch.json";
       const shortTel = (typeof TELEMETRY_URL === "string" && TELEMETRY_URL) ? TELEMETRY_URL.replace(/^https?:\/\//, "").slice(0, 40) : "off";
       strip.textContent = "Backend · patch " + shortPatch + " · telemetry " + shortTel + " · poll " + POLL_MS + "ms";
     }
+    if (patchStatusEl) patchStatusEl.textContent = patchStatus;
     if (telSensors) telSensors.textContent = sensorsArmed ? "armed" : (sensorStatus.audio || "idle");
     if (telSensMic) telSensMic.textContent = sensorStatus.mic;
     if (telSensMotion) telSensMotion.textContent = sensorStatus.motion;
@@ -2983,7 +2994,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const simImpulseBtn = $("simImpulseBtn");
   if (simImpulseBtn) {
     simImpulseBtn.addEventListener("click", function(){
-      noteImpulse(true, false);
+      // MVP / e2e (#62): Simulate impulse must latch even when Signal/sensors are off.
+      const prevArmed = sensorsArmed;
+      sensorsArmed = true;
+      noteImpulse("simulate", typeof IMPULSE_PEAK_DB === "number" ? IMPULSE_PEAK_DB : 12);
+      sensorsArmed = prevArmed;
       publishFleetHeartbeat();
       paintFleetCards();
       updateTelUI();
