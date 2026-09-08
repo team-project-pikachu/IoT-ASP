@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Example Info.plist keys for an AppShell host app (#109).
+  Copy into a real .app target when shipping — do NOT invent SensorKit entitlement grants.
+  Canonical docs: docs/privacy-entitlements-native.md (#113) when merged.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSMotionUsageDescription</key>
+	<string>Motion data supports ultrasonic / hop vibration logging and Nest alarm reactivity research.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access supports micDiff impulse and glass-shatter acoustic event stubs.</string>
+</dict>
+</plist>
