@@ -58,9 +58,25 @@ python3 -m pytest tests/test_deploy_workflow.py tests/test_public_html.py -q
 
 Evidence package: [`.vv/ci/`](../.vv/ci/).
 
+## Closed-issue log (#68)
+
+Optional workflow [`.github/workflows/mvp-closed-log.yml`](../.github/workflows/mvp-closed-log.yml) runs on
+`issues: [closed]` (and `workflow_dispatch`) and appends a metadata row via
+`scripts/mvp_closed_log_append.sh`. It requests `contents: write` + `pull-requests: write`.
+Default path opens/updates PR branch `automation/mvp-closed-log` (works with empty
+`bypass_actors`). Set repo variable `MVP_CLOSED_LOG_PUSH_MAIN=1` only when Actions
+may push `main`. Soft-fails with a notice if push is blocked — then:
+
+```bash
+bash scripts/mvp_closed_log_append.sh <issue-number>
+# or
+bash scripts/mvp_closed_log_append.sh --backfill
+```
+
 ## Out of scope
 
 - Heavy Firecrawl / link crawls
 - Live GCP / Vertex / Vercel deploy — the Vercel dev → test → prod ship lives in `.github/workflows/deploy.yml` (see [deploy.md](deploy.md), issue #27)
 - Hosting the public HTTPS webhook receiver (stub only: `services/vercel-webhook-receiver/`, docs #37)
 - Editing SEBoK plan files
+- Subtree/submodule of private `IoT-ASP-study` into public `main` (PII) — see [STUDY_PRIVATE.md](STUDY_PRIVATE.md) / #67

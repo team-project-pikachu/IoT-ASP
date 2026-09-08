@@ -36,10 +36,12 @@ Docs ingest: `reference/knowledge/INGEST.md`.
 
 ## Roadmap
 
+Tracked as GitHub milestones **M0–M5** (seeds, monitoring, vib rotation, RLHF ±, SensorKit research). Parked features are issues labeled `parked`.
+
+Canonical milestone → issue map: [`docs/mvp-roadmap.md`](docs/mvp-roadmap.md) (#69). Closed-issue audit: [`docs/mvp-closed-log.md`](docs/mvp-closed-log.md) (#68).
 Canonical map: [`docs/mvp-roadmap.md`](docs/mvp-roadmap.md) (M0–M7 → GitHub issues, parked vs ship).  
 Closed-issue audit trail: [`docs/mvp-closed-log.md`](docs/mvp-closed-log.md).  
 Balanced stub board: [`docs/issues/BALANCED-BUILD-STATUS.md`](docs/issues/BALANCED-BUILD-STATUS.md).
-
 Tracked as GitHub milestones / Project 5. Parked features are issues labeled `parked`.
 
 ## Control plane
@@ -67,15 +69,18 @@ Tracked as GitHub milestones / Project 5. Parked features are issues labeled `pa
 public/                 # shipped static web blaster (PWA)
 docs/                   # gemini, ADK, autoroute, physics, Colab, deploy, branch protection
 docs/specs/             # feature specs per Project 5 issue
-packages/iot-asp-study/ # public-safe study schema/doctor (#67); private protocol stays gitignored
+docs/mvp-roadmap.md     # M0–M5 → issue # map
+docs/mvp-closed-log.md  # closed-issue audit (#68)
+packages/algo-timestore/  # SciPy timestore (#20)
+packages/iot-asp-study/   # public-safe study schema/doctor (#67); private protocol stays gitignored
 services/autoroute-adk/ # Google ADK Python agent (+ fleet_log, features_live, mic_diff)
 tests/                  # pytest + tests/e2e (Playwright smoke)
-scripts/                # gates, dry-run, mdc_convert, deploy smoke, gh_protect_main
+scripts/                # gates, dry-run, mdc_convert, deploy smoke, gh_protect_main, mvp_closed_log_append
 notebooks/              # Colab ETL stub
 reference/knowledge-base/  # Context7 refreshable KB
 reference/knowledge/    # Firecrawl ingest (incl. ADK)
 .claude/                # Claude Code rules (path-scoped) + converted skills/manifest
-.github/                # ci.yml, deploy.yml, rulesets/, PR template
+.github/                # ci.yml, deploy.yml, mvp-closed-log.yml, rulesets/, PR template
 CLAUDE.md               # project memory (Cursor .mdc converted blocks live here)
 SPEC.md
 Makefile

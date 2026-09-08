@@ -48,5 +48,5 @@ bash packages/iot-asp-study/scripts/upload_recordings.sh ./recordings node1
 
 ## Related
 
-- Issue #67 (post-MVP / research; private protocol stays in IoT-ASP-study)
+- Issue #67 · roadmap [`docs/mvp-roadmap.md`](../../docs/mvp-roadmap.md); private protocol stays in IoT-ASP-study
 - Invariant 7 in `CLAUDE.md` — no site PII on the public branch

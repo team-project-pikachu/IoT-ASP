@@ -80,4 +80,5 @@ Caches under `.context7/` (see [asp-prior-art.md](asp-prior-art.md)).
 
 ## Privacy
 
-- Private study protocol: companion `IoT-ASP-study`. Pointer: [STUDY_PRIVATE.md](STUDY_PRIVATE.md)
+- Private study protocol: companion `IoT-ASP-study`. Pointer: [STUDY_PRIVATE.md](STUDY_PRIVATE.md); public-safe package [`packages/iot-asp-study`](../packages/iot-asp-study/) (#67)
+- [MVP roadmap (M0–M5 → issues)](mvp-roadmap.md) · [Closed-issue log](mvp-closed-log.md)
