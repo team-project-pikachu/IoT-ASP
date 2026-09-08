@@ -25,3 +25,4 @@ study/
 *.wav
 recordings/
 tests/e2e/.server.log
+.github/nest.op.env

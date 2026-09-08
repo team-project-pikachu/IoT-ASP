@@ -1,0 +1,10 @@
+{
+  "eventId": "15479164-d1d0-4ea0-acef-1d39ae961b87",
+  "timestamp": "2019-01-01T00:00:01Z",
+  "relationUpdate": {
+    "type": "CREATED",
+    "subject": "enterprises/project-id/structures/structure-id",
+    "object": "enterprises/project-id/devices/device-id"
+  },
+  "userId": "AVPHwEuBfnPOnTqzVFT4IONX2Qqhu9EJ4ubO-bNnQ-yi"
+}

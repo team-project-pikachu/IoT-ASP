@@ -73,6 +73,8 @@ jobs:
               "fleet_log_summary",
               "live_features",
               "hw_limits_report",
+              "nest_fleet_status",
+              "nest_classify_burst",
           ]
           tool_names = [
               getattr(tool, "name", None) or getattr(tool, "__name__", None)
