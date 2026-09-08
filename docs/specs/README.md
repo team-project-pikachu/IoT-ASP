@@ -35,6 +35,7 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #43 #49 #53 | [43-soundcore-manufacturer-specs.md](43-soundcore-manufacturer-specs.md) — Soundcore 2 manufacturer dossier | documentation implemented | docs |
 | #44 #46 #50 | [44-web-pwa-impulse-blast.md](44-web-pwa-impulse-blast.md) — web impulse-to-blast path | stubbed with telemetry latch | frontend |
 | #45 #47 #51 | [45-web-pwa-alarm-reactivity.md](45-web-pwa-alarm-reactivity.md) — web alarm state machine | stubbed with observable clear state | frontend |
+| #87 #91 #96 #88 | [87-gemini-burst-detector-stub.md](87-gemini-burst-detector-stub.md) — M8 HomeNestAlarm SPM stub + Gemini burst/glass-shatter detector (no metered calls) | stubbed on this branch; `make home-ios-build` is macOS-only | native + detector |
 
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
 tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items referenced from

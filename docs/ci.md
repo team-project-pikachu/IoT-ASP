@@ -19,6 +19,7 @@ Issue-linked PRs are the intended path for Project 5 Todo work (#12, #16, #17, r
 4. **`tests`** — `pip install -r requirements-dev.txt` then `python -m pytest tests -q` (converter, fleet log, micDiff, live features, ruleset JSON, deploy workflow, public HTML).
 5. **`mdc check`** — `python3 scripts/mdc_convert.py --check` (Cursor `.mdc` → Claude Code outputs are fresh).
 6. **`e2e smoke`** — Playwright against `public/` (`tests/e2e/run.sh`); informative, not required by the ruleset.
+7. **`M8 Home iOS stub presence`** — file presence for `native/IoTASPHome/Package.swift` + Home/gcloud scripts + `services/gemini-burst-detect/detect.py`, then `pytest tests/test_gemini_burst_detect.py`. Informative, not required by the ruleset. Does **not** run Swift (linux runner). Full stub build is macOS-local: `make home-ios-build`.
 
 ## Continuous ship
 
@@ -51,7 +52,10 @@ JSON in the same PR — `tests/test_ruleset_json.py` fails otherwise. See [branc
 ```bash
 bash scripts/ci_static_gates.sh
 bash scripts/autoroute_dev.sh
-python3 -m pytest tests/test_deploy_workflow.py tests/test_public_html.py -q
+python3 -m pytest tests/test_deploy_workflow.py tests/test_public_html.py tests/test_gemini_burst_detect.py -q
+# macOS + Swift toolchain only:
+make home-ios-build
+bash scripts/home_apis_gcloud_bootstrap.sh   # dry-run
 ```
 
 Evidence package: [`.vv/ci/`](../.vv/ci/).

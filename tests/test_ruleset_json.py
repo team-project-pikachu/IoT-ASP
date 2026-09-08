@@ -108,7 +108,7 @@ def test_contexts_match_ci_job_names_exactly(ruleset, ci_job_names):
     assert len(contexts) == len(set(contexts)), "duplicate contexts"
     # Jobs that run in CI but are deliberately NOT required for merging (informative only).
     # Anything else added to ci.yml must be added to the ruleset (or listed here) — that is the drift gate.
-    non_required = {"e2e smoke"}
+    non_required = {"e2e smoke", "M8 Home iOS stub presence"}
     assert non_required <= ci_job_names, f"allowlisted non-required jobs missing from ci.yml: {non_required - ci_job_names}"
     assert set(contexts) == ci_job_names - non_required, (
         f"ruleset contexts {sorted(contexts)} must equal ci.yml job names minus non-required "
