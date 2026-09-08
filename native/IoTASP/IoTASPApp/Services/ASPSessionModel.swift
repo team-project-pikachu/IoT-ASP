@@ -30,6 +30,8 @@ final class ASPSessionModel: ObservableObject {
 
     private let detector = ImpulseDetector()
     private let physicalVib = PhysicalVibChannel()
+    private let acousticVib = AcousticVibChannel()
+    @Published var lastAcousticEvent: String = "none"
     @Published var lastPhysicalEvent: String = "none"
     @Published var shakeCount: Int = 0
     #if canImport(CoreMotion)
@@ -140,8 +142,14 @@ final class ASPSessionModel: ObservableObject {
         #if canImport(AVFoundation)
         if micArmed {
             let cap = UltrasonicMicCapture()
-            cap.onMeter = { [weak self] _, _ in
-                self?.micStatus = cap.status
+            cap.onMeter = { [weak self] energy, diff in
+                guard let self else { return }
+                self.micStatus = cap.status
+                let ev = self.acousticVib.observe(energyDb: energy, micDiffDb: diff, armed: true)
+                self.lastAcousticEvent = ev.rawValue
+                if ev == .acousticBurst {
+                    self.pendingImpulse = ImpulseEvent(fromAccel: false, fromMicDiff: true, riseMs: 40)
+                }
             }
             cap.start()
             mic = cap

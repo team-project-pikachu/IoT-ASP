@@ -70,6 +70,7 @@ struct ContentView: View {
                     LabeledContent("AEC off requested", value: session.micStatus.aecOffRequested ? "yes" : "no")
                     LabeledContent("OS may override", value: session.micStatus.osMayOverride ? "yes (honest)" : "no")
                     LabeledContent("bandEnergyUs", value: String(format: "%.1f dB", session.micStatus.lastBandEnergyUs))
+                    LabeledContent("acoustic vib", value: session.lastAcousticEvent)
                     Text(session.micStatus.note)
                         .font(.caption2)
                         .foregroundStyle(.secondary)

@@ -106,6 +106,15 @@ struct IoTASPSmoke {
         check("shake hop", hop == .shakeHop)
         check("disarmed none", ch.observe(absA: 2, now: t1.addingTimeInterval(2), armed: false) == .none)
 
+        // #5 acoustic vib
+        let ac = AcousticVibChannel(config: AcousticVibConfig(burstMarginDb: 12, floorDb: -55, window: 5))
+        check("median", AcousticVibChannel.median([-10, -20, -30]) == -20)
+        for _ in 0..<5 { _ = ac.observe(energyDb: -60) }
+        check("quiet none-or-floor", ac.observe(energyDb: -60) == .none)
+        check("burst", ac.observe(energyDb: -20) == .acousticBurst)
+        check("micDiff preferred", ac.observe(energyDb: -20, micDiffDb: -80) != .acousticBurst)
+        check("disarmed acoustic", ac.observe(energyDb: 0, armed: false) == .none)
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()
