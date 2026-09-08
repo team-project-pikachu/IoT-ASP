@@ -86,6 +86,17 @@ Apple docs (cite):
 - [ ] sonos-web (or SoCo) usable for grouping/mute without street PII in logs
 - [ ] Atmos: document as **na** for ASP Web Audio AirPlay path
 
+
+
+## Pre-arrival protocol (Balanced PR4 — no HW claim)
+
+Until a Beam Gen 2 is on the bench, treat Node 3 as **research-only**:
+
+1. Keep fleet defaults: nodes 1–2 Soundcore A2DP (C1); node 3 AirPlay enum only.
+2. Run Shared tests: `cd native/IoTASP && swift test`.
+3. Printable first-session checklist: [`native/IoTASP/SYSTEMS-CHECK.md`](../native/IoTASP/SYSTEMS-CHECK.md).
+4. Do **not** mark #39 Done or remove `parked` until AirPlay systems check boxes above are ticked on real hardware.
+
 ## Out of scope
 
 - No street PII; no purchase/pricing claims (listing link only on #39)

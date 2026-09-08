@@ -140,3 +140,14 @@ Static (`tests/test_public_html.py`, once item 2 lands): 7. `lfEnergy` appears i
   `sudden_freq.py`, `fleet_log.py`, `features_live.py`, `agent.py`, `public/index.html`
   (`origin/main` @ `0625e91`, lines cited above), `reference/knowledge/apple-coremotion/*.md` (Core Motion
   digests — native path only).
+
+
+## Balanced PR4 — chair mount checklist (parked)
+
+- [ ] Physical: phone taped/strapped to chair frame (not handheld)
+- [ ] Telemetry: `vibClass=infra_felt` dominates; document handheld vs chair delta
+- [ ] Honesty UI: "felt proxy via accel — not infrasound mic"
+- [ ] TX: do not arm 10–20 Hz unless `lfDriveCapable` (Soundcore = false)
+- [ ] Sonos Beam (#39) is an **alternate** Node 3 sink research path — do not conflate with chair mech coupling
+
+No HW claimed present in this Balanced stack pass.

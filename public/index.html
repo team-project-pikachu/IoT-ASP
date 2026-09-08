@@ -395,6 +395,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   <section class="mon" id="monitor">
     <div class="plot-head">
       <p class="legend">Monitor · telemetry beacon (no site PII)</p>
+
+    <p class="sub" id="fleetBackendStrip" style="margin:6px 0 0">Backend · patch — · telemetry off · poll —</p>
+
       <p class="legend" id="ctxStateLabel">ctx —</p>
     </div>
     <p class="sub" style="margin:8px 0 0">Fleet audio: <b>iPhone native Bluetooth</b> → paired Soundcore (OS route). No Web Bluetooth.</p>
@@ -592,6 +595,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let prevMicDiffSample = -120, accelEma = 0;
   let ax=0, ay=0, az=0;
   let accelMag=0, lfMag=0, acousticEnergy=-120;
+  let gx=0, gy=0, gz=0, absOmega=0, gyroSampled=false;
+  const DEG_TO_RAD = Math.PI / 180;
+
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
   let pulseMs=120, shriekMs=55;
@@ -1385,6 +1391,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     else if (vibClass === "physical" || vibClass === "infra_felt"){
       if (accelMag < thr * 0.4) updateVibClass(acousticEnergy > -55 ? "acoustic" : "none");
     }
+    // DeviceMotionEvent.rotationRate is deg/s — convert to rad/s for contract/ETL (#26)
+        const rr = e.rotationRate;
+        if (rr && (rr.alpha != null || rr.beta != null || rr.gamma != null)) {
+          gx = (rr.alpha || 0) * DEG_TO_RAD;
+          gy = (rr.beta || 0) * DEG_TO_RAD;
+          gz = (rr.gamma || 0) * DEG_TO_RAD;
+          absOmega = 0.85 * absOmega + 0.15 * Math.hypot(gx, gy, gz);
+          gyroSampled = true;
+        }
+    
   }, { passive:true });
 
   // ══ graph ═════════════════════════════════════════════════════════════
@@ -2448,6 +2464,24 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (telNight) telNight.textContent = n.active ? (n.target.toFixed(1) + "%") : "day";
   }
 
+  const strip = $("fleetBackendStrip");
+    if (strip) {
+      const shortPatch = (typeof PATCH_URL === "string" && PATCH_URL) ? PATCH_URL.replace(/^https?:\/\//, "").slice(0, 48) : "/patch.json";
+      const shortTel = (typeof TELEMETRY_URL === "string" && TELEMETRY_URL) ? TELEMETRY_URL.replace(/^https?:\/\//, "").slice(0, 40) : "off";
+      strip.textContent = "Backend · patch " + shortPatch + " · telemetry " + shortTel + " · poll " + POLL_MS + "ms";
+    }
+  }
+  const simImpulseBtn = $("simImpulseBtn");
+  if (simImpulseBtn) {
+    simImpulseBtn.addEventListener("click", function(){
+      noteImpulse(true, false);
+      publishFleetHeartbeat();
+      paintFleetCards();
+      updateTelUI();
+    });
+  }
+
+
   function telemetryPayload(){
     const suddenFreq = !!(geminiAutorouteFlag || suddenState === "rotate" || suddenState === "onset" || soundBurst);
     return {
@@ -2463,6 +2497,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       impulse: !!impulse,
       volBlast: !!volBlast,
       alarmState: effectiveAlarmState(),
+      ...(gyroSampled ? { gx, gy, gz, absOmega } : {}),
       bandBurst: bandBurst || "none",
       soundBurstMeta: {
         energyDelta: burstEnergyDelta,
