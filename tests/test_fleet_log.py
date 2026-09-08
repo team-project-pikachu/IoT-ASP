@@ -512,3 +512,67 @@ def test_safe_ts_normalises_any_wire_ts():
     for evil in ("../../patches/node1", "..", "", None, "garbage", {"x": 1}):
         assert safe_ts(evil, now=now) == "2026-02-01T00-00-00Z", evil
     assert ":" not in safe_ts("2026-01-15T12:00:00Z") and "/" not in safe_ts("a/b", now=now)
+
+
+# 18. demo fixture + alarmState enum (stack PR5 deepen)
+def test_demo_fixture_record_keys_and_hold_events():
+    recs = demo_fixture("node1")
+    assert len(recs) == 12
+    holds = [r for r in recs if r["event"] == "hold_refuse"]
+    ingests = [r for r in recs if r["event"] == "ingest"]
+    assert len(holds) == 3 and len(ingests) == 9
+    for r in recs:
+        assert list(r) == RECORD_KEYS
+        assert r["kind"] == "fleet_log"
+        assert r["schemaVersion"] == 1
+        assert r["alarmState"] is None or r["alarmState"] in fleet_log.ALARM_STATES
+
+
+@pytest.mark.parametrize(
+    "state,expected",
+    [
+        ("armed", "armed"),
+        ("triggered", "triggered"),
+        ("sustaining", "sustaining"),
+        ("cleared", "cleared"),
+        ("ARMED", "armed"),
+        ("bogus", None),
+        (None, None),
+        (3, None),
+    ],
+)
+def test_alarm_state_coercion(state, expected):
+    tel = {**BASE_TEL, "alarmState": state, "impulse": True, "volBlast": True}
+    rec = log_record("info", "ingest", tel)
+    assert rec["alarmState"] == expected
+    assert rec["impulse"] is True and rec["volBlast"] is True
+
+
+def test_fleet_log_demo_shell(tmp_path, monkeypatch):
+    script = ROOT / "scripts" / "fleet_log_demo.sh"
+    env = {
+        **os.environ,
+        "IOT_ASP_AUTOROUTE_DRY_RUN": "1",
+        "IOT_ASP_AUTOROUTE_DRY_ROOT": str(tmp_path),
+        "PYTHONPATH": str(PKG_ROOT) + (os.pathsep + os.environ["PYTHONPATH"] if os.environ.get("PYTHONPATH") else ""),
+    }
+    proc = subprocess.run(
+        ["bash", str(script)],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=env,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    out = json.loads(proc.stdout.split("\n", 1)[-1] if proc.stdout.lstrip().startswith("#") else proc.stdout)
+    # Script prints a comment line then JSON — parse last JSON object if needed
+    if "sample" not in out:
+        # find JSON blob after the dry-run comment
+        start = proc.stdout.find("{")
+        assert start >= 0, proc.stdout
+        out = json.loads(proc.stdout[start:])
+    assert out["sample"]["kind"] == "fleet_log"
+    assert list(out["sample"]) == RECORD_KEYS
+    assert out["written"] == 12
+    assert (tmp_path / "meta" / "logs" / "node1" / "2026-01-15.jsonl").is_file()

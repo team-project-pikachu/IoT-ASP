@@ -3,6 +3,8 @@
 **Research closeout (docs only):** [sensorkit-research-closeout.md](sensorkit-research-closeout.md) · evidence [`.vv/9/`](../.vv/9/).  
 **Balanced stub (2026-09-08):** source sketch under [`native/IoTASP/`](../native/IoTASP/) + [`native/README.md`](../native/README.md) (issues #41/#48/#52). Still **no** SensorKit entitlement grant and **no** signed App Store build.
 
+CLT-only hosts: `bash scripts/native_compile_check.sh` / `make native-check` runs `alarm_smoke.swift` + SPM Shared build (no `xcodebuild` claim).
+
 MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md)). Xcode is for a future shell that can unlock fuller audio/BT APIs.
 
 ## Workflow (when scheduled)
