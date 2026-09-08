@@ -11,7 +11,8 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 [[ -f "$PKG_SRC/timestore.py" ]] || fail "missing timestore.py"
 
 # Guard: no monorepo sys.path / parents[N] hacks in executable adapter code.
-if grep -nE 'parents\[[0-9]+\]|sys\.path\.(insert|append)|importlib\.import_module\(["'\'']algo_timestore' \
+# Double-quoted BRE so ['"] is safe; allow optional whitespace after import_module(.
+if grep -nE "parents\\[[0-9]+\\]|sys\\.path\\.(insert|append)|importlib\\.import_module\\([[:space:]]*['\"]algo_timestore" \
   "$PKG_SRC/timestore.py"; then
   fail "timestore.py still uses monorepo path hacks (not ADK-safe)"
 fi

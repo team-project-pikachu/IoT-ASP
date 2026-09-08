@@ -13,7 +13,8 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 [[ -d "$SRC" ]] || fail "missing canonical source $SRC"
 
 list_py() {
-  (cd "$1" && find . -type f -name '*.py' ! -path './__pycache__/*' | LC_ALL=C sort)
+  # Exclude __pycache__ at any depth (nested packages create nested caches).
+  (cd "$1" && find . -type f -name '*.py' ! -path '*/__pycache__/*' | LC_ALL=C sort)
 }
 
 check_sync() {
