@@ -2095,9 +2095,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const URL_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#]*|(?:[A-Za-z0-9._~-]+\/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9._~-]+)[?#][^\s]*/g;
   function redactUrlQuery(s){ return String(s).replace(URL_QUERY_RE, "$1?[redacted]"); }
   function monLog(msg, event, fields, level){
-    const snap = (typeof fleetLogLineFromTel === "function")
-      ? fleetLogLineFromTel({ event: event ? String(event).slice(0, 32) : "log", msg: "" })
-      : null;
+    const snap = fleetLogLineFromTel({ event: event ? String(event).slice(0, 32) : "log", msg: "" });
     const rec = {
       seq: ++logSeq,
       ts: new Date().toISOString(),
@@ -2147,7 +2145,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     "lfArmed","lfDriveCapable","lfGate","algo","vibClass","suddenFreq","suddenState","holdManual","peakHz",
     "absA","micEnergy","impulse","volBlast","alarmState","msg"];
   function fleetLogLineFromTel(extra){
-    const tel = typeof telemetryPayload === "function" ? telemetryPayload() : {};
+    const tel = telemetryPayload();
     const row = {
       kind: "fleet_log",
       schemaVersion: SCHEMA_VERSION,
@@ -2161,7 +2159,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       lfArmed: !!tel.lfArmed,
       lfDriveCapable: !!tel.lfDriveCapable,
       lfGate: !!(tel.lfArmed && tel.lfDriveCapable && tel.vibClass === "infra_felt"),
-      algo: tel.algo || (typeof algoWireName === "function" ? algoWireName() : algo),
+      algo: tel.algo || algoWireName(),
       vibClass: tel.vibClass || "none",
       suddenFreq: !!tel.suddenFreq,
       suddenState: tel.suddenState || "idle",
