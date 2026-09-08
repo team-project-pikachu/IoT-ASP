@@ -12,7 +12,7 @@ Primary control: **suddenFreq → Gemini/ADK autorotate** ([autoroute.md](autoro
 |------|----------|-------|------------------|--------|
 | 1 | iPhone 16 ↔ Soundcore 2 | Room A | Acoustic (mic/spectrum) + optional accel | **Active** |
 | 2 | iPhone 16 ↔ Soundcore 2 | Room B | Acoustic + optional accel | **Active** |
-| 3 | Future iPhone (e.g. 14) **taped to a chair** | TBD | **Physical / structure-borne** (linear accel); chair frame → seat → floor | **Parked** |
+| 3 | **Third iPhone 16** ↔ **Sonos Beam Gen 2** (AirPlay) and/or chair-taped sensing | TBD | Physical / AirPlay TX + structure-borne bias | **Research** (#39 / #18) |
 
 Nodes 1–2 blast **incoherently** (independent per-tab RNG). Humans and ambient external sounds are in-scope interferers (details live in the private study repo).
 
@@ -74,6 +74,29 @@ micDiff_band = micEnergy_band − α · outLevel_band
 **TX align:** default response band **17–23 kHz**; if `bandBurst` is `lf`/`both` **and** `lfDriveCapable`, may arm **10–20 Hz**. Continuous mic while armed/Signal on.
 
 Wire fields: `soundBurst`, `extremeActive`, `micEnergy`, `outLevel`, `micDiff` / `micNet`, `bandBurst`. Evidence: `.vv/burst-shriek.md`.
+
+## Impulse → blast / alarm reactivity
+
+**Semantics:** security-alarm style — not a gentle ramp.
+
+| State | Meaning |
+|-------|---------|
+| `armed` | Sensors live; waiting for onset |
+| `triggered` | First short-duration impulse (accel spike and/or `micDiff` onset with short rise time) |
+| `sustaining` | Impulse train / hot micDiff continues; keep blast |
+| `cleared` | Quiet hysteresis met (~**2.5 s**); auto **re-arm** (do not soft-fade on first dip) |
+
+**Impulse definition:** short rise (≲120 ms) where either (a) `|a|` jumps ≥ onset above EMA baseline, or (b) `micDiff` jumps ≥ ~9 dB above EMA baseline (same family as environmental burst).
+
+**Blast:** set `volBlast=true`, jump UI `vol` toward **100** (night window may cap via `nightTargetVol`; 0.5-step glide only when escalating from quiet under night rules). Prefer extreme / shriek / contour-mirror family while blasting.
+
+**Hold / Manual:** disarm → `cleared`, freeze remote + blast (`holdManual` wins).
+
+**Telemetry (additive, schemaVersion 1):** `impulse` (bool), `volBlast` (bool), `alarmState` ∈ `armed`\|`triggered`\|`sustaining`\|`cleared`.
+
+**Surfaces:** Web DeviceMotion+mic (issue **#42** / PWA lane); native iPhone+Watch [`native/IoTASP/`](../native/IoTASP/) (**#41**). SensorKit not on web (#9).
+
+**Intense vib:** treat **10–20 Hz** as intense vibrations band for TX gate and/or sensing priority (`infra_felt` / LF). Log **1–100 Hz** accel+gyro on native paths.
 
 ## Algorithms
 

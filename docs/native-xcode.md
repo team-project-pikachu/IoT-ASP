@@ -23,3 +23,7 @@ MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRA
 | CoreBluetooth sensors | No | Optional later — **not** carrier TX |
 
 Author UX wireframes in **Chrome**; validate HIG on Simulator + device Safari/native. See [iphone-bluetooth.md](iphone-bluetooth.md), [ux-tooling.md](ux-tooling.md).
+
+## Sonos AirPlay shell sketch (#39)
+
+Canonical app: [`native/IoTASP/`](../native/IoTASP/) (iOS + Watch) — fleet sink picker includes Soundcore A2DP and Sonos Beam AirPlay. Legacy sketch: [`native/ios-sonos-shell/`](../native/ios-sonos-shell/). Docs: [sonos-beam.md](sonos-beam.md), [sensorkit-watch.md](sensorkit-watch.md). Full `xcodebuild` needs Xcode.app (Command Line Tools alone are insufficient on this Studio). Shared alarm/impulse logic: `swift test` in `native/IoTASP/`.
