@@ -5,20 +5,22 @@ Soundcore 2 over **iOS native Bluetooth A2DP**, with a decoupled GCP/ADK "autoro
 that authors clamped parameter patches from telemetry. Public scientific tooling; **no site PII**.
 
 Live app: https://hop-ultrasonic-1digital-design.vercel.app/ (source mirror: `public/`).
-Board: https://github.com/orgs/team-project-pikachu/projects/5 — issues `#1`–`#27`, milestones M0–M5.
+Board: https://github.com/orgs/team-project-pikachu/projects/5 — issues `#1`–`#27` (+ later), milestones M0–M5.
+Roadmap map: `docs/mvp-roadmap.md` (#69). Closed log: `docs/mvp-closed-log.md` (#68).
 
 ## Layout
 
 ```
 public/                          # static PWA blaster (Vercel) — single-file app: index.html + patch.json mock
 services/autoroute-adk/          # Google ADK Python agent + tools + clamps + priors + Colab ETL (GCP, independent deploy)
-packages/iot-asp-study/          # public-safe templates/schema/doctor (#67); gitignored study/ unchanged
-scripts/                         # gates + dry-run + KB refresh + mdc converter
+packages/algo-timestore/         # SciPy timestore package (#20)
+packages/iot-asp-study/          # public-safe study schema/doctor (#67); private protocol stays in gitignored study/ + IoT-ASP-study
+scripts/                         # gates + dry-run + KB refresh + mdc converter + mvp_closed_log_append
 tests/                           # pytest (stdlib + numpy/scipy) — run before every push
-docs/                            # contract, constraints, autoroute, CI, physics, specs/
+docs/                            # contract, constraints, autoroute, CI, physics, specs/, mvp-roadmap
 docs/specs/                      # one spec per Project 5 issue (goal, wire, clamps, acceptance, CI gate)
 reference/                       # literature + Firecrawl/Context7 knowledge digests
-.github/workflows/               # ci.yml (breaking-change gates), deploy.yml (dev → test → prod)
+.github/workflows/               # ci.yml, deploy.yml, mvp-closed-log.yml
 .claude/rules/                   # path-scoped rules (paths: frontmatter); generated + hand-written
 .cursor/rules/*.mdc              # Cursor rules (local) → converted by scripts/mdc_convert.py
 .vv/                             # verification evidence packages (CI, deploy, sensors)
@@ -40,7 +42,8 @@ reference/                       # literature + Firecrawl/Context7 knowledge dig
    patches and the phone ignores remote patches. The UI label `Hold / Manual`, wire key `holdManual`, and
    element `holdPatchBtn` must stay in `public/index.html`.
 7. **No site PII** anywhere public: no street addresses, neighbor identifiers, recording URIs, speech
-   transcripts. Study material lives in gitignored `study/`; public templates live in `packages/iot-asp-study`.
+   transcripts. Study material lives in gitignored `study/` and private `IoT-ASP-study`. Public-safe
+   helpers only: `packages/iot-asp-study` (never subtree private protocol onto `main`).
 8. **Physics honesty:** linearized acoustics / Navier–Stokes / seismo-acoustic coupling are priors and
    prompt constraints only. Never claim CFD on-phone. Safari + BT cannot capture or play true infrasound;
    LF accelerometer energy is a felt proxy.
@@ -60,6 +63,8 @@ the phone-side defensive clamp `VOL_PATCH_MAX` in `public/index.html` is 12 with
 bash scripts/ci_static_gates.sh          # Hold/Manual, no keys, patch.json schemaVersion, clamp constants
 bash scripts/autoroute_dev.sh            # offline dry-run: suddenFreq → clamped patch under .autoroute-dry/
 python3 -m pytest tests -q               # unit tests (needs numpy scipy pytest; pip install -r requirements-dev.txt)
+PYTHONPATH=packages/iot-asp-study python3 packages/iot-asp-study/scripts/doctor.py
+bash scripts/mvp_closed_log_append.sh --backfill   # rebuild docs/mvp-closed-log.md from gh (needs network)
 python3 scripts/mdc_convert.py           # .cursor/rules/*.mdc → CLAUDE.md blocks + .claude/rules + .claude/skills
 python3 scripts/mdc_convert.py --check   # CI: fail if converted outputs are stale
 make gates test mdc                      # same three, via Makefile

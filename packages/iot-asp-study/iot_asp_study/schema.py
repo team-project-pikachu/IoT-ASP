@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 REQUIRED_SIDECAR_KEYS = (
@@ -34,6 +35,23 @@ VIB_CHANNELS = frozenset({"physical", "acoustic", "infra_felt", "none", "mixed"}
 EXT_SOURCE_PUBLIC = frozenset({"neighbor_unit", "outside", "none"})
 
 
+def _parse_utc(label: str, val: Any) -> tuple[datetime | None, str]:
+    if not isinstance(val, str) or not val.strip():
+        return None, f"{label} must be a non-empty ISO-8601 string"
+    raw = val.strip()
+    # Accept trailing Z or explicit offset; require timezone-aware UTC fields.
+    try:
+        if raw.endswith("Z"):
+            dt = datetime.fromisoformat(raw[:-1] + "+00:00")
+        else:
+            dt = datetime.fromisoformat(raw)
+    except ValueError:
+        return None, f"{label} must be ISO-8601 (got {raw!r})"
+    if dt.tzinfo is None:
+        return None, f"{label} must be timezone-aware UTC (Z or offset)"
+    return dt.astimezone(timezone.utc), "ok"
+
+
 def validate_sidecar(payload: dict[str, Any]) -> tuple[bool, str]:
     """Validate a recording/session sidecar dict. Returns (ok, message)."""
     if not isinstance(payload, dict):
@@ -54,10 +72,14 @@ def validate_sidecar(payload: dict[str, Any]) -> tuple[bool, str]:
     if vib not in VIB_CHANNELS:
         return False, f"vib_channel must be one of {sorted(VIB_CHANNELS)}"
 
-    for ts_key in ("started_at_utc", "ended_at_utc"):
-        val = payload.get(ts_key)
-        if not isinstance(val, str) or not val.strip():
-            return False, f"{ts_key} must be a non-empty ISO-8601 string"
+    started, err = _parse_utc("started_at_utc", payload.get("started_at_utc"))
+    if started is None:
+        return False, err
+    ended, err = _parse_utc("ended_at_utc", payload.get("ended_at_utc"))
+    if ended is None:
+        return False, err
+    if ended < started:
+        return False, "ended_at_utc must be >= started_at_utc"
 
     site = payload.get("site_code")
     if not isinstance(site, str) or not site.strip():

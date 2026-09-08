@@ -20,4 +20,4 @@ PYTHONPATH=packages/iot-asp-study python3 packages/iot-asp-study/scripts/doctor.
 
 **History strategy:** do **not** `git subtree` / submodule the private companion into public `main` (PII). Vendor only the public-safe package; keep private git history in `IoT-ASP-study`.
 
-Public scientific tooling (blaster PWA, ADK autoroute agent, Colab stub, literature) stays on `main`. This package is post-MVP / research (#67); it is not required for the M0–M5 public blaster.
+Public scientific tooling (blaster PWA, ADK autoroute agent, Colab stub, literature) stays on `main`. This package is post-MVP / research (#67); it is not required for the M0–M5 public blaster. Roadmap row: [`mvp-roadmap.md`](mvp-roadmap.md).

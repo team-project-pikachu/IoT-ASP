@@ -1,5 +1,5 @@
 # IoT-ASP — deterministic local entry points (mirror .github/workflows/ci.yml)
-.PHONY: help deps gates dryrun test mdc mdc-check all e2e protect-main
+.PHONY: help deps gates dryrun test mdc mdc-check all e2e protect-main study-doctor
 
 PY ?= python3
 
@@ -8,6 +8,7 @@ help:
 	@echo "make gates      # scripts/ci_static_gates.sh (Hold/Manual, no keys, schemaVersion, clamps)"
 	@echo "make dryrun     # scripts/autoroute_dev.sh (offline suddenFreq → clamped patch)"
 	@echo "make test       # pytest tests/"
+	@echo "make study-doctor # packages/iot-asp-study public-safe schema + scrub (#67)"
 	@echo "make mdc        # convert .cursor/rules/*.mdc → CLAUDE.md blocks + .claude/rules + .claude/skills"
 	@echo "make mdc-check  # fail if converted outputs are stale (CI gate)"
 	@echo "make all        # gates + dryrun + test + mdc-check"
@@ -22,6 +23,9 @@ gates:
 
 dryrun:
 	bash scripts/autoroute_dev.sh
+
+study-doctor:
+	PYTHONPATH=packages/iot-asp-study $(PY) packages/iot-asp-study/scripts/doctor.py
 
 test:
 	$(PY) -m pytest tests -q

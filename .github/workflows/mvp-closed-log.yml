@@ -1,11 +1,18 @@
-# Append closed MVP issues to docs/mvp-closed-log.md
+# Append closed MVP issues to docs/mvp-closed-log.md via scripts/mvp_closed_log_append.sh
 #
+# Default: opens/updates PR branch automation/mvp-closed-log (works under main
+# protection with empty bypass_actors). Optional direct main push: repo variable
+# MVP_CLOSED_LOG_PUSH_MAIN=1 when Actions has a bypass.
+# Related: docs/mvp-roadmap.md, issue #68 (#65 closed as duplicate).
+# Security: never interpolate issue title/body into run: scripts via ${{ }}.
+# Pass only issue number through expressions; fetch metadata via gh inside the script.
+#
+# Branch reuse: when automation/mvp-closed-log already exists on the remote, check
+# it out, rebase onto origin/main, and append on top so prior rows accumulate.
+# Append closed MVP issues to docs/mvp-closed-log.md
 # Opens/updates PR branch automation/mvp-closed-log (works under main-protection
 # with empty bypass_actors). Optional direct main push: repo variable
-# MVP_CLOSED_LOG_PUSH_MAIN=1 when Actions has a bypass.
 # Related: docs/mvp-roadmap.md, issue #65.
-#
-# Security: never interpolate issue title/body into run: scripts via ${{ }}.
 # Pass only issue number through expressions; fetch title/outcome via gh + env.
 
 name: MVP closed-issue log
@@ -16,8 +23,9 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: Issue number to append (backfill)
+        description: Issue number to append (must already be closed)
         required: true
+        description: Issue number to append (backfill)
       outcome:
         description: One-line outcome
         required: false
@@ -58,24 +66,35 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Append log line (idempotent)
+      - name: Append log row (idempotent script)
         id: write
         env:
           GH_TOKEN: ${{ github.token }}
-          EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           N: ${{ steps.num.outputs.n }}
+      - name: Append log line (idempotent)
+          EVENT_NAME: ${{ github.event_name }}
           INPUT_OUTCOME: ${{ inputs.outcome }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           LOG=docs/mvp-closed-log.md
           test -f "$LOG"
+          if grep -qE "\| #${N} \|" "$LOG"; then
           if grep -F "| #${N} |" "$LOG" >/dev/null 2>&1; then
             echo "already_logged=true" >> "$GITHUB_OUTPUT"
             echo "Issue #${N} already in log; skip"
             exit 0
           fi
+          bash scripts/mvp_closed_log_append.sh "$N"
+          if git diff --quiet -- "$LOG"; then
+            echo "already_logged=true" >> "$GITHUB_OUTPUT"
+            echo "No log change after script"
+            exit 0
+          fi
+          echo "already_logged=false" >> "$GITHUB_OUTPUT"
 
+      - name: Commit via PR branch (or main if allowed)
           TITLE="$(gh issue view "$N" -R "$REPO" --json title --jq .title)"
           if [ "$EVENT_NAME" = "issues" ]; then
             # Closing-associated comment from timeline (not latest comment page).
@@ -114,8 +133,6 @@ jobs:
             fi
           else
             OUTCOME="${INPUT_OUTCOME:-closed}"
-          fi
-
           # Sanitize for single-line pipe-delimited log (untrusted text)
           TITLE="$(printf '%s' "$TITLE" | tr '|\n\r' ' /  ' | sed 's/  */ /g' | cut -c1-160)"
           OUTCOME="$(printf '%s' "$OUTCOME" | tr '|\n\r' ' /  ' | sed 's/  */ /g' | cut -c1-200)"
@@ -129,7 +146,6 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
           echo "Appended: $LINE"
-
       - name: Commit via PR branch
         if: steps.write.outputs.already_logged != 'true'
         env:
@@ -144,31 +160,73 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           BRANCH="automation/mvp-closed-log"
+          LOG=docs/mvp-closed-log.md
           git fetch origin main
+          git fetch origin "$BRANCH" 2>/dev/null || true
+
+          git stash push -u -m "mvp-closed-log #$N" -- "$LOG"
+          stash_ref="$(git stash list -n 1 --format='%gd')"
+          if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+            git rebase origin/main
+            HAD_REMOTE=1
+          else
+            git checkout -B "$BRANCH" origin/main
+            HAD_REMOTE=0
+          if ! grep -qE "\| #${N} \|" "$LOG"; then
+            bash scripts/mvp_closed_log_append.sh "$N" || true
           # Preserve unmerged rows: reuse remote automation branch, then merge main.
           if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
             git fetch origin "$BRANCH"
             git checkout -B "$BRANCH" "origin/${BRANCH}"
             git merge --no-edit origin/main
-          else
-            git checkout -B "$BRANCH" origin/main
           fi
-
-          LOG=docs/mvp-closed-log.md
           if ! grep -F "| #${N} |" "$LOG" >/dev/null 2>&1; then
             printf '%s\n' "$LINE" >> "$LOG"
           fi
+
+          if ! git stash pop "$stash_ref"; then
+            echo "::error title=closed-log stash conflict::stash pop failed for #$N; refusing to commit conflict markers"
+            git stash drop "$stash_ref" 2>/dev/null || true
+            exit 1
+          fi
+
+          if ! grep -qE "\| #${N} \|" "$LOG"; then
+            if ! bash scripts/mvp_closed_log_append.sh "$N"; then
+              echo "::error title=closed-log append failed::scripts/mvp_closed_log_append.sh exited non-zero for #$N"
+              exit 1
+            fi
+          fi
+          if ! grep -qE "\| #${N} \|" "$LOG"; then
+            echo "::error title=closed-log missing row::issue #$N still absent after append"
+            exit 1
+          fi
+
           git add "$LOG"
           if git diff --cached --quiet; then
             echo "nothing to commit"
             exit 0
           fi
-          git commit -m "chore: log closed issue #${N}" -m "Refs #65"
+          git commit -m "chore: log closed issue #${N}" -m "Refs #68"
 
           if [ "$PUSH_MAIN" = "1" ]; then
-            git push origin "HEAD:main" && exit 0
+            if git push origin "HEAD:main"; then
+              exit 0
+            fi
+            echo "::notice title=closed-log main push blocked::Falling back to PR branch automation/mvp-closed-log (#68)."
           fi
 
+          if [ "$HAD_REMOTE" = "1" ]; then
+            PUSH_ARGS=(-u origin "$BRANCH")
+          else
+            PUSH_ARGS=(-u origin "$BRANCH" --force-with-lease)
+          fi
+          if ! git push "${PUSH_ARGS[@]}"; then
+          if ! git push -u origin "$BRANCH" --force-with-lease; then
+            echo "::notice title=closed-log push blocked::Ruleset or token cannot push. Run: bash scripts/mvp_closed_log_append.sh ${N} locally and open a PR. See docs/mvp-closed-log.md / issue #68."
+            exit 0
+          git commit -m "chore: log closed issue #${N}" -m "Refs #65"
+            git push origin "HEAD:main" && exit 0
           # Fast-forward from remote tip after merge — no force-push of a recreated tip.
           git push -u origin "$BRANCH"
           if gh pr view "$BRANCH" -R "$REPO" >/dev/null 2>&1; then
@@ -180,11 +238,15 @@ jobs:
               --title "chore: mvp closed-log (#${N})" \
               --body "## Summary
           - Append closed issue #${N} to `docs/mvp-closed-log.md`
-          - Automation for #65 (no new secrets)
+          - Automation for #68 (no new secrets)
 
           ## Test plan
+          - [ ] Diff is a single append-only log row
+          - [ ] No secrets / issue bodies in the row
+          Tracks #68."
+          - Append closed issue #${N} to `docs/mvp-closed-log.md`
+          - Automation for #65 (no new secrets)
           - [ ] Diff is a single append-only log line
           - [ ] No secrets in the line
-
           Tracks #65."
           fi
