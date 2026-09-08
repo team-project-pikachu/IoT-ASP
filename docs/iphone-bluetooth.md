@@ -39,10 +39,15 @@ Research closeout: [sensorkit-research-closeout.md](sensorkit-research-closeout.
 | BLE sensors later | CoreBluetooth — **sensors only**, not carrier TX substitute |
 | SensorKit | Research closed; entitlement path remains parked |
 
+## Node 3 — Sonos Beam Gen 2 (not A2DP parity)
+
+Third iPhone 16 + Beam Gen 2 is researched under issue **#39**. Expected phone→Beam path is **AirPlay 2**, not Soundcore-style A2DP. LAN control (SoCo CLI / sonos-web) is separate from C1 TX. See [sonos-beam.md](sonos-beam.md).
+
 ## Related
 
 - Sensors (Chrome iOS): [sensors-chrome-ios.md](sensors-chrome-ios.md)
 - SDD via app: [sdd-app-control.md](sdd-app-control.md)
 - Algorithms: [algorithms.md](algorithms.md)
 - Autoroute: [autoroute.md](autoroute.md)
+- Sonos / Node 3: [sonos-beam.md](sonos-beam.md) (issue **#39**)
 - Pi USB-C parked: issue **#14**, [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) **C2**

@@ -23,3 +23,7 @@ MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRA
 | CoreBluetooth sensors | No | Optional later — **not** carrier TX |
 
 Author UX wireframes in **Chrome**; validate HIG on Simulator + device Safari/native. See [iphone-bluetooth.md](iphone-bluetooth.md), [ux-tooling.md](ux-tooling.md).
+
+## Sonos AirPlay shell sketch (#39)
+
+Separate from SensorKit: stub under [`native/ios-sonos-shell/`](../native/ios-sonos-shell/) embeds `AVRoutePickerView` for Beam Gen 2 (Node 3). Docs: [sonos-beam.md](sonos-beam.md). Full `xcodebuild` needs Xcode.app (Command Line Tools alone are insufficient on this Studio).
