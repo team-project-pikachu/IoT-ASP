@@ -14,8 +14,8 @@ Publish one living matrix of **delivery surfaces × Nest hardware × SDM / ASP e
 - Issue body tables (surfaces / hardware / events) — source of truth for this wave.
 - [`docs/nest-device-access.md`](../nest-device-access.md) — owner Device Access / OAuth / Pub/Sub steps.
 - Nest backend on `main`: `services/autoroute-adk/iot_asp_autoroute/nest/` (events, mapping, detector).
-- Sibling surfaces (other PRs / stacked M8): Vercel PWA UI (#101), Swift Playground (#102),
-  `native/IoTASPHome` (#91 / PR #105 stack).
+- Docs drain index: [`docs/milestones/M8-docs-acceptance.md`](../milestones/M8-docs-acceptance.md).
+- Feature stack (implementations — **do not duplicate** here): [#114](https://github.com/team-project-pikachu/IoT-ASP/pull/114) (#96 AcousticEventClass / gemini-burst-detect), [#115](https://github.com/team-project-pikachu/IoT-ASP/pull/115) (#101 PWA eventClass), [#116](https://github.com/team-project-pikachu/IoT-ASP/pull/116) (#102 Playground / home-ios-build), [#117](https://github.com/team-project-pikachu/IoT-ASP/pull/117) (#97 Home wiring).
 - Alarm wire already on the PWA: `alarmState`, `volBlast`, `holdManual` in [`docs/api-contract.md`](../api-contract.md).
 
 ## Shipped on `main`
@@ -33,11 +33,14 @@ Publish one living matrix of **delivery surfaces × Nest hardware × SDM / ASP e
 
 | Cell | Owner |
 |------|-------|
-| Nest SDM webhook → PWA event UI | #101 |
-| Swift Playground package workflow | #102 |
+| Nest SDM webhook → PWA event UI | #101 · PR #115 |
+| Swift Playground package workflow | #102 · PR #116 |
+| AcousticEventClass + gemini-burst-detect stub | #96 · PR #114 |
+| HomeNest Glass Shatter tab + notify TODO | #97 · PR #117 |
 | Live GoogleHomeSDK + OAuth device run | #83 / #93 (parked) |
 | Pub/Sub continuous → louder alarm in prod | #103 |
 | Physical Nest cam / doorbell ladder | #104 |
+| Offline E2E acceptance / privacy docs | #98 · #99 (sibling docs PRs) |
 
 ## Delivery surfaces
 

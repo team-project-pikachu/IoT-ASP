@@ -78,7 +78,7 @@ Caches under `.context7/` (see [asp-prior-art.md](asp-prior-art.md)).
 - Multi-LLM autoroute registry (#13) — [multi-llm-registry.md](multi-llm-registry.md) (design sketch; no prod non-Gemini)
 - Telemetry logging enrichment (#22)
 - Missing ops note (later lane): `docs/gcp-recordings.md` (`bear-iot-asp-rec`)
-- **M8 platform matrix (#100):** [specs/100-platform-matrix.md](specs/100-platform-matrix.md) — Vercel / iOS / Playground × Nest hardware × SDM events · [nest-device-access.md](nest-device-access.md)
+- **M8 platform matrix (#100):** [specs/100-platform-matrix.md](specs/100-platform-matrix.md) — Vercel / iOS / Playground × Nest hardware × SDM events · [nest-device-access.md](nest-device-access.md) · drain index [milestones/M8-docs-acceptance.md](milestones/M8-docs-acceptance.md)
 
 ## Privacy
 
