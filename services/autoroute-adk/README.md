@@ -55,4 +55,4 @@ See `docs/adk-autoroute.md` and wire format `docs/api-contract.md`.
 
 - Secrets: env / Secret Manager / Colab userdata only  
 - Private GCS for telemetry + patches  
-- Clamp Gemini outputs before apply (residential gain caps)
+- Clamp Gemini outputs before apply (`vol` UI percent soft==hard ≤100; Hold/Manual refuses writes)

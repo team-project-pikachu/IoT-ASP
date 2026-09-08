@@ -7,10 +7,32 @@ Curated index for the public Adaptive Signal Processing hop fleet.
 - Blaster PWA (Vercel): see repo README
 - Source: `public/index.html`
 
+## Awesome-list / prior art first (ASP)
+
+- Topic: https://github.com/topics/awesome-list
+- Process: [asp-prior-art.md](asp-prior-art.md) · [awesome-list-asp.md](awesome-list-asp.md)
+- Rule: `.cursor/rules/asp-prior-art.mdc` (Firecrawl + Context7 + .gov + USPTO)
+- **Developer index:** [`.firecrawl/developer-index/INDEX.md`](../.firecrawl/developer-index/INDEX.md) (71 unique entries; SciPy / ADK / Web Audio / Vertex·Gemini / awesome DSP)
+- Awesome hubs: [faroit/awesome-python-scientific-audio](https://github.com/faroit/awesome-python-scientific-audio) · [nitnelav/awesome-acoustic](https://github.com/nitnelav/awesome-acoustic)
+
+## Context7 baselines (library docs)
+
+| Library ID | Concept | Use in ASP |
+|------------|---------|------------|
+| `/scipy/scipy` | `signal.welch` · `optimize.curve_fit` | Vib PSD / timestore nonlinear fits |
+| `/google/adk-python` | `LlmAgent` + `adk deploy agent_engine` | Autoroute agent |
+| `/websites/webaudio_github_io_web-audio-api` | `AudioContext` / Gain / Oscillator | Hop blaster TX graph |
+
+Caches under `.context7/` (see [asp-prior-art.md](asp-prior-art.md)).
+
 ## Design constraints (formal)
 
-- [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) — **C1** native A2DP only · **C2** Pi USB-C (#14)
+- [DESIGN_CONSTRAINTS.md](DESIGN_CONSTRAINTS.md) — **C1** native A2DP · **C2** Pi USB-C (#14) · **C3** SDD · **C4** max gain · **C5** 120 V AC · **C6** LF 10–20 Hz gated
+- [power-fleet.md](power-fleet.md) — continuous **120 V AC**
+- [SEBoK V&V](vv/README.md) · [`.vv/matrix.md`](../.vv/matrix.md) — Req IDs → issues #12/#16/#17/#9/#13
+- [iphone-dedicated-mode.md](iphone-dedicated-mode.md)
 - [iphone-bluetooth.md](iphone-bluetooth.md)
+- [timestore.md](timestore.md) · [ai-edge-portal.md](ai-edge-portal.md) (parked)
 
 ## Control plane
 
@@ -48,8 +70,13 @@ Curated index for the public Adaptive Signal Processing hop fleet.
 
 - Raspberry Pi 5 + **USB-C** (#14)
 - Apple Home / HomeKit / Matter (#15) — not A2DP TX
-- SensorKit native shell (#9)
-- Multi-LLM autoroute registry (post-Gemini)
+- Google Home Wi‑Fi autorotate · cellular later (#21)
+- SensorKit native shell (#9) — [sensorkit-research-closeout.md](sensorkit-research-closeout.md) (research Done-ready; impl parked)
+- Timestore SciPy ≥16-param + weather/ciphers (#20)
+- AI Edge Portal (#23) — [ai-edge-portal.md](ai-edge-portal.md)
+- Multi-LLM autoroute registry (#13) — [multi-llm-registry.md](multi-llm-registry.md) (design sketch; no prod non-Gemini)
+- Telemetry logging enrichment (#22)
+- Missing ops note (later lane): `docs/gcp-recordings.md` (`bear-iot-asp-rec`)
 
 ## Privacy
 

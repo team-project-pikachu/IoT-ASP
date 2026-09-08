@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "algo": "burst",
+  "band": "17-23k",
+  "fMin": 17000.0,
+  "fMax": 23000.0,
+  "vol": 100.0,
+  "pulseMs": 90.0,
+  "shriekMs": 55.0,
+  "vibThreshold": 0.15,
+  "seedAction": "keep",
+  "rationale": "suddenFreq autorotate for node1 @ 19500 Hz; vibClass=physical; band=17-23k; weights\u2192burst among ['burst', 'shriek_chirp', 'am_gate']; NS/linearized/seismo priors as constraints only",
+  "priors": [
+    "sudden_freq",
+    "linearized_acoustic",
+    "navier_stokes_constraint",
+    "structure_borne"
+  ],
+  "priorWeights": {
+    "burst": 0.48,
+    "shriek_chirp": 0.42,
+    "am_gate": 0.3
+  },
+  "literature": [
+    "arxiv:2307.01775",
+    "arxiv:2509.17986",
+    "arxiv:2211.03647",
+    "doi:10.1121/1.5063819"
+  ],
+  "engineId": "iot-asp-autoroute",
+  "createdAt": "2026-09-08T00:20:18Z",
+  "trigger": "suddenFreq",
+  "nodeId": "node1",
+  "priorNotes": "- sudden_freq: Sudden frequency onset (\u0394f or energy spike in-band): autorotate noise params (algo cycle + dwell/pulse/shriek jitter) then author a clamped GCS patch for the node.\n- linearized_acoustic: From compressible Navier\u2013Stokes under small perturbations \u2192 linearized acoustic wave equation (1/c0^2)\u2202t\u00b2p' \u2212 \u2207\u00b2p' = S (Lighthill-type sources). Near-ultrasonic air path 17\u201323 kHz is weakly nonlinear at residential gain; band limits are hard constraints. Cite arXiv:2307.01775, arXiv:2509.17986.\n- navier_stokes_constraint: Do NOT claim full Navier\u2013Stokes / CFD on-device. Use linearized acoustics and coupling analogies as soft priors only (docs/physics.md).\n- structure_borne: Structure-borne / seismo-acoustic coupling: chair/floor frames transmit broadband vibration; prefer pulse/shriek/burst over continuous hop when vibClass=physical. Cite arXiv:2211.03647 (seismo-acoustic nuisance) + seated WBV human\u2013seat PMIDs (e.g. 27780424).",
+  "lfDriveCapable": false,
+  "materialPreset": "table"
+}
