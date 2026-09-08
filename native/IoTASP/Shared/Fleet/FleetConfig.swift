@@ -29,9 +29,10 @@ public struct FleetNode: Sendable {
 public enum SoundcoreConstraints {
     /// Published peak stereo power (6 W × 2) — Anker/Soundcore product pages; see soundcore-specs.md.
     public static let ratedPowerWattsPublished = 12.0
-    /// Ultrasonic honesty: manufacturer FR for 17–23 kHz is **unpublished**; do not claim flat FR.
+    /// Ultrasonic honesty: A3105 manual FR is **70 Hz–20 kHz** (band, not a curve); 17–23 kHz
+    /// reaches/exceeds that published ceiling — expect AAC/SBC + BassUp/DSP roll-off; no flat-FR claim.
     public static let ultrasonicHonesty =
-        "A3105 FR unpublished; expect AAC/SBC + BassUp/DSP roll-off in 17–23 kHz; no flat-FR claim."
+        "A3105 manual FR 70 Hz–20 kHz; 17–23 kHz at/above ceiling — AAC/SBC + BassUp/DSP roll-off; no flat-FR claim."
     public static let lf10_20Honesty =
         "10–20 Hz TX typically na on Soundcore/A2DP; gate lfDriveCapable=false; intense vib via accel only."
     public static let docsPath = "docs/hardware/soundcore-specs.md (+ soundcore-2.md pointer)"

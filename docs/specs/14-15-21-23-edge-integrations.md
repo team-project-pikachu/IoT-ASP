@@ -181,7 +181,7 @@ Per path, when unparked:
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Pi 5 (#14) power | USB-C only | C2; not in web MVP |
-| Pi telemetry | Same `meta/telemetry/<node>/` contract | No new wire schema |
+| Pi telemetry | Same `meta/telemetry/<deviceId>/<ts>.json` contract | No new wire schema |
 | HomeKit / Matter (#15) | Presence/context only | Never a TX path (C1) |
 | Node 3 chair (#18) | Parked physical mount | `infra_felt` priors already exist; chair not deployed |
 | Claim live edge | **Forbidden** this stack | Owner lab required |

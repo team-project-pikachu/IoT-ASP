@@ -1,7 +1,9 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
-/// Shared alarm / impulse / fleet logic — `swift test` without full Xcode.app.
+/// Shared alarm / impulse / fleet logic.
+/// - Xcode.app / full toolchain: `swift test` (XCTest target below).
+/// - CLT-only hosts: `swift build` + `swift Scripts/alarm_smoke.swift` (no XCTest module).
 let package = Package(
     name: "IoTASPShared",
     platforms: [.macOS(.v13), .iOS(.v16), .watchOS(.v9)],

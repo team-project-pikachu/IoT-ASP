@@ -93,9 +93,9 @@ Apple docs (cite):
 Until a Beam Gen 2 is on the bench, treat Node 3 as **research-only**:
 
 1. Keep fleet defaults: nodes 1–2 Soundcore A2DP (C1); node 3 AirPlay enum only.
-2. Run Shared tests: `cd native/IoTASP && swift test`.
-3. Printable first-session checklist: [`native/IoTASP/SYSTEMS-CHECK.md`](../native/IoTASP/SYSTEMS-CHECK.md).
-4. Do **not** mark #39 Done or remove `parked` until AirPlay systems check boxes above are ticked on real hardware.
+2. Shared package gate: with Xcode.app → `cd native/IoTASP && swift test`; on CLT-only → `swift build` + `swift Scripts/alarm_smoke.swift` (XCTest requires full Xcode).
+3. Printable first-session checklist: [`native/IoTASP/SYSTEMS-CHECK.md`](../native/IoTASP/SYSTEMS-CHECK.md) — AirPlay labeled **C1 exception / non-compliant** (not MVP carrier TX).
+4. Do **not** mark #39 Done or remove `parked` until AirPlay systems check boxes above are ticked on real hardware, and only after an explicit product decision if promoting AirPlay toward C1.
 
 ## Out of scope
 

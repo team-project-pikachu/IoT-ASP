@@ -5,7 +5,7 @@
 ## Preflight
 
 - [ ] `xcode-select -p` points at Xcode.app (not CLT-only)
-- [ ] `cd native/IoTASP && swift test` green on Shared
+- [ ] Shared package: with Xcode.app → `cd native/IoTASP && swift test` green; on CLT-only → `swift build` + `swift Scripts/alarm_smoke.swift` (XCTest unavailable under CLT)
 - [ ] iPhone unlocked, Bluetooth on; Watch paired if testing companion
 
 ## Nodes 1–2 — Soundcore 2 A3105 (A2DP C1)
@@ -13,11 +13,13 @@
 - [ ] Settings → Bluetooth → Soundcore 2 connected
 - [ ] Control Center route shows Soundcore (not phone speaker)
 - [ ] Hop / shriek audible; night vol clamp observed
-- [ ] Record honesty: FR unpublished — no flat 17–23 kHz claim (`soundcore-specs.md`)
+- [ ] Record honesty: A3105 manual FR **70 Hz–20 kHz**; 17–23 kHz at/above ceiling — no flat FR claim (`soundcore-specs.md` / #43)
 
-## Node 3 — Sonos Beam Gen 2 (AirPlay) — **only if Beam present**
+## Node 3 — Sonos Beam Gen 2 (AirPlay) — **C1 exception / research-only**
 
-- [ ] AirPlay route to Beam; carriers audible
+AirPlay is **not** C1-compliant carrier TX (`DESIGN_CONSTRAINTS.md` C1 = iOS Bluetooth A2DP only). Keep this node explicitly non-carrier for MVP until a product decision revises C1. Tick only if Beam HW is present for a research listen — do not treat as fleet TX path.
+
+- [ ] AirPlay route to Beam; carriers audible (**research / non-C1** — not MVP carrier TX)
 - [ ] Negative: Beam is **not** offered as classic A2DP sink (or document firmware exception)
 - [ ] SoCo on LAN (names only in logs; no street PII)
 
@@ -31,4 +33,5 @@
 
 - SensorKit entitlement: **not granted**
 - App Store / TestFlight: **not this checklist**
-- LF 10–20 Hz TX on Soundcore: **na** (`lfDriveCapable=false`)
+- LF 10–20 Hz TX on Soundcore: **na** (`lfDriveCapable=false`; below published 70 Hz floor)
+- AirPlay / Beam: **not** a C1-compliant carrier path

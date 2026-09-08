@@ -10,9 +10,9 @@ MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRA
 
 | Host | What works | What does not |
 |------|------------|---------------|
-| macOS + **Xcode.app** | `open native/IoTASP/IoTASP.xcodeproj` · device/simulator | — |
-| macOS **CLT only** (this Studio default) | `cd native/IoTASP && swift test` (Shared SPM) | `xcodebuild` / Simulator |
-| Linux / CI | Shared Swift tests if toolchain present | iOS/Watch app targets |
+| macOS + **Xcode.app** | `open native/IoTASP/IoTASP.xcodeproj` · device/simulator · `cd native/IoTASP && swift test` (`.testTarget` → `Tests/AlarmStateMachineTests.swift`) | — |
+| macOS **CLT only** (this Studio default) | `cd native/IoTASP && swift build` + `swift Scripts/alarm_smoke.swift` (no XCTest under CLT) | `swift test` / `xcodebuild` / Simulator |
+| Linux / CI | `swift build` if toolchain present; XCTest only with full SDK | iOS/Watch app targets |
 
 ## Entitlement / capability honesty
 
@@ -30,7 +30,7 @@ MVP remains **Safari + iOS native A2DP** ([DESIGN_CONSTRAINTS.md](DESIGN_CONSTRA
 
 1. Select Xcode.app (`xcode-select -s /Applications/Xcode.app/Contents/Developer`).
 2. Scheme **IoTASP** (iPhone) / **IoTASPWatch**.
-3. Device for real Bluetooth A2DP / AirPlay; Simulator for UI + `swift test` for Shared.
+3. Device for real Bluetooth A2DP (C1); AirPlay/Beam is a **C1 exception** (research-only). Simulator for UI; Shared: `swift test` under Xcode.app, or `swift build` + `Scripts/alarm_smoke.swift` on CLT.
 4. Never invent SensorKit / App Store credentials in git.
 
 ## Related
