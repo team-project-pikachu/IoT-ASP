@@ -86,6 +86,12 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "function fleetLogLineFromTel(" in html
     assert 'id="simImpulseBtn"' in html
     assert "noteImpulse(true, false)" in html
+    assert "enterExtremeFromBurst(" in _fn_body(html, "function noteImpulse(fromAccel, fromMic){")
+    assert "accelBaselineReady" in html
+    assert "volBeforeBlast" in html
+    assert "burstHot" in _fn_body(html, "function alarmTick(now){")
+    assert "r.fleet" in _fn_body(html, "function copyFleetLogJsonl(){")
+    assert "d.instanceId === instanceId" in html
     assert "Seed compare" in html
     assert "peerStale" in html
 

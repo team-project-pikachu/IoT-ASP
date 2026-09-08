@@ -255,6 +255,42 @@ test.describe("public blaster smoke", () => {
     expect(errors).toEqual([]);
   });
 
+
+  test("two tabs exchange fleet heartbeats + simulate impulse (#11 #22 #44)", async ({ browser }) => {
+    const context = await browser.newContext();
+    const pageA = await context.newPage();
+    const pageB = await context.newPage();
+    const errors = [];
+    pageA.on("pageerror", e => errors.push(String(e)));
+    pageB.on("pageerror", e => errors.push(String(e)));
+    await pageA.goto("/");
+    await pageB.goto("/");
+    await pageA.waitForFunction(() => !!window.__hop);
+    await pageB.waitForFunction(() => !!window.__hop);
+    const ids = await Promise.all([
+      pageA.evaluate(() => window.__hop.getState().deviceId),
+      pageB.evaluate(() => window.__hop.getState().deviceId),
+    ]);
+    // Same deviceId (localStorage) but distinct instanceId so BroadcastChannel peers appear
+    expect(ids[0]).toBeTruthy();
+    await pageA.waitForFunction(() => {
+      const t = document.getElementById("fleetSeedCompare")?.textContent || "";
+      return /peers=/.test(t) || /incoherent OK/.test(t) || /CHECK shared seeds/.test(t);
+    }, null, { timeout: 8000 });
+    await pageA.click("#simImpulseBtn");
+    await pageA.waitForFunction(() => {
+      const p = window.__hop.telemetryPayload();
+      return (p.impulse === true || p.volBlast === true)
+        && (p.alarmState === "triggered" || p.alarmState === "sustaining")
+        && p.extremeActive === true;
+    }, null, { timeout: 5000 });
+    const p = await pageA.evaluate(() => window.__hop.telemetryPayload());
+    expect(p.extremeActive).toBe(true);
+    expect(["triggered", "sustaining"]).toContain(p.alarmState);
+    expect(errors).toEqual([]);
+    await context.close();
+  });
+
   test("systems check escapes a reflected ?patch= value (no XSS)", async ({ page }) => {
     const errors = [];
     page.on("pageerror", e => errors.push(String(e)));

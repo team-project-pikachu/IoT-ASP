@@ -582,7 +582,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const BURST_ONSET_DB = 9, BURST_RELEASE_DB = 5, BURST_EMA = 0.08;
   const BURST_JITTER_MS = 450, BURST_QUIET_MS = 2500, OUT_ALPHA = 0.85;
   let alarmState="armed", impulse=false, volBlast=false;
-  let lastImpulseAt=0, alarmQuietSince=0, accelBaseline=0.05;
+  let lastImpulseAt=0, alarmQuietSince=0, accelBaseline=0, accelBaselineReady=false, volBeforeBlast=null;
   const IMPULSE_ACCEL_DELTA = 0.45;
   let ax=0, ay=0, az=0;
   let accelMag=0, lfMag=0, acousticEnergy=-120;
@@ -1200,6 +1200,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   function blastVolJump(){
     if (holdManual) return;
+    if (!volBlast) volBeforeBlast = +vol.value;
     let next = VOL_PATCH_MAX;
     if (nightActive) next = Math.min(nightTargetVol, VOL_PATCH_MAX);
     applyVolUi(next, false);
@@ -1208,7 +1209,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   function clearAlarm(reason){
     impulse = false;
+    if (volBlast && volBeforeBlast != null) {
+      applyVolUi(volBeforeBlast, false);
+    }
     volBlast = false;
+    volBeforeBlast = null;
     alarmQuietSince = 0;
     lastImpulseAt = 0;
     alarmState = "cleared";
@@ -1223,6 +1228,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (alarmState === "cleared" || alarmState === "armed") alarmState = "triggered";
     else alarmState = "sustaining";
     blastVolJump();
+    // Same full response path as micDiff onset: extreme shriek/contour family (#44/#45)
+    if (!extremeActive) enterExtremeFromBurst(IMPULSE_ACCEL_DELTA, bandBurst || "us");
+    else applyExtremeVarianceTick(fromAccel && fromMic ? "impulse accel+mic" : (fromAccel ? "impulse accel" : "impulse mic"));
     if (typeof monLog === "function") {
       monLog("impulse · " + (fromAccel ? "accel" : "") + (fromAccel && fromMic ? "+" : "") + (fromMic ? "micDiff" : "")
         + " → " + alarmState);
@@ -1231,21 +1239,25 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function alarmTick(now){
-    if (holdManual) return;
+    if (holdManual) {
+      if (volBlast || impulse || alarmState === "triggered" || alarmState === "sustaining") clearAlarm("Hold");
+      return;
+    }
     const t = now || performance.now();
     if (alarmState !== "triggered" && alarmState !== "sustaining") return;
-    const quiet = (t - lastImpulseAt) > 80;
+    // Sustain while impulse latch, continuous soundBurst, or recent burst energy is hot
+    const burstHot = !!soundBurst || (lastBurstAt > 0 && (t - lastBurstAt) < BURST_QUIET_MS);
+    const quiet = !burstHot && (t - lastImpulseAt) > 80 && !impulse;
     if (!quiet) {
       alarmState = "sustaining";
-      volBlast = true;
+      if (!volBlast) blastVolJump();
+      else volBlast = true;
       alarmQuietSince = 0;
       return;
     }
     if (!alarmQuietSince) alarmQuietSince = t;
     if ((t - alarmQuietSince) >= BURST_QUIET_MS) {
-      volBlast = false;
-      alarmState = "cleared";
-      alarmQuietSince = 0;
+      clearAlarm("quiet " + (BURST_QUIET_MS / 1000) + "s");
     } else {
       alarmState = "sustaining";
       volBlast = true;
@@ -1261,15 +1273,22 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   window.addEventListener("devicemotion", e => {
-    const a = e.acceleration || e.accelerationIncludingGravity;
+    // Prefer linear acceleration; gravity-inclusive only after baseline is warm
+    const linear = e.acceleration;
+    const a = (linear && (linear.x != null || linear.y != null || linear.z != null))
+      ? linear : e.accelerationIncludingGravity;
     if (!a) return;
     ax = a.x || 0; ay = a.y || 0; az = a.z || 0;
     const mag = Math.hypot(ax, ay, az);
     accelMag = 0.85 * accelMag + 0.15 * mag;
-    const emaA = 0.9 * accelBaseline + 0.1 * mag;
-    const dA = mag - accelBaseline;
-    accelBaseline = emaA;
-    if (dA >= IMPULSE_ACCEL_DELTA) noteImpulse(true, false);
+    if (!accelBaselineReady) {
+      accelBaseline = mag;
+      accelBaselineReady = true;
+    } else {
+      const dA = mag - accelBaseline;
+      accelBaseline = 0.9 * accelBaseline + 0.1 * mag;
+      if (dA >= IMPULSE_ACCEL_DELTA) noteImpulse(true, false);
+    }
     // crude LF proxy: low-pass of magnitude deltas
     const g = e.accelerationIncludingGravity;
     if (g){
@@ -2058,13 +2077,17 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const URL_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#]*|(?:[A-Za-z0-9._~-]+\/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9._~-]+)[?#][^\s]*/g;
   function redactUrlQuery(s){ return String(s).replace(URL_QUERY_RE, "$1?[redacted]"); }
   function monLog(msg, event, fields, level){
+    const snap = (typeof fleetLogLineFromTel === "function")
+      ? fleetLogLineFromTel({ event: event ? String(event).slice(0, 32) : "log", msg: "" })
+      : null;
     const rec = {
       seq: ++logSeq,
       ts: new Date().toISOString(),
       level: LOG_LEVELS[level] ? level : "info",
       event: event ? String(event).slice(0, 32) : "log",
       msg: redactUrlQuery(msg).slice(0, 240),
-      fields: fields && typeof fields === "object" ? fields : {}
+      fields: fields && typeof fields === "object" ? fields : {},
+      fleet: snap
     };
     records.push(rec);
     while (records.length > LOG_MAX) records.shift();
@@ -2139,7 +2162,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
   function copyFleetLogJsonl(){
     const lines = records.slice(-50).map(function(r){
-      return JSON.stringify(fleetLogLineFromTel({ event: r.event || "log", msg: r.msg || "" }));
+      const base = (r && r.fleet && typeof r.fleet === "object")
+        ? Object.assign({}, r.fleet)
+        : fleetLogLineFromTel({ event: r.event || "log", msg: r.msg || "" });
+      if (r && r.ts) base.ts = String(r.ts).replace(/\.\d{3}Z$/, "Z");
+      if (r && r.level) base.level = r.level;
+      if (r && r.event) base.event = r.event;
+      if (r && r.msg != null) base.msg = r.msg;
+      const ordered = {};
+      for (let i = 0; i < FLEET_LOG_KEYS.length; i++) ordered[FLEET_LOG_KEYS[i]] = base[FLEET_LOG_KEYS[i]];
+      return JSON.stringify(ordered);
     });
     if (!lines.length) lines.push(JSON.stringify(fleetLogLineFromTel({ event: "export", msg: "empty ring" })));
     copyTextToClipboard(lines.join("\n") + "\n", "fleet_log JSONL copied", { n: lines.length, keys: FLEET_LOG_KEYS.length });
@@ -2273,7 +2305,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState, impulse, volBlast, deviceId }),
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState, impulse, volBlast, deviceId, instanceId }),
     getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
 
