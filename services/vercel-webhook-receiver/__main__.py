@@ -1,4 +1,8 @@
-"""Run: python3 -m vercel_webhook_receiver (from this directory) or server.py."""
+"""Run server from this package directory:
+
+  python3 server.py --bind 127.0.0.1 --port 8080
+  # or: python3 __main__.py …
+"""
 
 from __future__ import annotations
 

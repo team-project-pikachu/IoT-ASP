@@ -3,7 +3,8 @@
 
 Usage:
   WEBHOOK_DRY_RUN=1 VERCEL_WEBHOOK_SECRET=… \\
-    python3 -m vercel_webhook_receiver --bind 127.0.0.1 --port 8080
+    python3 services/vercel-webhook-receiver/server.py --bind 127.0.0.1 --port 8080
+  # or from this directory: python3 server.py --bind 127.0.0.1 --port 8080
 
 Env names only (never commit values):
   VERCEL_WEBHOOK_SECRET          required — Vercel → receiver HMAC

@@ -119,7 +119,18 @@ GitHub Actions **cannot** expose a public HTTPS endpoint for Vercel to POST to. 
 Runnable receiver (stdlib):
 [`services/vercel-webhook-receiver/`](../services/vercel-webhook-receiver/) —
 `handler.py` (verify + `repository_dispatch`), `server.py` (HTTP listen),
-`notify_once.py` (one-shot CLI). Dry-run with `WEBHOOK_DRY_RUN=1`.
+`notify_once.py` (one-shot CLI). Dry-run with `WEBHOOK_DRY_RUN=1`:
+
+```bash
+cd services/vercel-webhook-receiver
+WEBHOOK_DRY_RUN=1 VERCEL_WEBHOOK_SECRET=… python3 server.py --bind 127.0.0.1 --port 8080
+# one-shot: python3 notify_once.py --body-file /tmp/body.json --signature "$SIG"
+# --live requires GITHUB_TOKEN or GH_APP_INSTALLATION_TOKEN (exits non-zero without it)
+```
+
+Scheme-less Vercel `deployment.url` hostnames are normalized to `https://…` in the redacted
+`client_payload`. Evidence: [`.vv/deploy/WEBHOOK_RECEIVER.md`](../.vv/deploy/WEBHOOK_RECEIVER.md).
+Spec: [`docs/specs/37-vercel-webhooks.md`](specs/37-vercel-webhooks.md).
 
 ### 2. Docs-only / manual verify
 

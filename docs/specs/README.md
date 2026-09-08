@@ -35,11 +35,11 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #43 #49 #53 | [43-soundcore-manufacturer-specs.md](43-soundcore-manufacturer-specs.md) — Soundcore 2 manufacturer dossier | documentation implemented | docs |
 | #44 #46 #50 | [44-web-pwa-impulse-blast.md](44-web-pwa-impulse-blast.md) — web impulse-to-blast path | stubbed with telemetry latch | frontend |
 | #45 #47 #51 | [45-web-pwa-alarm-reactivity.md](45-web-pwa-alarm-reactivity.md) — web alarm state machine | stubbed with observable clear state | frontend |
+| #37 | [37-vercel-webhooks.md](37-vercel-webhooks.md) — Vercel webhooks → GitHub notify | implemented on branch (public HTTPS host + secrets owner-gated) | infra |
 
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
 tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items referenced from
-`docs/ci.md` and spec 26), and #37 (Vercel webhooks for hop-ultrasonic — docs + verify stub in
-`docs/vercel-webhooks.md`, complementary to #27).
+`docs/ci.md` and spec 26).
 
 Owner surface legend: **frontend** = `public/` (Vercel), **backend** = `services/autoroute-adk/` (GCP,
 independent deploy), **infra** = `.github/`, `scripts/`, `vercel.json`, edge hardware, **docs** = `docs/`,

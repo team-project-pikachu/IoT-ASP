@@ -51,6 +51,13 @@ def main(argv: list[str] | None = None) -> int:
     dry = not args.live
     if args.live:
         env.pop("WEBHOOK_DRY_RUN", None)
+        if not (env.get("GITHUB_TOKEN") or env.get("GH_APP_INSTALLATION_TOKEN")):
+            print(
+                "FAIL: --live requires GITHUB_TOKEN or GH_APP_INSTALLATION_TOKEN "
+                "(Contents write on this repo only)",
+                file=sys.stderr,
+            )
+            return 1
     else:
         env["WEBHOOK_DRY_RUN"] = "1"
 
@@ -67,6 +74,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(json.dumps(body, indent=2, sort_keys=True))
+    if args.live and not body.get("notified"):
+        print("FAIL: --live completed without notified=true", file=sys.stderr)
+        return 1
     return 0 if status == 200 else 1
 
 

@@ -53,22 +53,38 @@ def verify_signature(*, secret: str, raw_body: bytes, header_sig: str) -> bool:
     return hmac.compare_digest(expected, header_sig)
 
 
+def _public_https_url(val: Any) -> str:
+    """Normalize Vercel URL fields (often scheme-less hostnames) to https://…"""
+    if not isinstance(val, str):
+        return ""
+    s = val.strip()
+    if not s or s.startswith(("http://", "javascript:", "data:")):
+        return ""
+    if s.startswith("https://"):
+        return s
+    if s.startswith("//"):
+        return "https:" + s
+    # Common Vercel shape: "my-app.vercel.app" (scheme-less hostname)
+    if "." in s and " " not in s and not s.startswith("."):
+        return "https://" + s
+    return ""
+
+
 def redact_client_payload(event: dict[str, Any]) -> dict[str, str]:
     """Public fields only — never secrets."""
     payload = event.get("payload") if isinstance(event.get("payload"), dict) else {}
     url = ""
     if isinstance(payload, dict):
         for key in ("url", "deploymentUrl", "alias"):
-            val = payload.get(key)
-            if isinstance(val, str) and val.startswith("https://"):
-                url = val
+            url = _public_https_url(payload.get(key))
+            if url:
                 break
         meta = payload.get("deployment") if isinstance(payload.get("deployment"), dict) else {}
         if not url and isinstance(meta, dict):
-            for key in ("url", "id"):
-                val = meta.get(key)
-                if isinstance(val, str) and val:
-                    url = val if val.startswith("https://") else url
+            for key in ("url", "urlAlias", "id"):
+                cand = _public_https_url(meta.get(key))
+                if cand:
+                    url = cand
                     break
     eid = event.get("id")
     return {

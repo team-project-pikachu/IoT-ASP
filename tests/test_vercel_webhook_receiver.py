@@ -120,6 +120,16 @@ def test_handle_post_live_dispatch(handler):
     )
 
 
+def test_redact_normalizes_schemeless_deployment_url(handler):
+    event = {
+        "type": "deployment.succeeded",
+        "id": "evt_host",
+        "payload": {"deployment": {"url": "hop-ultrasonic-1digital-design.vercel.app"}},
+    }
+    out = handler.redact_client_payload(event)
+    assert out["url"] == "https://hop-ultrasonic-1digital-design.vercel.app"
+
+
 def test_notify_once_cli_dry(tmp_path, monkeypatch):
     mod = _load("vercel_webhook_notify_once", NOTIFY)
     event = {"type": "deployment.canceled", "id": "c1", "payload": {"url": "https://y.vercel.app"}}
@@ -131,3 +141,16 @@ def test_notify_once_cli_dry(tmp_path, monkeypatch):
     monkeypatch.delenv("GH_APP_INSTALLATION_TOKEN", raising=False)
     rc = mod.main(["--body-file", str(body_path), "--signature", _sign(raw)])
     assert rc == 0
+
+
+def test_notify_once_live_requires_token(tmp_path, monkeypatch):
+    mod = _load("vercel_webhook_notify_once_live", NOTIFY)
+    event = {"type": "deployment.succeeded", "id": "l1", "payload": {"url": "https://z.vercel.app"}}
+    body_path = tmp_path / "body.json"
+    raw = json.dumps(event).encode()
+    body_path.write_bytes(raw)
+    monkeypatch.setenv("VERCEL_WEBHOOK_SECRET", DUMMY_SECRET)
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("GH_APP_INSTALLATION_TOKEN", raising=False)
+    rc = mod.main(["--body-file", str(body_path), "--signature", _sign(raw), "--live"])
+    assert rc == 1
