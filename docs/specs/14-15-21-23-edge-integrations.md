@@ -174,3 +174,16 @@ Per path, when unparked:
   Google Cloud Blog posts (2025-05-20 announcement; later LLM benchmarking).
 - Repo: `docs/DESIGN_CONSTRAINTS.md`, `docs/awesome-iot-asp.md`, `docs/iphone-bluetooth.md`,
   `docs/api-contract.md`, `services/autoroute-adk/ingest_main.py`, `priors.py`, `fleet_log.py`.
+
+
+## Balanced PR4 deepen (research only — no implementation)
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Pi 5 (#14) power | USB-C only | C2; not in web MVP |
+| Pi telemetry | Same `meta/telemetry/<node>/` contract | No new wire schema |
+| HomeKit / Matter (#15) | Presence/context only | Never a TX path (C1) |
+| Node 3 chair (#18) | Parked physical mount | `infra_felt` priors already exist; chair not deployed |
+| Claim live edge | **Forbidden** this stack | Owner lab required |
+
+Next physical checks (owner): order Pi image research; HomeKit accessory class list; chair tape mount photo + `materialPreset` proposal — still ADR-only until elected.
