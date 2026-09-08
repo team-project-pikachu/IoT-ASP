@@ -492,12 +492,19 @@ def protected_write_conflicts(root: Path, plan: Plan) -> list[str]:
         if not p.is_file():
             continue
         try:
+<<<<<<< HEAD
             # GEN_MARK is emitted after frontmatter; globs/descriptions are unbounded,
             # so a fixed head slice misclassifies legitimate generated files.
             existing = p.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
         if GEN_MARK not in existing:
+=======
+            head = p.read_text(encoding="utf-8", errors="replace")[:800]
+        except OSError:
+            continue
+        if GEN_MARK not in head:
+>>>>>>> 80f65c0 (Refuse mdc_convert overwrite of hand-written Claude rules.)
             conflicts.append(rel)
     return sorted(conflicts)
 
