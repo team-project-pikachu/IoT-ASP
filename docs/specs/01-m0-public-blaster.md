@@ -51,22 +51,33 @@ Bluetooth A2DP** to its own Soundcore 2 (C1). Optional third role: chair-mounted
 | Seed init: `seedSource`, `entropySeed()` when no stored seed > 0 | `public/index.html:503-519` |
 | `pickFreq` with `MIN_HOP_DELTA_HZ()` retry loop | `public/index.html:554-561` |
 | `start()`: `lastHopAt` baseline + `rand() * 0.5` stagger | `public/index.html:846-847` |
-| `frame()`: `lastHopAt = performance.now()` on each pending shift | `public/index.html:1198` |
-| `// ══ structured monitor log (#22) ══` — `LOG_MAX = 200`, `records`, `logSeq`, `monLog(msg, event, fields, level)`, `copyLogJson()` | `public/index.html:1326-1374` |
-| `// ══ telemetry enrichment (#22) ══` — `nightNYNow()`, `bandTag()` | `public/index.html:1376-1385` |
-| `// ══ watchdog (#3) ══` — state, `lastHopAgeMs()`, `stallLimitMs()`, `watchdogTick()`, `setInterval(watchdogTick, 1000)` | `public/index.html:1387-1419` |
-| `// ══ max-entropy seeds (#2) ══` — `xmur3`, `fnv1a32`, `entropySeed`, `MIN_HOP_DELTA_HZ`, `reseed`, `reseedBtn` | `public/index.html:1421-1463` |
-| `// ══ debug hook (#1) ══` — `window.__hop` (frozen) | `public/index.html:1465-1470` |
-| `updateTelUI()` fills the three watchdog cells | `public/index.html:1473-1493` (tail `:1489-1492`) |
-| `telemetryPayload()` — keys after `holdManual`: `band … logTail` | `public/index.html:1495-1534` |
-| Remote `seedAction: "reseed"` → `reseed("patch")` | `public/index.html:1583` |
-| Systems check: `Hop RNG` row shows `(stored|entropy)` + min Δ; new `Watchdog` row | `public/index.html:1717`, `:1720` |
+| `frame()`: hop delivery via the shared `shiftDueHops()` (records `lastHopAt` + committed dwell, spec 03) | `public/index.html:1196` |
+| `// ══ structured monitor log (#22) ══` — `LOG_MAX = 200`, `records`, `logSeq`, `escHtml()` (`:1325`), `URL_QUERY_RE` + `redactUrlQuery()` (`:1329-1330`), `monLog(msg, event, fields, level)` (`:1331`, `msg` scrubbed before storage), `copyLogJson()` (`:1352`) | `public/index.html:1318-1373` |
+| `// ══ telemetry enrichment (#22) ══` — `nightNYNow()`, `bandTag()` | `public/index.html:1375-1384` |
+| `// ══ watchdog (#3) ══` — state, `committedDwellS()`, `stallLimitMs()`, `nextHopDueAt()`, `shiftDueHops()`, `watchdogTick()`, `setInterval(watchdogTick, 1000)` | `public/index.html:1386-1453` |
+| `// ══ max-entropy seeds (#2) ══` — `xmur3`, `fnv1a32`, `entropySeed`, `MIN_HOP_DELTA_HZ`, `reseed`, `reseedBtn` | `public/index.html:1455-1497` |
+| `// ══ debug hook (#1) ══` — `window.__hop` (frozen; `getWatchdog` added in the review round) | `public/index.html:1499-1506` |
+| `updateTelUI()` fills the three watchdog cells | `public/index.html:1508-1528` |
+| `telemetryPayload()` — keys after `holdManual`: `band … logTail` | `public/index.html:1530-1569` |
+| Remote `seedAction: "reseed"` → `reseed("patch")` | `public/index.html:1618` |
+| Ready line logs `redactUrlQuery(PATCH_URL)` (never the raw `?patch=` value) | `public/index.html:1664` |
+| `row()` HTML-escapes `label` and `detail` (reflected `?patch=` XSS fix, pre-existing sink) | `public/index.html:1697-1700` |
+| Systems check: `Hop RNG` row shows `(stored|entropy)` + min Δ; new `Watchdog` row | `public/index.html:1752`, `:1755` |
 | `public/README.txt` — live URL + three-phone fleet, no PII | `public/README.txt:3-5` |
-| `tests/test_public_html.py` (44 cases, stdlib) · `tests/e2e/{package.json,run.sh,public_smoke.spec.mjs,.gitignore}` (7 Playwright tests) | see *Acceptance tests* |
+| `tests/test_public_html.py` (48 cases, stdlib) · `tests/e2e/{package.json,run.sh,public_smoke.spec.mjs,.gitignore}` (9 Playwright tests) | see *Acceptance tests* |
 
 Unchanged: `SCHEMA_VERSION = 1` (`:444`), `VOL_PATCH_MAX = 100, BAND_ABS_LO = 17000, BAND_ABS_HI = 23000` (`:534`),
 `clampPatch()` (`:1549`), `applyPatch`/`pollPatch` Hold short-circuits (`:1564-1565`, `:1598-1599`), slider `max="60"`
-(`:344`), every pre-existing element id, no `navigator.bluetooth`. Size after change: 80 885 bytes (< 120 000 guard).
+(`:344`), every pre-existing element id, no `navigator.bluetooth`. Size after change: 83 843 bytes (< 120 000 guard).
+
+**Review round (2026-09-08, adversarial review of this branch) — fixed in the owned files:**
+
+| Finding | Root cause | Fix |
+|---------|-----------|-----|
+| `logTail` / Copy log JSON / `getLog()` carried the raw `?patch=` URL (signed-URL query string beaconed to ingest) | the boot line concatenated `PATCH_URL` into a `monLog` message and `monLog` stored `msg` verbatim | `monLog` scrubs every URL-like token's query/fragment (`redactUrlQuery`, `/patch.json?…` → `/patch.json?[redacted]`) **before** the record is stored, and the ready line passes `redactUrlQuery(PATCH_URL)` explicitly; static test forbids `monLog(… + PATCH_URL` / `+ TELEMETRY_URL`; e2e loads `?patch=/patch.json%3FX-Goog-Signature%3DSECRETSIG123…` and asserts the secret is absent from `getLog()`, `telemetryPayload()` and `logTail` after a beacon/poll tick |
+| Reflected XSS: `row()` concatenated unescaped `detail` (incl. `PATCH_URL`) into `sysList.innerHTML` (pre-existing) | no escaping helper on that sink | `escHtml()` (`< > & " '`) applied to `label` and `detail` in `row()` and to monitor-log lines; e2e loads `?patch=x<img src=x onerror=…>`, clicks *Systems check* and asserts no `<img>` rendered, `window.__xss` undefined, literal text shown |
+| Watchdog false trip when dwell sliders are lowered mid-dwell | see spec 03 | see spec 03 (committed-schedule judgement, `shiftDueHops()`) |
+| e2e "no false trips" relied on confounders (mock patch `algo` reschedules every poll; sudden-auto rotation) | test did not isolate the watchdog | e2e test 7 clicks `#holdPatchBtn` and `#suddenOff` **before** *Signal on*, asserts `committedDwellS ≈ 60` survives lowering the sliders to 1 s, and injects a real stall (frozen audio clock) that must trip |
 
 Baseline verified by reading `public/index.html` on `origin/main` @ `0625e91` **before** this branch (line numbers of
 that revision):
@@ -184,6 +195,9 @@ window.__hop = Object.freeze({
 ```
 Read-only (frozen object, functions return copies); exposes no URLs, tokens, or DOM. `seedSource` is defined in
 spec 02 (`'stored' | 'entropy'`). It exists so the Playwright smoke can assert behaviour without scraping the DOM.
+Review round adds `getWatchdog: () => ({ lastHopAgeMs, nextHopOverdueMs, stallLimitMs, committedDwellS, ctxResumes,
+watchdogTrips })` — numbers only — so the e2e can assert the committed stall limit (spec 03) without a stall hook.
+`getLog()` returns the ring buffer, whose `msg` is already URL-query-scrubbed at `monLog` time (§A).
 
 ### D. `public/README.txt` (M0 record)
 
@@ -237,8 +251,12 @@ No patch fields change. `seedSource` is UI/debug only and **not** on the wire.
 - `VOL_PATCH_MAX = 100` (`:522`), `BAND_ABS_LO/HI`, `clampPatch()` and the `Hold / Manual` short-circuits are **not
   modified**. `SCHEMA_VERSION = 1` unchanged. No `navigator.bluetooth` anywhere (C1). No key-like strings
   (`AIza…`, `sk-…`, `PRIVATE KEY`, `*_API_KEY=`, `apiKey:`) — the structured log must never store a URL query string
-  (`?telemetry=` could carry a token by a careless operator): `fields` are numbers/enums only, `PATCH_URL` is logged
-  as before via `monLog` text only.
+  (`?patch=` / `?telemetry=` may be a signed or tokened URL, see `docs/api-contract.md:28`): `fields` are
+  numbers/enums only and `monLog` runs `redactUrlQuery()` on every `msg` before it enters `records`, so the ring
+  buffer, `logTail`, *Copy log JSON* and `__hop.getLog()` carry at most `/patch.json?[redacted]`. The full URL is
+  still used for polling and shown on the phone (`#patchUrlLabel`, DOM `textContent`, never on the wire).
+- **innerHTML sinks are escaped:** `row()` (systems check) and the monitor-log line both go through `escHtml()`;
+  a crafted `?patch=` value renders as text. Static test `test_systems_check_rows_escaped`; e2e test 9.
 - `lfArmed`/`lfDriveCapable` are hard-coded `false` on the web fleet; the backend LF gate (`priors.lf_drive_capable`)
   therefore never opens from a browser heartbeat.
 - **C4 resolved:** phone clamp `VOL_PATCH_MAX = 100` matches `clamps.py` (`vol_soft_max == vol_hard_max == 100.0`)
@@ -249,12 +267,13 @@ No patch fields change. `seedSource` is UI/debug only and **not** on the wire.
 
 ## Acceptance tests
 
-**Result on this branch (2026-09-08 UTC):** `python3 -m pytest tests/test_public_html.py -q` → `44 passed`, exit 0
-(covers 1-12 below plus spec 02 tests 1-7 and spec 03 tests 1-8). `bash scripts/ci_static_gates.sh` → `OK ci_static_gates`,
-exit 0. `bash tests/e2e/run.sh` → `7 passed (10.7s)`, `OK e2e`, exit 0 — `npm i` resolved `@playwright/test@1.56.1`
-from the registry (no proxy issue; `registry.npmjs.org` is on the no-proxy list), Chromium from `/opt/pw-browsers`.
-Headless Chromium reported `audioContextState: "running"` after *Signal on* (hop age 52 ms, `ctxResumes 0`,
-`watchdogTrips 0`), so the e2e ran the "running" branch of spec 03 test 10-11 including the no-false-trips wait.
+**Result on this branch (2026-09-08 UTC, after the review round):** `python3 -m pytest tests/test_public_html.py -q`
+→ `48 passed`, exit 0 (covers 1-12 and 20-23 below plus spec 02 tests 1-7 and spec 03 tests 1-8).
+`bash scripts/ci_static_gates.sh` → `OK ci_static_gates`, exit 0. `bash tests/e2e/run.sh` → `9 passed (14.7s)`,
+`OK e2e`, exit 0 — `npm i` resolved `@playwright/test@1.56.1` from the registry, Chromium from `/opt/pw-browsers`.
+Headless Chromium reported `audioContextState: "running"` after *Signal on*, so the e2e ran the "running" branch of
+spec 03 tests 10-11 (committed dwell 60 s kept while sliders dropped to 1 s, 0 trips; frozen audio clock → 1 trip,
+`reason: "clockStalled"`).
 
 `python3 -m pytest tests/test_public_html.py -q` (stdlib only, no network, reads `public/index.html` and
 `public/README.txt` from the repo root resolved relative to the test file):
@@ -283,7 +302,20 @@ Headless Chromium reported `audioContextState: "running"` after *Signal on* (hop
 10. `monLog(` is declared once as `function monLog(msg, event, fields, level)`, and the legacy one-arg calls still exist
     (at least 3 `monLog("` occurrences).
 11. Every `// ══ … (#N) ══` banner line in the file matches `^\s*// ══ .+ \(#\d+\) ══+\s*$`.
-12. File size guard: `public/index.html` < 120 000 bytes (currently 72 537) — catches accidental duplication.
+12. File size guard: `public/index.html` < 120 000 bytes (currently 83 843) — catches accidental duplication.
+
+Review-round regressions (same file):
+
+20. `test_watchdog_stall_uses_committed_schedule` — `stallLimitMs` body contains no `dwellHi()`; `committedDwellS()`
+    falls back to `dwellHi()` only before the first shift; `lastHopDwellS = hop.d;` exactly once inside
+    `shiftDueHops()`; `frame()` and `watchdogTick()` both call `shiftDueHops()`; `"hopOverdue"` / `"clockStalled"`
+    reasons; `STALL_GRACE_S = 1.0`; `start()` resets `lastHopDwellS = 0`.
+21. `test_log_never_stores_url_query` — `redactUrlQuery` declared once; `monLog` stores `redactUrlQuery(msg)`; no
+    `monLog(` call line contains `+ PATCH_URL` or `+ TELEMETRY_URL`; the ready line uses `redactUrlQuery(PATCH_URL)`.
+22. `test_redact_regex_semantics` — stdlib mirror of `URL_QUERY_RE` on four fixtures (signed path, absolute URL
+    with fragment, prose with `?`, bare path).
+23. `test_systems_check_rows_escaped` — `escHtml` declared once with the five entities; `row()` escapes `label` and
+    `detail`; monitor-log lines use `escHtml(rec.msg)`.
 
 `bash tests/e2e/run.sh` (headless Chromium from `/opt/pw-browsers`, local `http.server` on 127.0.0.1:8765, no
 external network):
@@ -305,16 +337,25 @@ external network):
     `getLog()` contains a record with `event === "reseed"`.
 19. `click('#copyLogBtn')` does not throw; afterwards `getLog().some(r => r.event === "ui")`; every log record has
     keys exactly `["seq","ts","level","event","msg","fields"]` and `seq` is strictly increasing.
+24. `goto('/?patch=' + encodeURIComponent('/patch.json?X-Goog-Signature=SECRETSIG123&X-Goog-Expires=60'))`: the
+    ready record's `msg` is exactly `scientific tooling ready · patch /patch.json?[redacted]`; `SECRETSIG123` is
+    absent from `JSON.stringify(getLog())`, `telemetryPayload()` and `logTail` — also 2.5 s later (after a beacon and
+    a poll tick); `#patchUrlLabel` still shows the full URL (DOM only).
+25. `goto('/?patch=' + encodeURIComponent('x<img src=x onerror="window.__xss=1">'))`, click `#sysBtn`, wait for the
+    `Patch hold` row: `window.__xss` is `undefined`, `#sysList img` count is 0, `#sysList` text contains the literal
+    `polling x<img …>`, `#monLog img` count is 0, no `pageerror`.
 
 Exit code of `bash tests/e2e/run.sh` is reported in the implementation notes; if `npm ci`/`npm i` cannot reach the
 registry through the proxy, the failure text is reported verbatim and the static tests remain the blocking gate.
 
-Shipped e2e layout (`tests/e2e/public_smoke.spec.mjs`, 7 tests in one `test.describe("public blaster smoke")`):
+Shipped e2e layout (`tests/e2e/public_smoke.spec.mjs`, 9 tests in one `test.describe("public blaster smoke")`):
 `loads, ids exist, no page errors` (13-14) · `Hold / Manual toggles holdManual` (15) · `telemetryPayload carries
 schemaVersion 1 + #22 / #3 fields` (16 + spec 03 test 9) · `seed is a positive entropy-mixed integer, persisted,
 reseedable` (17-18 + spec 02 tests 8-10, 12) · `two independent contexts get different seeds` (spec 02 test 11) ·
-`Copy log JSON does not throw; structured records well-formed` (19) · `Signal on: watchdog tracks hop age or resumes a
-suspended ctx; Signal off resets` (spec 03 tests 10-12). `run.sh` accepts `E2E_PORT` (default 8765) and forwards extra
+`Copy log JSON does not throw; structured records well-formed` (19) · `watchdog: no false trips on a healthy scheduler
+(Hold + sudden-auto off), trips on a real stall` (spec 03 tests 10-12) · `?patch= query string never reaches the log
+ring buffer, logTail or Copy log JSON` (24) · `systems check escapes a reflected ?patch= value (no XSS)` (25).
+`run.sh` accepts `E2E_PORT` (default 8765) and forwards extra
 arguments to `npx playwright test`. No `playwright.config` file: `@playwright/test` defaults (cwd `testDir`,
 `**/*.spec.mjs`, headless) plus `test.use({ baseURL })` in the spec.
 

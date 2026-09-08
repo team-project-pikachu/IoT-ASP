@@ -1,7 +1,7 @@
 """Tests for iot_asp_autoroute.mic_diff — #25 HW-limited LF mic/TX + AEC micDiff.
 
 Offline, deterministic (random.Random(25), fixed values). IDs mirror
-docs/specs/25-hw-limited-lf-aec-micdiff.md § Acceptance tests (MD-01 … MD-17).
+docs/specs/25-hw-limited-lf-aec-micdiff.md § Acceptance tests (MD-01 … MD-19).
 """
 
 from __future__ import annotations
@@ -462,6 +462,89 @@ def test_md17_negative_controls():
     # Unknown telemetry keys are ignored, never echoed.
     d = md.burst_decision_from_telemetry({"micDiff": 9, "bogusKey": "x", "vibClass": "physical"})
     assert d["extreme"] is True and "bogusKey" not in json.dumps(d)
+
+
+# ── MD-18 refuse, never rewrite, an out-of-policy base patch ─────────────────
+
+
+def test_md18_apply_burst_bias_refuses_out_of_policy_base():
+    """CLAUDE.md invariant 5: the bias must never launder a patch validate_patch refuses."""
+    d = _extreme_decision(9.0)
+    bad_patches = [
+        {"algo": "hop", "shriekMs": 500},
+        {"algo": "hop", "shriekMs": -100},
+        {"algo": "hop", "shriekMs": 0},
+        {"algo": "hop", "shriekMs": "abc"},
+        {"algo": "hop", "shriekMs": float("nan")},
+        {"algo": "hop", "shriekMs": float("inf")},
+        {"algo": "evil", "shriekMs": 50},
+        {"algo": "hop", "fMin": 22000, "fMax": 18000, "shriekMs": 50},
+        {"algo": "hop", "pulseMs": 5000, "shriekMs": 50},
+        {"algo": "hop", "vol": 101, "shriekMs": 50},
+        {"algo": "hop", "vol": float("nan")},
+    ]
+    for patch in bad_patches:
+        ok_in, msg_in, _ = clamps.validate_patch(patch)
+        assert ok_in is False, patch  # precondition: validate_patch refuses the input
+        snapshot = copy.deepcopy(patch)
+        out = md.apply_burst_bias(patch, d)
+        assert out == snapshot, patch  # untouched copy: no algo swap, no shriekMs rewrite
+        assert out is not patch and patch == snapshot
+        assert "burstBias" not in out and out.get("algo") == patch.get("algo")
+        ok_out, msg_out, _ = clamps.validate_patch(out)
+        assert ok_out is False and msg_out == msg_in, patch  # downstream refusal is unchanged
+        eligible, reason = md.burst_bias_eligibility(patch)
+        assert eligible is False
+        assert reason == f"{md.BIAS_REFUSE_PREFIX}{msg_in}"
+
+    # Eligible boundaries: only the +15 delta is clamped, the input is never rewritten.
+    assert md.apply_burst_bias({"algo": "hop", "shriekMs": 20}, d)["shriekMs"] == 35.0
+    assert md.apply_burst_bias({"algo": "hop", "shriekMs": 105}, d)["shriekMs"] == 120.0
+    assert md.apply_burst_bias({"algo": "hop", "shriekMs": 120}, d)["shriekMs"] == 120.0
+    assert md.apply_burst_bias({"algo": "hop", "shriekMs": None}, d)["shriekMs"] == 65.0
+    assert md.burst_bias_eligibility(BASE_PATCH) == (True, "ok")
+    assert md.burst_bias_eligibility("not-a-dict")[0] is False
+    assert md.burst_bias_eligibility(None)[0] is False
+
+    # Same guarantee through the integrated author: a quiet draft under a burst is biased,
+    # a draft that validate_patch refuses is refused with validate_patch's message.
+    from iot_asp_autoroute import sudden_freq as sf
+
+    ok, msg, patch = sf.author_sudden_freq_patch({"deviceId": "n1", "algo": "hop", "shriekMs": 50, "micDiff": 9.0})
+    assert ok is True and patch["algo"] == "shriek_chirp" and patch["shriekMs"] == 70.0 and "burstBias" in patch
+    ok_h, msg_h, patch_h = sf.author_sudden_freq_patch({"deviceId": "n1", "holdManual": True, "micDiff": 40.0})
+    assert ok_h is False and patch_h == {} and "holdManual" in msg_h
+
+
+# ── MD-19 spec carries the mandatory sections in order ───────────────────────
+
+SPEC_PATH = ROOT / "docs" / "specs" / "25-hw-limited-lf-aec-micdiff.md"
+REQUIRED_SECTIONS = [
+    "Status",
+    "Goal",
+    "Prior art",
+    "Shipped on `main`",
+    "Remaining scope",
+    "Wire fields",
+    "Clamps / safety",
+    "Acceptance tests",
+    "CI gate",
+    "Risks / HW limits",
+    "Sources",
+]
+
+
+def test_md19_spec_sections_and_prior_art():
+    text = SPEC_PATH.read_text(encoding="utf-8")
+    headings = [line[3:].strip() for line in text.splitlines() if line.startswith("## ")]
+    assert headings == REQUIRED_SECTIONS, headings  # .claude/rules/docs-and-specs.md order
+    prior = text.split("## Prior art", 1)[1].split("## Shipped on `main`", 1)[0]
+    for venue in ("this repo", "mac clone", "org repos", "awesome-list", "context7", "firecrawl"):
+        assert venue in prior.lower(), venue
+    # The register row and the in-repo sibling helper are both cited.
+    assert "docs/PRIOR_ART.md" in prior and "features_live.py" in prior
+    # The spec documents the refuse-never-rewrite contract of apply_burst_bias.
+    assert "burst_bias_eligibility" in text and "MD-18" in text and "MD-19" in text
 
 
 def test_sound_burst_makes_contour_mirrors_rankable():

@@ -151,14 +151,17 @@ now also reschedules. `seedSource` is **not** on the wire (UI/debug only).
 - Seeds are `1 … 2^31-2` (positive, safe integer, JSON-safe, `>>> 0`-stable).
 - `mulberry32` period ~2^32; a reseed via UI/patch restarts the stream — acceptable for hours-long sessions.
 - PII: seed inputs are CSPRNG, clocks, `fnv1a32(deviceId)` (a random local id) and screen size — no UA, no locale, no
-  URL, no geolocation. The log record for reseed carries `{seed, reason}` only.
+  URL, no geolocation. The log record for reseed carries `{seed, reason}` only. (Review round: every `monLog`
+  message is URL-query-scrubbed before storage — spec 01 §Clamps — so no reseed path can leak a `?patch=` value.)
+- **Reseed = reschedule from now** with the *current* sliders: the watchdog's committed dwell (spec 03) is reset by
+  the first hop of the fresh schedule; the e2e uses this to move from a 60 s to a 1 s committed dwell.
 
 ## Acceptance tests
 
 **Result on this branch (2026-09-08 UTC):** static tests 1-7 are `test_entropy_seed`, `test_min_hop_delta_and_stagger`,
 `test_reseed` in `tests/test_public_html.py` (`44 passed`, exit 0). Browser tests 8-12 are covered by the e2e tests
 `seed is a positive entropy-mixed integer, persisted, reseedable` and `two independent contexts get different seeds`
-(`bash tests/e2e/run.sh` → `7 passed`, exit 0).
+(`bash tests/e2e/run.sh` → `9 passed`, exit 0 after the review round; static `48 passed`).
 
 Static (`tests/test_public_html.py`, in addition to spec 01's checks):
 

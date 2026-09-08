@@ -1,6 +1,6 @@
 """Tests for iot_asp_autoroute.features_live (#26) — offline, deterministic.
 
-Acceptance IDs FL-01 … FL-13 from docs/specs/26-colab-live-gcs-features.md.
+Acceptance IDs FL-01 … FL-16 from docs/specs/26-colab-live-gcs-features.md.
 """
 
 from __future__ import annotations
@@ -161,7 +161,9 @@ def test_normalize_ts_variants():
     assert fl.normalize_ts("2026-09-08T00-00-05Z") == "2026-09-08T00:00:05Z"
     assert fl.normalize_ts("2026-09-08T01:00:05+01:00") == "2026-09-08T00:00:05Z"
     assert fl.normalize_ts(None) is None
-    assert fl.normalize_ts("garbage") == "garbage"
+    assert fl.normalize_ts("garbage") is None  # never echoes unparseable input
+    assert fl.normalize_ts("zz/../../../patches/node1") is None
+    assert fl.normalize_ts("2026-09-08T00:00:05Z") == "2026-09-08T00:00:05Z"
 
 
 # ── FL-05 / FL-06 feature record + shriekBias ────────────────────────────────
@@ -252,6 +254,136 @@ def test_fl08_guard_refuses_patch_paths():
         fl.assert_not_patch_path("/meta/patches/node1.json")
     fl.assert_not_patch_path("meta/features/node1/x.json")
     assert fl.features_object_name("node1", "2026-09-08T00:00:11Z") == "meta/features/node1/2026-09-08T00-00-11Z.json"
+    assert fl.features_object_name("node1", 1788825601000) == "meta/features/node1/2026-09-08T00-00-01Z.json"
+
+
+# ── FL-14 path-safe object names (node + ts) ─────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "meta/features/node1/../../patches/node1.json",
+        "meta/features/node1/zz/../../../patches/node1.json",
+        "meta/features//node1/x.json",
+        "meta/features/./x.json",
+        "/meta/features/node1/x.json",
+        "meta\\features\\node1\\x.json",
+        "../patches/x.json",
+    ],
+)
+def test_fl14_guard_refuses_unsafe_segments(bad):
+    with pytest.raises(ValueError, match="refuse"):
+        fl.assert_not_patch_path(bad)
+    with pytest.raises(ValueError, match="refuse"):
+        fl.assert_features_path(bad)
+
+
+@pytest.mark.parametrize("node", ["../patches/x", "node1/../../patches", "a/b", "", " ", "node 1", ".", "..", "nöde", "node1\n", "node1\r"])
+def test_fl14_node_validation(node, dry_root):
+    with pytest.raises(ValueError, match="node id"):
+        fl.validate_node(node)
+    with pytest.raises(ValueError, match="node id"):
+        fl.features_object_name(node, "2026-09-08T00:00:00Z")
+    with pytest.raises(ValueError, match="node id"):
+        fl.list_telemetry_names(node)
+    with pytest.raises(ValueError, match="node id"):
+        fl._seed_demo(node)
+    with pytest.raises(ValueError, match="node id"):
+        fl.run_live(node, 50)
+    assert not (dry_root / "meta").exists()  # refused before any read or write
+    assert fl.validate_node("node-1_A") == "node-1_A"
+
+
+@pytest.mark.parametrize("ts", ["z/../../../patches/node1", "garbage", "", None, "2026-13-45", float("nan"), True, "day"])
+def test_fl14_features_object_name_refuses_bad_ts(ts):
+    with pytest.raises(ValueError, match="refuse"):
+        fl.features_object_name("node1", ts)
+
+
+def test_fl14_features_object_name_accepts_iso_variants():
+    # date-only / offset / object-name forms are real ISO inputs → normalised, never refused
+    assert fl.features_object_name("node1", "2026-09-08") == "meta/features/node1/2026-09-08T00-00-00Z.json"
+    assert fl.features_object_name("node1", "2026-09-08T01:00:05+01:00") == "meta/features/node1/2026-09-08T00-00-05Z.json"
+    assert fl.features_object_name("node1", "2026-09-08T00-00-05Z") == "meta/features/node1/2026-09-08T00-00-05Z.json"
+
+
+def test_fl14_telemetry_controlled_ts_cannot_reach_patches(dry_root):
+    """Phone-controlled ts with '..' is dropped; an existing patch object is untouched."""
+    patch = dry_root / "meta" / "patches" / "node1.json"
+    _write(dry_root, "meta/patches/node1.json", json.dumps({"schemaVersion": 1, "algo": "hop"}))
+    before = patch.read_text(encoding="utf-8")
+    pre = "meta/telemetry/node1/"
+    lines = [
+        json.dumps({"deviceId": "node1", "ts": "2026-09-08T00:00:09Z", "algo": "hop", "absA": 0.09, "soundBurst": True}),
+        json.dumps({"deviceId": "node1", "ts": "zz/../../../patches/node1", "algo": "hop", "absA": 0.02}),
+    ]
+    _write(dry_root, pre + "day.jsonl", "\n".join(lines) + "\n")
+    _write(dry_root, pre + "2026-09-08T00-00-01Z.json",
+           json.dumps({"deviceId": "node1", "ts": "z/../../../patches/node1", "algo": "hop", "absA": 0.01}))
+
+    errors: list = []
+    pts = fl.parse_telemetry_objects(fl.list_telemetry_names("node1"), errors=errors)
+    # .json object falls back to its (safe) name stem; the .jsonl line is dropped
+    assert [p["ts"] for p in pts] == ["2026-09-08T00:00:01Z", "2026-09-08T00:00:09Z"]
+    assert errors == [{"object": pre + "day.jsonl", "line": 1, "error": "unparseable ts"}]
+
+    res = fl.run_live("node1", 50)
+    assert res["ok"] is True and res["object"] == "meta/features/node1/2026-09-08T00-00-09Z.json"
+    assert res["shriekBias"] is True
+    assert (dry_root / "meta" / "features" / "node1" / "2026-09-08T00-00-09Z.json").is_file()
+    assert sorted(p.name for p in (dry_root / "meta" / "patches").iterdir()) == ["node1.json"]
+    assert patch.read_text(encoding="utf-8") == before
+
+
+def test_fl14_cli_refuses_traversal_node(tmp_path):
+    env = dict(os.environ)
+    env.pop("LIVE_GCS", None)
+    env.pop("IOT_ASP_GCS_BUCKET", None)
+    env["IOT_ASP_AUTOROUTE_DRY_ROOT"] = str(tmp_path)
+    env["IOT_ASP_AUTOROUTE_DRY_RUN"] = "1"
+    env["PYTHONPATH"] = str(PKG_ROOT)
+    proc = subprocess.run(
+        [sys.executable, "-m", "iot_asp_autoroute.features_live", "--node", "../patches/x", "--seed-demo"],
+        cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=120,
+    )
+    assert proc.returncode == 2, proc.stderr
+    out = json.loads(proc.stdout.strip().splitlines()[-1])
+    assert out["ok"] is False and "node id" in out["error"]
+    assert not (tmp_path / "meta").exists()
+
+
+# ── FL-15 unparseable ts is dropped, never string-sorted ─────────────────────
+
+
+def test_fl15_jsonl_line_without_ts_is_dropped_not_latest(dry_root):
+    pre = "meta/telemetry/node1/"
+    lines = [
+        json.dumps({"deviceId": "node1", "ts": "2026-09-08T00:00:09Z", "absA": 0.09, "soundBurst": True}),
+        json.dumps({"deviceId": "node1", "absA": 0.01}),  # no ts → dropped (stem 'day' is not a ts)
+        json.dumps({"deviceId": "node1", "ts": "garbage", "absA": 0.02}),
+    ]
+    _write(dry_root, pre + "day.jsonl", "\n".join(lines) + "\n")
+    errors: list = []
+    pts = fl.parse_telemetry_objects([pre + "day.jsonl"], errors=errors)
+    assert [(p["ts"], p["absA"]) for p in pts] == [("2026-09-08T00:00:09Z", 0.09)]
+    assert [e["line"] for e in errors] == [1, 2] and {e["error"] for e in errors} == {"unparseable ts"}
+
+    res = fl.run_live("node1", 50)
+    assert res["object"] == "meta/features/node1/2026-09-08T00-00-09Z.json"
+    assert res["sourceCount"] == 1 and res["shriekBias"] is True
+    feats = list((dry_root / "meta" / "features" / "node1").iterdir())
+    assert [f.name for f in feats] == ["2026-09-08T00-00-09Z.json"]
+
+
+def test_fl15_json_object_without_ts_uses_name_stem(dry_root):
+    pre = "meta/telemetry/node1/"
+    _write(dry_root, pre + "2026-09-08T00-00-05Z.json", json.dumps({"deviceId": "node1", "absA": 0.05}))
+    _write(dry_root, pre + "notats.json", json.dumps({"deviceId": "node1", "absA": 0.06}))
+    errors: list = []
+    pts = fl.parse_telemetry_objects(fl.list_telemetry_names("node1"), errors=errors)
+    assert [p["ts"] for p in pts] == ["2026-09-08T00:00:05Z"]
+    assert errors == [{"object": pre + "notats.json", "line": 0, "error": "unparseable ts"}]
 
 
 def test_fl09_env_gate(dry_root, monkeypatch):
@@ -371,6 +503,24 @@ def test_fl12_notebook_ipynb_and_md_in_sync():
         assert "".join(c["source"]).strip() in md
 
 
+# ── FL-16 dry-run write target resolves under DRY_ROOT/meta/features ────────
+
+
+def test_fl16_assert_features_path_resolves_under_dry_root(dry_root):
+    fl.assert_features_path("meta/features/node1/2026-09-08T00-00-00Z.json")
+    with pytest.raises(ValueError, match="only under meta/features"):
+        fl.assert_features_path("meta/telemetry/node1/x.json")
+    with pytest.raises(ValueError, match="meta/patches"):
+        fl.assert_features_path("meta/patches/node1.json")
+    # a name that only *looks* safe but resolves elsewhere (symlinked node dir) is refused
+    outside = dry_root / "elsewhere"
+    outside.mkdir()
+    (dry_root / "meta" / "features").mkdir(parents=True)
+    (dry_root / "meta" / "features" / "linked").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError, match="resolves outside"):
+        fl.assert_features_path("meta/features/linked/2026-09-08T00-00-00Z.json")
+
+
 # ── FL-13 constants ──────────────────────────────────────────────────────────
 
 
@@ -387,5 +537,6 @@ def test_fl13_constants():
     assert fl.FEATURES_PREFIX == "meta/features/" and fl.FORBIDDEN_PREFIX == "meta/patches"
     for name in ("mic_diff", "band_burst", "project_sensor_features", "parse_telemetry_objects",
                  "latest_points", "build_feature_record", "features_object_name",
-                 "assert_not_patch_path", "run_live", "_seed_demo", "main"):
+                 "assert_not_patch_path", "assert_features_path", "validate_node",
+                 "run_live", "_seed_demo", "main"):
         assert callable(getattr(fl, name)), name

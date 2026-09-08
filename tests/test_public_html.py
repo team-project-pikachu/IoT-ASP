@@ -224,7 +224,7 @@ def test_watchdog(html: str) -> None:
     for tok in ('ctx.state !== "running"', "ctx.resume()", "ctxResumes++", "watchdogTrips++",
                 "pending.length = 0", "schedule()", '"watchdog reschedule"', ', "watchdog",'):
         assert tok in body, tok
-    assert "dwellHi() * 1.5 * 1000 + 1000" in html
+    assert "committedDwellS() * 1.5 * 1000 + 1000" in html
     assert html.count("lastHopAt = performance.now();") >= 2
     assert "function lastHopAgeMs(" in html and "function stallLimitMs(" in html
 
@@ -242,3 +242,70 @@ def test_hold_manual_short_circuits_preserved(html: str) -> None:
     assert ap.startswith('function applyPatch(raw){\n    if (holdManual) { patchStatus = "held";')
     pp = _fn_body(html, "async function pollPatch(){")
     assert pp.startswith('async function pollPatch(){\n    if (holdManual) { patchStatus = "held";')
+
+
+# ── review fixes: watchdog judges the COMMITTED schedule, not the live sliders ────
+def test_watchdog_stall_uses_committed_schedule(html: str) -> None:
+    """Lowering dMin/dMax mid-dwell must not trip the watchdog (review finding 1)."""
+    limit = _fn_body(html, "function stallLimitMs(){")
+    assert "dwellHi()" not in limit, "stallLimitMs must not read the live slider"
+    assert "committedDwellS()" in limit
+    committed = _fn_body(html, "function committedDwellS(){")
+    assert "lastHopDwellS > 0 ? lastHopDwellS : dwellHi()" in committed
+    # the committed dwell is recorded exactly once, where hops are delivered (shared by frame() and the watchdog)
+    assert html.count("lastHopDwellS = hop.d;") == 1
+    assert html.count("function shiftDueHops(") == 1
+    assert "shiftDueHops();" in _fn_body(html, "function frame(){")
+    body = _fn_body(html, "function watchdogTick(){")
+    assert "shiftDueHops()" in body
+    assert "nextHopOverdueMs()" in body
+    for tok in ('"hopOverdue"', '"clockStalled"', "reason,", "overdueMs: overdue", "lastHopDwellS = 0;"):
+        assert tok in body, tok
+    assert "const STALL_GRACE_S = 1.0;" in html
+    assert "pending.length ? pending[0].t : nextHopAt" in _fn_body(html, "function nextHopDueAt(){")
+    start_body = _fn_body(html, "async function start(){")
+    assert "lastHopDwellS = 0;" in start_body
+
+
+# ── review fixes: no URL query string in the structured log / logTail ───────────
+def test_log_never_stores_url_query(html: str) -> None:
+    """`?patch=` may be a signed/tokened URL: it must never reach `records` (→ logTail / Copy log JSON)."""
+    assert html.count("function redactUrlQuery(") == 1
+    assert 'replace(URL_QUERY_RE, "$1?[redacted]")' in html
+    body = _fn_body(html, "function monLog(msg, event, fields, level){")
+    assert "msg: redactUrlQuery(msg).slice(0, 240)" in body
+    # no monLog call may concatenate the raw PATCH_URL / TELEMETRY_URL
+    for m in re.finditer(r"monLog\([^\n]*", html):
+        line = m.group(0)
+        assert "+ PATCH_URL" not in line and "+ TELEMETRY_URL" not in line, line
+    assert 'monLog("scientific tooling ready · patch " + redactUrlQuery(PATCH_URL) + " · poll " + POLL_MS + "ms (hot-apply)");' in html
+    # the debug hook and the payload still expose the ring buffer only through copies
+    assert "records.slice(-3)" in _fn_body(html, "function telemetryPayload(){")
+
+
+def test_redact_regex_semantics() -> None:
+    """Mirror of URL_QUERY_RE (kept in sync by test_log_never_stores_url_query) — stdlib re."""
+    rx = re.compile(
+        r"((?:https?://|/)[^\s?#]*|(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]+\.[A-Za-z0-9._~-]+)[?#][^\s]*"
+    )
+    red = lambda t: rx.sub(r"\1?[redacted]", t)
+    assert red("patch /patch.json?X-Goog-Signature=SECRET123") == "patch /patch.json?[redacted]"
+    assert red("https://h.example/p.json?token=T#f") == "https://h.example/p.json?[redacted]"
+    assert red("ready patch.json?token=SECRET") == "ready patch.json?[redacted]"
+    assert red("what? really") == "what? really"
+    assert red("patch /patch.json") == "patch /patch.json"
+
+
+# ── review fixes: systems-check rows escape reflected text (XSS via ?patch=) ────
+def test_systems_check_rows_escaped(html: str) -> None:
+    assert html.count("function escHtml(") == 1
+    body = _fn_body(html, "function row(label, status, detail){")
+    assert "escHtml(label)" in body and "escHtml(detail)" in body
+    assert '+ label +' not in body and '+ detail +' not in body
+    esc = _fn_body(html, "function escHtml(s){") if "function escHtml(s){\n" in html else html[html.index("function escHtml(s){"):html.index("\n", html.index("function escHtml(s){"))]
+    for ent in ("&lt;", "&gt;", "&amp;", "&quot;", "&#39;"):
+        assert ent in esc, ent
+    # monitor log lines go through the same helper
+    assert "const safe = escHtml(rec.msg);" in html
+    # innerHTML sinks: every string concatenated into sysList / monLog lines is escaped
+    assert html.count("sysList.innerHTML") == 2

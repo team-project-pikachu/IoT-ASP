@@ -19,5 +19,7 @@ Checked 2026-09-08 (UTC). Sources are Context7 library ids or URLs.
 | `public/index.html` watchdog / entropy seeds / telemetry fields (#1 #2 #3 #22) | Existing `mulberry32` + `localStorage` seed, `monLog`, `telemetryPayload()` in `public/index.html`; owner's local burst/extreme changes | **Extend existing functions in delimited blocks** | Keeps merges with the Mac clone mechanical; no new libraries (Web Audio + stdlib browser APIs only) |
 | `Makefile` / `requirements-dev.txt` | Existing `scripts/*.sh` gates and `ci.yml` | **Thin wrappers** | Mirror CI exactly; no new tooling |
 
-Not checked yet (owner's Mac only, not on `origin`): `timestore.py`, `.vv/burst-shriek.md`, `docs/mvp-tooling.md`,
-`docs/dependencies.md`, `docs/materials-engineering.md`. Push those and re-run the check before extending them.
+Now on `origin` (via #30 / #28 and related): `services/autoroute-adk/iot_asp_autoroute/timestore.py`,
+`packages/algo-timestore/`, `docs/timestore.md`, `docs/timestore-scipy.md`, `.vv/burst-shriek.md`,
+`docs/mvp-tooling.md`, `docs/dependencies.md`, `docs/materials-engineering.md`, `docs/connectivity-wifi.md` (#31),
+`docs/ai-edge-portal.md` (#32). Re-check before extending further.

@@ -55,8 +55,9 @@ gh auth status >/dev/null 2>&1 || fail "gh is not authenticated — run 'gh auth
 
 # Look up an existing ruleset with the same name (repo-level rulesets only; org rulesets are
 # reported with source_type=Organization and must not be overwritten from here).
+# Errors (403 no admin, 404 wrong REPO, expired token) must surface, not be swallowed.
 EXISTING_ID="$(gh api "repos/$REPO/rulesets" \
-  --jq ".[] | select(.name == \"$NAME\" and .source_type == \"Repository\") | .id" 2>/dev/null | head -n 1 || true)"
+  --jq ".[] | select(.name == \"$NAME\" and .source_type == \"Repository\") | .id" | head -n 1)"
 
 if [[ -n "$EXISTING_ID" ]]; then
   echo "updating existing ruleset id=$EXISTING_ID (PUT)"

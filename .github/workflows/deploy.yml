@@ -9,6 +9,13 @@
 # jobs with a ::notice; they never fail the run. Vercel's Git auto-deploy for main is disabled in
 # vercel.json (git.deploymentEnabled.main: false) so one commit == one Actions-gated deploy.
 #
+# Gate rules:
+#   * Automatic (workflow_run) prod ships go through dev → test; they require the CLI secrets.
+#   * The Deploy Hook path skips dev/test (no preview without a token), so it is DISPATCH-ONLY
+#     (workflow_dispatch target=prod) — never an automatic ship — and it only turns green once
+#     production serves exactly this checkout (scripts/deploy_smoke.sh SMOKE_PUBLIC_DIR=public
+#     compares served ETags with local content hashes). A passing OLD build is not success.
+#
 # NOTE: `env` context is not available in job-level `if:` / `environment:` (GitHub Actions context
 # availability), so run-level values travel as job outputs of secrets_check (target) or as
 # `vars.PROD_URL || <default>` expressions.
@@ -79,6 +86,9 @@ jobs:
           echo "has_cli=$has_cli has_hook=$has_hook"
           if [ -n "$missing" ]; then
             echo "::notice title=Vercel secrets::missing:${missing} — see docs/deploy.md and issue #27"
+          fi
+          if [ "$has_cli" = false ] && [ "$has_hook" = true ] && [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            echo "::notice title=Deploy hook only::automatic prod ship is disabled without the CLI secrets (no dev → test stage); run workflow_dispatch target=prod to ship via the gh-actions-prod hook — see docs/deploy.md and issue #27"
           fi
           exit 0
 
@@ -188,6 +198,7 @@ jobs:
         env:
           PREVIEW_URL: ${{ needs.deploy_dev.outputs.preview_url }}
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          SMOKE_PUBLIC_DIR: public   # served ETags must match this checkout's files (build identity)
         run: bash scripts/deploy_smoke.sh "$PREVIEW_URL"
 
   deploy_prod:
@@ -198,7 +209,7 @@ jobs:
       && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
       && needs.secrets_check.outputs.target == 'prod'
       && needs.gates.result == 'success'
-      && (needs.test.result == 'success' || (needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true'))
+      && (needs.test.result == 'success' || (needs.test.result == 'skipped' && needs.secrets_check.outputs.has_cli != 'true' && github.event_name == 'workflow_dispatch'))
       && (needs.secrets_check.outputs.has_cli == 'true' || needs.secrets_check.outputs.has_hook == 'true')
     runs-on: ubuntu-latest
     environment:
@@ -242,11 +253,11 @@ jobs:
 
       # ── Deploy Hook fallback (only when the CLI secrets are absent) ────────
       - name: Warn when a non-main ref cannot be honoured by the deploy hook
-        if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true' && github.event.inputs.ref != '' && github.event.inputs.ref != 'main'
+        if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true' && github.event_name == 'workflow_dispatch' && github.event.inputs.ref != '' && github.event.inputs.ref != 'main'
         run: echo "::warning title=Deploy hook::the gh-actions-prod hook always builds ref main on Vercel; dispatch ref input is ignored on the hook path"
 
-      - name: Trigger Vercel Deploy Hook gh-actions-prod
-        if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true'
+      - name: Trigger Vercel Deploy Hook gh-actions-prod (dispatch-only fallback)
+        if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true' && github.event_name == 'workflow_dispatch'
         env:
           VERCEL_DEPLOY_HOOK_PROD: ${{ secrets.VERCEL_DEPLOY_HOOK_PROD }}
         run: |
@@ -254,30 +265,34 @@ jobs:
           resp=$(curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_PROD")
           printf '%s' "$resp" | python3 -c 'import json,sys; j=json.load(sys.stdin)["job"]; print("deploy hook job", j["id"], j["state"])'
 
-      - name: Poll production until the smoke test passes (≤ 5 min)
-        if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true'
+      - name: Poll production until it serves THIS checkout and passes smoke (≈ 5–6 min)
+        if: needs.secrets_check.outputs.has_cli != 'true' && needs.secrets_check.outputs.has_hook == 'true' && github.event_name == 'workflow_dispatch'
         env:
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          SMOKE_PUBLIC_DIR: public   # build identity: served ETag == md5(local file) for /, /patch.json, /manifest.webmanifest
         run: |
           set -uo pipefail
-          # Give the Vercel-side build a head start, then poll 10 × 30 s.
+          # The hook cannot be queried without a token, so the ONLY acceptable success signal is that the
+          # prod URL serves exactly the files of this checkout (ETag == content hash) AND passes smoke.
+          # A passing build that is not this checkout keeps polling and finally fails.
           sleep 30
           for i in $(seq 1 10); do
             if SMOKE_RETRIES=1 SMOKE_SLEEP_S=0 bash scripts/deploy_smoke.sh "$PROD_URL"; then
-              echo "poll $i/10: production smoke OK"
+              echo "poll $i/10: production serves this checkout and passes smoke"
               exit 0
             fi
-            echo "poll $i/10: not ready yet, sleeping 30 s"
+            echo "poll $i/10: not this checkout yet (or smoke failing), sleeping 30 s"
             sleep 30
           done
-          echo "::error::production smoke did not pass within 5 min after deploy hook"
+          echo "::error::production did not serve this checkout within ~6 min after the deploy hook — check the Vercel build for main; nothing is marked shipped"
           exit 1
 
       # ── Final smoke (both paths) ──────────────────────────────────────────
-      - name: Final smoke test against production
+      - name: Final smoke test against production (must serve this checkout)
         env:
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          SMOKE_PUBLIC_DIR: public
         run: |
           set -euo pipefail
           bash scripts/deploy_smoke.sh "$PROD_URL"
-          echo "prod: $PROD_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "prod: $PROD_URL (serves checkout $DEPLOY_REF)" >> "$GITHUB_STEP_SUMMARY"

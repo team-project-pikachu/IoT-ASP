@@ -20,10 +20,10 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #4 #5 #6 | [04-06-vibration-channels.md](04-06-vibration-channels.md) — physical (DeviceMotion), acoustic (mic energy), material-dependent channel selection | parked — partly shipped (`priors.MATERIAL_CHANNEL_BIAS`, vib classes); arming UI not shipped | frontend + backend |
 | #7 #8 | [07-08-rlhf-loops.md](07-08-rlhf-loops.md) — RLHF +/− loops (θ vector, `localStorage` schema, bandit step) | parked — design only | frontend |
 | #10 #11 | [10-11-react-rewrite.md](10-11-react-rewrite.md) — React / React Strict DOM rewrite + fleet polish | parked — constraints only | frontend |
-| #14 #15 #21 #23 | [14-15-21-23-edge-integrations.md](14-15-21-23-edge-integrations.md) — Pi 5 USB-C node, Apple Home / HomeKit / Matter, Google Home Wi-Fi autorotate, AI Edge Portal | parked — research | infra |
+| #14 #15 #21 #23 | [14-15-21-23-edge-integrations.md](14-15-21-23-edge-integrations.md) — Pi 5 USB-C node, Apple Home / HomeKit / Matter, Google Home Wi-Fi autorotate, AI Edge Portal | parked — research; #21/#23 docs on `main` (`docs/connectivity-wifi.md`, `docs/ai-edge-portal.md`) | infra |
 | #18 | [18-node3-chair-infrasound.md](18-node3-chair-infrasound.md) — node 3 chair-taped phone + infrasound LF-accel proxy | parked — priors shipped (`infra_felt`), node not deployed | frontend + backend |
 | #19 | [19-notion-hub.md](19-notion-hub.md) — Notion hub page for ASP tooling | parked — search done, hub not created | docs |
-| #20 | [20-timestore.md](20-timestore.md) — timestore: SciPy ≥16-param fit, 0.0006 s quantum, NWS weather prior, cipher tags | parked — stub only on the owner's Mac | backend |
+| #20 | [20-timestore.md](20-timestore.md) — timestore: SciPy ≥16-param fit, 0.0006 s quantum, NWS weather prior, cipher tags | implemented on `main` (`timestore.py` + `packages/algo-timestore/`, #30) | backend |
 | #22 | [22-structured-fleet-logs.md](22-structured-fleet-logs.md) — structured fleet telemetry logs (`fleet_log.py`) | implemented on branch — integration hooks pending | backend |
 | #24 | [24-adk-2x-migration.md](24-adk-2x-migration.md) — `google-adk` / `google-genai` 2.x migration | parked — keep `<2` pins | backend |
 | #25 | [25-hw-limited-lf-aec-micdiff.md](25-hw-limited-lf-aec-micdiff.md) — HW-limited LF mic/TX + AEC, `micDiff` (`mic_diff.py`) | HW-limited — backend helper implemented on branch | backend |
@@ -41,14 +41,12 @@ independent deploy), **infra** = `.github/`, `scripts/`, `vercel.json`, edge har
 
 ## Known missing docs
 
-Computed on 2026-09-08 by scanning `docs/**/*.md` for relative `.md` links and checking each target against
-`git ls-tree -r origin/main` and this checkout (script in the *Method* note below). The files in the first
-table **live on the owner's Mac clone** (`/Users/machine/apps/IoT-ASP`, usually ahead of `origin/main`) and
-are **not** on `origin/main` nor on this branch. Do not create placeholder copies
-(`.claude/rules/docs-and-specs.md:18`); the links stay as-is until the Mac clone is pushed.
+Computed on 2026-09-08; refreshed after merging #28/#30/#31/#32 into this PR. The former "Mac-only"
+doc targets below are now present on this branch / `origin/main`. Do not create placeholder copies
+(`.claude/rules/docs-and-specs.md:18`).
 
-| Missing target | Linked from |
-|----------------|-------------|
+| Target (now present) | Linked from |
+|----------------------|-------------|
 | `docs/materials-engineering.md` | `docs/autoroute.md` (×2), `docs/awesome-iot-asp.md` |
 | `docs/mvp-tooling.md` | `docs/DESIGN_CONSTRAINTS.md`, `docs/awesome-iot-asp.md` |
 | `docs/well-architected-ai.md` | `docs/awesome-iot-asp.md` |
@@ -58,9 +56,9 @@ are **not** on `origin/main` nor on this branch. Do not create placeholder copie
 | `docs/wireframe-notes.md` | `docs/awesome-iot-asp.md` |
 | `docs/native-xcode.md` | `docs/awesome-iot-asp.md` |
 
-Also Mac-only but referenced from GitHub issues rather than docs links: `docs/timestore.md` and
-`services/autoroute-adk/iot_asp_autoroute/timestore.py` (#20), `docs/dependencies.md` + `.vv/deps/` (#24),
-`docs/ai-edge-portal.md` (#23), and the `net=wifi|cellular` telemetry tag (#21).
+Landed on `main` via #30/#31/#32/#28: `docs/timestore.md`, `services/autoroute-adk/iot_asp_autoroute/timestore.py`,
+`packages/algo-timestore/` (#20), `docs/dependencies.md` + `.vv/deps/`, `docs/ai-edge-portal.md` (#23),
+`docs/connectivity-wifi.md` (#21). The `net=wifi|cellular` telemetry tag remains optional / iOS-limited.
 
 Links whose targets exist **on this branch** but not yet on `origin/main` (they land with this branch's PR;
 listed so a link check against `main` is not misread as breakage): `docs/ci.md` → `docs/branch-protection.md`,

@@ -7,7 +7,7 @@ Owned files: `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `tests
 ## Status
 
 **Implemented 2026-09-08 on branch `claude/mdc-conversion-features-gu3yzk` (not yet on `main`).**
-`features_live.py`, `tests/test_features_live.py` (26 tests, FL-01 … FL-13), the regenerated notebook
+`features_live.py`, `tests/test_features_live.py` (FL-01 … FL-16), the regenerated notebook
 pair and `.vv/colab-sensors.md` are on the branch; the offline path (dry-run mirror) is fully tested in
 CI. The live GCS write is gated behind Colab `userdata` names and is recorded as `live: PENDING` in
 `.vv/colab-sensors.md` until an owner runs the notebook with `LIVE_GCS=1`.
@@ -27,6 +27,7 @@ CI. The live GCS write is gated behind Colab `userdata` names and is recorded as
 | Notebook cell 3 (`from iot_asp_autoroute import features_live`) seeds the mirror with `_seed_demo` when **not** live so the notebook runs offline end-to-end | `notebooks/iot_asp_colab_etl.*` |
 | FL-12 additionally asserts the `.md` python fences equal the `.ipynb` code-cell sources (generated from one cell list) | `tests/test_features_live.py` |
 | FL-09 live branch stubs `features_live.latest_points` so no GCS client is constructed; asserts `gcs_io.DRY_RUN`/`BUCKET` are restored | `tests/test_features_live.py` |
+| **Review fix (2026-09-08):** object names are built only from validated parts — `validate_node` (`^[A-Za-z0-9_-]+$`), `features_object_name` requires a strict ISO-8601 `ts` (`TS_RE`), `assert_not_patch_path` also refuses absolute names and `""`/`.`/`..` segments, and `assert_features_path` resolves the dry-run target under `DRY_ROOT/meta/features/`. `normalize_ts` returns `None` (never the raw string) for unparseable input; `.jsonl` lines without a usable `ts` are dropped and reported as `unparseable ts` instead of being string-sorted last. `run_live` / `_seed_demo` / `list_telemetry_names` raise `ValueError` on a bad node before any I/O; the CLI maps that to `{"ok": false, "error": …}` exit 2 | `features_live.py`; FL-14 … FL-16 |
 
 ## Goal
 
@@ -38,6 +39,41 @@ projected into a **features** object under `meta/features/<deviceId>/<ts>.json`,
 runnable offline (`--seed-demo`) and from Colab with secrets referenced **by name only**. It never writes
 `meta/patches/` (Colab/ETL is never authoritative — CLAUDE.md "Storage" cheat-sheet and
 `.claude/rules/autoroute-backend.md`).
+
+## Prior art
+
+Checked 2026-09-08 (UTC), in the order CLAUDE.md prescribes; register row in `docs/PRIOR_ART.md`
+("`iot_asp_autoroute/features_live.py` → Extend, do not duplicate").
+
+- **This repo (`rg`, `git log -S`, `origin/*`):** `colab_etl.extract_features` / `normalize_telemetry` /
+  `TELEMETRY_FEATURE_COLUMNS` (offline feature record), `vib_anomaly.detect_disturbances` (the authoritative
+  SciPy detector — `.claude/rules/autoroute-backend.md` forbids re-implementing it in notebooks), `gcs_io`
+  (dry-run mirror + GCS adapter), `tools.read_telemetry` (lexicographic `names[-1]`, no `.jsonl`, no ts
+  parsing), `fleet_log` (#22, writes daily `.jsonl` under `meta/logs/`), the notebook stub cells
+  `latest_telemetry` / `vib_features` (sketch only). Nothing read `.jsonl` telemetry, projected the sensor
+  columns, or wrote `meta/features/` with a patch-path guard. **Decision: extend** — import `colab_etl`,
+  `vib_anomaly`, `gcs_io`; add only the live read path, sensor projection, and the write guard.
+- **Owner's Mac clone (per issues #25/#26):** the frontend already emits `micDiff = micEnergy − 0.85·outLevel`,
+  `bandBurst`, `soundBurst`, `extremeActive`; not on `origin`. The backend therefore treats those as additive
+  optional keys and never recomputes a phone-supplied `micDiff` (α = 0.85 kept identical).
+- **Org repos:** not reachable from this session (no network to the org); nothing in `docs/PRIOR_ART.md` or the
+  issue thread names another implementation. Re-check before extending if `timestore.py` lands (#20).
+- **Awesome-lists / OSS:** `pandas.read_json(..., lines=True)` over `gs://` via `gcsfs` (Firecrawl:
+  https://clickhouse.com/resources/engineering/read-jsonl-file-python ,
+  https://markusodenthal.medium.com/the-easy-way-to-read-files-from-google-cloud-storage-with-pandas-or-dask-3a424b71af14)
+  and chDB `DataStore.read_json` (Firecrawl: https://github.com/clickhouse/clickhouse-docs — chdb/datastore
+  factory methods) would read JSONL from GCS, but each adds a dependency (`pandas`/`gcsfs`/`chdb`) to a
+  stdlib-first ADK package for ≤ 200 heartbeats per run and gives no per-line error reporting or ts
+  normalisation. **Decision: build the ~40-line reader on `gcs_io`** (`google-cloud-storage` is already
+  pinned; Context7 `/googleapis/python-storage`).
+- **Object-name safety (review finding):** the same bug class — joining a storage object name containing
+  `..` onto a local directory — was fixed in Apache Airflow's Google provider by resolving the joined path and
+  refusing when it leaves the destination (Firecrawl: https://github.com/apache/airflow/issues/67667). GCS
+  itself is a flat namespace (https://docs.cloud.google.com/storage/docs/hns-overview) and object-store naming
+  guidance warns that `.`/`..` segments are interpreted as relative references by tools
+  (https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html), so the live bucket is not the
+  exposure — the dry-run mirror is. **Adopted:** validate inputs (`validate_node`, `TS_RE`) *and* resolve the
+  target under `DRY_ROOT/meta/features/` (`assert_features_path`), as Airflow did.
 
 ## Shipped on `main`
 
@@ -94,14 +130,17 @@ Functions (all pure except `run_live`, `_seed_demo`)
 | `mic_diff(mic_energy, out_level, alpha=MIC_DIFF_ALPHA, given=None) -> float` | If `given` (the telemetry's own `micDiff`) is a finite number, return it **unchanged**. Else `mic_diff = float(mic_energy) - alpha * float(out_level)`; non-numeric / `None` inputs coerce to `0.0`. Returned as `float`, rounded to 3 dp. |
 | `band_burst(lf_energy, us_energy, lf_thr=-60.0, us_thr=-55.0) -> str \| None` | `'both'` if `lf ≥ lf_thr and us ≥ us_thr`; `'lf'` if only LF; `'us'` if only US; `None` when neither crosses or both inputs are `None`/non-numeric. A pre-existing `bandBurst` value in `{'lf','us','both'}` is passed through by `project_sensor_features`. |
 | `project_sensor_features(t) -> dict` | Returns only the `SENSOR_COLUMNS` present in `t` (skips `None`). Scalars coerced to `float` (bools `soundBurst`, `extremeActive` stay `bool`; `bandBurst` stays `str` if in the allowed set, else dropped; `ctxResumes`, `watchdogTrips`, `lastHopAgeMs` → `int`). `accelAxes` / `gyroAxes` must be a 3-element sequence → `list[float]` of length 3, else dropped. If `ax,ay,az` are present and `accelAxes` is absent, `accelAxes` is synthesised (same for `gx,gy,gz` → `gyroAxes`). Unknown keys ignored. |
-| `parse_telemetry_objects(names, reader=gcs_io.read_json, text_reader=None) -> list[dict]` | Accepts object names under `meta/telemetry/<node>/`. `*.json` → one point; `*.jsonl` → one point per non-blank line (bad lines skipped, counted in `errors`). Every point is `colab_etl.normalize_telemetry`'d; `ts` may be ISO-8601 or epoch ms (ms → `%Y-%m-%dT%H:%M:%SZ`). Result sorted by `ts` ascending, stable on name. |
+| `normalize_ts(ts) -> str \| None` | ISO-8601 `%Y-%m-%dT%H:%M:%SZ` from ISO strings (any offset → UTC), epoch s / ms, or the object-name form `…T00-00-05Z`. **Returns `None` for anything unparseable — never the raw input.** |
+| `validate_node(node) -> str` | `str(node)` iff it matches `^[A-Za-z0-9_-]+$`; else `ValueError("refuse: node id …")`. Called by `list_telemetry_names`, `features_object_name`, `run_live`, `_seed_demo` before any I/O. |
+| `parse_telemetry_objects(names, reader=gcs_io.read_json, text_reader=None, errors=None) -> list[dict]` | Accepts object names under `meta/telemetry/<node>/`. `*.json` → one point; `*.jsonl` → one point per non-blank line (bad lines skipped, appended to `errors` as `{object, line, error}`). Every point is `colab_etl.normalize_telemetry`'d; `ts` may be ISO-8601 or epoch ms (ms → `%Y-%m-%dT%H:%M:%SZ`). A `*.json` object without a usable `ts` falls back to its name stem (ingest names objects by ts); a `*.jsonl` line without a usable `ts` is **dropped** with `error: "unparseable ts"` (never string-sorted). Result sorted by `ts` ascending, stable on name then line. |
 | `latest_points(node, limit=200) -> list[dict]` | `gcs_io.list_prefix(f"meta/telemetry/{node}/")` **plus** `.jsonl` siblings (dry-run: extra `rglob("*.jsonl")` under `DRY_ROOT`; live: names already come from `list_blobs`) → `parse_telemetry_objects` → keep the last `limit`. |
 | `build_feature_record(points, node) -> dict` | Requires `points` non-empty (else `ValueError`). `latest = points[-1]`; `vib_series = [absA or a]` over all points (1 Hz, `SAMPLE_HZ`), skipping points without either key. Calls `colab_etl.extract_features(latest, vib_series=vib_series)` and **adds** additive keys: `sensors` (projected latest sensors; `micDiff` computed via `mic_diff(micEnergy, outLevel)` when absent and `micEnergy`+`outLevel` present; `bandBurst` computed via `band_burst(lfEnergy, usEnergy)` when absent), `shriekBias` (bool: `soundBurst is True or extremeActive is True or micDiff > 6.0`), `sourceCount = len(points)`, `live` (bool set by caller, default `False`), `sensorColumns = list(SENSOR_COLUMNS)`, `micDiffAlpha = 0.85`, `writer = "iot_asp_autoroute.features_live"`. `kind` stays `"iot_asp_features"`; `schemaVersion` stays `1`. |
-| `features_object_name(node, ts) -> str` | `f"meta/features/{node}/{ts.replace(':', '-')}.json"`. |
-| `assert_not_patch_path(object_name)` | `raise ValueError("refuse: features_live never writes meta/patches")` if `object_name.lstrip('/').startswith("meta/patches")`. Called by `run_live` before every write. |
-| `run_live(node, limit=200, write=True, live=None) -> dict` | `live` defaults to `os.environ.get("LIVE_GCS") == "1" and bool(os.environ.get("IOT_ASP_GCS_BUCKET"))`. When `live` is `False` the write is forced to the dry-run mirror (`gcs_io.DRY_RUN = True` for the duration; restored after). Reads `latest_points`, builds the record with `record["live"] = live`, computes `name = features_object_name(node, record["ts"])`, `assert_not_patch_path(name)`, writes via `gcs_io.write_json` iff `write`. Returns `{ "ok": bool, "uri": str \| None, "node", "live", "sourceCount", "featureKeys": sorted(record.keys()), "object": name }`; when no telemetry: `{"ok": False, "error": "no telemetry under meta/telemetry/<node>/", ...}` and no write. |
+| `features_object_name(node, ts) -> str` | `f"meta/features/{validate_node(node)}/{iso.replace(':', '-')}.json"` where `iso = normalize_ts(ts)` must match `TS_RE` (`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$`); otherwise `ValueError`. The name is built from validated parts only — a telemetry-controlled `ts` cannot inject `/` or `..`. |
+| `assert_not_patch_path(object_name)` | `ValueError` if the name is absolute, contains `\`, or has any `""` / `.` / `..` segment (`refuse: unsafe object name …`), or if it starts with `meta/patches` (`refuse: features_live never writes meta/patches`). |
+| `assert_features_path(object_name)` | `assert_not_patch_path` + must start with `meta/features/` + in dry-run `(DRY_ROOT / name).resolve()` must be under `(DRY_ROOT / "meta/features/").resolve()` (symlink-safe). Called by `run_live` before every write. |
+| `run_live(node, limit=200, write=True, live=None) -> dict` | `live` defaults to `os.environ.get("LIVE_GCS") == "1" and bool(os.environ.get("IOT_ASP_GCS_BUCKET"))`. When `live` is `False` the write is forced to the dry-run mirror (`gcs_io.DRY_RUN = True` for the duration; restored after). `node` goes through `validate_node` first (`ValueError` before any read). Reads `latest_points`, builds the record with `record["live"] = live`, computes `name = features_object_name(node, record["ts"])`, `assert_features_path(name)`, writes via `gcs_io.write_json` iff `write`. Returns `{ "ok": bool, "uri": str \| None, "node", "live", "sourceCount", "featureKeys": sorted(record.keys()), "object": name }`; when no telemetry: `{"ok": False, "error": "no telemetry under meta/telemetry/<node>/", ...}` and no write. |
 | `_seed_demo(node, n=12, seed=26) -> list[str]` | Writes `n` synthetic points `meta/telemetry/<node>/2026-09-08T00-00-<ss>Z.json` (1 s apart, fixed base ts) to the dry-run mirror via `gcs_io.write_json`: `ax..gz` from `random.Random(seed)`, `absA` from `vib_anomaly.synthetic_demo_series(n, seed)`, `outLevel=-30.0`, `micEnergy=-40.0`, `lfEnergy=-70.0`, `usEnergy=-50.0`, `algo="hop"`, `suddenFreq=False`, `holdManual=False`; point index 9 has `soundBurst=True`, `micEnergy=-20.0`. Returns written URIs. |
-| CLI `python3 -m iot_asp_autoroute.features_live --node node1 --limit 50 [--live] [--seed-demo]` | `--seed-demo` runs `_seed_demo` first; without `--live` the run is dry-run regardless of env. Prints one JSON line (the `run_live` result) and exits 0 on `ok`, 2 otherwise. Never prints env values. |
+| CLI `python3 -m iot_asp_autoroute.features_live --node node1 --limit 50 [--live] [--seed-demo]` | `--seed-demo` runs `_seed_demo` first; without `--live` the run is dry-run regardless of env. Prints one JSON line (the `run_live` result) and exits 0 on `ok`, 2 otherwise. A refused node / ts / path (`ValueError`) prints `{"ok": false, "error": "refuse: …"}` and exits 2 with nothing written. Never prints env values. |
 
 ### Notebook `notebooks/iot_asp_colab_etl.md` + `.ipynb` (kept in sync; `.ipynb` is nbformat 4 JSON with `cells`, `metadata`, `nbformat: 4`, `nbformat_minor`)
 
@@ -169,8 +208,12 @@ Features object (`meta/features/<deviceId>/<ts>.json`, additive over `colab_etl.
 
 ## Clamps / safety
 
-- **Never writes `meta/patches/`**: `assert_not_patch_path` raises `ValueError` before any write; the only
-  write target is `meta/features/<node>/<ts>.json`.
+- **Never writes `meta/patches/`**: `assert_features_path` (which includes `assert_not_patch_path`) raises
+  `ValueError` before any write; the only write target is `meta/features/<node>/<ts>.json`.
+- **Path-safe names**: `node` must match `^[A-Za-z0-9_-]+$` and `ts` must be strict ISO-8601 before an object
+  name is built; `..`, `.`, empty segments, absolute names and backslashes are refused; in dry-run the
+  resolved on-disk target must stay under `DRY_ROOT/meta/features/`. Phone-controlled `ts` values and
+  ADK-tool-supplied `node_id` values therefore cannot redirect a read or write into the `meta/patches/` mirror.
 - No patch authoring here: `shriekBias` is a feature, not a patch; `clamps.validate_patch` remains the single
   policy source and `tools.write_patch` still refuses on `holdManual`. `holdManual` telemetry is projected
   unchanged (it is in `TELEMETRY_FEATURE_COLUMNS`), so downstream authors can still refuse.
@@ -201,6 +244,9 @@ Features object (`meta/features/<deviceId>/<ts>.json`, additive over `colab_etl.
 | FL-11 | CLI | `python3 -m iot_asp_autoroute.features_live --node node1 --limit 50 --seed-demo` with `IOT_ASP_AUTOROUTE_DRY_ROOT=<tmp>` exits 0 and prints JSON with `"ok": true` and a `file://` uri (subprocess, `PYTHONPATH=services/autoroute-adk`) |
 | FL-12 | Notebook sync | `.ipynb` parses as JSON with `nbformat == 4`; code-cell sources concatenated contain `userdata.get("GCP_SA_JSON")`, `userdata.get("IOT_ASP_GCS_BUCKET")`, `userdata.get("LIVE_GCS")`, `features_live.run_live(`, `services/autoroute-adk`; do **not** contain `meta/patches` or key-like patterns; the `.md` file contains the same three names and `run_live(`, its ```python fences equal the `.ipynb` code cells in order, and every `.ipynb` markdown cell appears in the `.md` |
 | FL-13 | Constants | `ALL_COLUMNS[:len(TELEMETRY_FEATURE_COLUMNS)] == TELEMETRY_FEATURE_COLUMNS`; `MIC_DIFF_ALPHA == 0.85`; `len(SENSOR_COLUMNS) == 18` |
+| FL-14 | Path-safe names | `assert_not_patch_path` / `assert_features_path` raise on `meta/features/node1/../../patches/node1.json`, `//`, `./`, absolute and `\` names; `validate_node` / `features_object_name` / `list_telemetry_names` / `_seed_demo` / `run_live` raise `ValueError("refuse: node id …")` for `../patches/x`, `node1/../../patches`, `a/b`, `""`, `"node 1"`, `.`, `..` with nothing created under `tmp_path/meta`; `features_object_name("node1", ts)` raises for `z/../../../patches/node1`, `garbage`, `""`, `None`, `2026-13-45` (invalid month/day), `nan`, `True`, `day`, and accepts real ISO variants (`2026-09-08` → `…T00-00-00Z`, `+01:00` offset → UTC, `T00-00-05Z` object-name form); with a pre-existing `meta/patches/node1.json`, a `.jsonl` line `ts="zz/../../../patches/node1"` and a `.json` object `ts="z/../../../patches/node1"` (name stem `2026-09-08T00-00-01Z`), `run_live("node1")` writes only `meta/features/node1/2026-09-08T00-00-09Z.json`, `meta/patches/` still holds exactly the unchanged `node1.json`; CLI `--node ../patches/x --seed-demo` exits 2 with `"ok": false`, `"node id"` in `error`, and no `tmp_path/meta` |
+| FL-15 | Unparseable ts dropped | `.jsonl` lines without `ts` / with `ts="garbage"` are dropped and reported as `{"line": i, "error": "unparseable ts"}`; the remaining `soundBurst` point stays latest → `run_live` writes `…T00-00-09Z.json` with `shriekBias is True`, `sourceCount == 1`; a `.json` object without `ts` uses its name stem (`2026-09-08T00-00-05Z.json` → `2026-09-08T00:00:05Z`) while `notats.json` is dropped; `normalize_ts("garbage") is None` |
+| FL-16 | Dry-run target resolution | `assert_features_path` accepts `meta/features/node1/<ts>.json`, refuses `meta/telemetry/…` and `meta/patches/…`, and refuses `meta/features/linked/<ts>.json` when `linked` is a symlink to a directory outside `DRY_ROOT/meta/features/` (`refuse: … resolves outside`) |
 
 ## CI gate
 
@@ -214,7 +260,11 @@ Features object (`meta/features/<deviceId>/<ts>.json`, additive over `colab_etl.
 - `gcs_io.list_prefix` dry-run only globs `*.json`; `.jsonl` support lives in `features_live.latest_points`
   (extra glob) rather than a `gcs_io` edit (not owned). Live `list_blobs` returns both.
 - `ts` ordering: object names replace `:` with `-`; sort uses the parsed `ts` field, not the name, so mixed
-  ISO / epoch-ms inputs order correctly.
+  ISO / epoch-ms inputs order correctly. Points whose `ts` cannot be parsed are dropped (reported in `errors`),
+  so a garbage `ts` can neither become "latest" nor name the features object.
+- `ingest_telemetry` (`tools.py`, not owned) still passes `deviceId` / `ts` through with only `:`→`-`; hostile
+  values can therefore land under `meta/telemetry/` in the mirror. `features_live` refuses them on read
+  (`validate_node`, ts normalisation) — a matching input guard in `ingest_telemetry` is an integration request.
 - Sensor fields are not yet emitted by `public/index.html` on `origin/main`; until the Mac frontend merges,
   live runs will produce records with an empty `sensors` block except computed `micDiff` when
   `micEnergy`+`outLevel` exist (`micEnergy` is stored "as sent", dB or linear — `micDiff` is only meaningful
@@ -230,4 +280,6 @@ Features object (`meta/features/<deviceId>/<ts>.json`, additive over `colab_etl.
 - Context7 `/jupyter/nbformat` — notebook top-level keys (`cells`, `metadata`, `nbformat: 4`, `nbformat_minor`), markdown/code cell shapes (`cell_type`, `metadata`, `source`, code cells add `execution_count`, `outputs`).
 - Context7 `/googleapis/python-storage` (v3.x) — `Client(project=, credentials=)`, `list_blobs(bucket_or_name, prefix=)`, `Blob.upload_from_string(data, content_type=)`.
 - Firecrawl developer search — Colab secrets API `from google.colab import userdata; userdata.get('<NAME>')`: https://guides.library.stanford.edu/api_auth/colab , https://github.com/googlecolab/colab-vscode/issues/215
+- Firecrawl developer search (prior art, JSONL from GCS): https://clickhouse.com/resources/engineering/read-jsonl-file-python , https://markusodenthal.medium.com/the-easy-way-to-read-files-from-google-cloud-storage-with-pandas-or-dask-3a424b71af14 , chDB `DataStore` factory methods in https://github.com/clickhouse/clickhouse-docs (docs/chdb/datastore/factory-methods.md)
+- Firecrawl developer search (object-name traversal): Apache Airflow "Validate destination paths derived from GCS object names" https://github.com/apache/airflow/issues/67667 ; Cloud Storage flat namespace https://docs.cloud.google.com/storage/docs/hns-overview ; S3 object-key guidance on `.`/`..` segments https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
 - Repo: `docs/api-contract.md`, `docs/colab-gemini-pipeline.md`, `.claude/rules/autoroute-backend.md`, `.claude/rules/docs-and-specs.md`, GitHub issue #26.

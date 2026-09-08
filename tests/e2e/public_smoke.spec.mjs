@@ -20,6 +20,27 @@ async function openPage(page) {
 const state = page => page.evaluate(() => window.__hop.getState());
 const payload = page => page.evaluate(() => window.__hop.telemetryPayload());
 const log = page => page.evaluate(() => window.__hop.getLog());
+const watchdog = page => page.evaluate(() => window.__hop.getWatchdog());
+// Both values are set before either `input` fires: syncDwell() clamps dMin back to dMax when dMin alone is raised.
+const setDwell = (page, s) => page.evaluate(v => {
+  const els = ["dMin", "dMax"].map(id => document.getElementById(id));
+  for (const el of els) el.value = String(v);
+  for (const el of els) el.dispatchEvent(new Event("input"));
+}, s);
+// Stall injection: freeze BaseAudioContext.currentTime on demand (window.__freezeAudioClock = true). The app is
+// untouched; only the audio clock the page reads is held, which is what an iOS route change / interruption looks
+// like from JS ("running" state, clock not advancing). Must be installed before the page script runs.
+const FREEZE_INIT = () => {
+  const proto = window.BaseAudioContext && window.BaseAudioContext.prototype;
+  const d = proto && Object.getOwnPropertyDescriptor(proto, "currentTime");
+  if (!d || !d.get) return;
+  let frozen = null;
+  Object.defineProperty(proto, "currentTime", { configurable: true, get() {
+    const t = d.get.call(this);
+    if (window.__freezeAudioClock) { if (frozen == null) frozen = t; return frozen; }
+    frozen = null; return t;
+  } });
+};
 
 test.describe("public blaster smoke", () => {
   test("loads, ids exist, no page errors", async ({ page }) => {
@@ -127,34 +148,127 @@ test.describe("public blaster smoke", () => {
     expect(errors).toEqual([]);
   });
 
-  test("Signal on: watchdog tracks hop age or resumes a suspended ctx; Signal off resets", async ({ page }) => {
+  test("watchdog: no false trips on a healthy scheduler (Hold + sudden-auto off), trips on a real stall", async ({ page }) => {
+    await page.addInitScript(FREEZE_INIT);
     const errors = await openPage(page);
+    // Remove the confounders (review finding 2): no remote patch (Hold / Manual) and no sudden-auto rotation, so
+    // only the hop scheduler and the watchdog are running.
+    await page.click("#holdPatchBtn");
+    await page.click("#suddenOff");
+    expect((await state(page)).holdManual).toBe(true);
+    await setDwell(page, 60);
     await page.click("#power");
     await page.waitForTimeout(1500);
     const s = await state(page);
     expect(s.running).toBe(true);
+    expect(s.algo).toBe("hop");
     let p = await payload(page);
-    if (p.audioContextState === "running") {
-      expect(Number.isFinite(p.lastHopAgeMs) && p.lastHopAgeMs >= 0).toBe(true);
-    } else {
+    if (p.audioContextState !== "running") {
       // headless without an audio sink: the watchdog must be observably attempting recovery
       await page.waitForFunction(() => window.__hop.telemetryPayload().ctxResumes >= 1, null, { timeout: 3000 });
       expect((await log(page)).some(r => r.event === "watchdog")).toBe(true);
+      await page.click("#power");
+      expect((await payload(page)).lastHopAgeMs).toBeNull();
+      expect(errors).toEqual([]);
+      return;
     }
-    // healthy scheduler → no false trips: shortest dwell, wait past the stall limit
-    await page.evaluate(() => {
-      for (const id of ["dMin", "dMax"]) { const el = document.getElementById(id); el.value = "1"; el.dispatchEvent(new Event("input")); }
-    });
+    // first hop delivered with a committed dwell of ~60 s
+    expect(Number.isFinite(p.lastHopAgeMs) && p.lastHopAgeMs >= 0).toBe(true);
+    let w = await watchdog(page);
+    expect(w.committedDwellS).toBeCloseTo(60, 0);
+    expect(w.stallLimitMs).toBe(Math.round(60 * 1.5 * 1000 + 1000));
+    // review finding 1: lowering the sliders mid-dwell must NOT change the committed limit nor trip the watchdog
+    await setDwell(page, 1);
+    await page.waitForTimeout(1 * 1.5 * 1000 + 1000 + 2000);
+    w = await watchdog(page);
+    expect(w.committedDwellS).toBeCloseTo(60, 0);
+    expect(w.watchdogTrips).toBe(0);
+    expect(w.nextHopOverdueMs).toBeLessThan(0);
+    expect((await payload(page)).watchdogTrips).toBe(0);
+    expect((await log(page)).filter(r => r.event === "watchdog")).toEqual([]);
+    await expect(page.locator("#telWatchdog")).toHaveText("0");
+    expect(s.algo).toBe((await state(page)).algo);            // no patch applied while held
+    // reschedule under the 1 s dwell (Reseed = reschedule from now) → committed dwell ≈ 1 s, limit 2.5 s
+    await page.click("#reseedBtn");
+    await page.waitForFunction(() => { const w = window.__hop.getWatchdog(); return w.committedDwellS > 0 && w.committedDwellS <= 1.0; }, null, { timeout: 5000 });
+    w = await watchdog(page);
+    expect(w.stallLimitMs).toBeLessThanOrEqual(2500);
+    expect(w.watchdogTrips).toBe(0);
+    // real stall: freeze the audio clock while the context still reports "running"
+    await page.evaluate(() => { window.__freezeAudioClock = true; });
+    await page.waitForFunction(() => window.__hop.getWatchdog().watchdogTrips >= 1, null, { timeout: 8000 });
+    const trip = (await log(page)).find(r => r.event === "watchdog" && r.msg === "watchdog reschedule");
+    expect(trip).toBeTruthy();
+    expect(trip.level).toBe("warn");
+    expect(trip.fields.reason).toBe("clockStalled");
+    expect(trip.fields.limitMs).toBeLessThanOrEqual(2500);
+    expect(trip.fields.ageMs).toBeGreaterThan(trip.fields.limitMs);
+    expect(trip.fields.algo).toBe("hop");
     p = await payload(page);
-    if (p.audioContextState === "running") {
-      await page.waitForTimeout(1 * 1.5 * 1000 + 1000 + 2000);
-      expect((await payload(page)).watchdogTrips).toBe(0);
-    }
+    expect(p.watchdogTrips).toBeGreaterThanOrEqual(1);
+    expect(p.ctxResumes).toBe(0);
+    await expect(page.locator("#telWatchdog")).not.toHaveText("0");
+    await page.evaluate(() => { window.__freezeAudioClock = false; });
+    // Signal off resets the age; counters are kept
     await page.click("#power");
-    const s2 = await state(page);
-    expect(s2.running).toBe(false);
+    expect((await state(page)).running).toBe(false);
     p = await payload(page);
     expect(p.lastHopAgeMs).toBeNull();
+    expect(p.watchdogTrips).toBeGreaterThanOrEqual(1);
+    expect(errors).toEqual([]);
+  });
+
+  test("?patch= query string never reaches the log ring buffer, logTail or Copy log JSON", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", e => errors.push(String(e)));
+    const resp = await page.goto("/?patch=" + encodeURIComponent("/patch.json?X-Goog-Signature=SECRETSIG123&X-Goog-Expires=60"));
+    expect(resp.status()).toBe(200);
+    await page.waitForFunction(() => !!window.__hop);
+    const recs = await log(page);
+    expect(recs.length).toBeGreaterThan(0);
+    const ready = recs.find(r => r.msg.startsWith("scientific tooling ready"));
+    expect(ready).toBeTruthy();
+    expect(ready.msg).toBe("scientific tooling ready · patch /patch.json?[redacted] · poll 3000ms (hot-apply)");
+    expect(JSON.stringify(recs)).not.toContain("SECRETSIG123");
+    expect(JSON.stringify(await payload(page))).not.toContain("SECRETSIG123");
+    // the poll still targets the full URL (app behaviour unchanged) — only the log copy is scrubbed
+    await expect(page.locator("#patchUrlLabel")).toHaveText("/patch.json?X-Goog-Signature=SECRETSIG123&X-Goog-Expires=60");
+    await page.waitForTimeout(2500);                        // a beacon tick + a poll → more log lines
+    expect(JSON.stringify(await log(page))).not.toContain("SECRETSIG123");
+    expect(JSON.stringify((await payload(page)).logTail)).not.toContain("SECRETSIG123");
+    expect(errors).toEqual([]);
+  });
+
+  test("bare relative ?patch= query is redacted in the log ring buffer", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", e => errors.push(String(e)));
+    const resp = await page.goto("/?patch=" + encodeURIComponent("patch.json?token=SECRETREL456"));
+    expect(resp.status()).toBe(200);
+    await page.waitForFunction(() => !!window.__hop);
+    const recs = await log(page);
+    const ready = recs.find(r => r.msg.startsWith("scientific tooling ready"));
+    expect(ready).toBeTruthy();
+    expect(ready.msg).toContain("patch.json?[redacted]");
+    expect(JSON.stringify(recs)).not.toContain("SECRETREL456");
+    expect(JSON.stringify(await payload(page))).not.toContain("SECRETREL456");
+    await expect(page.locator("#patchUrlLabel")).toHaveText("patch.json?token=SECRETREL456");
+    expect(errors).toEqual([]);
+  });
+
+  test("systems check escapes a reflected ?patch= value (no XSS)", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", e => errors.push(String(e)));
+    const evil = 'x<img src=x onerror="window.__xss=1">';
+    await page.goto("/?patch=" + encodeURIComponent(evil));
+    await page.waitForFunction(() => !!window.__hop);
+    await page.click("#sysBtn");
+    await page.waitForFunction(() => /Patch hold/.test(document.getElementById("sysList").textContent), null, { timeout: 20000 });
+    expect(await page.evaluate(() => window.__xss)).toBeUndefined();
+    expect(await page.locator("#sysList img").count()).toBe(0);
+    expect(await page.locator("#sysList").innerHTML()).not.toContain("<img");
+    expect(await page.locator("#sysList").textContent()).toContain("polling " + evil);
+    // the monitor log line is escaped too, and the stored record carries no query string
+    expect(await page.locator("#monLog img").count()).toBe(0);
     expect(errors).toEqual([]);
   });
 });

@@ -4,13 +4,11 @@ Issue: https://github.com/team-project-pikachu/IoT-ASP/issues/20 · Labels: `enh
 
 ## Status
 
-**Parked — stub exists only on the owner's Mac.** The issue references
-`services/autoroute-adk/iot_asp_autoroute/timestore.py` and `docs/timestore.md` ("stub done": 24 h circle,
-year horizon, 0.0006 s uniqueness quantum). Neither file is on `origin/main` (`git ls-tree -r origin/main`
-has no `timestore*`; `docs/PRIOR_ART.md:22` on this branch records the same gap). This spec pins the
-design so the Mac stub and the eventual module converge: the time-feature model, the ≥16-parameter
-SciPy fit, the weather-prior source (NWS `api.weather.gov`, no street addresses), the cipher-tag rules,
-and how the result feeds `priors` and the structured log. No implementation lands with this spec.
+**Implemented on `main` (PR #30 / #28).** `services/autoroute-adk/iot_asp_autoroute/timestore.py`,
+`packages/algo-timestore/`, `docs/timestore.md`, and `docs/timestore-scipy.md` are on `origin`. This spec
+remains the design contract for the time-feature model, the ≥16-parameter SciPy fit, the weather-prior
+source (NWS `api.weather.gov`, no street addresses), the cipher-tag rules, and how the result feeds
+`priors` and the structured log. Gaps vs the full acceptance list stay in Remaining scope.
 
 ## Goal
 
@@ -41,7 +39,7 @@ Verified by reading the files (backend identical between `origin/main` @ `0625e9
 | Priors bundle with `docs` pointers and honesty string — the hook point for a time/weather prior | `services/autoroute-adk/iot_asp_autoroute/priors.py:280-295` |
 | SciPy pin `scipy>=1.14.0,<1.18`, numpy `>=1.26,<3` | `services/autoroute-adk/requirements.txt:5-6` |
 | Colab ETL writes `meta/features/` only, never `meta/patches/` | `.claude/rules/autoroute-backend.md:13`; `features_live.assert_not_patch_path` (branch) |
-| No `timestore.py`, no `docs/timestore.md`, no weather code on `origin/main` | `git ls-tree -r --name-only origin/main \| grep -i "timestore\|weather"` → nothing |
+| Timestore package + ADK wrapper on `origin/main` | `timestore.py`, `packages/algo-timestore/`, `docs/timestore.md` (via #30) |
 
 ## Remaining scope
 

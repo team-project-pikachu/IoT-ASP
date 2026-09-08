@@ -1,9 +1,9 @@
 # Colab live GCS sensors evidence — #26 (`features_live`)
 
-**Config item:** `services/autoroute-adk/iot_asp_autoroute/features_live.py` + `notebooks/iot_asp_colab_etl.{ipynb,md}`
-**Spec:** `docs/specs/26-colab-live-gcs-features.md` (FL-01 … FL-13)
-**Date:** 2026-09-08 (UTC)
-**Branch:** `claude/mdc-conversion-features-gu3yzk`
+**Config item:** `services/autoroute-adk/iot_asp_autoroute/features_live.py` + `notebooks/iot_asp_colab_etl.{ipynb,md}`  
+**Spec:** `docs/specs/26-colab-live-gcs-features.md` (FL-01 … FL-16)  
+**Date:** 2026-09-08 (UTC)  
+**Branch:** `claude/mdc-conversion-features-gu3yzk`  
 **Secrets:** by name only — `GCP_SA_JSON`, `IOT_ASP_GCS_BUCKET`, `LIVE_GCS`, `GOOGLE_CLOUD_PROJECT`. No values in this file.
 
 ## Requirements
@@ -17,6 +17,8 @@
 | CS-05 | Offline self-contained CLI (`--seed-demo`) exits 0 with a `file://` URI |
 | CS-06 | Live write gated on `LIVE_GCS=1` **and** `IOT_ASP_GCS_BUCKET`; otherwise dry-run mirror |
 | CS-07 | Notebook `.ipynb` / `.md` in sync; `userdata` names only; no `meta/patches` in code cells |
+| CS-08 | Object names built from validated parts only (`node` `^[A-Za-z0-9_-]+$`, strict ISO `ts`); `..`/empty segments refused; dry-run target resolved under `DRY_ROOT/meta/features/` (review fix) |
+| CS-09 | Unparseable `ts` points dropped and reported, never string-sorted as "latest" (review fix) |
 
 ## Procedure (offline, no network)
 
@@ -24,12 +26,13 @@
 export IOT_ASP_AUTOROUTE_DRY_ROOT=<tmp>        # scratch mirror; unset LIVE_GCS / IOT_ASP_GCS_BUCKET
 PYTHONPATH=services/autoroute-adk python3 -m iot_asp_autoroute.features_live --node node1 --limit 50 --seed-demo
 PYTHONPATH=services/autoroute-adk python3 -m iot_asp_autoroute.features_live --node ghost   # negative control
+PYTHONPATH=services/autoroute-adk python3 -m iot_asp_autoroute.features_live --node '../patches/x' --seed-demo   # traversal control
 python3 -m pytest tests/test_features_live.py -q
 bash scripts/ci_static_gates.sh
 bash scripts/autoroute_dev.sh
 ```
 
-## Observed (2026-09-08T01:20:57Z, Python 3.11.15, numpy + scipy installed)
+## Observed (re-run 2026-09-08T01:38:42Z after the review fixes, Python 3.11.15, numpy + scipy installed)
 
 `--seed-demo` run — **exit 0** (single JSON line, shown expanded; `<DRY_ROOT>` = the tmp mirror):
 
@@ -77,9 +80,21 @@ Negative control `--node ghost` — **exit 2**, no write:
 {"error": "no telemetry under meta/telemetry/ghost/", "featureKeys": [], "live": false, "node": "ghost", "object": null, "ok": false, "seeded": 0, "sourceCount": 0, "uri": null}
 ```
 
+Traversal control `--node '../patches/x' --seed-demo` (CS-08) — **exit 2**, refused before any read or write
+(the mirror still holds exactly the 13 files above; no `meta/patches/`):
+
+```json
+{"error": "refuse: node id must match '^[A-Za-z0-9_-]+$', got '../patches/x'", "node": "../patches/x", "ok": false, "seeded": 0, "sourceCount": 0, "uri": null}
+```
+
+Telemetry-controlled `ts` (CS-08 / CS-09, asserted in FL-14 / FL-15 rather than run by hand): a `.jsonl` line with
+`ts = "zz/../../../patches/node1"` or no `ts` is dropped and reported as `{"line": i, "error": "unparseable ts"}`;
+a pre-seeded `meta/patches/node1.json` is byte-identical after `run_live`, and the features object is named from
+the newest *valid* point (`…T00-00-09Z.json`, `shriekBias: true`).
+
 | Check | Result |
 |-------|--------|
-| `python3 -m pytest tests/test_features_live.py -q` | exit 0 — 26 passed (FL-01 … FL-13 + ts / guard extras) |
+| `python3 -m pytest tests/test_features_live.py -q` | exit 0 — 56 passed (FL-01 … FL-16 incl. path-safety, ts-drop and symlink-resolve controls) |
 | `bash scripts/ci_static_gates.sh` | exit 0 — `OK ci_static_gates` |
 | `bash scripts/autoroute_dev.sh` | exit 0 — `DRY-RUN OK` (unchanged by this module) |
 | `notebooks/iot_asp_colab_etl.ipynb` | parses as JSON, `nbformat: 4`, 6 cells (md, code, code, code, md, code) |
@@ -101,7 +116,7 @@ From Colab: open `notebooks/iot_asp_colab_etl.ipynb`, add `userdata` secrets **n
 
 | Req | Status |
 |-----|--------|
-| CS-01 … CS-07 (offline path) | **PASS** (local, 2026-09-08) |
+| CS-01 … CS-09 (offline path) | **PASS** (local, 2026-09-08, re-run after review fixes) |
 | Live GCS write | **PENDING** — owner runs the notebook with `LIVE_GCS=1`; record the `gs://` object name (bucket redacted) here |
 
 ## Frontend / ETL alignment

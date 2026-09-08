@@ -12,8 +12,12 @@ Issue #26. Extends (imports, never modifies) ``colab_etl`` and ``vib_anomaly``:
   and writes **only** ``meta/features/<node>/<ts>.json``.
 
 Hard guard: this module never writes ``meta/patches/`` (Colab / ETL output is never
-authoritative — the ADK worker clamps and writes patches). ``assert_not_patch_path``
-raises before every write.
+authoritative — the ADK worker clamps and writes patches). Object names are built only
+from a validated ``node`` (``[A-Za-z0-9_-]+``) and a strict ISO-8601 ``ts``; names with
+``/``, ``..`` or empty segments are refused before any read or write, and in dry-run
+the resolved target must stay under ``DRY_ROOT/meta/features/``
+(``validate_node`` · ``features_object_name`` · ``assert_not_patch_path`` ·
+``assert_features_path``).
 
 Secrets by **name** only: ``LIVE_GCS``, ``IOT_ASP_GCS_BUCKET``, ``GCP_SA_JSON``,
 ``GOOGLE_CLOUD_PROJECT``. Values are never printed or written into features.
@@ -30,6 +34,7 @@ import json
 import math
 import os
 import random
+import re
 import sys
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -87,6 +92,10 @@ TELEMETRY_PREFIX = "meta/telemetry/"
 FORBIDDEN_PREFIX = "meta/patches"
 WRITER = "iot_asp_autoroute.features_live"
 TS_FMT = "%Y-%m-%dT%H:%M:%SZ"
+# Path-safe node id: no "/", no "..", no empty segment (object names are built from it).
+NODE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+# Strict UTC ISO-8601 as produced by ``normalize_ts`` (the only ts allowed in object names).
+TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 BAND_BURST_ALLOWED = frozenset({"lf", "us", "both"})
 _BOOL_COLUMNS = frozenset({"soundBurst", "extremeActive"})
@@ -223,8 +232,26 @@ def project_sensor_features(t: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def validate_node(node: Any) -> str:
+    """Return ``node`` as ``str`` iff it matches ``[A-Za-z0-9_-]+``; else ``ValueError``.
+
+    Node ids become path segments of ``meta/telemetry/<node>/`` and
+    ``meta/features/<node>/``; anything with ``/``, ``..``, whitespace or an empty
+    value could escape those prefixes in the dry-run mirror, so it is refused.
+    """
+    s = str(node) if node is not None else ""
+    # fullmatch: re.match + $ still accepts a trailing newline ("node1\n").
+    if not NODE_RE.fullmatch(s):
+        raise ValueError(f"refuse: node id must match {NODE_RE.pattern!r}, got {s!r}")
+    return s
+
+
 def normalize_ts(ts: Any) -> str | None:
-    """ISO-8601 (``%Y-%m-%dT%H:%M:%SZ``) from ISO strings or epoch seconds / ms."""
+    """ISO-8601 (``%Y-%m-%dT%H:%M:%SZ``) from ISO strings or epoch seconds / ms.
+
+    Returns ``None`` for anything that cannot be parsed (never the raw input) so a
+    garbage ``ts`` can neither sort as a string nor reach an object name.
+    """
     if ts is None:
         return None
     if isinstance(ts, bool):
@@ -249,7 +276,7 @@ def normalize_ts(ts: Any) -> str | None:
         try:
             dt = datetime.strptime(s, "%Y-%m-%dT%H-%M-%SZ").replace(tzinfo=timezone.utc)
         except ValueError:
-            return s
+            return None
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc).strftime(TS_FMT)
@@ -274,17 +301,24 @@ def _read_text(object_name: str) -> str | None:
     return blob.download_as_text()
 
 
-def _normalize_point(raw: Any, name: str) -> dict[str, Any] | None:
+def _normalize_point(raw: Any, name: str) -> tuple[dict[str, Any] | None, str | None]:
+    """``(point, None)`` or ``(None, reason)``.
+
+    ``ts`` must normalise to ISO-8601. A per-ts ``*.json`` object (ingest names them
+    ``<ts with ':'→'-'>.json``) may fall back to its name stem; a ``*.jsonl`` line has
+    no per-point name and is dropped when its ``ts`` is missing or unparseable.
+    """
     if not isinstance(raw, dict):
-        return None
+        return None, "not an object"
     t = normalize_telemetry(raw)
     ts = normalize_ts(t.get("ts", t.get("t")))
+    if ts is None and name.lower().endswith(".json"):
+        ts = normalize_ts(Path(name).stem)
     if ts is None:
-        # Fall back to the object name stem (ingest names objects by ts with ':'→'-')
-        ts = normalize_ts(Path(name).stem) or ""
+        return None, "unparseable ts"
     t["ts"] = ts
     t["_source"] = name
-    return t
+    return t, None
 
 
 def parse_telemetry_objects(
@@ -297,8 +331,10 @@ def parse_telemetry_objects(
 
     ``*.json`` → one point; ``*.jsonl`` → one point per non-blank line (bad lines
     skipped and appended to ``errors`` when given). Every point is normalised
-    (``colab_etl.normalize_telemetry``), ``ts`` coerced to ISO-8601, and the result
-    is sorted by ``ts`` ascending (stable on object name, then line index).
+    (``colab_etl.normalize_telemetry``), ``ts`` coerced to ISO-8601 — points whose
+    ``ts`` cannot be normalised are **dropped** (reported as ``unparseable ts``), never
+    string-sorted — and the result is sorted by ``ts`` ascending (stable on object
+    name, then line index).
     """
     read_json = reader or gcs_io.read_json
     read_text = text_reader or _read_text
@@ -318,10 +354,10 @@ def parse_telemetry_objects(
                     if errors is not None:
                         errors.append({"object": name, "line": idx, "error": str(exc)})
                     continue
-                p = _normalize_point(raw, name)
+                p, why = _normalize_point(raw, name)
                 if p is None:
                     if errors is not None:
-                        errors.append({"object": name, "line": idx, "error": "not an object"})
+                        errors.append({"object": name, "line": idx, "error": why})
                     continue
                 points.append((p["ts"], name, idx, p))
         elif lower.endswith(".json"):
@@ -331,10 +367,10 @@ def parse_telemetry_objects(
                 if errors is not None:
                     errors.append({"object": name, "line": 0, "error": str(exc)})
                 continue
-            p = _normalize_point(raw, name)
+            p, why = _normalize_point(raw, name)
             if p is None:
                 if errors is not None:
-                    errors.append({"object": name, "line": 0, "error": "not an object"})
+                    errors.append({"object": name, "line": 0, "error": why})
                 continue
             points.append((p["ts"], name, 0, p))
     points.sort(key=lambda item: (item[0], item[1], item[2]))
@@ -347,7 +383,7 @@ def list_telemetry_names(node: str) -> list[str]:
     ``gcs_io.list_prefix`` dry-run globs only ``*.json``; live ``list_blobs`` already
     returns both, so the extra ``*.jsonl`` glob is dry-run only.
     """
-    prefix = f"{TELEMETRY_PREFIX}{node}/"
+    prefix = f"{TELEMETRY_PREFIX}{validate_node(node)}/"
     names = list(gcs_io.list_prefix(prefix))
     if gcs_io.is_dry_run():
         root = gcs_io.DRY_ROOT / prefix
@@ -434,14 +470,46 @@ def build_feature_record(points: list[dict[str, Any]], node: str) -> dict[str, A
     return record
 
 
-def features_object_name(node: str, ts: str) -> str:
-    return f"{FEATURES_PREFIX}{node}/{str(ts).replace(':', '-')}.json"
+def features_object_name(node: str, ts: Any) -> str:
+    """``meta/features/<node>/<ts with ':'→'-'>.json`` from validated parts only.
+
+    ``node`` must satisfy ``validate_node``; ``ts`` must normalise to strict UTC
+    ISO-8601 (``TS_RE``). Anything else raises ``ValueError`` so a phone-controlled
+    ``ts`` (or a hostile node id) can never inject ``/`` or ``..`` into the name.
+    """
+    n = validate_node(node)
+    iso = normalize_ts(ts)
+    if iso is None or not TS_RE.match(iso):
+        raise ValueError(f"refuse: ts must be ISO-8601 {TS_FMT!r}, got {ts!r}")
+    return f"{FEATURES_PREFIX}{n}/{iso.replace(':', '-')}.json"
 
 
 def assert_not_patch_path(object_name: str) -> None:
-    """Hard guard: this module never writes ``meta/patches``."""
-    if str(object_name).lstrip("/").startswith(FORBIDDEN_PREFIX):
+    """Hard guard: this module never writes ``meta/patches``.
+
+    Also refuses path-unsafe object names — absolute, backslashes, or any ``""`` /
+    ``"."`` / ``".."`` segment — because ``gcs_io`` joins the name onto
+    ``DRY_ROOT`` on disk and a ``..`` segment would defeat a plain prefix check.
+    """
+    s = str(object_name)
+    parts = s.split("/")
+    if s.startswith("/") or "\\" in s or any(seg in ("", ".", "..") for seg in parts):
+        raise ValueError(f"refuse: unsafe object name {s!r} (absolute, '\\', empty, '.' or '..' segment)")
+    if s.startswith(FORBIDDEN_PREFIX):
         raise ValueError("refuse: features_live never writes meta/patches")
+
+
+def assert_features_path(object_name: str) -> None:
+    """Write guard for ``run_live``: safe name, ``meta/features/`` prefix, and — in
+    dry-run — the on-disk target resolved under ``DRY_ROOT/meta/features/``."""
+    assert_not_patch_path(object_name)
+    if not str(object_name).startswith(FEATURES_PREFIX):
+        raise ValueError("refuse: features_live writes only under meta/features/")
+    if gcs_io.is_dry_run():
+        root = (gcs_io.DRY_ROOT / FEATURES_PREFIX).resolve()
+        target = (gcs_io.DRY_ROOT / str(object_name)).resolve()
+        if target != root and root not in target.parents:
+            raise ValueError("refuse: features target resolves outside DRY_ROOT/meta/features/")
 
 
 # ── live gate + run ──────────────────────────────────────────────────────────
@@ -480,13 +548,14 @@ def run_live(
 
     ``live`` defaults to ``env_live_gate()``; an explicit ``True`` still requires a
     non-empty ``IOT_ASP_GCS_BUCKET`` (otherwise the run is downgraded to the dry-run
-    mirror). Only ``meta/features/<node>/<ts>.json`` is ever written.
+    mirror). Only ``meta/features/<node>/<ts>.json`` is ever written; ``node`` must
+    pass ``validate_node`` (``ValueError`` otherwise — before any read).
     """
     if live is None:
         is_live = env_live_gate()
     else:
         is_live = bool(live) and bool(os.environ.get("IOT_ASP_GCS_BUCKET"))
-    node = str(node)
+    node = validate_node(node)
     with _gcs_mode(is_live):
         points = latest_points(node, limit)
         if not points:
@@ -502,10 +571,8 @@ def run_live(
             }
         record = build_feature_record(points, node)
         record["live"] = is_live
-        name = features_object_name(node, str(record["ts"]))
-        assert_not_patch_path(name)
-        if not name.startswith(FEATURES_PREFIX):
-            raise ValueError("refuse: features_live writes only under meta/features/")
+        name = features_object_name(node, record["ts"])
+        assert_features_path(name)
         uri: str | None = None
         if write:
             uri = gcs_io.write_json(name, record)
@@ -568,6 +635,7 @@ def demo_points(node: str = "node1", n: int = 12, seed: int = 26) -> list[dict[s
 
 def _seed_demo(node: str = "node1", n: int = 12, seed: int = 26) -> list[str]:
     """Write ``n`` synthetic telemetry objects to the **dry-run mirror**; returns URIs."""
+    node = validate_node(node)
     uris: list[str] = []
     with _gcs_mode(False):
         for p in demo_points(node, n, seed):
@@ -589,9 +657,12 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     seeded: list[str] = []
-    if args.seed_demo:
-        seeded = _seed_demo(args.node)
-    res = run_live(args.node, args.limit, write=True, live=bool(args.live))
+    try:
+        if args.seed_demo:
+            seeded = _seed_demo(args.node)
+        res = run_live(args.node, args.limit, write=True, live=bool(args.live))
+    except ValueError as exc:  # refused node / ts / path — nothing was written
+        res = {"ok": False, "error": str(exc), "uri": None, "node": str(args.node), "sourceCount": 0}
     res["seeded"] = len(seeded)
     if seeded:
         res["seedUris"] = [seeded[0], seeded[-1]]

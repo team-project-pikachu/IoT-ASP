@@ -34,7 +34,8 @@ Verified by reading the files (`origin/main` @ `0625e91`):
 | Telemetry is device-id keyed and PII-scrubbed server-side (`fleet_log.scrub_pii`, `enrich_telemetry`) — a Pi node needs no new contract | `docs/api-contract.md:94-97`; `fleet_log.py:183-229` (branch) |
 | `lfDriveCapable` / `lfArmed` exist precisely so a non-web node can declare LF capability | `docs/api-contract.md:83`; `priors.lf_drive_capable` (`priors.py:203-216`) |
 | **No** `net` tag on the wire or in `public/index.html` on `origin/main` (`grep -n "net=\|navigator.connection\|effectiveType" public/index.html` → nothing). Issue #21's "public app already tags net=wifi\|cellular" refers to the owner's Mac clone | — |
-| No `docs/ai-edge-portal.md` on `origin/main` (issue #23 cites it; Mac-only) | `git ls-tree -r --name-only origin/main \| grep ai-edge` → nothing; see `docs/specs/README.md` § Known missing docs |
+| `docs/connectivity-wifi.md` on `origin/main` (#31) | Google Home Wi-Fi-now / cellular-later research answer |
+| `docs/ai-edge-portal.md` on `origin/main` (#32) | packaging checklist landed; LiteRT model still optional / not required for MVP |
 
 ## Remaining scope
 
