@@ -46,6 +46,20 @@ struct ContentView: View {
                     LabeledContent("SensorKit entitled", value: SensorKitGate.entitlementDeclared ? "yes" : "stub")
                 }
 
+                Section("Permissions") {
+                    ForEach(session.permissionSteps, id: \.kind) { step in
+                        VStack(alignment: .leading, spacing: 2) {
+                            LabeledContent(step.kind.rawValue, value: step.state.rawValue)
+                            Text(step.prePrompt)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Button("Re-arm permissions") { session.runPermissionSequence() }
+                    Text("Denied mic/motion does not crash; SensorKit is skipped unless Apple granted the reader entitlement.")
+                        .font(.caption2)
+                }
+
                 Section("Near-ultrasonic mic") {
                     Toggle("Arm 48 kHz mic (AEC/NS/AGC off)", isOn: $session.micArmed)
                     LabeledContent("preferred Hz", value: String(format: "%.0f", session.micStatus.preferredSampleRate))

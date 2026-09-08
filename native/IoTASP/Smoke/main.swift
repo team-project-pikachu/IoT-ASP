@@ -81,6 +81,19 @@ struct IoTASPSmoke {
         let stub = UltrasonicMicStatus.stub()
         check("stub not running", stub.engineRunning == false && stub.grantedSampleRate == 0)
 
+        // #144 permission sequence
+        let seq = PermissionSequencer.sequence(sensorkitEntitled: false)
+        check("order mic then motion", seq == [.microphone, .motion])
+        check("no SK when ungated", !seq.contains(.sensorkit))
+        let seqSK = PermissionSequencer.sequence(sensorkitEntitled: true)
+        check("SK last when entitled", seqSK.last == .sensorkit)
+        let ungated = PermissionSequencer.ungatedSensorKitStep()
+        check("SK skippedUngated", ungated.state == .skippedUngated)
+        var steps = PermissionSequencer.initialSteps(sensorkitEntitled: false)
+        steps = PermissionSequencer.apply(state: .denied, to: .microphone, steps: steps)
+        check("denied does not crash", steps.contains(where: { $0.kind == .microphone && $0.isBlocking }))
+        check("mic usage on-device", PermissionSequencer.usageDescription(for: .microphone).contains("on-device"))
+
         // Existing alarm / impulse still reachable
         let alarm = AlarmStateMachine()
         alarm.arm()

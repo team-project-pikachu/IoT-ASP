@@ -1,6 +1,9 @@
 import Combine
 import Foundation
 import SwiftUI
+#if canImport(AVFoundation)
+import AVFoundation
+#endif
 
 @MainActor
 final class ASPSessionModel: ObservableObject {
@@ -20,6 +23,9 @@ final class ASPSessionModel: ObservableObject {
     @Published var motionPlanHz: Double = CoreMotionSuite.defaultHz
     @Published var intenseVib = false
     @Published var sessionError: String?
+    @Published var permissionSteps: [PermissionStep] = PermissionSequencer.initialSteps(
+        sensorkitEntitled: SensorKitGate.entitlementDeclared
+    )
     @Published var alarm = AlarmStateMachine()
 
     private let detector = ImpulseDetector()
@@ -35,6 +41,7 @@ final class ASPSessionModel: ObservableObject {
     func bootstrap() {
         applySink()
         SensorKitGate.startReadersIfEntitled()
+        runPermissionSequence()
         arm()
         ticker = Timer.publish(every: 0.05, on: .main, in: .common)
             .autoconnect()
@@ -49,6 +56,44 @@ final class ASPSessionModel: ObservableObject {
 
     func arm() {
         alarm.arm()
+        objectWillChange.send()
+    }
+
+    /// First-run / re-arm: explain copy is already in `permissionSteps`; then mic → motion.
+    /// Denied permissions do not crash — status stays denied and sensors stay unarmed.
+    func runPermissionSequence() {
+        permissionSteps = PermissionSequencer.initialSteps(
+            sensorkitEntitled: SensorKitGate.entitlementDeclared
+        )
+        if !SensorKitGate.entitlementDeclared {
+            permissionSteps.append(PermissionSequencer.ungatedSensorKitStep())
+        }
+        #if canImport(AVFoundation)
+        let session = AVAudioSession.sharedInstance()
+        switch session.recordPermission {
+        case .granted:
+            permissionSteps = PermissionSequencer.apply(state: .authorized, to: .microphone, steps: permissionSteps)
+        case .denied:
+            permissionSteps = PermissionSequencer.apply(state: .denied, to: .microphone, steps: permissionSteps)
+            micArmed = false
+        default:
+            session.requestRecordPermission { [weak self] ok in
+                Task { @MainActor in
+                    self?.permissionSteps = PermissionSequencer.apply(
+                        state: ok ? .authorized : .denied,
+                        to: .microphone,
+                        steps: self?.permissionSteps ?? []
+                    )
+                    if !ok { self?.micArmed = false }
+                }
+            }
+        }
+        #endif
+        permissionSteps = PermissionSequencer.apply(
+            state: motionArmed ? .authorized : .notDetermined,
+            to: .motion,
+            steps: permissionSteps
+        )
         objectWillChange.send()
     }
 

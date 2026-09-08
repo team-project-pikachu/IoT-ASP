@@ -45,6 +45,7 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #69 | [69-mvp-roadmap.md](69-mvp-roadmap.md) — durable MVP milestone → issue roadmap | implemented on branch | docs |
 | #140 | [140-coremotion-suite.md](140-coremotion-suite.md) — full CoreMotion suite (accel/gyro/mag/attitude; pedometer skip) | implemented on branch | native |
 | #141 | [141-ultrasonic-mic.md](141-ultrasonic-mic.md) — 48 kHz mic, AEC/NS/AGC off, bandEnergyUs | implemented on branch | native |
+| #144 | [144-permission-ux.md](144-permission-ux.md) — mic/motion/SensorKit request order | implemented on branch | native |
 
 Issues without a spec file: #9 (native SensorKit / Xcode shell — research closeout; implementation
 tracked by #41 under `native/IoTASP/`), #12 #13 #16 #17 (tracking / parent items referenced from
