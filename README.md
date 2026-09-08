@@ -22,15 +22,29 @@ Public blaster (Vercel): **https://hop-ultrasonic-1digital-design.vercel.app/**
 
 See `SPEC.md` for Soundcore 2 manufacturer limits (12 W, BT 5.0, BassUp/DSP — expect near-ultrasonic roll-off).
 
-## Vibration policy (parked — material-dependent)
+## Vibration policy (material-dependent — #6)
 
-The system should respond to vibration **physical or acoustic**, depending on materials/setup:
+Hard arming: `materialPreset` → physical / acoustic / both / none via
+[`public/vib-channel-select.js`](public/vib-channel-select.js) (Python twin
+`services/autoroute-adk/iot_asp_autoroute/vib_channel_select.py`). Soft algo
+weights remain in `priors.MATERIAL_CHANNEL_BIAS`. Spec:
+[`docs/specs/04-06-vibration-channels.md`](docs/specs/04-06-vibration-channels.md).
 
-| Channel | Sensor path | Typical materials / setup |
-|---------|-------------|---------------------------|
-| **Physical** | Linear accelerometer / `DeviceMotionEvent` | Phone body, table mount, speaker enclosure contact |
-| **Acoustic** | Mic + in-band spectrum energy | Air path, Soundcore cone/cabinet, room surfaces |
-| **Selection** | Arm one or both based on setup | Phone-on-table → physical; BT radiate → acoustic; over-air listen → mic |
+| `materialPreset` | Mode | Arm physical | Arm acoustic | Prefer | Typical setup |
+|------------------|------|--------------|--------------|--------|---------------|
+| `table` | physical | yes | no | physical | Phone-on-table / rigid mount |
+| `chair` | physical | yes | no | physical | Chair-taped node 3 (`infra_felt`) |
+| `speaker` | both† | yes | yes | acoustic | Soundcore contact / BT radiate |
+| `handheld` | both | yes | yes | acoustic | Free handheld |
+
+† When DeviceMotion is denied/unavailable, `speaker` falls back to **acoustic** only.
+Mic deny strips acoustic. Both denied → `none`.
+
+| Channel | Sensor path | Issue |
+|---------|-------------|-------|
+| **Physical** | Linear accel / `DeviceMotionEvent` | #4 |
+| **Acoustic** | Mic + in-band spectrum energy | #5 |
+| **Selection** | Material preset + availability fallbacks | #6 |
 
 Docs ingest: `reference/knowledge/INGEST.md`.
 

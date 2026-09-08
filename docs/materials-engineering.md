@@ -11,14 +11,17 @@ Public tooling. **No site addresses.** Priors for vib / sudden-freq → algorith
 | **Speaker cabinet** | Plastic enclosure + dual drivers + BassUp DSP | Mic near cabinet + optional contact | Expect US roll-off; treat DSP as unknown filter |
 | **Chair-taped node 3** (parked) | Phone taped to chair → seat → legs → floor | Accel-biased | Raise `physical` + `infra_felt` weight |
 
-## Material presets (autoroute prior)
+## Material presets (autoroute prior + #6 arming)
 
-| Preset | Prefer channel | Prefer algos on suddenFreq |
-|--------|----------------|----------------------------|
-| `handheld` | acoustic + light physical | `hop`, `am_gate` |
-| `table` | physical + acoustic | `am_gate`, `shriek_chirp` |
+| Preset | Prefer channel (hard arm) | Prefer algos on suddenFreq |
+|--------|---------------------------|----------------------------|
+| `handheld` | both (acoustic-leaning) | `hop`, `am_gate` |
+| `table` | physical only | `am_gate`, `shriek_chirp` |
 | `chair` | physical / infra_felt | `pulse`, `shriek`, `infra_mod` |
-| `speaker` | acoustic (cabinet radiation) | `hop` retune / `shriek_sweep` |
+| `speaker` | both; acoustic if motion denied | `hop` retune / `shriek_sweep` |
+
+Hard arming: `vib_channel_select.select_channels` / `IotAspVibChannelSelect.selectChannels`.  
+Soft bias: `MATERIAL_CHANNEL_BIAS` in `priors.py`.
 
 Pass `materialPreset` in telemetry when known (no PII). ADK may use it as a soft prior with NS / seismo-acoustic constraints ([physics.md](physics.md)).
 

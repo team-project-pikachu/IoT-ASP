@@ -131,6 +131,7 @@ Compact JSON heartbeat. Required fields marked ★.
 | `vol` | | number | **UI percent 0–100** (matches slider max); legacy linear ≤1 accepted by ingest/author |
 | `holdManual` | | bool | If true, backend must refuse patches |
 | `vibClass` | | string | `none` \| `physical` \| `acoustic` \| `infra_felt` |
+| `materialPreset` | | string | `handheld` \| `table` \| `chair` \| `speaker` — material → channel arming (#6); soft algo bias via `MATERIAL_CHANNEL_BIAS` |
 | `band` | | string | `17-23k` (default) \| `10-20` (LF, only with `lfDriveCapable`) — #22 |
 | `power` | | string | `ac120` (fleet is continuous 120 V AC) — #22 |
 | `nightNY` | | bool | Local hour in America/New_York ∈ [22, 07) — #22 |

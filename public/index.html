@@ -338,6 +338,17 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         <button type="button" id="vibAutoOff" aria-pressed="true">Vib off</button>
         <button type="button" id="vibAutoOn" aria-pressed="false">Vib auto</button>
       </div>
+      <!-- vib channels (#6): material → arm physical / acoustic -->
+      <div class="row" style="margin-top:10px">
+        <label for="materialPreset">material</label>
+        <select id="materialPreset" aria-label="Material preset for vib channel arming">
+          <option value="handheld">handheld</option>
+          <option value="table">table</option>
+          <option value="chair">chair</option>
+          <option value="speaker">speaker</option>
+        </select>
+      </div>
+      <p class="sub" style="margin-top:6px">channels <b id="vibChannelLive">both</b> · prefer <b id="vibPreferLive">acoustic</b></p>
       <div class="seg" role="group" aria-label="Sudden frequency autorotate" style="margin-top:10px">
         <button type="button" id="suddenOff" aria-pressed="false">Sudden off</button>
         <button type="button" id="suddenOn" aria-pressed="true">Autorotate on sudden frequency</button>
@@ -505,6 +516,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     the receiver quantises each detected tone back to the nearest slot in that plan.
   </div>
 
+<script src="/vib-channel-select.js"></script>
+<script src="/acoustic-vib-energy.js"></script>
 <script>
 (() => {
   "use strict";
@@ -533,8 +546,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const algoCry = $("algoCry"), algoSiren = $("algoSiren"), algoMetal = $("algoMetal");
   const vibAutoOff = $("vibAutoOff"), vibAutoOn = $("vibAutoOn");
   const vibSens = $("vibSens"), vibSensOut = $("vibSensOut");
+  const materialPresetEl = $("materialPreset");
+  const vibChannelLive = $("vibChannelLive"), vibPreferLive = $("vibPreferLive");
   const vibClassEl = $("vibClass"), algoLive = $("algoLive"), vibAutoLive = $("vibAutoLive");
   const suddenLive = $("suddenLive"), suddenOff = $("suddenOff"), suddenOn = $("suddenOn"), geminiFlagLive = $("geminiFlagLive");
+  const VibSelect = (typeof globalThis !== "undefined" && globalThis.IotAspVibChannelSelect)
+    ? globalThis.IotAspVibChannelSelect
+    : null;
   const vol = $("vol"), volOut = $("volOut"), dbfs = $("dbfs");
   const msgIn = $("msg"), txBtn = $("txBtn"), loopBtn = $("loopBtn"), micBtn = $("micBtn");
   const symMs = $("symMs"), symMsOut = $("symMsOut"), msgLen = $("msgLen");
@@ -572,6 +590,27 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let nextHopAt=0, lastTarget=19000, hopCount=0;
   let algo="hop"; // hop | pulse | shriek | cry | siren | metal
   let vibAuto=false, vibClass="none", lastVibSwitch=0;
+  // ══ vib channels (#6) ══
+  // ══ vib channels (#4) ══
+  // ══ vib channels (#5) ══
+  let materialPreset = (VibSelect && VibSelect.DEFAULT_PRESET) || "handheld";
+  let armPhysical = true, armAcoustic = true;
+  let vibChannelMode = "both", vibPrefer = "acoustic";
+  let physicalAvailable = null; // null = unknown; false after DeviceMotion deny
+  let acousticAvailable = null; // null = unknown; false after mic deny
+  // #4 physical DeviceMotion
+  const MS2_TO_G = 9.80665;
+  let gravityEmaX=null, gravityEmaY=null, gravityEmaZ=null;
+  let shakeCount=0, lastShakeAt=0, shakeHighStreak=0, lastShakeEventAt=0;
+  // #5 acoustic vib energy
+  const AcousticVib = (typeof globalThis !== "undefined" && globalThis.IotAspAcousticVib)
+    ? globalThis.IotAspAcousticVib
+    : null;
+  let acousticBurst = false, acousticMedian = -120, acousticDelta = 0;
+  let lastAcousticHopAt = 0;
+  const acousticTracker = AcousticVib && AcousticVib.createTracker
+    ? AcousticVib.createTracker()
+    : null;
   let suddenAuto=true, suddenState="idle", lastSuddenAt=0, geminiAutorouteFlag=false;
   let prevSpecPeakHz=null, prevSpecEnergy=-120, prevMicPeakHz=null;
   // Environmental burst: LF (<20 Hz) + US (>17 kHz) micDiff vs rolling baseline
@@ -927,6 +966,66 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (vibAuto) ensureMotion();
   }
 
+  // ══ vib channels (#6) ══
+  // Policy: /vib-channel-select.js (Python twin vib_channel_select.py).
+  // #4 forceHopFromShake / DeviceMotion → gate on armPhysical.
+  // #5 acousticBurst / mic energy → gate on armAcoustic (updateVibClass).
+  function refreshChannelArms(){
+    const opts = {};
+    if (physicalAvailable === false) opts.physicalAvailable = false;
+    if (physicalAvailable === true) opts.physicalAvailable = true;
+    if (acousticAvailable === false) opts.acousticAvailable = false;
+    if (acousticAvailable === true) opts.acousticAvailable = true;
+    let sel;
+    if (VibSelect && typeof VibSelect.selectChannels === "function") {
+      sel = VibSelect.selectChannels(materialPreset, opts);
+    } else {
+      // Offline stub if script failed to load — both armed (legacy behaviour)
+      sel = { materialPreset: materialPreset || "handheld", mode: "both",
+        armPhysical: true, armAcoustic: true, prefer: "acoustic", setup: "", fallbackReason: null };
+    }
+    materialPreset = sel.materialPreset;
+    armPhysical = !!sel.armPhysical;
+    armAcoustic = !!sel.armAcoustic;
+    vibChannelMode = sel.mode || "none";
+    vibPrefer = sel.prefer || "none";
+    if (materialPresetEl && materialPresetEl.value !== materialPreset) materialPresetEl.value = materialPreset;
+    if (vibChannelLive) vibChannelLive.textContent = vibChannelMode;
+    if (vibPreferLive) vibPreferLive.textContent = vibPrefer;
+    // Drop active class if newly disarmed
+    if ((vibClass === "physical" || vibClass === "infra_felt") && !armPhysical) {
+      vibClass = armAcoustic && acousticBurst ? "acoustic" : "none";
+      if (vibClassEl) vibClassEl.textContent = vibClass;
+    } else if (vibClass === "acoustic" && !armAcoustic) {
+      vibClass = "none";
+      if (vibClassEl) vibClassEl.textContent = vibClass;
+    }
+    return sel;
+  }
+
+  function setMaterialPreset(preset, persist){
+    if (VibSelect && typeof VibSelect.normalizeMaterialPreset === "function") {
+      materialPreset = VibSelect.normalizeMaterialPreset(preset);
+    } else {
+      const p = String(preset || "handheld").toLowerCase();
+      materialPreset = (p === "table" || p === "chair" || p === "speaker" || p === "handheld") ? p : "handheld";
+    }
+    refreshChannelArms();
+    if (persist !== false) {
+      try { localStorage.setItem("hop.materialPreset", materialPreset); } catch(_){}
+    }
+  }
+
+  function setPhysicalAvailable(ok){
+    physicalAvailable = !!ok;
+    refreshChannelArms();
+  }
+
+  function setAcousticAvailable(ok){
+    acousticAvailable = !!ok;
+    refreshChannelArms();
+  }
+
   function routeFromVib(cls){
     if (!vibAuto) return;
     const now = performance.now();
@@ -948,10 +1047,112 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function updateVibClass(cls){
+    // #6 hard gate — #4 physical/infra_felt and #5 acoustic must respect arming
+    if ((cls === "physical" || cls === "infra_felt") && !armPhysical) return;
+    if (cls === "acoustic" && !armAcoustic) return;
+    if (VibSelect && typeof VibSelect.allowsVibClass === "function"
+        && !VibSelect.allowsVibClass({ armPhysical, armAcoustic }, cls)) return;
     if (cls === vibClass) return;
     vibClass = cls;
     if (vibClassEl) vibClassEl.textContent = cls;
     routeFromVib(cls);
+  }
+
+  /** #4: strong shake → clear pending + force hop; every 4th shake reseeds (debounce ≥300 ms). */
+  function forceHopFromShake(){
+    if (!armPhysical) return;
+    const now = performance.now();
+    if (now - lastShakeAt < 300) return;
+    lastShakeAt = now;
+    shakeCount++;
+    if (running && ctx) {
+      pending.length = 0;
+      nextHopAt = ctx.currentTime + 0.05;
+      schedule();
+    }
+    if (shakeCount % 4 === 0) reseed("shake");
+    if (typeof monLog === "function") {
+      monLog("shake → hop #" + shakeCount, "shake", { shakeCount, accelMag }, "info");
+    }
+  }
+
+  /** #5: hop-band energy burst → vibClass acoustic + force hop (debounce ≥300 ms). */
+  function forceHopFromAcousticBurst(reason){
+    if (!armAcoustic || !vibAuto) return;
+    const now = performance.now();
+    if (now - lastAcousticHopAt < 300) return;
+    lastAcousticHopAt = now;
+    updateVibClass("acoustic");
+    if (running && ctx) {
+      pending.length = 0;
+      nextHopAt = ctx.currentTime + 0.05;
+      schedule();
+    }
+    if (typeof monLog === "function") {
+      monLog(
+        "acoustic burst → hop · " + (reason || "spectrum")
+          + " Δ=" + acousticDelta.toFixed(1) + " dB",
+        "acousticBurst",
+        { acousticDelta, acousticMedian, acousticEnergy, micDiff, armAcoustic },
+        "info"
+      );
+    }
+  }
+
+  /** #5: rolling-median burst on hop-band energy; prefer micDiff when available. */
+  function tickAcousticVibEnergy(tMs){
+    if (!armAcoustic) {
+      acousticBurst = false;
+      return null;
+    }
+    const prefer = AcousticVib && AcousticVib.preferEnergy
+      ? AcousticVib.preferEnergy(acousticEnergy, micDiff)
+      : (isFinite(micDiff) && micDiff > -119 ? micDiff : acousticEnergy);
+    let sample;
+    if (acousticTracker) {
+      sample = acousticTracker.push(prefer, tMs != null ? tMs : performance.now());
+    } else {
+      // Inline fallback if module failed to load (same 12 dB margin as sudden-freq)
+      acousticMedian = acousticMedian < -119 ? prefer : (0.85 * acousticMedian + 0.15 * prefer);
+      acousticDelta = prefer - acousticMedian;
+      const rising = acousticDelta >= 12 && prefer > -90;
+      if (rising) acousticBurst = true;
+      else if (prefer <= -90 || acousticDelta < 4.8) acousticBurst = false;
+      sample = {
+        energy: prefer,
+        median: Math.round(acousticMedian * 10) / 10,
+        delta: Math.round(acousticDelta * 10) / 10,
+        burst: acousticBurst,
+        rising: rising,
+        silence: prefer <= -90
+      };
+    }
+    acousticMedian = sample.median;
+    acousticDelta = sample.delta;
+    const wasBurst = acousticBurst;
+    acousticBurst = !!sample.burst;
+    if (sample.rising && !wasBurst) forceHopFromAcousticBurst("energy − median ≥ 12 dB");
+    else if (acousticBurst && vibAuto && vibClass !== "physical" && vibClass !== "infra_felt") {
+      updateVibClass("acoustic");
+    }
+    if (sample.silence && vibClass === "acoustic") {
+      updateVibClass("none");
+    }
+    return sample;
+  }
+
+  function resetAcousticVibEnergy(reason){
+    if (acousticTracker) acousticTracker.reset();
+    acousticBurst = false;
+    acousticMedian = -120;
+    acousticDelta = 0;
+    if (vibClass === "acoustic") {
+      vibClass = "none";
+      if (vibClassEl) vibClassEl.textContent = "none";
+    }
+    if (typeof monLog === "function" && reason) {
+      monLog("acoustic vib reset · " + reason, "acousticTeardown", { reason }, "info");
+    }
   }
 
   function setSuddenAuto(on){
@@ -1351,27 +1552,51 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   async function ensureMotion(){
     try {
       if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function"){
-        await DeviceMotionEvent.requestPermission();
+        const p = await DeviceMotionEvent.requestPermission();
+        setPhysicalAvailable(p === "granted");
+      } else if ("DeviceMotionEvent" in window) {
+        setPhysicalAvailable(true);
+      } else {
+        setPhysicalAvailable(false);
       }
-    } catch(_){}
+    } catch(_){
+      setPhysicalAvailable(false);
+    }
   }
 
   window.addEventListener("devicemotion", e => {
-    // Prefer linear acceleration; if only gravity-inclusive is available, warm a multi-sample
-    // baseline before any impulse→blast path (stationary ~9.8 must not false-trigger).
+    // Prefer e.acceleration || e.accelerationIncludingGravity (linear first).
+    // When linear is null (common WebKit), subtract a τ≈2 s EMA of gravity-inclusive axes
+    // so a still phone reads ≈0 g rather than ≈1 g (#4).
+    const preferred = e.acceleration || e.accelerationIncludingGravity;
+    if (!preferred) return;
     const linear = e.acceleration;
-    const a = (linear && (linear.x != null || linear.y != null || linear.z != null))
-      ? linear : e.accelerationIncludingGravity;
-    if (!a) return;
-    ax = a.x || 0; ay = a.y || 0; az = a.z || 0;
+    const hasLinear = !!(linear && (linear.x != null || linear.y != null || linear.z != null));
+    let mx, my, mz;
+    if (hasLinear) {
+      mx = linear.x || 0; my = linear.y || 0; mz = linear.z || 0;
+    } else {
+      const gx = preferred.x || 0, gy = preferred.y || 0, gz = preferred.z || 0;
+      const dtMs = (typeof e.interval === "number" && e.interval > 0) ? e.interval : 16.67;
+      const alpha = Math.min(1, dtMs / 2000);
+      if (gravityEmaX == null) { gravityEmaX = gx; gravityEmaY = gy; gravityEmaZ = gz; }
+      else {
+        gravityEmaX += alpha * (gx - gravityEmaX);
+        gravityEmaY += alpha * (gy - gravityEmaY);
+        gravityEmaZ += alpha * (gz - gravityEmaZ);
+      }
+      mx = gx - gravityEmaX; my = gy - gravityEmaY; mz = gz - gravityEmaZ;
+    }
+    // m/s² → g before vibThreshold compare and absA beacon
+    ax = mx / MS2_TO_G; ay = my / MS2_TO_G; az = mz / MS2_TO_G;
     const mag = Math.hypot(ax, ay, az);
     const accelRise = mag - (accelEma || mag);
     accelEma = accelEma ? (0.88 * accelEma + 0.12 * mag) : mag;
     accelMag = 0.85 * accelMag + 0.15 * mag;
-    // crude LF proxy: low-pass of magnitude deltas
+    // crude LF proxy: low-pass of gravity-magnitude deltas (felt / chair sway), in g
     const g = e.accelerationIncludingGravity;
     if (g){
-      const gmag = Math.hypot(g.x || 0, g.y || 0, g.z || 0);
+      const gmag = Math.hypot(g.x || 0, g.y || 0, g.z || 0) / MS2_TO_G;
       lfMag = 0.92 * lfMag + 0.08 * Math.abs(gmag - (lfMag || gmag));
     }
     const thr = (+vibSens.value || 12) / 10;
@@ -1380,10 +1605,23 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         && accelRise > Math.max(IMPULSE_ACCEL_RISE, thr * 0.45)) {
       noteImpulse("accel rise=" + accelRise.toFixed(2), accelRise);
     }
+    // #4 shake → force hop: accelMag > 3·thr for two consecutive events within 400 ms
+    const nowShake = performance.now();
+    if (armPhysical && accelMag > thr * 3) {
+      if (nowShake - lastShakeEventAt <= 400) shakeHighStreak++;
+      else shakeHighStreak = 1;
+      lastShakeEventAt = nowShake;
+      if (shakeHighStreak >= 2) {
+        shakeHighStreak = 0;
+        forceHopFromShake();
+      }
+    } else if (nowShake - lastShakeEventAt > 400) {
+      shakeHighStreak = 0;
+    }
     if (lfMag > thr * 0.35) updateVibClass("infra_felt");
     else if (accelMag > thr) updateVibClass("physical");
     else if (vibClass === "physical" || vibClass === "infra_felt"){
-      if (accelMag < thr * 0.4) updateVibClass(acousticEnergy > -55 ? "acoustic" : "none");
+      if (accelMag < thr * 0.4) updateVibClass(acousticBurst ? "acoustic" : "none");
     }
   }, { passive:true });
 
@@ -1549,6 +1787,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     micWarn.classList.add("hidden");
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      setAcousticAvailable(false);
       micFail("This browser exposes no microphone API, or the page is not in a secure context. Serve it over localhost or https.");
       return;
     }
@@ -1562,10 +1801,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         }
       });
     } catch (e){
+      setAcousticAvailable(false);
       micFail("Microphone refused: " + (e && e.name ? e.name : "unknown") +
         ". A page opened directly from disk is not a secure context \u2014 serve it over localhost instead.");
       return;
     }
+    setAcousticAvailable(true);
 
     const src = ctx.createMediaStreamSource(micStream);
     micAnalyser = ctx.createAnalyser();
@@ -1600,6 +1841,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     micBtn.setAttribute("aria-pressed","false");
     micBtn.textContent = "Listen";
     rxSrc.textContent = "loopback";
+    resetAcousticVibEnergy("micFail");
   }
 
   function micStop(){
@@ -1610,6 +1852,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     micBtn.textContent = "Listen";
     rxSrc.textContent = "loopback";
     rxSrVal.textContent = "\u2014";
+    resetAcousticVibEnergy("micStop");
   }
 
   micBtn.addEventListener("click", () => micOn ? micStop() : micStart());
@@ -1823,16 +2066,18 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
           micEnergyUs = meanBandDb(micAnalyser, micData, 17000, ny);
           acousticEnergy = micEnergyUs;
         }
-        if (vibAuto && acousticEnergy > -55 && vibClass !== "physical" && vibClass !== "infra_felt"){
-          updateVibClass("acoustic");
-        }
+        // #5 acoustic vib: rolling-median hop-band burst (prefer micDiff) → hop rotate
+        if (vibAuto) tickAcousticVibEnergy(performance.now());
       }
       else if (txActive) decodeFrom(loopAnalyser, loopData);
     }
     // Prefer mic for environmental burst (self-subtract via outLevel). Spectrum fallback only if no mic.
     if (suddenAuto && analyser && specData) {
       detectSuddenFrequency(analyser, specData, false);
-      if (!(micOn && micAnalyser)) detectSoundBurst(analyser, specData, false);
+      if (!(micOn && micAnalyser)) {
+        detectSoundBurst(analyser, specData, false);
+        if (vibAuto) tickAcousticVibEnergy(performance.now());
+      }
     }
     // Keep mic streaming while armed / Signal on / sudden autorotate (continuous monitor)
     if ((sensorsArmed || running || suddenAuto) && !micOn && hwCaps.micOk && !micStartPending) {
@@ -2010,7 +2255,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     } catch (e) {
       sensorStatus.mic = (e && e.name) ? e.name : "denied";
       hwCaps.micOk = false;
+      setAcousticAvailable(false);
     }
+    if (hwCaps.micOk) setAcousticAvailable(true);
 
     try {
       if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
@@ -2021,6 +2268,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       } else sensorStatus.motion = "na";
       hwCaps.motionOk = sensorStatus.motion === "ok";
     } catch (_) { sensorStatus.motion = "denied"; hwCaps.motionOk = false; }
+    setPhysicalAvailable(!!hwCaps.motionOk);
 
     try {
       if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
@@ -2136,6 +2384,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   if (suddenOff) suddenOff.addEventListener("click", () => setSuddenAuto(false));
   if (suddenOn) suddenOn.addEventListener("click", () => setSuddenAuto(true));
   vibSens.addEventListener("input", () => { vibSensOut.textContent = vibSens.value; });
+  if (materialPresetEl) {
+    materialPresetEl.addEventListener("change", () => setMaterialPreset(materialPresetEl.value));
+  }
   try {
     const sa = localStorage.getItem("hop.algo");
     if (sa === "hop" || sa === "pulse" || sa === "shriek" || sa === "cry" || sa === "siren" || sa === "metal") setAlgo(sa);
@@ -2143,7 +2394,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const sud = localStorage.getItem("hop.suddenAuto");
     if (sud === "0") setSuddenAuto(false);
     else setSuddenAuto(true);
-  } catch(_){ setSuddenAuto(true); }
+    const mp = localStorage.getItem("hop.materialPreset");
+    setMaterialPreset(mp || materialPreset, false);
+  } catch(_){ setSuddenAuto(true); refreshChannelArms(); }
 
   // ══ telemetry beacon + param patch poll ═══════════════════════════════
   // ══ structured monitor log (#22) ══════════════════════════════════════
@@ -2388,7 +2641,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId }),
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId, vibClass, vibAuto, shakeCount, accelMag, armPhysical, acousticBurst, acousticMedian, acousticDelta, acousticEnergy, armAcoustic, materialPreset }),
     getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
 
@@ -2492,6 +2745,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       shriekMs,
       vibThreshold: vibSens ? (+vibSens.value / 10) : 0.15,
       vibClass,
+      materialPreset,
       holdManual,
       band: bandWireTag(),
       lfDriveCapable: !!hwCaps.lfDriveCapable,

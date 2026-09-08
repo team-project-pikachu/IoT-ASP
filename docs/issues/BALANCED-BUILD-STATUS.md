@@ -9,9 +9,9 @@
 | #1 | implemented | M0 public Vercel hop blaster | `public/`, `vercel.json`, `docs/specs/01-m0-public-blaster.md` |
 | #2 | parked stub | Max-entropy seeds | `docs/specs/02-max-entropy-seeds.md` + `docs/issues/ISSUE-02-*` |
 | #3 | parked stub | Continuous polling & monitoring | `docs/specs/03-continuous-monitoring-watchdog.md` + `docs/issues/ISSUE-03-*` |
-| #4 | parked stub | Physical vib (DeviceMotion) | `docs/specs/04-06-vibration-channels.md` + `docs/issues/ISSUE-04-*` |
-| #5 | parked stub | Acoustic vib (mic energy) | `docs/specs/04-06-vibration-channels.md` + `docs/issues/ISSUE-05-*` |
-| #6 | parked stub | Material-dependent channel selection | `docs/specs/04-06-vibration-channels.md` + `docs/issues/ISSUE-06-*` |
+| #4 | local implemented (M3 integrate) | Physical vib (DeviceMotion) | `public/index.html` MS2_TO_G + gravity EMA + shake→hop; `docs/specs/04-06-vibration-channels.md` |
+| #5 | local implemented (M3 integrate) | Acoustic vib (mic energy) | `public/acoustic-vib-energy.js` + twin + `tickAcousticVibEnergy`; `docs/issues/ISSUE-05-*` |
+| #6 | local implemented (M3 integrate) | Material-dependent channel selection | `vib_channel_select` + `public/vib-channel-select.js` + `materialPreset` UI; owns `armPhysical`/`armAcoustic`; `docs/issues/ISSUE-06-*` |
 | #7 | parked stub | RLHF positive loop | `docs/specs/07-08-rlhf-loops.md` + `docs/issues/ISSUE-07-*` |
 | #8 | parked stub | RLHF negative loop | `docs/specs/07-08-rlhf-loops.md` + `docs/issues/ISSUE-08-*` |
 | #10 | parked stub | React / React Strict DOM rewrite | `docs/specs/10-11-react-rewrite.md` + `docs/issues/ISSUE-10-*` |
@@ -53,7 +53,7 @@
 - **Implemented / docs shipped:** #1 (already), #22 (extended), #26 dry-run (live pending), #27 docs, #34 GEN_MARK, #43 Soundcore docs.
 - **Working stubs:** #11 static fleet cards, #41 native Xcode/SPM stub, #42/#44/#45 impulse+alarm web, #39 Sonos ADR + shell.
 - **PR6 (this branch):** MVP roadmap/closed-log (#68/#69), #61 telemetry label, #60–#64 stubs, #62 checklist.
-- **Parked ADR-only:** #2–#8, #10, #14, #15, #18, #19, #24, #25 (+ duplicates #46–#53).
+- **Parked ADR-only:** #2–#3, #7–#8, #10, #14, #15, #18, #19, #24, #25 (+ duplicates #46–#53).
 - **Blocked on owner secrets:** #27 (VERCEL_*), #26 live GCS (`GCP_SA_JSON` / `IOT_ASP_GCS_BUCKET` / `LIVE_GCS`), #60/#61 live URLs, #63 apply, #64 pass rows.
 
 ## Stacked PRs
