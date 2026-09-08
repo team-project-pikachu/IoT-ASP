@@ -1,0 +1,27 @@
+bash scripts/home_ios_build.sh
+# swift: swift-driver version: 1.148.6 Apple Swift version 6.3.3 (swiftlang-6.3.3.1.3 clang-2100.1.1.101)
+# xcrun swift: /Library/Developer/CommandLineTools/usr/bin/swift
+# mode: stub (GoogleHomeSDK not required)
+[0/1] Planning build
+Building for debugging...
+[0/1] Write swift-version--1AB21518FC5DEDBE.txt
+Build complete! (0.10s)
+OK home-ios-build (native/IoTASPHome stub)
+[0/1] Planning build
+Building for debugging...
+[0/3] Write swift-version--1AB21518FC5DEDBE.txt
+error: emit-module command failed with exit code 1 (use -v to see invocation)
+[2/5] Emitting module HomeNestAlarmTests
+/Users/machine/apps/IoT-ASP-wt-m8-home-nest/native/IoTASPHome/Tests/HomeNestAlarmTests/HomeNestAlarmTests.swift:1:8: error: no such module 'XCTest'
+ 1 | import XCTest
+   |        `- error: no such module 'XCTest'
+ 2 | @testable import HomeNestAlarm
+ 3 | 
+[3/5] Compiling HomeNestAlarmTests HomeNestAlarmTests.swift
+/Users/machine/apps/IoT-ASP-wt-m8-home-nest/native/IoTASPHome/Tests/HomeNestAlarmTests/HomeNestAlarmTests.swift:1:8: error: no such module 'XCTest'
+ 1 | import XCTest
+   |        `- error: no such module 'XCTest'
+ 2 | @testable import HomeNestAlarm
+ 3 | 
+error: fatalError
+NOTE: XCTest unavailable on this host (CLT-only). Build gate remains green; run tests under full Xcode.app.

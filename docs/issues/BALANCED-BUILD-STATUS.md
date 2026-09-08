@@ -1,7 +1,7 @@
 # Balanced build status — open issues
 
 **Election:** 2 = Balanced (stub-first iterate).
-**Branch tip:** `feat/balanced-ops-secrets-adk` (rebased onto `main`)
+**Branch tip (this PR):** `feat/m8-nest-gemini-home-ios` (stack on PR8 `feat/balanced-ops-secrets-adk`)
 **Date:** 2026-09-08
 
 | Issue | Classification | Title | Key paths |
@@ -50,7 +50,8 @@
 ## Summary
 - **Implemented / docs shipped:** #1 (already), #22 (extended), #26 dry-run (live pending), #27 docs+inventory, #34 GEN_MARK, #43 Soundcore docs.
 - **Working stubs:** #11 static fleet cards, #41 native Xcode/SPM stub, #42/#44/#45 impulse+alarm web, #39 Sonos ADR + shell.
-- **PR8 (this branch):** #27 Actions inventory (ORG/PROJECT yes, TOKEN no), #63 ruleset status script, #60 ADK layout dry-check.
+- **M8 (this PR):** Nest cameras + Gemini sound-burst + glass shatter; `make home-ios-build` stub; #15 cross-linked (Apple ≠ Google).
+- **PR8 (stack base):** #27 Actions inventory (ORG/PROJECT yes, TOKEN no), #63 ruleset status script, #60 ADK layout dry-check.
 - **Parked ADR-only:** #2–#8, #10, #14, #15, #18, #19, #24, #25 (+ duplicates #46–#53).
 - **Blocked on owner secrets:** #27 (`VERCEL_TOKEN`), #26 live GCS (`GCP_SA_JSON` / `IOT_ASP_GCS_BUCKET` / `LIVE_GCS`).
 
@@ -61,4 +62,12 @@
 - PR #73 — MVP roadmap/closed-log stubs for #60–#69 (coordinate on merge).
 
 ## Stacked PRs
+
 See [STACKED-PRS.md](STACKED-PRS.md).
+## Outstanding themes (log-only — 2026-09-08)
+1. **Merge order / conflicts:** resolve `#70` and `#76` before tip `#105`.
+2. **Secrets:** Vercel `#27`, GCS `#26`, Nest/OAuth `#83`/`#93`.
+3. **Nest console / Gemini live:** M8 `#87`/`#103` stubbed only.
+4. **HW parked:** `#104`/`#39`/`#14`/`#18`.
+5. **Field + V&V:** `#61`→`#62`→`#64`.
+Comments + project 5 board refreshed same day; see [STACKED-PRS.md](STACKED-PRS.md).

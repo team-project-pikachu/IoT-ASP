@@ -65,6 +65,16 @@
       "target": "claude"
     },
     {
+      "alwaysApply": true,
+      "cursorType": "always",
+      "description": "No browser automation and no unapproved ad-hoc HTTPS page fetch; use local CLI; Firecrawl only for approved prior-art/reference ingest",
+      "globs": [],
+      "output": "CLAUDE.md",
+      "scope": "",
+      "sha256": "a27d71a50a48",
+      "slug": "no-browser-no-https-browse",
+      "source": ".cursor/rules/no-browser-no-https-browse.mdc",
+      "target": "claude"
       "alwaysApply": false,
       "cursorType": "auto",
       "description": "1Password access is headless service-account token only \u2014 never interactive signin or biometrics",
@@ -75,7 +85,6 @@
         ".github/**"
       ],
       "output": ".claude/rules/secrets-headless-op.md",
-      "scope": "",
       "sha256": "fcff1419bd45",
       "slug": "secrets-headless-op",
       "source": ".cursor/rules/secrets-headless-op.mdc",
