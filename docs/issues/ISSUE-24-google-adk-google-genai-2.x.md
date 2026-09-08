@@ -24,12 +24,13 @@ Keep `google-adk` major 1 on `main`. Make the parked spec match `origin/main` `r
 - Added `## Prior art` (repo convention) and a `docs/PRIOR_ART.md` register row.
 - Documented current pins vs parked example: `google-adk>=1.39.1,<2` stays; `google-genai>=2.22.0,<3` already on main; `requirements-adk2.example.txt` remains the 2.x target.
 - `tests/test_agent_import.py`: AST name parse always runs; live `root_agent` import skipped unless ADK is installed; parked `<2` pin guard. CI `tests` job does not install `google-adk`.
+- Added `.vv/deps/adk-2x-parked-spec.md` with the parked-spec verification procedure and results; it does not claim an ADK 2.x migration or deployment.
 
 ## Didn't
 
 - Did not bump `services/autoroute-adk/requirements.txt` to `google-adk` 2.x.
 - Did not rewrite `agent.py` or the registered tool list.
-- Did not unpark, deploy, or add `.vv/deps/adk-2x.md`.
+- Did not unpark, deploy, or add the future migration evidence file `.vv/deps/adk-2x.md`.
 
 ## Next
 

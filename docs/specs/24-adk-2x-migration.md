@@ -4,7 +4,7 @@ Issue: https://github.com/team-project-pikachu/IoT-ASP/issues/24 · Labels: `enh
 
 ## Status
 
-**Parked — keep `google-adk` major 1 (`<2`).** Production `services/autoroute-adk/requirements.txt` already pins `google-adk>=1.39.1,<2` and `google-genai>=2.22.0,<3`. The genai major-2 pin is **required** by `google-adk>=1.36` (PyPI metadata `google-genai>=2.9,<3`); it is not the #24 migration. `.claude/rules/autoroute-backend.md:19` still says keep both `<2` — the genai half is stale vs the manifest. This spec lists the **concrete ADK 2.x breaking changes that touch our `LlmAgent` / `root_agent`**, what does *not* touch us, the migration steps, and the acceptance gates — so unparking is a bounded change, not a research task.
+**Parked — keep `google-adk` major 1 (`<2`).** Production `services/autoroute-adk/requirements.txt` already pins `google-adk>=1.39.1,<2` and `google-genai>=2.22.0,<3`. The genai major-2 pin is **required** by `google-adk>=1.36` (PyPI metadata `google-genai>=2.9,<3`); it is not the #24 migration. Active guidance in `.claude/rules/autoroute-backend.md` and the spec index reflects that split. This spec lists the **concrete ADK 2.x breaking changes that touch our `LlmAgent` / `root_agent`**, what does *not* touch us, the migration steps, and the acceptance gates — so unparking is a bounded change, not a research task.
 
 No production pin changes with this spec. Parked 2.x **targets** live only in `services/autoroute-adk/requirements-adk2.example.txt`.
 

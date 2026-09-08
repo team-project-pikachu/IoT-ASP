@@ -25,7 +25,7 @@ Board: https://github.com/orgs/team-project-pikachu/projects/5 · Status as of 2
 | #19 | [19-notion-hub.md](19-notion-hub.md) — Notion hub page for ASP tooling | parked — search done, hub not created | docs |
 | #20 | [20-timestore.md](20-timestore.md) — timestore: SciPy ≥16-param fit, 0.0006 s quantum, NWS weather prior, cipher tags | implemented on `main` (`timestore.py` + `packages/algo-timestore/`, #30) | backend |
 | #22 | [22-structured-fleet-logs.md](22-structured-fleet-logs.md) — structured fleet telemetry logs (`fleet_log.py`) | implemented on branch — integration hooks pending | backend |
-| #24 | [24-adk-2x-migration.md](24-adk-2x-migration.md) — `google-adk` / `google-genai` 2.x migration | parked — keep `<2` pins | backend |
+| #24 | [24-adk-2x-migration.md](24-adk-2x-migration.md) — `google-adk` 2.x migration (`google-genai` already 2.x) | parked — keep `google-adk<2` | backend |
 | #25 | [25-hw-limited-lf-aec-micdiff.md](25-hw-limited-lf-aec-micdiff.md) — HW-limited LF mic/TX + AEC, `micDiff` (`mic_diff.py`) | HW-limited — backend helper implemented on branch | backend |
 | #26 | [26-colab-live-gcs-features.md](26-colab-live-gcs-features.md) — Colab live GCS: accel / gyro / `micDiff` → `meta/features` | implemented on branch (live write pending owner run) | backend |
 | #27 | [27-continuous-ship-dev-test-prod.md](27-continuous-ship-dev-test-prod.md) — continuous ship: GitHub Actions dev → test → prod into Vercel | implemented on branch (secrets not yet set) | infra |
