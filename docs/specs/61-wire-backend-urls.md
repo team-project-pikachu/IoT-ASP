@@ -1,46 +1,38 @@
 # #61 — Wire live backend URLs for 3-phone fleet
 
-## Status
+## Status (2026-09-08)
 
-UI affordance for backend patch/telemetry URLs landed with Balanced MVP docs; live URLs remain owner-gated.
+| Layer | State |
+|-------|--------|
+| PWA constants | Baked non-secret Vercel `BACKEND_PATCH_URL` + `BACKEND_TELEMETRY_URL` (`/api/ingest`) |
+| Vercel ingest | `api/ingest.js` → GCS when `IOT_ASP_GCS_BUCKET` + `GCP_SA_JSON` set |
+| Cloud Run twin | `iot-asp-ingest` Ready; **not** phone-public (`allUsers` blocked by org policy) |
+| `gcs_io` container | `_default_dry_root()` survives `/app` shallow path (import 500 fixed) |
+| Field 3-phone | Template `.vv/61/field-note.md` → close with #62 |
 
-## Goal
+## Chosen override path (acceptance #1)
 
-Make `BACKEND_TELEMETRY_URL` / patch URL discoverable and settable for the three-phone fleet without baking secrets into the static PWA.
+1. **Default:** `BACKEND_*` absolute HTTPS on production Vercel (no secrets, no `?` in constants).
+2. **Override:** `?telemetry=` / `?patch=` / `?pollMs=` still win (query > constants).
+3. Contract: `docs/api-contract.md`. Hold/Manual: `.vv/hot-apply.md`.
 
-## Prior art
+## Why not Cloud Run as phone target
 
-Reuse existing `?patch=` / `?telemetry=` query params and `docs/api-contract.md` rather than inventing a second config channel.
+`gcloud run services add-iam-policy-binding … --member=allUsers` → `FAILED_PRECONDITION`
+(`iam.allowedPolicyMemberDomains`). Safari `sendBeacon` cannot attach Cloud Run ID tokens, so
+phones use the public Vercel `/api/ingest` proxy.
 
-## Shipped on `main`
+## Acceptance mapping
 
-Public PWA already accepts optional backend URL query params; this issue tracks wiring them for the field fleet.
-
-## Remaining scope
-
-Document operator procedure, confirm URLs against #60 deploy, and verify beacons in field lab (#62).
-
-## Wire fields
-
-Existing patch/telemetry URL query params only; no secret values in HTML.
-
-## Clamps / safety
-
-Names-only in page source; never embed API keys.
-
-## Acceptance tests
-
-With URLs set, phones poll patch and emit telemetry; with URLs unset, offline blaster still works.
-
-## CI gate
-
-Static HTML gates (no key patterns); live URL check is manual.
-
-## Risks / HW limits
-
-Mis-pointed URLs fail closed to local/static behavior.
+| AC | How |
+|----|-----|
+| Document override path | This spec + `docs/adk-autoroute.md` + `.vv/61/WIRING.md` |
+| Beacon → GCS | `/api/ingest` after Vercel env set |
+| Patch ≤5 s + Hold freeze | Existing PWA poll/apply (unchanged) |
+| No secrets in payload | Existing redaction e2e + ingest scrub |
+| 3-phone field note | `.vv/61/field-note.md` (filled under #62) |
 
 ## Sources
 
 - https://github.com/team-project-pikachu/IoT-ASP/issues/61
-- `docs/api-contract.md`
+- `.vv/61/WIRING.md`

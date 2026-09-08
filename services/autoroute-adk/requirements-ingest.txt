@@ -1,0 +1,7 @@
+# Runtime deps for Cloud Run ingest image only (#61) — no google-adk / Vertex.
+# Pin ranges; no @latest. Matches ADK package ranges where shared.
+google-cloud-storage>=3.13.0,<4
+numpy>=2.0.0,<3
+scipy>=1.14.0,<1.19
+flask>=3.0.3,<4
+gunicorn>=23.0.0,<24

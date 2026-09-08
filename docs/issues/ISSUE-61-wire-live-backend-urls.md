@@ -1,24 +1,27 @@
 # ISSUE-61 — Wire live BACKEND_TELEMETRY_URL + patch URL
 
 **Issue:** https://github.com/team-project-pikachu/IoT-ASP/issues/61  
-**Classification:** ship polish (names + query overrides); **live HTTPS endpoints owner-gated**  
-**Status:** PWA already supports offline defaults + `?patch=` / `?telemetry=` / `?pollMs=` (stack PR6 UI label)
+**Classification:** M0 ship — public URL wiring  
+**Status:** Wired to Vercel production absolute URLs + `/api/ingest` proxy (2026-09-08)
 
 ## Did
 
-- Documented constants in `public/index.html`:
-  - `BACKEND_BASE_URL` / `BACKEND_PATCH_URL` / `BACKEND_TELEMETRY_URL` (empty = offline / static mock)
-  - Query overrides: `?patch=` · `?telemetry=` · `?pollMs=`
-- UI shows **patch** + **telemetry** URL labels (telemetry `off` when empty) — no secrets embedded
-- Tests: `tests/test_public_html.py` asserts `telemetryUrlLabel` + query override comments
+- Bake non-secret public constants in `public/index.html`:
+  - `BACKEND_PATCH_URL` → production `/patch.json`
+  - `BACKEND_TELEMETRY_URL` → production `/api/ingest`
+- Add `api/ingest.js` (CORS + GCS write when `IOT_ASP_GCS_BUCKET` + `GCP_SA_JSON` set)
+- Deploy authenticated Cloud Run twin `iot-asp-ingest` (`services/autoroute-adk/Dockerfile`)
+- Document org-policy blocker: `allUsers` / `allAuthenticatedUsers` invoker refused on `bear-iot-asp-rec`
+- Fleet notes in `public/README.txt`; evidence under `.vv/61/`
 
-## Didn't
+## Didn't / residual
 
-- Hard-code a production Cloud Run / ingest host
-- Claim 3-phone live beacon path works end-to-end
+- Full ADK autoroute author loop (#60) — ingest is write-only (`IOT_ASP_AUTOROUTE_ON_INGEST=0`)
+- Vercel env `GCP_SA_JSON` / `IOT_ASP_GCS_BUCKET` may still need owner set for live GCS (else 503)
+- Field checklist on three phones remains #62
 
 ## Next
 
-1. Owner publishes HTTPS ingest + patch after `#60`
-2. Field verify with `?telemetry=https://…/ingest&patch=https://…/patch.json` on three phones
-3. Optional: bake non-secret public URLs into constants once stable (still no keys)
+1. Owner: set Vercel project env names above (1Password → Vercel; no git)
+2. Redeploy Vercel so `/api/ingest` is live on production
+3. Field-verify beacons → GCS; then #62

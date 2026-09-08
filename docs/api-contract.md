@@ -16,7 +16,7 @@
 
 | Role | Method | Default offline | Live override |
 |------|--------|-----------------|---------------|
-| Param patch | `GET` | `/patch.json` (static mock on Vercel) | `?patch=<absolute-or-path URL>` or `BACKEND_*` constants in `public/index.html` |
+| Param patch | `GET` | `BACKEND_PATCH_URL` → production `/patch.json` (#61) | `?patch=<absolute-or-path URL>` overrides |
 | Telemetry | `POST` / `sendBeacon` | disabled (empty URL) | `?telemetry=<ingest URL>` or `BACKEND_TELEMETRY_URL` |
 
 Poll interval: **default 3000 ms**, clamped **2–5 s** (`?pollMs=` or `BACKEND_POLL_MS_DEFAULT`).  
@@ -36,8 +36,8 @@ Backend HTTP surface (independent of Vercel):
 
 | Role | Surface | Notes |
 |------|---------|--------|
-| Ingest | Cloud Run / Cloud Functions (`ingest_main.py`) | Writes `meta/telemetry/<deviceId>/<ts>.json` |
-| Patch object | GCS (or signed/CDN URL the phone polls) | `meta/patches/<deviceId>.json` |
+| Ingest | Cloud Run (`ingest_app.py` via `scripts/deploy_ingest_cloudrun.sh`; legacy `ingest_main.py` CF stub) | Writes `meta/telemetry/<deviceId>/<ts>.json`; also serves `GET /patch.json?node=` from GCS/fallback |
+| Patch object | GCS (or the ingest service `/patch.json`, or signed/CDN URL) | `meta/patches/<deviceId>.json` |
 | Agent | ADK Agent Engine / Cloud Run | Authors patches; see [adk-autoroute.md](adk-autoroute.md) |
 
 ## Telemetry POST / beacon schema (`schemaVersion: 1`)
@@ -138,7 +138,7 @@ Compact JSON heartbeat. Required fields marked ★.
 | `lastHopAgeMs` / `ctxResumes` / `watchdogTrips` | | number | Watchdog health counters — #3 |
 | `logSeq` / `logTail` | | number / array | Structured monitor-log sequence + last 3 records (`{seq, ts, level, event, msg, fields}`, no PII) — #22 |
 | `ax` `ay` `az` / `accelAxes` | | number / [3] | Linear acceleration axes (g) when available — #26 |
-| `gx` `gy` `gz` / `gyroAxes` | | number / [3] | Rotation-rate axes (rad/s; frontend converts DeviceMotion deg/s) when a sample exists — #26 |
+| `gx` `gy` `gz` / `gyroAxes` | | number / [3] | Rotation-rate axes (deg/s) when available — #26 |
 | `outLevel` | | number | Output bus level (dB) used for `micDiff` — #25/#26 |
 | `micDiff` | | number | `micEnergy − 0.85·outLevel` (best-effort AEC; browser cannot do full AEC) — #25 |
 | `bandBurst` | | string | `lf` \| `us` \| `both` burst classification — #25/#26 |
