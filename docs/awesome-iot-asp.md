@@ -62,6 +62,7 @@ Caches under `.context7/` (see [asp-prior-art.md](asp-prior-art.md)).
 ## Knowledge Base
 
 - Living KB: [`reference/knowledge-base/`](../reference/knowledge-base/README.md)
+- **Notion hub:** [IoT-ASP — Adaptive Signal Processing hub](https://www.notion.so/IoT-ASP-Adaptive-Signal-Processing-hub-3d5bf46958418109a303eb31342ff50d) (public-safe; generic ASP / Gemini / scientific tooling — no site PII)
 - Refresh: `bash scripts/kb_refresh.sh`
 - Context7 caches: `.context7/` (gitignored)
 - Firecrawl ingest: [`reference/knowledge/INGEST.md`](../reference/knowledge/INGEST.md)
