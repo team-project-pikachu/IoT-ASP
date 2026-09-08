@@ -53,7 +53,6 @@ from ..clamps import SCHEMA_VERSION, validate_patch
 from ..sudden_freq import author_sudden_freq_patch
 from . import constants
 from .detector import (
-    LABEL_GLASS_SHATTER,
     LABEL_SOUND_BURST,
     AcousticEvidence,
     BurstClassification,
