@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "nestSource": "poll",
+  "nestEvent": "none",
+  "nestBurstClass": "other",
+  "nestBurstConfidence": 0,
+  "nestBurstCorroborated": false,
+  "nestConnectivity": "UNKNOWN",
+  "nestCameras": 0,
+  "ts": "2026-09-08T00:00:00Z",
+  "rationale": "Offline mock: no Device Access project bound. Backend writes the live object; the app only displays it."
+}

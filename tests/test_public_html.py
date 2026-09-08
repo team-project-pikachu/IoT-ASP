@@ -403,3 +403,41 @@ def test_impulse_alarm_and_fleet_stub(html: str) -> None:
     assert "d.instanceId === instanceId" in html
     assert "fleetPeers[d.instanceId] = d" in html
     assert "deviceId, instanceId, seed" in html
+
+
+def test_nest_status_surface_is_display_only(html: str) -> None:
+    """#101 Nest/SDM surface renders status and must never become a second control plane.
+
+    The alarm has exactly one escalation path: backend authors a clamped patch, the app
+    polls and hot-applies it (docs/api-contract.md). If the Nest status poller could also
+    drive the alarm, Hold/Manual and the clamps would have a route around them.
+    """
+    # tiles exist
+    for el in ('id="telNestEvent"', 'id="telNestClass"', 'id="telNestAge"'):
+        assert el in html, el
+    assert 'const BACKEND_NEST_PATH = "/nest.json"' in html
+    assert 'qs.get("nest")' in html
+
+    body = _fn_body(html, "async function pollNest(){")
+    # read-only fetch, cache-busted like the patch poll
+    assert "fetch(" in body and 'cache: "no-store"' in body
+    # ...and it drives NOTHING. These are the functions that escalate.
+    for forbidden in (
+        "noteImpulse", "setAlarmState", "blastVolJump", "enterExtremeFromBurst",
+        "applyPatch", "holdManual =", "volBlast =", "alarmState =",
+    ):
+        assert forbidden not in body, f"pollNest must not call/assign {forbidden}"
+    # no credential ever leaves the page on this path
+    for forbidden in ("Authorization", "Bearer", "access_token", "client_secret", "apiKey"):
+        assert forbidden not in body, f"pollNest must not send {forbidden}"
+
+
+def test_nest_mock_is_schema_version_1_and_carries_no_pii() -> None:
+    import json
+
+    data = json.loads((ROOT / "public" / "nest.json").read_text(encoding="utf-8"))
+    assert data["schemaVersion"] == 1
+    blob = json.dumps(data)
+    # Google's docs placeholders only — never a real resource name, preview URL or address.
+    for forbidden in ("previewUrl", "enterprises/", "structures/", "home.google.com", "@gmail.com"):
+        assert forbidden not in blob, forbidden
