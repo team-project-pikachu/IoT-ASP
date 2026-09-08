@@ -7,6 +7,9 @@ telemetry keys defined there).
 ## Status
 
 **Implemented on branch `claude/mdc-conversion-features-gu3yzk`** (static + e2e green, see *Acceptance tests*).
+**Review round (2026-09-08):** a confirmed false trip — the stall limit read the *live* `dwellHi()` while the hop in
+flight kept the dwell committed at schedule time, so dragging the dwell sliders down mid-dwell counted as a stall,
+cancelled automation and cut the dwell short. Fixed: the watchdog now judges the **committed schedule** (below).
 Before this branch the app kept the Web Audio graph alive with an audio-clock scheduler, but
 nothing recovered when iOS suspends/interrupts the `AudioContext` (phone call, Siri, route change, Control Center) or
 when the scheduler stalls; the Monitor panel shows `ctx` state but no hop age or recovery counters. This spec adds a
@@ -16,8 +19,10 @@ reschedule, three Monitor cells, and the `lastHopAgeMs` / `ctxResumes` / `watchd
 ## Goal
 
 While *Signal on* is active on all three phones, each phone independently (a) notices a non-`running` `AudioContext`
-and resumes it, (b) notices a scheduler that has not produced a hop for longer than `dwellHi()·1.5 + 1 s` and
-reschedules from *now*, (c) counts both recoveries, shows them in the Monitor grid and in the heartbeat, and
+and resumes it, (b) notices a scheduler that has not delivered the hop it **committed to** — either the committed
+next hop is > 1 s behind the audio clock (`hopOverdue`) or no hop arrived for `committedDwell·1.5 + 1 s` on the wall
+clock while the context claims `running` (`clockStalled`) — and reschedules from *now*, (c) counts both recoveries,
+shows them in the Monitor grid and in the heartbeat, and
 (d) writes a structured log record for every trip so the fleet log (#22) can aggregate stalls per node/night.
 
 ## Prior art
@@ -40,17 +45,44 @@ reschedules from *now*, (c) counts both recoveries, shows them in the Monitor gr
 | What | Where |
 |------|-------|
 | Monitor cells `telHopAge` / `telResumes` / `telWatchdog` after `telSudden` (`<!-- ══ watchdog cells (#3) ══ -->`) | `public/index.html:367-370` |
-| `start()`: `lastHopAt = performance.now()` baseline | `public/index.html:846` |
-| `frame()`: `lastHopAt = performance.now()` after each `pending.shift()` | `public/index.html:1198` |
-| `// ══ watchdog (#3) ══`: `var lastHopAt, ctxResumes, watchdogTrips, lastWatchdogAt` (`:1390`), `lastHopAgeMs()` (`:1391`), `stallLimitMs()` (`:1392`), `watchdogTick()` (`:1393-1418`), `setInterval(watchdogTick, 1000)` (`:1419`) | `public/index.html:1387-1419` |
-| `updateTelUI()` fills the three cells (`—` when not running) | `public/index.html:1489-1492` |
-| `telemetryPayload()`: `lastHopAgeMs`, `ctxResumes`, `watchdogTrips` | `public/index.html:1528-1530` |
-| Systems check `Watchdog` row after `Patch hold` | `public/index.html:1720` |
-| Log records `event: "watchdog"`, `level: "warn"` via structured `monLog` (spec 01) | `public/index.html:1398`, `:1414` |
+| `start()`: `lastHopAt = performance.now(); lastHopDwellS = 0` baseline (no dwell committed yet) | `public/index.html:846` |
+| `frame()`: hop delivery delegated to `shiftDueHops()` (shared with the watchdog) | `public/index.html:1196` |
+| `// ══ watchdog (#3) ══`: `var lastHopAt, lastHopDwellS, ctxResumes, watchdogTrips, lastWatchdogAt` (`:1395`), `STALL_GRACE_S = 1.0` (`:1396`), `lastHopAgeMs()`, `committedDwellS()` (`:1400`), `stallLimitMs()` (`:1401`), `nextHopDueAt()` / `nextHopOverdueMs()` (`:1402-1403`), `shiftDueHops()` (`:1406-1419`, records `lastHopAt` + `lastHopDwellS = hop.d`), `watchdogTick()` (`:1421-1452`), `setInterval(watchdogTick, 1000)` (`:1453`) | `public/index.html:1386-1453` |
+| `updateTelUI()` fills the three cells (`—` when not running) | `public/index.html:1523-1527` |
+| `telemetryPayload()`: `lastHopAgeMs`, `ctxResumes`, `watchdogTrips` | `public/index.html:1563-1565` |
+| Debug hook `getWatchdog()` (numbers only: `lastHopAgeMs`, `nextHopOverdueMs`, `stallLimitMs`, `committedDwellS`, `ctxResumes`, `watchdogTrips`) | `public/index.html:1505` |
+| Systems check `Watchdog` row after `Patch hold` | `public/index.html:1755` |
+| Log records `event: "watchdog"`, `level: "warn"`, `fields.reason ∈ {hopOverdue, clockStalled}` via structured `monLog` (spec 01) | `public/index.html:1426`, `:1449` |
 
 Shipped deviations from the text below: counters are `var` (boot order — `setAlgo()` from `localStorage` (`:1317`) calls
 `updateTelUI()` before the block runs; a `let` would throw in its TDZ), and `watchdogTick()` also calls `updateTelUI()`
 in the resume branch so `telResumes` updates on the same tick.
+
+**Shipped stall judgement (supersedes items 3-5 of *Remaining scope*, which record the original brief):**
+
+```js
+var lastHopAt = 0, lastHopDwellS = 0, ctxResumes = 0, watchdogTrips = 0, lastWatchdogAt = 0;
+const STALL_GRACE_S = 1.0;
+function committedDwellS(){ return lastHopDwellS > 0 ? lastHopDwellS : dwellHi(); }   // hop.d of the hop in flight
+function stallLimitMs(){ return committedDwellS() * 1.5 * 1000 + 1000; }
+function nextHopDueAt(){ return pending.length ? pending[0].t : nextHopAt; }
+function nextHopOverdueMs(){ return running && ctx ? Math.round((ctx.currentTime - nextHopDueAt()) * 1000) : null; }
+function shiftDueHops(){ /* frame()'s old while-loop + `lastHopDwellS = hop.d` */ }
+function watchdogTick(){
+  … resume branch unchanged …
+  if (osc) shiftDueHops();                     // a paused rAF loop (hidden tab) is not a dead scheduler
+  const age = lastHopAgeMs(), overdue = nextHopOverdueMs();
+  const reason = overdue > STALL_GRACE_S * 1000 ? "hopOverdue" : age > stallLimitMs() ? "clockStalled" : null;
+  if (reason && osc) { …trip as before…; lastHopDwellS = 0; monLog("watchdog reschedule", "watchdog", { reason, ageMs, overdueMs, limitMs, watchdogTrips, algo }, "warn"); }
+}
+```
+
+Why two conditions: `hopOverdue` catches a scheduler that stopped refilling/draining while the audio clock runs
+(`nextHopAt` falls behind `ctx.currentTime`); `clockStalled` catches an audio clock that froze while `state` still says
+`running` (iOS route change / interruption) — there the committed hop never becomes due, so only the wall clock can
+tell. Neither reads the live dwell sliders: lowering `dMin`/`dMax` after a 60 s dwell was committed keeps
+`stallLimitMs() = 91 000` until that hop lands (e2e test 11). `shiftDueHops()` is the single place that records the
+commitment, so `frame()` and the watchdog can never disagree on "the hop in flight".
 
 Baseline verified by reading `public/index.html` (`origin/main` @ `0625e91`, before this branch; lines of that revision):
 
@@ -136,8 +168,9 @@ Additive under `schemaVersion: 1`; rows already in `docs/api-contract.md:84` (wo
 | `ctxResumes` | number | count of `ctx.resume()` attempts by the watchdog since page load | health |
 | `watchdogTrips` | number | count of stalled-scheduler reschedules since page load | health |
 
-Log records (`logTail` / `getLog()`): `event: "watchdog"`, `level: "warn"`, `fields` ⊂ `{state, ctxResumes, ageMs,
-limitMs, watchdogTrips, algo}` — numbers and enum strings only. Backend (`fleet_log`) treats unknown keys additively.
+Log records (`logTail` / `getLog()`): `event: "watchdog"`, `level: "warn"`, `fields` ⊂ `{state, ctxResumes, reason,
+ageMs, overdueMs, limitMs, watchdogTrips, algo}` — numbers and enum strings only (`reason ∈ {hopOverdue,
+clockStalled}`). Backend (`fleet_log`) treats unknown keys additively.
 
 ## Clamps / safety
 
@@ -149,6 +182,11 @@ limitMs, watchdogTrips, algo}` — numbers and enum strings only. Backend (`flee
   `running` is false the tick returns immediately, so a stopped phone never re-emits.
 - Re-trip hysteresis: `lastHopAt = now` after a trip guarantees at least `stallLimitMs()` between trips; with default
   dwell sliders that is ≥ 2.5 s (`dwellHi ≥ 1 s`).
+- **No false trips from slider edits (review finding):** the limit is derived from the committed `hop.d`, not from
+  `dwellHi()`; `syncDwell()` still never reschedules, so a lowered slider only takes effect at the next hop. The only
+  ways to shorten a committed dwell remain the explicit reschedules (`setAlgo`, `applyPatch`, `reseed`).
+- **Hidden tab:** `rAF` pauses `frame()`, but the watchdog drains `pending` itself, so an undrained queue is not
+  reported as `hopOverdue`; the 1 s-throttled `schedule()` keeps `nextHopAt` within `LOOKAHEAD + 1 s` of the clock.
 - `ctx.resume()` rejections are swallowed (no unhandled-rejection noise in Playwright's `pageerror`).
 - PII: none of the fields are free text; `algo` is the wire enum.
 - C1: no Bluetooth API involvement; route recovery is the OS's job, the watchdog only revives the Web Audio clock.
@@ -158,11 +196,14 @@ limitMs, watchdogTrips, algo}` — numbers and enum strings only. Backend (`flee
 **Result on this branch (2026-09-08 UTC):** static tests 1-8 are `test_watchdog`, `test_watchdog_cells_in_mon_grid`,
 `test_telemetry_payload_tokens`, `test_no_web_bluetooth` in `tests/test_public_html.py` (`44 passed`, exit 0).
 Browser tests 9-12 are the e2e tests `telemetryPayload carries schemaVersion 1 + #22 / #3 fields` (9) and
-`Signal on: watchdog tracks hop age or resumes a suspended ctx; Signal off resets` (10-12); `bash tests/e2e/run.sh`
-→ `7 passed`, exit 0. **Headless-audio caveat observed:** Playwright's Chromium 141 (`chromium-1194`) reported
-`audioContextState: "running"` 1.5 s after *Signal on* (hop age 52 ms, `ctxResumes 0`, `watchdogTrips 0`), so the
-"running" branch ran, including the 4.5 s no-false-trips wait at `dMin = dMax = 1 s`; the `suspended` branch
-(`ctxResumes ≥ 1` within 3 s) remains in the spec for sinks without audio.
+`watchdog: no false trips on a healthy scheduler (Hold + sudden-auto off), trips on a real stall` (10-12);
+`bash tests/e2e/run.sh` → `9 passed (14.7s)`, exit 0 after the review round (static: `48 passed`, incl.
+`test_watchdog_stall_uses_committed_schedule`). **Headless-audio caveat observed:** Playwright's Chromium 141
+(`chromium-1194`) reported `audioContextState: "running"` 1.5 s after *Signal on*, so the "running" branch ran:
+committed dwell ≈ 60 s survived `dMin = dMax = 1 s` for 4.5 s with `watchdogTrips 0` and no `watchdog` log record;
+after *Reseed* (committed dwell ≤ 1 s, limit ≤ 2 500 ms) a frozen audio clock produced a trip with
+`fields.reason === "clockStalled"` within 8 s. The `suspended` branch (`ctxResumes ≥ 1` within 3 s) remains for sinks
+without audio.
 
 Static (`tests/test_public_html.py`, alongside spec 01/02 checks):
 
@@ -170,7 +211,9 @@ Static (`tests/test_public_html.py`, alongside spec 01/02 checks):
    present exactly once.
 2. `ctx.state !== "running"` and `ctx.resume()` both present inside the `watchdogTick` body; `ctxResumes++` and
    `watchdogTrips++` present.
-3. `dwellHi() * 1.5 * 1000 + 1000` literal present (`stallLimitMs`).
+3. `committedDwellS() * 1.5 * 1000 + 1000` literal present (`stallLimitMs`); `stallLimitMs` body contains no
+   `dwellHi()` (review regression `test_watchdog_stall_uses_committed_schedule`, which also pins `shiftDueHops()`,
+   `lastHopDwellS = hop.d;` once, `STALL_GRACE_S = 1.0`, the two `reason` enums and the `start()` reset).
 4. `lastHopAt = performance.now();` occurs at least twice (frame shift + start).
 5. `"watchdog reschedule"` literal present; `"watchdog"` used as the `event` argument (`, "watchdog",` present).
 6. Ids `telHopAge`, `telResumes`, `telWatchdog` present inside the `mon-grid` div (text between
@@ -182,17 +225,23 @@ Browser (`tests/e2e/public_smoke.spec.mjs`):
 
 9. Before any gesture: `p = __hop.telemetryPayload()` has `p.lastHopAgeMs === null`, `p.ctxResumes === 0`,
    `p.watchdogTrips === 0`; `#telResumes` and `#telWatchdog` text is `0`; `#telHopAge` text is `—`.
-10. Click `#power` (Signal on) — Chromium headless is launched by Playwright with autoplay allowed for user gestures;
-    after `page.waitForTimeout(1500)`: `__hop.getState().running === true`, `telemetryPayload().lastHopAgeMs` is a
-    finite number `≥ 0`, and `audioContextState === "running"`. If the context reports `suspended` in headless
-    (no audio device), the test instead asserts `ctxResumes >= 1` within 3 s — i.e. the watchdog is observably
-    attempting recovery — and marks the case in the test name (`"watchdog resumes suspended ctx"`).
-11. Stall injection: `page.evaluate(() => { /* pending is closure-private */ })` cannot clear `pending`, so the test
-    lowers the dwell sliders to their minimum (`#dMin`, `#dMax` → dispatch `input`), waits `stallLimitMs + 2000` ms
-    while the page is running, and asserts `watchdogTrips === 0` (**no false trips** on a healthy scheduler).
-    A positive trip is asserted via the structured log after `page.evaluate(() => window.__hop.getState())` only
-    when `audioContextState !== "running"` (headless without audio): then `getLog().some(r => r.event === "watchdog")`.
-12. Click `#power` again (Signal off): `running === false`, `lastHopAgeMs === null`, counters unchanged.
+10. Isolation first (review finding 2): click `#holdPatchBtn` (no remote patch can reschedule) and `#suddenOff`
+    (no sudden-auto rotation), set `#dMin = #dMax = 60` (both values set before either `input` fires — `syncDwell`
+    clamps `dMin` to `dMax` otherwise), then click `#power` (Signal on). After `page.waitForTimeout(1500)`:
+    `getState().running === true`, `algo === "hop"`, `telemetryPayload().lastHopAgeMs` finite `≥ 0`,
+    `getWatchdog().committedDwellS ≈ 60`, `stallLimitMs === 91000`. If the context reports `suspended` in headless
+    (no audio device), the test instead asserts `ctxResumes >= 1` within 3 s and a `watchdog` log record, then ends.
+11. **No false trips:** set `#dMin = #dMax = 1`, wait `1·1.5·1000 + 1000 + 2000` ms → `committedDwellS` still ≈ 60,
+    `watchdogTrips === 0`, `nextHopOverdueMs < 0`, no `event === "watchdog"` record, `#telWatchdog` text `0`, `algo`
+    unchanged. **Real stall:** click `#reseedBtn` (reschedule under the 1 s dwell) and wait until
+    `getWatchdog().committedDwellS ∈ (0, 1]` (`stallLimitMs ≤ 2500`); then set `window.__freezeAudioClock = true`
+    (an `addInitScript` wraps the `BaseAudioContext.prototype.currentTime` getter so the clock the page reads holds
+    still while `state` stays `running` — the app is untouched) and wait ≤ 8 s for `watchdogTrips >= 1`. The trip
+    record has `msg === "watchdog reschedule"`, `level === "warn"`, `fields.reason === "clockStalled"`,
+    `fields.limitMs ≤ 2500`, `fields.ageMs > fields.limitMs`, `fields.algo === "hop"`; `ctxResumes === 0`;
+    `#telWatchdog` is no longer `0`.
+12. Unfreeze, click `#power` again (Signal off): `running === false`, `lastHopAgeMs === null`, `watchdogTrips`
+    kept (≥ 1), no `pageerror`.
 
 Exit code and any headless-audio caveat are recorded in the implementation notes.
 

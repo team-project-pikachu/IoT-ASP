@@ -843,7 +843,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (!txActive) toneGain.gain.exponentialRampToValueAtTime(Math.max(level(),0.0002), ctx.currentTime+0.02);
 
     running = true; hopCount = 0;
-    lastHopAt = performance.now();                    // watchdog baseline (#3)
+    lastHopAt = performance.now(); lastHopDwellS = 0; // watchdog baseline; no dwell committed yet (#3)
     nextHopAt = ctx.currentTime + 0.05 + rand() * 0.5; // seed-determined 0–500 ms start stagger (#2)
     pending.length = 0; history.length = 0;
     history.push({ t:performance.now(), f:lastTarget });
@@ -1193,15 +1193,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   function frame(){
     if (ctx){
       if (running){
-        while (pending.length && pending[0].t <= ctx.currentTime){
-          const hop = pending.shift();
-          lastHopAt = performance.now();              // hop-age tracking (#3)
-          history.push({ t:performance.now(), f:hop.f });
-          targetEl.textContent = nf(hop.f);
-          holdEl.textContent = hop.d.toFixed(1) + " s";
-          hopsEl.textContent = ++hopCount;
-          flashUntil = performance.now() + 220;
-        }
+        shiftDueHops();                             // hop delivery + committed dwell (#3, shared with watchdog)
         const at = pending.length ? pending[0].t : nextHopAt;
         countdownEl.textContent = Math.max(0, at - ctx.currentTime).toFixed(1) + " s";
       }
@@ -1329,20 +1321,27 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const records = [];
   let logSeq = 0;
   const LOG_LEVELS = { debug: 1, info: 1, warn: 1, error: 1 };
+  // HTML-escape for every string that is concatenated into innerHTML (monitor log lines, systems-check rows).
+  function escHtml(s){ return String(s).replace(/[<>&"']/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;", "'":"&#39;" }[c])); }
+  // Strip the query/fragment of any URL-like token (`https://…?sig=…`, `/patch.json?token=…`) before a message is
+  // stored: the ring buffer is shipped on the wire as `logTail` and copied as JSON, and `?patch=` / `?telemetry=`
+  // may be a signed / tokened URL. Plain prose with a "?" is untouched (only tokens starting with `http(s)://` or `/`).
+  const URL_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#]*)[?#][^\s]*/g;
+  function redactUrlQuery(s){ return String(s).replace(URL_QUERY_RE, "$1?[redacted]"); }
   function monLog(msg, event, fields, level){
     const rec = {
       seq: ++logSeq,
       ts: new Date().toISOString(),
       level: LOG_LEVELS[level] ? level : "info",
       event: event ? String(event).slice(0, 32) : "log",
-      msg: String(msg).slice(0, 240),
+      msg: redactUrlQuery(msg).slice(0, 240),
       fields: fields && typeof fields === "object" ? fields : {}
     };
     records.push(rec);
     while (records.length > LOG_MAX) records.shift();
     if (!monLogEl) return;
     const t = rec.ts.slice(11, 19);
-    const safe = rec.msg.replace(/[<>&]/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;" }[c]));
+    const safe = escHtml(rec.msg);
     const line = document.createElement("div");
     line.className = "line";
     line.innerHTML = "<span class='hi'>" + t + "</span> " + safe;
@@ -1386,10 +1385,39 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   // ══ watchdog (#3) ══
   // 1 s tick: resume a non-running AudioContext; reschedule a stalled hop scheduler.
+  // A stall is judged against the schedule the scheduler COMMITTED to, never against the live dwell sliders
+  // (lowering dMin/dMax mid-dwell must not count as a stall — the in-flight hop keeps its committed dwell):
+  //   (a) hopOverdue  — the committed next hop (`pending[0].t`, else `nextHopAt`) is more than STALL_GRACE_S
+  //                     behind the audio clock: the scheduler stopped refilling / draining.
+  //   (b) clockStalled — no hop was delivered for longer than committedDwell·1.5 + 1 s on the wall clock while the
+  //                     context claims "running": the audio clock is frozen (iOS route change / interruption).
   // `var` (not `let`): updateTelUI() can run during boot (setAlgo from localStorage) before this block executes.
-  var lastHopAt = 0, ctxResumes = 0, watchdogTrips = 0, lastWatchdogAt = 0;
+  var lastHopAt = 0, lastHopDwellS = 0, ctxResumes = 0, watchdogTrips = 0, lastWatchdogAt = 0;
+  const STALL_GRACE_S = 1.0;
   function lastHopAgeMs(){ return running && lastHopAt > 0 ? Math.round(performance.now() - lastHopAt) : null; }
-  function stallLimitMs(){ return dwellHi() * 1.5 * 1000 + 1000; }
+  // Dwell committed by the hop in flight (`hop.d` of the last shifted hop); before the first shift the slider
+  // upper bound is the only (conservative) information available.
+  function committedDwellS(){ return lastHopDwellS > 0 ? lastHopDwellS : dwellHi(); }
+  function stallLimitMs(){ return committedDwellS() * 1.5 * 1000 + 1000; }
+  function nextHopDueAt(){ return pending.length ? pending[0].t : nextHopAt; }
+  function nextHopOverdueMs(){ return running && ctx ? Math.round((ctx.currentTime - nextHopDueAt()) * 1000) : null; }
+  // Shared with frame(): deliver every hop whose audio-clock time has passed and record the commitment.
+  // The watchdog drains too, so a paused rAF loop (hidden tab) is not mistaken for a dead scheduler.
+  function shiftDueHops(){
+    let n = 0;
+    while (pending.length && pending[0].t <= ctx.currentTime){
+      const hop = pending.shift();
+      lastHopAt = performance.now();              // hop-age tracking (#3)
+      lastHopDwellS = hop.d;                      // committed dwell of the hop now in flight (#3)
+      history.push({ t:performance.now(), f:hop.f });
+      targetEl.textContent = nf(hop.f);
+      holdEl.textContent = hop.d.toFixed(1) + " s";
+      hopsEl.textContent = ++hopCount;
+      flashUntil = performance.now() + 220;
+      n++;
+    }
+    return n;
+  }
   function watchdogTick(){
     const now = performance.now();
     if (!running || !ctx) return;
@@ -1400,8 +1428,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       updateTelUI();
       return;                               // hop age is not judged while the clock is stopped
     }
+    if (osc) shiftDueHops();
     const age = lastHopAgeMs();
-    if (age != null && age > stallLimitMs() && osc) {
+    const overdue = nextHopOverdueMs();
+    const reason = overdue != null && overdue > STALL_GRACE_S * 1000 ? "hopOverdue"
+                 : age != null && age > stallLimitMs() ? "clockStalled" : null;
+    if (reason && osc) {
+      const limit = Math.round(stallLimitMs());
       watchdogTrips++;
       pending.length = 0;
       nextHopAt = ctx.currentTime + 0.05;
@@ -1411,7 +1444,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       } catch (_) {}
       schedule();
       lastHopAt = now;                      // hysteresis: no re-trip on the same stall
-      monLog("watchdog reschedule", "watchdog", { ageMs: age, limitMs: Math.round(stallLimitMs()), watchdogTrips, algo: algoWireName() }, "warn");
+      lastHopDwellS = 0;                    // the fresh schedule commits again on its first shift
+      monLog("watchdog reschedule", "watchdog", { reason, ageMs: age, overdueMs: overdue, limitMs: limit, watchdogTrips, algo: algoWireName() }, "warn");
     }
     lastWatchdogAt = now;
     updateTelUI();
@@ -1467,7 +1501,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource })
+    getState: () => ({ running, holdManual, algo, seed, seedSource }),
+    getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
   });
 
   function updateTelUI(){
@@ -1626,7 +1661,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   setInterval(pollPatch, POLL_MS);
   setTimeout(pollPatch, 500);
   updateTelUI();
-  monLog("scientific tooling ready · patch " + PATCH_URL);
+  monLog("scientific tooling ready · patch " + redactUrlQuery(PATCH_URL));
 
   // ══ multi-device roles + systems check ═══════════════════════════════
   const roleTx = $("roleTx"), roleRx = $("roleRx"), roleHop = $("roleHop");
@@ -1661,7 +1696,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
 
   function row(label, status, detail){
     const cls = status === "ok" ? "ok" : status === "bad" ? "bad" : "na";
-    return "<li><span>" + label + "</span><span class='" + cls + "'>" + detail + "</span></li>";
+    return "<li><span>" + escHtml(label) + "</span><span class='" + cls + "'>" + escHtml(detail) + "</span></li>";
   }
 
   async function systemsCheck(){
