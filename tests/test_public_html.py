@@ -51,7 +51,8 @@ def test_invariant_literals(html: str) -> None:
 # ── 2. ids ───────────────────────────────────────────────────────────────────
 NEW_IDS = ("copyLogBtn", "copyFleetLogBtn", "reseedBtn", "simImpulseBtn", "fleetSeedCompare",
            "telHopAge", "telResumes", "telWatchdog",
-           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal")
+           "telImpulse", "telVolBlast", "telAlarm", "fleetLocal",
+           "telemetryUrlLabel", "patchUrlLabel")
 OLD_IDS = ("telDevice", "telSeed", "telAlgo", "telPeak", "telAccel", "telMic", "telVib", "telHold",
            "telSudden", "monLog", "sysList", "sysBtn", "vol", "fMin", "fMax", "holdPatchBtn", "power")
 
@@ -90,8 +91,15 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "peerStale" in html
 
 
-# ── 4. enrichment literals ───────────────────────────────────────────────────
-def test_enrichment_literals(html: str) -> None:
+def test_backend_url_query_overrides(html: str) -> None:
+    """#61 — live URLs via query, never baked secrets."""
+    assert 'id="telemetryUrlLabel"' in html
+    assert "qs.get(\"patch\")" in html or "qs.get('patch')" in html or 'qs.get("patch")' in html
+    assert 'qs.get("telemetry")' in html
+    assert 'qs.get("pollMs")' in html
+    assert 'BACKEND_TELEMETRY_URL = ""' in html
+    assert "TELEMETRY_URL || \"off\"" in html or 'TELEMETRY_URL || "off"' in html
+
     for lit in ('"ac120"', '"America/New_York"', '"10-20"', '"17-23k"', "function nightNYNow("):
         assert lit in html, lit
     assert "+fMin.value <= 100" in html

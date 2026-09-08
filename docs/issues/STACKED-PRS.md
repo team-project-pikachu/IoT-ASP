@@ -22,5 +22,7 @@
 | #41 App Store / SensorKit | Entitlement + Xcode.app device session |
 | #60 ADK prod | Cloud Run / Agent Engine deploy credentials |
 | #61 live backend URLs | Owner publish ingest/patch HTTPS endpoints |
+| #63 ruleset apply | Owner `make protect-main` |
+| #64 V&V pass rows | Fresh evidence after field `#62` |
 
 Status board: [BALANCED-BUILD-STATUS.md](BALANCED-BUILD-STATUS.md).

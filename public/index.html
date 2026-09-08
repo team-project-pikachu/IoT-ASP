@@ -345,7 +345,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <div class="tapbar" style="margin-top:10px">
         <button type="button" class="tap" id="holdPatchBtn" aria-pressed="false">Hold / Manual</button>
       </div>
-      <p class="sub" style="margin-top:8px">patch <b id="patchUrlLabel">/patch.json</b> · <b id="patchStatus">idle</b> · gemini flag <b id="geminiFlagLive">—</b></p>
+      <p class="sub" style="margin-top:8px">patch <b id="patchUrlLabel">/patch.json</b> · telemetry <b id="telemetryUrlLabel">off</b> · <b id="patchStatus">idle</b> · gemini flag <b id="geminiFlagLive">—</b></p>
       <div class="row" style="margin-top:12px"><label for="vibSens">sens</label><input type="range" id="vibSens" min="1" max="40" step="1" value="12"><output id="vibSensOut">12</output></div>
     </div>
 
@@ -541,7 +541,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const rxCount = $("rxCount"), rxErr = $("rxErr"), rxBar = $("rxBar");
   const specCv = $("spectrum"), traceCv = $("trace");
   const holdPatchBtn = $("holdPatchBtn");
-  const patchUrlLabel = $("patchUrlLabel"), patchStatusEl = $("patchStatus");
+  const patchUrlLabel = $("patchUrlLabel"), telemetryUrlLabel = $("telemetryUrlLabel"), patchStatusEl = $("patchStatus");
   const telDevice = $("telDevice"), telSeed = $("telSeed"), telAlgo = $("telAlgo");
   const telPeak = $("telPeak"), telAccel = $("telAccel"), telMic = $("telMic");
   const telVib = $("telVib"), telHold = $("telHold"), ctxStateLabel = $("ctxStateLabel");
@@ -2315,6 +2315,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     paintFleetCards();
     if (geminiFlagLive) geminiFlagLive.textContent = geminiAutorouteFlag ? "pending" : "—";
     if (patchUrlLabel) patchUrlLabel.textContent = PATCH_URL;
+    if (telemetryUrlLabel) telemetryUrlLabel.textContent = TELEMETRY_URL || "off";
     if (patchStatusEl) patchStatusEl.textContent = patchStatus;
     if (telSensors) telSensors.textContent = sensorsArmed ? "armed" : (sensorStatus.audio || "idle");
     if (telSensMic) telSensMic.textContent = sensorStatus.mic;
