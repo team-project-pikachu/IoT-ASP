@@ -19,6 +19,7 @@ are set. Everything offline is green (see Observed).
 | Vercel Git auto-deploy for `main` disabled; all original headers preserved | `vercel.json` |
 | Remote smoke: 200, `Hold / Manual` + `holdManual`, `Permissions-Policy` ∋ microphone, `patch.json` `schemaVersion == 1`, manifest `Content-Type` | `scripts/deploy_smoke.sh` |
 | Local secret-name pre-flight + 1Password / `gh secret set` recipe | `scripts/vercel_secrets_check.sh` |
+| Deploy **notifications** (webhooks → HMAC → optional `repository_dispatch`) | `docs/vercel-webhooks.md`, `.github/workflows/vercel-webhook.yml`, `scripts/vercel_webhook_verify.py`, `tests/test_vercel_webhook.py` (issue #37; complementary to #27) |
 
 ## Required secret NAMES (values never recorded here)
 

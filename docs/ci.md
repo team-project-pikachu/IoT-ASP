@@ -29,7 +29,16 @@ production. Every checkout uses one `DEPLOY_REF`:
 `workflow_run.head_sha` for CI-triggered runs, or the requested dispatch
 ref (default `main`) for manual runs. Missing Vercel secrets produce a
 notice and skip deployment; see [deploy.md](deploy.md) for setup,
-fallback, rollback, and environment protection.
+fallback, rollback, and environment protection (issue #27).
+
+## Vercel deploy notifications (webhooks)
+
+Outbound Vercel **webhooks** (HMAC `x-vercel-signature`, secret name `VERCEL_WEBHOOK_SECRET`) are
+documented in [vercel-webhooks.md](vercel-webhooks.md) (issue #37). Actions receives notifications via
+`repository_dispatch` `vercel-deployment` (`.github/workflows/vercel-webhook.yml`) after an external
+HTTPS receiver verifies the signature — complementary to Deploy Hooks / CLI ship in #27, not a
+substitute. Settings UI:
+<https://vercel.com/1digital-design/hop-ultrasonic/settings/webhooks>.
 
 ## Required on `main`
 
@@ -51,4 +60,5 @@ Evidence package: [`.vv/ci/`](../.vv/ci/).
 
 - Heavy Firecrawl / link crawls
 - Live GCP / Vertex / Vercel deploy — the Vercel dev → test → prod ship lives in `.github/workflows/deploy.yml` (see [deploy.md](deploy.md), issue #27)
+- Hosting the public HTTPS webhook receiver (stub only: `services/vercel-webhook-receiver/`, docs #37)
 - Editing SEBoK plan files
