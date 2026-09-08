@@ -25,6 +25,9 @@ study/
 *.wav
 recordings/
 tests/e2e/.server.log
+coverage.xml
+.coverage
+.coverage.*
 
 # Swift SPM / native compile-check (#41)
 native/**/.build/
