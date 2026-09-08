@@ -173,7 +173,10 @@ def test_webhook_workflow_triggers(on: dict):
 
 
 def test_webhook_workflow_minimal_permissions(wf: dict):
-    assert wf["permissions"] == {"contents": "read"}
+    # contents:read for checkout-less summary; issues:write for optional #37 comment
+    assert wf["permissions"]["contents"] == "read"
+    assert wf["permissions"].get("issues") == "write"
+    assert set(wf["permissions"]) <= {"contents", "issues", "actions", "checks"}
 
 
 def test_webhook_workflow_summary_wiring(wf_raw: str, wf: dict):
@@ -188,6 +191,7 @@ def test_webhook_workflow_summary_wiring(wf_raw: str, wf: dict):
     run = step["run"]
     assert "EVENT_NAME" in run
     assert "GITHUB_STEP_SUMMARY" in run
+    assert "gh issue comment 37" in run
     # Must not hard-code both triggers as the source row.
     assert "repository_dispatch` / `workflow_dispatch" not in wf_raw
     assert "secrets.VERCEL_WEBHOOK_SECRET" not in run  # HMAC stays outside Actions

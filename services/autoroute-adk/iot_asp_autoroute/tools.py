@@ -244,3 +244,90 @@ def hw_limits_report() -> dict[str, Any]:
         docs/iphone-bluetooth.md and the native companion path (#9).
     """
     return _hw_limits_report()
+
+
+def nest_fleet_status() -> dict[str, Any]:
+    """Read-only Google Nest (SDM) fleet status: config, documented quotas, pacing floors (#85 #84).
+
+    Never issues a live SDM call from the agent loop and never authors a patch — the
+    continuous poller owns the API budget. When credentials are absent this reports what
+    is missing by secret NAME only, which is the expected state in dry-run and CI.
+
+    Returns:
+        Dict with ok, configured, missingSecrets (names), cadences (seconds), quotas, and docs.
+    """
+    from .nest import constants as nest_constants
+
+    missing = [name for name in nest_constants.SECRET_NAMES if not os.environ.get(name)]
+    return {
+        "ok": True,
+        "configured": not missing,
+        "missingSecrets": missing,
+        "gcpProject": os.environ.get(nest_constants.ENV_GCP_PROJECT, "bear-iot-asp-rec"),
+        "cadenceS": {
+            "devicesList": nest_constants.DEFAULT_LIST_CADENCE_S,
+            "perCamera": nest_constants.DEFAULT_CAMERA_CADENCE_S,
+        },
+        "maxCamerasOnPollPath": nest_constants.max_cameras_at_cadence(
+            nest_constants.DEFAULT_CAMERA_CADENCE_S
+        ),
+        "quotaNote": (
+            "camera instance is 30 QPM or 100 QPH — the hourly cap binds at 36.0 s "
+            "sustained; events (Pub/Sub) cost no SDM quota and carry the fast path"
+        ),
+        "acousticEvents": sorted(nest_constants.ACOUSTIC_EVENTS),
+        "docs": ["docs/nest-device-access.md", "docs/specs/85-nest-google-home-integration.md"],
+        "source": "https://developers.google.com/nest/device-access/project/limits",
+    }
+
+
+def nest_classify_burst(evidence_json: str) -> dict[str, Any]:
+    """Classify one acoustic burst from Nest + phone evidence via Gemini Enterprise (#87 #96 #103).
+
+    Advisory only. Returns a label and escalation hints; it never writes a patch. The
+    caller must still route hints through write_patch, which enforces clamps and refuses
+    under holdManual. Falls back to a deterministic offline heuristic with no credentials,
+    so this tool always answers.
+
+    Args:
+        evidence_json: JSON with any of nestEvent, micDiffDb, micEnergyDb, bandEnergyLfDb,
+            bandEnergyUsDb, bandBurst, soundBurst, extremeActive, absA, vibClass, lagS,
+            nightNY, holdManual. Never audio bytes, URLs or raw device ids.
+    """
+    from .nest import detector as nest_detector
+
+    try:
+        raw = json.loads(evidence_json) if isinstance(evidence_json, str) else dict(evidence_json)
+    except json.JSONDecodeError as exc:
+        return {"ok": False, "error": f"invalid JSON: {exc}"}
+
+    evidence = nest_detector.AcousticEvidence(
+        nest_event=raw.get("nestEvent"),
+        nest_device_type=raw.get("nestDeviceType"),
+        nest_device_ref=raw.get("nestDeviceRef"),
+        mic_diff_db=raw.get("micDiffDb"),
+        mic_energy_db=raw.get("micEnergyDb"),
+        band_energy_lf_db=raw.get("bandEnergyLfDb"),
+        band_energy_us_db=raw.get("bandEnergyUsDb"),
+        band_burst=raw.get("bandBurst"),
+        sound_burst=bool(raw.get("soundBurst")),
+        extreme_active=bool(raw.get("extremeActive")),
+        abs_a=raw.get("absA"),
+        vib_class=raw.get("vibClass"),
+        lag_s=raw.get("lagS"),
+        night_ny=bool(raw.get("nightNY")),
+    )
+    result = nest_detector.GeminiEnterpriseDetector().classify(evidence)
+    hold = bool(raw.get("holdManual"))
+    return {
+        "ok": True,
+        "label": result.label,
+        "confidence": result.confidence,
+        "rationale": result.rationale,
+        "source": result.source,
+        "corroborated": result.corroborated,
+        "wire": result.as_wire(),
+        "escalationHint": nest_detector.escalation_hint(result, hold_manual=hold),
+        "holdManual": hold,
+        "note": "advisory — route hints through write_patch, which enforces clamps and Hold",
+    }
