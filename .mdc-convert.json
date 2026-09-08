@@ -1,0 +1,13 @@
+{
+  "_doc": "Config for scripts/mdc_convert.py (Cursor .mdc → CLAUDE.md / .claude/rules / .claude/skills / SPEC.md). Keys starting with _ are ignored. 'spec' lists rule slugs (file stems) routed into SPEC.md managed blocks; 'map' forces a target per slug: claude | rule | skill | spec. Unlisted rules follow the alwaysApply/globs/description table in CLAUDE.md.",
+  "sources": [".cursor/rules"],
+  "legacy_cursorrules": true,
+  "claude_file": "CLAUDE.md",
+  "spec_file": "SPEC.md",
+  "rules_dir": ".claude/rules",
+  "skills_dir": ".claude/skills",
+  "manifest": ".claude/mdc-manifest.json",
+  "agent_requested_as": "skill",
+  "spec": [],
+  "map": {}
+}
