@@ -17,10 +17,18 @@ services/autoroute-adk/
     tools.py
     clamps.py
     priors.py
-    timestore.py      # shared circle/quantum prior + telemetry stamp adapter
+    timestore.py      # adapter → relative import of vendored algo_timestore
+    algo_timestore/   # vendored from packages/algo-timestore (ADK deploy tree)
     sudden_freq.py    # suddenFreq → autorotate
     gcs_io.py
     dry_run.py
+```
+
+After editing `packages/algo-timestore/`, sync the vendor copy:
+
+```bash
+bash scripts/sync_algo_timestore_to_adk.sh
+bash scripts/adk_layout_import_smoke.sh
 ```
 
 ## Dry-run (no keys / no Vertex)

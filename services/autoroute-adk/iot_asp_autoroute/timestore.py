@@ -1,21 +1,24 @@
-"""Adapter from autoroute to the standalone algo-timestore package."""
+"""Adapter from autoroute to the vendored algo_timestore subpackage.
+
+Canonical source lives at ``packages/algo-timestore/``; ADK deploy only ships
+``iot_asp_autoroute/``, so the library is copied under
+``iot_asp_autoroute/algo_timestore/`` (see ``scripts/sync_algo_timestore_to_adk.sh``).
+
+Import is **lazy**: ``priors`` / ``fleet_log`` / ``mic_diff`` must not pull numpy/scipy
+at module import time (see ``tests/test_fleet_log.py`` hygiene + ``test_md15_*``).
+Relative import keeps ADK packaging safe (no monorepo path insertion / parents[N] hacks).
+"""
 
 from __future__ import annotations
 
-import importlib
-import sys
-from pathlib import Path
 from typing import Any
-
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_TIMESTORE_ROOT = _REPO_ROOT / "packages" / "algo-timestore"
-if str(_TIMESTORE_ROOT) not in sys.path:
-    sys.path.insert(0, str(_TIMESTORE_ROOT))
 
 
 def _load_timestore() -> Any:
-    """Load the SciPy-backed package only when a timestore operation is requested."""
-    return importlib.import_module("algo_timestore")
+    """Load the SciPy-backed vendored subpackage only when a stamp/prior is requested."""
+    from . import algo_timestore
+
+    return algo_timestore
 
 
 def autoroute_timestore_prior() -> dict[str, Any]:
