@@ -63,6 +63,23 @@
       "slug": "asp-prior-art",
       "source": ".cursor/rules/asp-prior-art.mdc",
       "target": "claude"
+    },
+    {
+      "alwaysApply": false,
+      "cursorType": "auto",
+      "description": "1Password access is headless service-account token only \u2014 never interactive signin or biometrics",
+      "globs": [
+        "scripts/**",
+        "services/**",
+        "docs/**",
+        ".github/**"
+      ],
+      "output": ".claude/rules/secrets-headless-op.md",
+      "scope": "",
+      "sha256": "fcff1419bd45",
+      "slug": "secrets-headless-op",
+      "source": ".cursor/rules/secrets-headless-op.mdc",
+      "target": "rule"
     }
   ],
   "tool": "scripts/mdc_convert.py",
