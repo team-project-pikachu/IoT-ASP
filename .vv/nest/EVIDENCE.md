@@ -2,7 +2,8 @@
 
 **Configuration item:** `services/autoroute-adk/iot_asp_autoroute/nest/**`, `tests/test_nest_*.py`,
 `scripts/nest_gcp_bootstrap.sh`, `scripts/nest_dev.sh`, `scripts/nest_secrets_headless.sh`.
-**Revision under test:** `e41b32a` on branch `claude/google-home-integration-l0zu25`, base `main` @ `332ea9e`.
+**Revision under test:** branch `claude/google-home-integration-l0zu25` merged with base `main` @ `d790831`
+(#183, which locks Web Audio gain at 100% and removes the volume slider).
 **Date (UTC):** 2026-09-09. **Operator:** Claude Code session (remote Linux container).
 **Secrets:** none read, none present. No values appear in this file.
 
@@ -15,24 +16,29 @@
 | `bash scripts/autoroute_dev.sh` | `0` | `OK fleet_log jsonl` |
 | `python3 scripts/mdc_convert.py --check` | `0` | `OK mdc_convert --check` |
 | `bash scripts/nest_gcp_bootstrap.sh` (dry run) | `0` | `OK nest_gcp_bootstrap` |
-| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `556 passed in 45.88s` |
+| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `557 passed in 45.70s` |
 | `… pytest tests/test_nest_*.py -q` | `0` | `224 passed in 11.95s` |
-| `bash tests/e2e/run.sh` | `0` | `11 passed (12.2s)` / `OK e2e` |
+| `bash tests/e2e/run.sh` | `0` | `11 passed (11.2s)` / `OK e2e` |
 | `bash scripts/nest_secrets_headless.sh check` | **`1`** | `FAIL: op not installed (brew install 1password-cli)` |
 
 The last row is an **expected** non-zero: the container has no `op` binary, and the script is
 headless-only by design, so it refuses rather than degrading to an interactive prompt. Re-run on a
 host with `op` and `OP_SERVICE_ACCOUNT_TOKEN` exported.
 
-Determinism: the suite was run twice from a cleared `__pycache__` (`556 passed` both times, the
-second with `-p no:randomly`). Recorded from an earlier revision and still the standing explanation:
-two failures once seen in `test_nest_poller.py` were traced to a stale bytecode cache left by a
-branch reset that briefly removed `poller.py`, not to test-order pollution.
+Determinism: the suite was run twice from a cleared `__pycache__` at `e41b32a` — `556 passed` both
+times, the second with `-p no:randomly`. The count is `557` in the table above because merging #183
+brought its own tests with it.
 
-CI on this exact head: [run 390](https://github.com/team-project-pikachu/IoT-ASP/actions/runs/34303143667)
-— `success`. Runs 388 and 389 on the same sha show `cancelled` jobs; both were superseded by 390 under
-`ci.yml`'s `concurrency: cancel-in-progress`, after a PR-body edit re-triggered the workflow. Their
-job logs cancel inside `setup-python`, before any test body ran — not failures.
+Carried from an earlier revision and still the standing explanation: two failures once seen in
+`test_nest_poller.py` were traced to a stale bytecode cache left by a branch reset that briefly
+removed `poller.py`, not to test-order pollution.
+
+CI on `e41b32a`, the head this branch carried before the #183 merge:
+[run 390](https://github.com/team-project-pikachu/IoT-ASP/actions/runs/34303143667) — `success`.
+Runs 388 and 389 on that same sha show `cancelled` jobs; both were superseded by 390 under `ci.yml`'s
+`concurrency: cancel-in-progress`, after a PR-body edit re-triggered the workflow, and their job logs
+cancel inside `setup-python` before any test body ran. Recorded because that pattern reads like
+failure and is not — no fix and no re-run were owed.
 
 ## Negative controls
 
