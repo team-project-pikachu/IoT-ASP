@@ -160,7 +160,7 @@ test.describe("public blaster smoke", () => {
     // Max hop dwell is 1 s (DWELL_MAX_S). Commit the long end of the allowed band.
     await setDwell(page, 1);
     await page.click("#power");
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(200);
     const s = await state(page);
     expect(s.running).toBe(true);
     expect(s.algo).toBe("hop");
@@ -174,20 +174,26 @@ test.describe("public blaster smoke", () => {
       expect(errors).toEqual([]);
       return;
     }
+    // Wait for the first hop while age is still young — an 800ms+350ms fixed wait can
+    // outlive the remaining 1 s commit and flakily observe the post-slider 0.1 s dwell.
+    await page.waitForFunction(() => {
+      const tp = window.__hop.telemetryPayload();
+      return Number.isFinite(tp.lastHopAgeMs) && tp.lastHopAgeMs >= 0 && tp.lastHopAgeMs < 350;
+    }, null, { timeout: 5000 });
+    p = await payload(page);
     // first hop delivered with a committed dwell of ~1 s (hard cap)
     expect(Number.isFinite(p.lastHopAgeMs) && p.lastHopAgeMs >= 0).toBe(true);
     let w = await watchdog(page);
     expect(w.committedDwellS).toBeCloseTo(1, 1);
     expect(w.stallLimitMs).toBe(Math.round(1 * 1.5 * 1000 + 1000));
     // review finding 1: lowering sliders mid-dwell must NOT change committed stall math.
-    // With DWELL_MAX_S=1 the next hop arrives ~1 s later, so assert immediately (and briefly)
-    // rather than waiting past a live-0.1 stall window — that wait outlives the committed hop.
+    // Assert immediately (and only briefly) while still inside the remaining ~1 s window.
     await setDwell(page, 0.1);
     w = await watchdog(page);
     expect(w.committedDwellS).toBeCloseTo(1, 1);
     expect(w.stallLimitMs).toBe(2500);
     expect(w.watchdogTrips).toBe(0);
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(80);
     w = await watchdog(page);
     expect(w.committedDwellS).toBeCloseTo(1, 1);
     expect(w.stallLimitMs).toBe(2500);
