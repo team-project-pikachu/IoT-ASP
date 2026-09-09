@@ -97,8 +97,9 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "function copyFleetLogJsonl()" in html
     assert "function fleetLogLineFromTel(" in html
     assert 'id="simImpulseBtn"' in html
-    assert "noteImpulse(true, false)" in html
-    note = _fn_body(html, "function noteImpulse(source, deltaHint){")
+    assert 'noteImpulse("simulate", false, true)' in html
+    note = _fn_body(html, "function noteImpulse(source, deltaHint, force){")
+    assert "if (!force && !running && !sensorsArmed)" in note
     assert "enterExtremeFromBurst(" in note
     assert "blastVolJump(" in note
     # #54 SM: EMA accel rise (no gravity baseline warm-up vars)
