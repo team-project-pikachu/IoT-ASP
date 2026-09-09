@@ -2,8 +2,8 @@
 
 **Configuration item:** `services/autoroute-adk/iot_asp_autoroute/nest/**`, `tests/test_nest_*.py`,
 `scripts/nest_gcp_bootstrap.sh`, `scripts/nest_dev.sh`, `scripts/nest_secrets_headless.sh`.
-**Revision under test:** branch `claude/google-home-integration-l0zu25`, base `main` @ `38cc972`.
-**Date (UTC):** 2026-09-08. **Operator:** Claude Code session (remote Linux container).
+**Revision under test:** `e41b32a` on branch `claude/google-home-integration-l0zu25`, base `main` @ `332ea9e`.
+**Date (UTC):** 2026-09-09. **Operator:** Claude Code session (remote Linux container).
 **Secrets:** none read, none present. No values appear in this file.
 
 ## Procedure and observed results
@@ -15,22 +15,36 @@
 | `bash scripts/autoroute_dev.sh` | `0` | `OK fleet_log jsonl` |
 | `python3 scripts/mdc_convert.py --check` | `0` | `OK mdc_convert --check` |
 | `bash scripts/nest_gcp_bootstrap.sh` (dry run) | `0` | `OK nest_gcp_bootstrap` |
-| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `522 passed in 45.74s` |
-| `… pytest tests/test_nest_*.py -q` | `0` | `223 passed in 12.51s` |
+| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `556 passed in 45.88s` |
+| `… pytest tests/test_nest_*.py -q` | `0` | `224 passed in 11.95s` |
+| `bash tests/e2e/run.sh` | `0` | `11 passed (12.2s)` / `OK e2e` |
 | `bash scripts/nest_secrets_headless.sh check` | **`1`** | `FAIL: op not installed (brew install 1password-cli)` |
 
 The last row is an **expected** non-zero: the container has no `op` binary, and the script is
 headless-only by design, so it refuses rather than degrading to an interactive prompt. Re-run on a
 host with `op` and `OP_SERVICE_ACCOUNT_TOKEN` exported.
 
-Determinism: the suite was run twice from a cleared `__pycache__` (`522 passed` both times). Two
-earlier failures in `test_nest_poller.py` were traced to a stale bytecode cache left by a branch
-reset that briefly removed `poller.py`, not to test-order pollution.
+Determinism: the suite was run twice from a cleared `__pycache__` (`556 passed` both times, the
+second with `-p no:randomly`). Recorded from an earlier revision and still the standing explanation:
+two failures once seen in `test_nest_poller.py` were traced to a stale bytecode cache left by a
+branch reset that briefly removed `poller.py`, not to test-order pollution.
+
+CI on this exact head: [run 390](https://github.com/team-project-pikachu/IoT-ASP/actions/runs/34303143667)
+— `success`. Runs 388 and 389 on the same sha show `cancelled` jobs; both were superseded by 390 under
+`ci.yml`'s `concurrency: cancel-in-progress`, after a PR-body edit re-triggered the workflow. Their
+job logs cancel inside `setup-python`, before any test body ran — not failures.
 
 ## Negative controls
 
 A gate that has never failed is not evidence. Each was driven to failure with a planted input, then
 the input removed and green confirmed.
+
+Re-verified on `e41b32a`, not inherited from the earlier revision. The first three rows were re-driven
+by hand with planted inputs (synthetic placeholder ids, never a real resource name), each observed
+`exit 1` with the offending file named, then removed — `OK ci_static_gates`, `exit 0`. The Hold /
+Manual, patch-path, patch-field and cadence rows are asserted by `scripts/nest_dev.sh` on every run
+(`exit 0` above); quota drift by `ci_static_gates.sh`; PII containment and detector degradation by the
+pytest suite.
 
 | Control | Planted input | Observed |
 |---------|---------------|----------|
