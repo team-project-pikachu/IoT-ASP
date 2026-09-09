@@ -2,8 +2,8 @@
 
 **Configuration item:** `services/autoroute-adk/iot_asp_autoroute/nest/**`, `tests/test_nest_*.py`,
 `scripts/nest_gcp_bootstrap.sh`, `scripts/nest_dev.sh`, `scripts/nest_secrets_headless.sh`.
-**Revision under test:** branch `claude/google-home-integration-l0zu25` merged with base `main` @ `7a701f9`
-(#186, Beam AirPlay peak 0.40; on top of #185 headroom and #183, which locks Web Audio gain at 100%).
+**Revision under test:** branch `claude/google-home-integration-l0zu25` merged with base `main` @ `67c14d3`
+(#187, Vercel CLI via `VERCEL_TOKEN` env; on top of #186 peak 0.40, #185 headroom, #183 gain lock).
 **Date (UTC):** 2026-09-09. **Operator:** Claude Code session (remote Linux container).
 **Secrets:** none read, none present. No values appear in this file.
 
@@ -16,9 +16,9 @@
 | `bash scripts/autoroute_dev.sh` | `0` | `OK fleet_log jsonl` |
 | `python3 scripts/mdc_convert.py --check` | `0` | `OK mdc_convert --check` |
 | `bash scripts/nest_gcp_bootstrap.sh` (dry run) | `0` | `OK nest_gcp_bootstrap` |
-| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `557 passed in 41.69s` |
+| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `557 passed in 42.84s` |
 | `… pytest tests/test_nest_*.py -q` | `0` | `224 passed in 11.95s` |
-| `bash tests/e2e/run.sh` | `0` | `11 passed (10.4s)` / `OK e2e` |
+| `bash tests/e2e/run.sh` | `0` | `11 passed (10.8s)` / `OK e2e` |
 | `bash scripts/nest_secrets_headless.sh check` | **`1`** | `FAIL: op not installed (brew install 1password-cli)` |
 
 The last row is an **expected** non-zero: the container has no `op` binary, and the script is
