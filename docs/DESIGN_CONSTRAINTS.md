@@ -57,6 +57,7 @@ Public IoT-ASP scientific tooling. **These are non-negotiable product constraint
 | Telemetry | Web fleet always tags `band=17-23k`; `lfArmed` / `lfDriveCapable` stay **false** |
 | Node-3 / infrasound sensing | LF **accel proxy** remains primary for `infra_felt` (#18); true infrasound mic/geophone parked |
 | Beam clean max (AirPlay) | UI 100% (C4) + digital peak **0.40** (−8.0 dBFS) headroom; macOS/AirPlay ≤~60% or Volume Limit; Night/Speech/Loudness **OFF** — avoids click/clip/**static** on **Mac Studio (M4 Max) → Beam** field path ([sonos-beam-gen2-airplay-volume-constraints.md](sonos-beam-gen2-airplay-volume-constraints.md)) |
+| Chromecast (optional) | CAF Web Sender + Default Media Receiver (`CC1AD845`) or `?castAppId=` custom receiver; same **0.40** peak when `audioSink=chromecast`; Chrome/Edge + HTTPS — [chromecast.md](chromecast.md) |
 
 ## Downstream docs
 
@@ -66,6 +67,7 @@ Public IoT-ASP scientific tooling. **These are non-negotiable product constraint
 - [sensors-chrome-ios.md](sensors-chrome-ios.md) — Chrome iOS sensor arm
 - [sensorkit-research-closeout.md](sensorkit-research-closeout.md) — #9 research (Web ≠ SensorKit; companions)
 - [iphone-bluetooth.md](iphone-bluetooth.md) — A2DP, codecs, Safari/Chrome-iOS limits
+- [chromecast.md](chromecast.md) — optional Google Cast / Chromecast Web Sender
 - [autoroute.md](autoroute.md) — sudden-freq → Gemini autorotate control loop
 - [multi-llm-registry.md](multi-llm-registry.md) — #13 design sketch (no prod non-Gemini)
 - [algorithms.md](algorithms.md) — carrier algorithms over OS BT route
