@@ -472,9 +472,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     (<a href="https://www.sonos.com/en-us/guides/beam" style="color:var(--uv-hot)">sonos.com/guides/beam</a>;
     shop <a href="https://www.sonos.com/en-us/shop/beam" style="color:var(--uv-hot)">sonos.com/shop/beam</a>).
     For clean TX turn Night Sound / Speech / Loudness <b>OFF</b>, set EQ flat. UI stays at <b>100%</b> (C4) but Beam
-    AirPlay digital peak is capped at <b>0.60</b> (−4.4&nbsp;dBFS) on Mac/desktop (default sink) or when
+    AirPlay digital peak is capped at <b>0.40</b> (−8.0&nbsp;dBFS) on Mac/desktop (default sink) or when
     <code>?audioSink=sonos-beam-2</code> is set, so FS content does not stack with high OS/AirPlay
-    volume into <b>audible clicks, clips, or harsh static/crackle</b> (field report above ~60% OS volume — not a Sonos-published 60% spec).
+    volume into <b>audible clicks, clips, or harsh static/crackle</b> (field report above ~60% OS volume — not a Sonos-published 60% spec; 0.40 after audible clip at UI 100% with 0.60 on Mac Studio→AirPlay→Beam).
     Prefer OS/AirPlay volume ≤~60% or a Sonos Volume Limit; raise Sonos player volume for SPL after headroom.
     See docs/sonos-beam-gen2-airplay-volume-constraints.md.
     Sonos does <b>not</b> publish SPL, wattage, or 17–23&nbsp;kHz FR for Beam Gen 2 — treat ultrasonic as experimental.
@@ -489,7 +489,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     <b>Signal on</b> to unlock Web Audio and request mic (plus DeviceMotion / DeviceOrientation on phones;
     Ambient Light often <i>na</i>). Prefer HTTPS (this Vercel deploy). Fleet power: <b>continuous 120&nbsp;V AC</b>.
     TX band is <b>17–23&nbsp;kHz only</b> (optional 10–20&nbsp;Hz path removed). Max clean AirPlay level = Web Audio UI 100%
-    with Beam peak headroom 0.60 + Night Sound / Speech / Loudness off (see Beam note above).
+    with Beam peak headroom 0.40 (−8.0&nbsp;dBFS) + Night Sound / Speech / Loudness off (see Beam note above).
   </div>
 
   <div class="note">
@@ -698,8 +698,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const dwellHi  = () => clampDwellS(Math.max(+dMin.value,+dMax.value));
   // UI / patch still lock at VOL_PATCH_MAX (C4). Beam AirPlay gets digital headroom so
   // 100% UI does not push FS PCM into the AirPlay×receiver stack (click/clip/static ~60% OS vol).
-  // See docs/sonos-beam-gen2-airplay-volume-constraints.md — 0.60 is policy, not a Sonos spec.
-  const AIRPLAY_BEAM_PEAK = 0.60;
+  // See docs/sonos-beam-gen2-airplay-volume-constraints.md — 0.40 (−8.0 dBFS) after audible clip at UI 100% with 0.60.
+  const AIRPLAY_BEAM_PEAK = 0.40;
   const audioSinkName = () => hwCaps.audioSink || "unknown";
   const isBeamAirPlaySink = () => hwCaps.audioSink === "sonos-beam-2";
   const level = () => (isBeamAirPlaySink() ? AIRPLAY_BEAM_PEAK : 1);
