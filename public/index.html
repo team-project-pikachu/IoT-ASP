@@ -1147,10 +1147,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if ((now - alarmClearedAt) >= ALARM_CLEARED_MS) setAlarmState("armed");
   }
 
-  function noteImpulse(source, deltaHint){
+  function noteImpulse(source, deltaHint, force){
     // armed→triggered→sustaining + blast; Hold wins.
+    // force=true: Simulate-impulse / UAT path (no Signal required).
     if (!suddenAuto || holdManual) return false;
-    if (!running && !sensorsArmed) return false;
+    if (!force && !running && !sensorsArmed) return false;
     const now = performance.now();
     const train = impulse && (now - lastImpulseAt) < IMPULSE_LATCH_MS;
     lastImpulseAt = now;
@@ -2623,7 +2624,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const simImpulseBtn = $("simImpulseBtn");
   if (simImpulseBtn) {
     simImpulseBtn.addEventListener("click", function(){
-      noteImpulse(true, false);
+      noteImpulse("simulate", false, true);
       publishFleetHeartbeat();
       paintFleetCards();
       updateTelUI();
