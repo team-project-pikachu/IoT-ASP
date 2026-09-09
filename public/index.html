@@ -360,9 +360,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         <button id="modeJump" aria-pressed="true">Jump</button>
         <button id="modeGlide" aria-pressed="false">Glide</button>
       </div>
-      <div class="row" style="margin-top:12px"><label for="vol">out</label><input type="range" id="vol" min="0" max="100" step="0.5" value="100"><output id="volOut">100 %</output></div>
-      <p class="legend" id="dbfs">0.0 dBFS</p>
-      <p class="sub" style="margin-top:6px">Max practical Web Audio gain. BT absolute volume + speaker hardware still limit SPL.</p>
+      <input type="hidden" id="vol" value="100">
+      <p class="legend" style="margin-top:12px">out · <b id="volOut">100 %</b> · <span id="dbfs">0.0 dBFS</span> (locked)</p>
+      <p class="sub" style="margin-top:6px">Web Audio gain locked at 100%. BT absolute volume + speaker hardware still limit SPL.</p>
     </div>
   </section>
 
@@ -461,7 +461,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     Extreme/burst rotation can pick shriek family or these mirrors. Quick <b>impulses</b> (micDiff rise/peak or accel spike) react like an
     <b>alarm</b>: armed → triggered → sustaining (blast vol + extreme) → cleared only after quiet hysteresis.
     With <b>Vib auto</b>, physical accel prefers pulse/shriek;
-    acoustic mic energy prefers pulse/hop. Debounced ≥300&nbsp;ms. <b>Hold / Manual</b> freezes remote patches and disarms blast. Default output is <b>100%</b> Web Audio gain (max practical); BT/hardware still limit SPL.
+    acoustic mic energy prefers pulse/hop. Debounced ≥300&nbsp;ms. <b>Hold / Manual</b> freezes remote patches and disarms blast. Output is locked at <b>100%</b> Web Audio gain (no UI attenuator); BT/hardware still limit SPL.
   </div>
 
   <div class="note warn">
@@ -683,7 +683,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const clampDwellS = s => Math.min(DWELL_MAX_S, Math.max(DWELL_MIN_S, +s || DWELL_MIN_S));
   const dwellLo  = () => clampDwellS(Math.min(+dMin.value,+dMax.value));
   const dwellHi  = () => clampDwellS(Math.max(+dMin.value,+dMax.value));
-  const level    = () => +vol.value/100;
+  // Gain hard-wired to 100% — no loudness/volume slider; night/patch/nudge cannot lower.
+  const level    = () => 1;
   function MIN_HOP_DELTA_HZ(){ return Math.max(200, 0.05 * (bandHigh() - bandLow())); }
   const pickFreq  = () => {
     const lo = bandLow(), hi = bandHigh(), d = MIN_HOP_DELTA_HZ();
@@ -1076,8 +1077,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function alarmCapVol(){
-    // Night caps blast; day=VOL_PATCH_MAX (C4). Hold refuses.
-    return nightActive ? Math.min(VOL_PATCH_MAX, nightTargetVol) : VOL_PATCH_MAX;
+    // Gain locked at VOL_PATCH_MAX (C4). Hold refuses blast apply elsewhere.
+    return VOL_PATCH_MAX;
   }
 
   function setAlarmState(next){
@@ -1096,34 +1097,23 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function blastVolJump(reason){
-    // Jump to cap in VOL_STEP quanta (alarm, not soft nudge).
+    // Reaffirm locked 100% gain (alarm path); cannot lower.
     if (holdManual) return false;
-    const cap = alarmCapVol();
-    let next = Math.round(cap / VOL_STEP) * VOL_STEP;
-    next = Math.min(VOL_PATCH_MAX, Math.max(0, next));
-    if (nightActive) next = Math.min(nightTargetVol, next);
     const before = +vol.value;
-    applyVolUi(next, false);
+    applyVolUi(VOL_PATCH_MAX, false);
     volBlast = true;
-    if (typeof monLog === "function" && Math.abs(before - next) >= VOL_STEP * 0.49) {
-      monLog("volBlast · " + before.toFixed(1) + "→" + next.toFixed(1)
+    if (typeof monLog === "function" && Math.abs(before - VOL_PATCH_MAX) >= VOL_STEP * 0.49) {
+      monLog("volBlast · " + before.toFixed(1) + "→" + VOL_PATCH_MAX.toFixed(1)
         + (reason ? (" · " + reason) : ""));
     }
     return true;
   }
 
   function burstVolNudge(){
-    // Alarm sustain → blast to cap; else legacy ±VOL_STEP jitter.
+    // Alarm sustain → reaffirm 100%; no downward volume jitter (gain locked).
     if (volBlast || alarmState === "triggered" || alarmState === "sustaining") {
       blastVolJump("alarm sustain");
-      return;
     }
-    const dir = rand() < 0.5 ? -VOL_STEP : VOL_STEP;
-    let next = +vol.value + dir * (1 + Math.floor(rand() * 2));
-    next = Math.round(next / VOL_STEP) * VOL_STEP;
-    if (nightActive) next = Math.min(nightTargetVol, Math.max(0, next));
-    else next = Math.min(VOL_PATCH_MAX, Math.max(0, next));
-    applyVolUi(next, false);
   }
 
   function clearImpulseAlarm(reason){
@@ -1959,23 +1949,21 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     return { active:true, progress, target: Math.min(100, Math.max(0, target)) };
   }
 
-  function applyVolUi(v, fromNight){
-    const q = Math.round((+v) / VOL_STEP) * VOL_STEP;
-    const clamped = Math.min(VOL_PATCH_MAX, Math.max(0, q));
+  function applyVolUi(_v, fromNight){
+    // Loudness locked at 100% — ignore requested attenuations (night/patch/nudge).
     if (fromNight) nightUserOverride = false;
-    vol.value = clamped;
-    try { if (vol && typeof vol.dispatchEvent === "function") vol.dispatchEvent(new Event("input")); } catch(_){}
+    vol.value = VOL_PATCH_MAX;
+    if (volOut) volOut.textContent = VOL_PATCH_MAX + " %";
+    if (dbfs) dbfs.textContent = "0.0 dBFS";
+    if (toneGain && ctx && !txActive) toneGain.gain.setTargetAtTime(1, ctx.currentTime, 0.02);
   }
 
   function nightTick(){
     const n = nightProgress01();
     nightActive = n.active;
-    nightTargetVol = n.target;
-    if (telNight) telNight.textContent = n.active ? (n.target.toFixed(1) + "%") : "day";
-    if (!n.active) return;
-    if (holdManual || nightUserOverride) return;
-    // continuous 120V — not battery-capped; schedule curve only
-    if (Math.abs(+vol.value - n.target) >= VOL_STEP * 0.49) applyVolUi(n.target, true);
+    nightTargetVol = VOL_PATCH_MAX; // gain locked; night window is informational only
+    if (telNight) telNight.textContent = n.active ? "100% (locked)" : "day";
+    if (+vol.value !== VOL_PATCH_MAX) applyVolUi(VOL_PATCH_MAX, true);
   }
 
   function refreshBandUi(){
@@ -2141,13 +2129,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   msgIn.addEventListener("input", renderTonemap);
   symMs.addEventListener("input", () => { symMsOut.textContent = symMs.value + " ms"; renderTonemap(); });
 
-  vol.addEventListener("input", () => {
-    volOut.textContent = vol.value + " %";
-    const l = level();
-    dbfs.textContent = l > 0 ? (20*Math.log10(l)).toFixed(1).replace("-","\u2212") + " dBFS" : "muted";
-    if (toneGain && ctx && !txActive) toneGain.gain.setTargetAtTime(Math.max(l,0.00001), ctx.currentTime, 0.02);
-  });
-  vol.addEventListener("change", () => { nightUserOverride = true; });
+  // No volume slider — gain stays at 100%; applyVolUi enforces lock.
   if (bandUsBtn) bandUsBtn.addEventListener("click", () => setBandMode("us"));
   if (armSensorsBtn) armSensorsBtn.addEventListener("click", () => { armSensors(); });
   setInterval(nightTick, 15000);
@@ -2703,7 +2685,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (p.fMin != null) { fMin.value = p.fMin; bandChanged = true; }
     if (p.fMax != null) { fMax.value = p.fMax; bandChanged = true; }
     if (bandChanged) syncBand();
-    if (p.vol != null) { vol.value = p.vol; vol.dispatchEvent(new Event("input")); }
+    if (p.vol != null) { applyVolUi(VOL_PATCH_MAX, false); } // patches cannot lower; stay at 100%
     if (p.pulseMs != null) pulseMs = p.pulseMs;
     if (p.shriekMs != null) shriekMs = p.shriekMs;
     if (p.vibThreshold != null && vibSens) {
@@ -2878,7 +2860,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   if (sysBtn) sysBtn.addEventListener("click", async () => { try { await armSensors(); } catch(_){} await systemsCheck(); });
 
   syncBand(); syncDwell(); renderTonemap();
-  vol.dispatchEvent(new Event("input"));
+  applyVolUi(VOL_PATCH_MAX, false);
 })();
 </script>
 </main>
