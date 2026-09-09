@@ -47,6 +47,6 @@ final class AlarmStateMachineTests: XCTestCase {
     }
 
     func testBeamAirPlayHeadroomPeak() {
-        XCTAssertEqual(BeamAirPlayHeadroom.peakGain, 0.50, accuracy: 0.0001)
+        XCTAssertEqual(BeamAirPlayHeadroom.peakGain, 0.40, accuracy: 0.0001)
     }
 }

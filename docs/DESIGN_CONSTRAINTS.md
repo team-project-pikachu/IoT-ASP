@@ -56,7 +56,7 @@ Public IoT-ASP scientific tooling. **These are non-negotiable product constraint
 | Removed | Optional **10–20 Hz** arm UI on the public control surface (was hardware-gated) |
 | Telemetry | Web fleet always tags `band=17-23k`; `lfArmed` / `lfDriveCapable` stay **false** |
 | Node-3 / infrasound sensing | LF **accel proxy** remains primary for `infra_felt` (#18); true infrasound mic/geophone parked |
-| Beam clean max (AirPlay) | UI 100% (C4) + digital peak **0.50** (−6.0 dBFS) headroom; macOS/AirPlay ≤~60% or Volume Limit; Night/Speech/Loudness **OFF** — avoids click/clip/**static** on **Mac Studio (M4 Max) → Beam** field path ([sonos-beam-gen2-airplay-volume-constraints.md](sonos-beam-gen2-airplay-volume-constraints.md)) |
+| Beam clean max (AirPlay) | UI 100% (C4) + digital peak **0.40** (−8.0 dBFS) headroom; macOS/AirPlay ≤~60% or Volume Limit; Night/Speech/Loudness **OFF** — avoids click/clip/**static** on **Mac Studio (M4 Max) → Beam** field path ([sonos-beam-gen2-airplay-volume-constraints.md](sonos-beam-gen2-airplay-volume-constraints.md)) |
 
 ## Downstream docs
 

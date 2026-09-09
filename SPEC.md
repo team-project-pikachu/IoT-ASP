@@ -27,7 +27,7 @@ Sources (2026-09-08 Firecrawl scrape):
 
 **Field symptom (AirPlay):** on **Mac Studio (M4 Max) → AirPlay → Beam Gen 2**, clicking + clipping + **staticky/crackle** above ~60% macOS/AirPlay system volume with near-FS digital content — **not** a Sonos-published 60% spec.
 
-**Max clean AirPlay policy:** Web Audio / `VOL_PATCH_MAX` = **100%** UI (C4); Beam sink digital peak `AIRPLAY_BEAM_PEAK = 0.50` (−6.0 dBFS); prefer OS/AirPlay ≤~60% or Sonos Volume Limit; Night Sound / Speech / Loudness **OFF**; EQ flat; **do not** stack FS Web Audio with max OS + max Sonos volume.
+**Max clean AirPlay policy:** Web Audio / `VOL_PATCH_MAX` = **100%** UI (C4); Beam sink digital peak `AIRPLAY_BEAM_PEAK = 0.40` (−8.0 dBFS); prefer OS/AirPlay ≤~60% or Sonos Volume Limit; Night Sound / Speech / Loudness **OFF**; EQ flat; **do not** stack FS Web Audio with max OS + max Sonos volume.
 
 Public TX band is **17–23 kHz only** (optional 10–20 Hz UI removed from the control surface).
 

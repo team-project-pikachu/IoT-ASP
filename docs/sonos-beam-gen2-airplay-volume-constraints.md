@@ -29,7 +29,7 @@ All three are treated as **real audible defects**, not UI layout “warping.” 
 | **Volume Limit** maps UI 100% → a chosen max on the 0–100 scale | **Official** |
 | Clicking + clipping + **staticky/crackle** above ~60% macOS/AirPlay volume with FS digital content | **Field report** (**Mac Studio M4 Max → AirPlay → Beam Gen 2**) — treated as **gain-staging / digital overs / hard limiting**, not a UI layout bug |
 
-Do **not** invent a manufacturer “60% max SPL” number. The IoT-ASP Beam peak constant is a **software headroom policy**. Prior UI history used `max="60"`; field artifacts still track high OS/AirPlay volume with near-FS content. Policy stepped **0.60 → 0.50** (−6.0 dBFS) after prod still clicked at UI 100% with 0.60 (improved but not clear).
+Do **not** invent a manufacturer “60% max SPL” number. The IoT-ASP Beam peak constant is a **software headroom policy**. Prior UI history used `max="60"`; field artifacts still track high OS/AirPlay volume with near-FS content. Policy stepped **0.60 → 0.40** (−8.0 dBFS) after field confirmation of **audible clipping** (not mild click) at UI 100% with 0.60 on Mac Studio (M4 Max) → AirPlay → Beam Gen 2.
 
 ## Manufacturer / Apple constraints (cited)
 
@@ -111,19 +111,19 @@ Secondary click mechanisms (any volume): abrupt `AudioParam` discontinuities (zi
 | Layer | Policy |
 |-------|--------|
 | UI / patch `VOL_PATCH_MAX` | Remains **100** (C4) — “max practical Web Audio request” |
-| Digital peak when `audioSink === "sonos-beam-2"` | **`AIRPLAY_BEAM_PEAK = 0.50`** (−6.0 dBFS) via `level()` — maps 100% UI → non-FS PCM peak (~1.6 dB more headroom than prior 0.60) |
+| Digital peak when `audioSink === "sonos-beam-2"` | **`AIRPLAY_BEAM_PEAK = 0.40`** (−8.0 dBFS) via `level()` — maps 100% UI → non-FS PCM peak (~3.6 dB more headroom than prior 0.60; field-driven after audible clip) |
 | OS / AirPlay volume | Prefer **≤ ~60%** until a completed field run proves higher is clean **or** Sonos **Volume Limit** is set |
 | Sonos player volume | Raise for SPL **after** digital headroom; optional Volume Limit ≤60–70 as hardware guard |
 | Night Sound / Speech / Loudness / Trueplay | **OFF** / flat for clean TX |
-| Native AirPlay shell | Same peak (`BeamAirPlayHeadroom.peakGain` / mixer `outputVolume` **0.50**) |
+| Native AirPlay shell | Same peak (`BeamAirPlayHeadroom.peakGain` / mixer `outputVolume` **0.40**) |
 
 Constant location (keep web + native in sync): `public/index.html` (`AIRPLAY_BEAM_PEAK`) and `native/IoTASP/Shared/Audio/BeamAirPlayHeadroom.swift` (mirrored in `native/ios-sonos-shell/Sources/BeamAirPlayHeadroom.swift`).
 
 ## How to verify on Beam Gen 2
 
 1. On **Mac Studio (M4 Max)** (primary reported path): **System Settings → Sound → Output** → Beam via **AirPlay 2**. (iPhone Control Center AirPlay is OK for parity, not yet a verified reporter.) Night Sound / Speech / Loudness **OFF**.
-2. Signal on (hop or stub tone). Confirm UI still shows **100%** but dBFS ≈ **−6.0** (web) when Beam sink is active.
-3. Sweep **macOS / AirPlay** system volume **40% → 100%**. Expect **less/no clicks, clips, or harsh static/crackle** vs the 0.60 peak (especially at OS 100%).
+2. Signal on (hop or stub tone). Confirm UI still shows **100%** but dBFS ≈ **−8.0** (web) when Beam sink is active.
+3. Sweep **macOS / AirPlay** system volume **40% → 100%**. Expect **no audible clip/click/static** vs the 0.60 peak that clipped at UI 100%.
 4. Negative control: temporarily force peak `1.0` (dev only) and confirm click/clip/**static** return near high OS volume — proves headroom, not “speaker broken.”
 5. Optional: Sonos app **Volume Limit** at 60; confirm UI 100% cannot exceed that acoustic ceiling.
 
