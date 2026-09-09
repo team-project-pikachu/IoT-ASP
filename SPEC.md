@@ -69,7 +69,7 @@ The published FR floor is **70 Hz**. Optional LF drive **10–20 Hz** is below t
 
 ## Volume blast vs rated 12 W (C4)
 
-Default / clamp ceiling is **100% Web Audio** gain (`VOL_PATCH_MAX`). That is **not** the same quantity as the speaker's rated **12 W** output. Bluetooth absolute volume, DSP limiter, and the 12 W electrical/acoustic rating still cap real SPL. Raise phone + Soundcore hardware volume separately if the plant must get louder. Hold / Manual still wins over remote / impulse blast apply.
+Web Audio gain is **locked at 100%** (`VOL_PATCH_MAX`; no UI attenuator). That is **not** the same quantity as the speaker's rated **12 W** output. Bluetooth absolute volume, DSP limiter, and the 12 W electrical/acoustic rating still cap real SPL. Raise phone + Soundcore hardware volume separately if the plant must get louder. Hold / Manual still wins over remote / impulse blast apply.
 
 ## Fleet topology (app requirement)
 
