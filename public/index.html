@@ -11,6 +11,7 @@
 <meta name="theme-color" content="#141519">
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Scientific near-ultrasonic hop / pulse / shriek tooling (17–23 kHz) for Mac Studio, desktop, and phone fleets via OS system audio to Sonos Beam 2 (not Web Bluetooth).">
+<meta name="google-cast-app-id" content="CC1AD845">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>HOP — near-ultrasonic scientific tooling</title>
@@ -129,6 +130,14 @@ input[type=text]:focus-visible{outline:2px solid var(--uv);outline-offset:-1px}
 .tap[aria-pressed="true"]{background:var(--uv);border-color:var(--uv);color:#12030F}
 .tap.rx[aria-pressed="true"]{background:var(--lime);border-color:var(--lime);color:#04120B}
 
+.cast-wrap{display:inline-flex;align-items:center;gap:10px;min-height:44px}
+google-cast-launcher{
+  --connected-color:var(--uv-hot);
+  --disconnected-color:var(--dim);
+  display:inline-block;width:28px;height:28px;cursor:pointer;vertical-align:middle;
+}
+#castStatus{font:400 11px/1.35 var(--mono);color:var(--dim);max-width:16rem}
+
 .tonemap{margin-top:16px;font:400 11px/2 var(--mono);color:var(--dim);word-break:break-word}
 .tonemap span{color:var(--uv-hot)}
 .tonemap em{font-style:normal;color:var(--ink)}
@@ -234,6 +243,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <div class="tapbar" style="gap:8px">
         <button type="button" class="tap" id="armSensorsBtn">Arm sensors</button>
         <button type="button" class="tap" id="sysBtn">Systems check</button>
+        <span class="cast-wrap" id="castWrap" title="Chromecast / Google Cast">
+          <google-cast-launcher id="castLauncher"></google-cast-launcher>
+          <span id="castStatus">cast idle</span>
+        </span>
       </div>
     </div>
     <div class="seg" role="group" aria-label="This node mode" style="margin-top:10px">
@@ -483,6 +496,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     Sonos does <b>not</b> publish SPL, wattage, or 17–23&nbsp;kHz FR for Beam Gen 2 — treat ultrasonic as experimental.
   </div>
 
+  <div class="note">
+    <b>Chromecast / Google Cast (optional).</b> Chrome/Edge on HTTPS: use the Cast icon to send a same-origin
+    ultrasonic carrier to a Cast device (Default Media Receiver). Local hop/pulse/shriek still use the
+    <b>OS audio route</b>; Cast gets a 19&nbsp;kHz bed with playback-rate nudges on hop. Digital peak
+    <b>0.40</b> (−8&nbsp;dBFS) when sink is <code>chromecast</code>. Custom hop-on-Cast needs
+    <code>?castAppId=</code> + <code>/cast-receiver.html</code>. See docs/chromecast.md.
+  </div>
+
   <div class="note warn hidden" id="warn"></div>
   <div class="note warn hidden" id="micWarn"></div>
 
@@ -644,7 +665,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const qs = new URLSearchParams(location.search);
   function normalizeAudioSink(v){
     const sink = String(v || "").trim().toLowerCase();
-    return sink === "sonos-beam-2" || sink === "soundcore-2-a2dp" ? sink : "unknown";
+    return sink === "sonos-beam-2" || sink === "soundcore-2-a2dp" || sink === "chromecast" ? sink : "unknown";
   }
   let configuredAudioSink = normalizeAudioSink(qs.get("audioSink") || qs.get("sink"));
   try {
@@ -730,9 +751,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   // 100% UI does not push FS PCM into the AirPlay×receiver stack (click/clip/static ~60% OS vol).
   // See docs/sonos-beam-gen2-airplay-volume-constraints.md — 0.40 (−8.0 dBFS) after audible clip at UI 100% with 0.60.
   const AIRPLAY_BEAM_PEAK = 0.40;
+  // Chromecast DMR / custom receiver: same digital peak policy as Beam AirPlay (docs/chromecast.md).
+  const CAST_PEAK = AIRPLAY_BEAM_PEAK;
   const audioSinkName = () => hwCaps.audioSink || "unknown";
   const isBeamAirPlaySink = () => hwCaps.audioSink === "sonos-beam-2";
-  const level = () => (isBeamAirPlaySink() ? AIRPLAY_BEAM_PEAK : 1);
+  const isChromecastSink = () => hwCaps.audioSink === "chromecast";
+  const level = () => ((isBeamAirPlaySink() || isChromecastSink()) ? AIRPLAY_BEAM_PEAK : 1);
   function MIN_HOP_DELTA_HZ(){ return Math.max(200, 0.05 * (bandHigh() - bandLow())); }
   const pickFreq  = () => {
     const lo = bandLow(), hi = bandHigh(), d = MIN_HOP_DELTA_HZ();
@@ -2030,7 +2054,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
         + " · sink " + audioSinkName()
         + " · " + (isBeamAirPlaySink()
           ? ("max clean: Beam peak " + AIRPLAY_BEAM_PEAK + " · OS/AirPlay ≤~60% · Night/Speech/Loudness OFF")
-          : "max clean: 100% UI (set ?audioSink=sonos-beam-2 for Beam headroom)");
+          : isChromecastSink()
+            ? ("max clean: Cast peak " + CAST_PEAK + " · Chrome/Edge Cast · docs/chromecast.md")
+            : "max clean: 100% UI (set ?audioSink=sonos-beam-2 or chromecast for headroom)");
     }
     if (telBand) telBand.textContent = bandWireTag();
     if (telPlatform) telPlatform.textContent = hwCaps.platform || "—";
@@ -2381,6 +2407,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       holdEl.textContent = hop.d.toFixed(1) + " s";
       hopsEl.textContent = ++hopCount;
       flashUntil = performance.now() + 220;
+      try {
+        if (window.__hopCast && typeof window.__hopCast.setTone === "function") {
+          window.__hopCast.setTone(hop.f, level());
+        }
+      } catch (_) {}
       n++;
     }
     return n;
@@ -2463,8 +2494,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   window.__hop = Object.freeze({
     telemetryPayload: () => telemetryPayload(),
     getLog: () => records.slice(),
-    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId }),
-    getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips })
+    getState: () => ({ running, holdManual, algo, seed, seedSource, alarmState: effectiveAlarmState(), impulse, volBlast, deviceId, instanceId, audioSink: audioSinkName() }),
+    getWatchdog: () => ({ lastHopAgeMs: lastHopAgeMs(), nextHopOverdueMs: nextHopOverdueMs(), stallLimitMs: Math.round(stallLimitMs()), committedDwellS: committedDwellS(), ctxResumes, watchdogTrips }),
+    getCast: () => (window.__hopCast && window.__hopCast.getState ? window.__hopCast.getState() : null)
   });
 
   function updateTelUI(){
@@ -2918,6 +2950,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       isBeamAirPlaySink()
         ? ("Night/Speech/Loudness OFF · digital peak " + AIRPLAY_BEAM_PEAK + " · OS/AirPlay ≤~60%")
         : "set ?audioSink=sonos-beam-2 to enable Beam headroom"));
+    const castSt = (window.__hopCast && window.__hopCast.getState) ? window.__hopCast.getState() : null;
+    lines.push(row("Chromecast", castSt && castSt.sessionActive ? "ok" : (castSt && castSt.ready ? "na" : "na"),
+      castSt && castSt.sessionActive
+        ? ("session · " + (castSt.deviceName || "device") + " · peak " + CAST_PEAK + " · " + (castSt.usingDefaultReceiver ? "DMR" : ("app " + castSt.appId)))
+        : "Chrome/Edge Cast icon · Default Media Receiver · docs/chromecast.md"));
     lines.push(row("Fleet", "ok", "Mac Studio/desktop + phones · Sonos Beam 2 · incoherent TX"));
     lines.push(row("This node", "ok", phoneRole === "tx" ? "Blaster / TX" : phoneRole === "rx" ? "Listen (debug)" : "Carrier only"));
     lines.push(row("Algorithm", "ok", algo + (vibAuto ? " · vib auto (" + vibClass + ")" : " · manual")));
@@ -2938,6 +2975,64 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     sysList.innerHTML = lines.join("");
   }
   if (sysBtn) sysBtn.addEventListener("click", async () => { try { await armSensors(); } catch(_){} await systemsCheck(); });
+
+
+  // ══ Chromecast CAF sender bootstrap ═══════════════════════════════════
+  let sinkBeforeCast = null;
+  window.__hopCastApiAvailable = false;
+  window.__onGCastApiAvailable = function(isAvailable){
+    window.__hopCastApiAvailable = !!isAvailable;
+    if (isAvailable && typeof window.__hopOnCastReady === "function") window.__hopOnCastReady();
+    else if (!isAvailable) {
+      const cs = $("castStatus");
+      if (cs) cs.textContent = "cast unavailable · need Chrome/Edge + Cast · HTTPS";
+    }
+  };
+  window.__hopOnCastEvent = function(evt, detail){
+    detail = detail || {};
+    if (evt === "session_started") {
+      sinkBeforeCast = hwCaps.audioSink;
+      hwCaps.audioSink = "chromecast";
+      hwCaps.route = "cast";
+      try { localStorage.setItem("hop.audioSink", "chromecast"); } catch (_) {}
+      applyVolUi(VOL_PATCH_MAX, false);
+      refreshBandUi();
+      monLog("Chromecast session · " + (detail.deviceName || "device"), "cast", {
+        deviceName: detail.deviceName || "",
+        appId: detail.appId || "",
+        defaultReceiver: !!detail.defaultReceiver
+      });
+    } else if (evt === "session_ended") {
+      if (sinkBeforeCast && sinkBeforeCast !== "chromecast") hwCaps.audioSink = sinkBeforeCast;
+      else if (hwCaps.formFactor === "desktop" || String(hwCaps.platform || "").indexOf("mac") === 0) hwCaps.audioSink = "sonos-beam-2";
+      else hwCaps.audioSink = configuredAudioSink !== "unknown" ? configuredAudioSink : "unknown";
+      hwCaps.route = (hwCaps.formFactor === "phone" || hwCaps.platform === "iphone") ? "a2dp" : "system";
+      applyVolUi(VOL_PATCH_MAX, false);
+      refreshBandUi();
+      monLog("Chromecast session ended", "cast", {});
+    } else if (evt === "ready") {
+      monLog("Cast framework ready", "cast", { appId: detail.appId || "", defaultReceiver: !!detail.defaultReceiver });
+    }
+  };
+  (function bootCastSender(){
+    function loadScript(src){
+      return new Promise(function(resolve, reject){
+        const s = document.createElement("script");
+        s.src = src;
+        s.async = true;
+        s.onload = function(){ resolve(); };
+        s.onerror = function(){ reject(new Error(src)); };
+        document.head.appendChild(s);
+      });
+    }
+    loadScript("/cast-sender.js").then(function(){
+      return loadScript("https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1");
+    }).catch(function(err){
+      const cs = $("castStatus");
+      if (cs) cs.textContent = "cast script failed";
+      try { monLog("Cast script failed", "cast", { err: String(err && err.message || err) }, "warn"); } catch (_) {}
+    });
+  })();
 
   syncBand(); syncDwell(); renderTonemap();
   applyVolUi(VOL_PATCH_MAX, false);

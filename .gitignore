@@ -23,6 +23,7 @@ study/
 .autoroute-dry/
 *.webm
 *.wav
+!public/media/us-carrier-19khz.wav
 recordings/
 tests/e2e/.server.log
 

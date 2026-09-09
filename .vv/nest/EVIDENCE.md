@@ -2,8 +2,8 @@
 
 **Configuration item:** `services/autoroute-adk/iot_asp_autoroute/nest/**`, `tests/test_nest_*.py`,
 `scripts/nest_gcp_bootstrap.sh`, `scripts/nest_dev.sh`, `scripts/nest_secrets_headless.sh`.
-**Revision under test:** branch `claude/google-home-integration-l0zu25` merged with base `main` @ `67c14d3`
-(#187, Vercel CLI via `VERCEL_TOKEN` env; on top of #186 peak 0.40, #185 headroom, #183 gain lock).
+**Revision under test:** branch `claude/google-home-integration-l0zu25` merged with base `main` @ `dab7afb`
+(#189 cleanUrls smoke + #188 Chromecast CAF sender; on top of #187, #186, #185, #183).
 **Date (UTC):** 2026-09-09. **Operator:** Claude Code session (remote Linux container).
 **Secrets:** none read, none present. No values appear in this file.
 
@@ -16,14 +16,32 @@
 | `bash scripts/autoroute_dev.sh` | `0` | `OK fleet_log jsonl` |
 | `python3 scripts/mdc_convert.py --check` | `0` | `OK mdc_convert --check` |
 | `bash scripts/nest_gcp_bootstrap.sh` (dry run) | `0` | `OK nest_gcp_bootstrap` |
-| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `557 passed in 42.84s` |
+| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `558 passed in 42.44s` |
 | `… pytest tests/test_nest_*.py -q` | `0` | `224 passed in 11.95s` |
-| `bash tests/e2e/run.sh` | `0` | `11 passed (10.8s)` / `OK e2e` |
+| `bash tests/e2e/run.sh` | **`1`** | `10 passed, 1 failed (3.1m)` — see below |
 | `bash scripts/nest_secrets_headless.sh check` | **`1`** | `FAIL: op not installed (brew install 1password-cli)` |
 
-The last row is an **expected** non-zero: the container has no `op` binary, and the script is
-headless-only by design, so it refuses rather than degrading to an interactive prompt. Re-run on a
-host with `op` and `OP_SERVICE_ACCOUNT_TOKEN` exported.
+The `nest_secrets_headless` row is an **expected** non-zero: the container has no `op` binary, and the
+script is headless-only by design, so it refuses rather than degrading to an interactive prompt. Re-run
+on a host with `op` and `OP_SERVICE_ACCOUNT_TOKEN` exported.
+
+**The e2e row is an environment artifact of this container, not a defect, and not this branch's.**
+`public_smoke.spec.mjs:152` (watchdog) asserts `algo === "hop"` 200 ms after `#power` and observed
+`"pulse"`. Established in that order:
+
+1. It reproduces **identically on a clean `origin/main` worktree at `dab7afb`** — same spec, same
+   values — so it is not this branch's.
+2. main's own CI is **green** on `dab7afb` ([run 420](https://github.com/team-project-pikachu/IoT-ASP/actions/runs/34313171611))
+   and on #188 ([run 418](https://github.com/team-project-pikachu/IoT-ASP/actions/runs/34312689561)),
+   so it is not main's breakage either.
+3. Mechanism: #188 loads the Cast SDK from `https://www.gstatic.com/cv/js/sender/v1/cast_sender.js`
+   (`public/index.html:3029`). This container's egress to that host stalls, so per-test wall time went
+   from ~1 s to ~12.8 s (suite 10.8 s -> 3.1 m) the moment #188 landed. The 200 ms read then falls past
+   a scheduler rotation. A runner with normal egress — GitHub's — does not see it.
+
+Nothing was changed to accommodate this: the spec and #188's SDK loading are main's, and editing either
+to suit one sandbox would be widening this PR into someone else's code for a problem CI does not have.
+CI on the pushed head is the authoritative e2e result.
 
 Determinism: the suite was run twice from a cleared `__pycache__` at `e41b32a` — `556 passed` both
 times, the second with `-p no:randomly`. The count is `557` in the table above because merging #183

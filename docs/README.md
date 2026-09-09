@@ -68,6 +68,7 @@ Live app: see repo [README](../README.md). Board: [Project 5](https://github.com
 | **macOS / PWA** | [architecture-pwa.md](architecture-pwa.md) · live URL in root README |
 | **Nest** | [nest-device-access.md](nest-device-access.md) |
 | **Sonos** | [sonos-beam.md](sonos-beam.md) · [sonos-beam-gen2-airplay-volume-constraints.md](sonos-beam-gen2-airplay-volume-constraints.md) (AirPlay click/clip/**static**) |
+| **Chromecast** | [chromecast.md](chromecast.md) (CAF Web Sender · Default Media Receiver · headroom 0.40) |
 | **Hardware** | [hardware/soundcore-2.md](hardware/soundcore-2.md) · [hardware/soundcore-specs.md](hardware/soundcore-specs.md) · [connectivity-wifi.md](connectivity-wifi.md) · [power-fleet.md](power-fleet.md) |
 
 ## 4. Ops & ship

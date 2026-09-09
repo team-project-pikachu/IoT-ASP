@@ -258,7 +258,8 @@ def test_banner_lines_well_formed(html: str) -> None:
 def test_size_guard() -> None:
     # Raised 2026-09-08 for fleet cards + impulse/alarm SM (#11/#42/#44/#45).
     # Raised again 2026-09-08 for the Nest tiles + pollNest guard (#85/#101) landing on top of
-    # the platform/sink tiles from #138 — 140_052 B at the merge, ~10 kB headroom.
+    # the platform/sink tiles from #138.
+    # Raised 2026-09-09 for Chromecast CAF bootstrap + sink/headroom wiring (#188).
     assert HTML_PATH.stat().st_size < 150_000
 
 
@@ -344,7 +345,8 @@ def test_volume_locked_at_100_no_slider(html: str) -> None:
     assert "isBeamAirPlaySink" in html
     assert "AIRPLAY_BEAM_PEAK" in html
     assert 'const isBeamAirPlaySink = () => hwCaps.audioSink === "sonos-beam-2";' in html
-    assert "const level = () => (isBeamAirPlaySink() ? AIRPLAY_BEAM_PEAK : 1);" in html
+    assert 'const isChromecastSink = () => hwCaps.audioSink === "chromecast";' in html
+    assert "const level = () => ((isBeamAirPlaySink() || isChromecastSink()) ? AIRPLAY_BEAM_PEAK : 1);" in html
     assert '(isMac || form === "desktop") && hwCaps.audioSink === "unknown"' in html
     assert 'hwCaps.audioSink = "sonos-beam-2";' in html
     apply = _fn_body(html, "function applyVolUi(_v, fromNight){")
@@ -360,6 +362,28 @@ def test_volume_locked_at_100_no_slider(html: str) -> None:
     assert 'applyVolUi(VOL_PATCH_MAX, false)' in html
     assert "(locked)" in html
     assert "staticky" in html or "static" in html.lower() or "click/clip" in html
+
+
+def test_chromecast_cast_markers(html: str) -> None:
+    """Chromecast CAF sender markers (script loaded dynamically; still one static <script>)."""
+    assert 'id="castLauncher"' in html or "google-cast-launcher" in html
+    assert 'id="castStatus"' in html
+    assert 'name="google-cast-app-id"' in html
+    assert "CC1AD845" in html
+    assert "/cast-sender.js" in html
+    assert "cast_sender.js?loadCastFramework=1" in html
+    assert "window.__onGCastApiAvailable" in html
+    assert "window.__hopCast" in html or "__hopCast.setTone" in html
+    assert 'sink === "chromecast"' in html
+    assert "const CAST_PEAK = AIRPLAY_BEAM_PEAK;" in html
+    assert "docs/chromecast.md" in html
+    cast_js = (ROOT / "public" / "cast-sender.js").read_text(encoding="utf-8")
+    assert "cast.framework.CastContext" in cast_js
+    assert "DEFAULT_MEDIA_RECEIVER_APP_ID" in cast_js
+    assert "/media/us-carrier-19khz.wav" in cast_js
+    assert (ROOT / "public" / "media" / "us-carrier-19khz.wav").is_file()
+    assert (ROOT / "public" / "cast-receiver.html").is_file()
+    assert (ROOT / "docs" / "chromecast.md").is_file()
 
 
 def test_watchdog_stall_uses_committed_schedule(html: str) -> None:

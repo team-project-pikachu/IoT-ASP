@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IoT-ASP Cast Receiver</title>
+<style>
+  html,body{margin:0;background:#0E0F13;color:#C8CCD8;font:14px/1.4 -apple-system,BlinkMacSystemFont,sans-serif}
+  main{padding:24px;max-width:40rem}
+  code{color:#E3A8FF}
+  #f{font:600 48px/1 ui-monospace,monospace;letter-spacing:-.02em}
+</style>
+<script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+</head>
+<body>
+<main>
+  <p>IoT-ASP custom Cast receiver (optional). Register this URL in the Google Cast Developer Console and pass the App ID as <code>?castAppId=</code> on the sender.</p>
+  <p>Tone <span id="f">—</span> Hz · peak <span id="p">0.40</span></p>
+  <p id="msg">waiting for sender…</p>
+</main>
+<script>
+(function () {
+  "use strict";
+  var NS = "urn:x-cast:io.bearresearch.iotasp.hop";
+  var ctx = null, osc = null, gain = null;
+  var peak = 0.40;
+  var fEl = document.getElementById("f");
+  var pEl = document.getElementById("p");
+  var msg = document.getElementById("msg");
+
+  function ensureAudio() {
+    if (ctx) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    ctx = new AC({ sampleRate: 48000 });
+    osc = ctx.createOscillator();
+    gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 19000;
+    gain.gain.value = peak;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+  }
+
+  function setTone(f, amp) {
+    ensureAudio();
+    if (ctx.state === "suspended") ctx.resume();
+    if (f != null && isFinite(+f)) {
+      osc.frequency.setTargetAtTime(+f, ctx.currentTime, 0.01);
+      fEl.textContent = String(Math.round(+f));
+    }
+    if (amp != null && isFinite(+amp)) {
+      peak = Math.max(0.05, Math.min(1, +amp));
+      gain.gain.setTargetAtTime(peak, ctx.currentTime, 0.02);
+      pEl.textContent = String(peak);
+    }
+  }
+
+  var context = cast.framework.CastReceiverContext.getInstance();
+  var options = new cast.framework.CastReceiverOptions();
+  options.disableIdleTimeout = true;
+  context.addCustomMessageListener(NS, function (event) {
+    try {
+      var data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      if (data && data.cmd === "tone") {
+        setTone(data.f, data.peak);
+        msg.textContent = "tone from sender";
+      }
+    } catch (e) {
+      msg.textContent = "bad message";
+    }
+  });
+  context.addEventListener(cast.framework.system.EventType.READY, function () {
+    msg.textContent = "receiver ready · custom namespace " + NS;
+  });
+  context.start(options);
+})();
+</script>
+</body>
+</html>
