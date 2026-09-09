@@ -146,6 +146,7 @@ def test_backend_url_query_overrides(html: str) -> None:
     """#61 — live URLs via query, never baked secrets."""
     assert 'id="telemetryUrlLabel"' in html
     assert 'id="patchUrlLabel"' in html
+    assert 'qs.get("audioSink")' in html
     assert 'qs.get("patch")' in html or "qs.get('patch')" in html
     assert 'qs.get("telemetry")' in html
     assert 'qs.get("pollMs")' in html
@@ -333,14 +334,23 @@ def test_hop_dwell_capped_at_one_second(html: str) -> None:
 
 
 def test_volume_locked_at_100_no_slider(html: str) -> None:
-    """Web Audio gain is hard-wired to 100%; no loudness/volume range control."""
+    """UI vol locked at 100%; Beam AirPlay maps peak via AIRPLAY_BEAM_PEAK headroom."""
     assert 'id="vol"' in html
     assert 'type="range" id="vol"' not in html
     assert 'type="hidden" id="vol" value="100"' in html
-    assert "const level    = () => 1;" in html or "const level = () => 1;" in html
+    assert "const AIRPLAY_BEAM_PEAK = 0.60;" in html
+    assert 'function normalizeAudioSink(v){' in html
+    assert 'localStorage.getItem("hop.audioSink")' in html
+    assert "isBeamAirPlaySink" in html
+    assert "AIRPLAY_BEAM_PEAK" in html
+    assert 'const isBeamAirPlaySink = () => hwCaps.audioSink === "sonos-beam-2";' in html
+    assert "const level = () => (isBeamAirPlaySink() ? AIRPLAY_BEAM_PEAK : 1);" in html
+    assert '(isMac || form === "desktop") && hwCaps.audioSink === "unknown"' in html
+    assert 'hwCaps.audioSink = "sonos-beam-2";' in html
     apply = _fn_body(html, "function applyVolUi(_v, fromNight){")
     assert "vol.value = VOL_PATCH_MAX;" in apply
     assert "Loudness locked at 100%" in apply or "ignore requested attenuations" in apply
+    assert "level()" in apply
     night = _fn_body(html, "function nightTick(){")
     assert "nightTargetVol = VOL_PATCH_MAX;" in night
     assert "applyVolUi(n.target" not in night
@@ -349,6 +359,7 @@ def test_volume_locked_at_100_no_slider(html: str) -> None:
     assert "blastVolJump(" in nudge
     assert 'applyVolUi(VOL_PATCH_MAX, false)' in html
     assert "(locked)" in html
+    assert "staticky" in html or "static" in html.lower() or "click/clip" in html
 
 
 def test_watchdog_stall_uses_committed_schedule(html: str) -> None:

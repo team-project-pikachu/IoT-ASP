@@ -12,6 +12,8 @@ NATIVE="${ROOT}/native/IoTASP"
 SMOKE="${NATIVE}/Scripts/alarm_smoke.swift"
 OUT="${NATIVE}/.swift-build-check.out"
 ERR="${NATIVE}/.swift-build-check.err"
+TEST_OUT="${NATIVE}/.swift-test.out"
+TEST_ERR="${NATIVE}/.swift-test.err"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
@@ -32,7 +34,7 @@ echo "# host: CLT-or-Xcode (xcodebuild intentionally not required for this gate)
   swift Scripts/alarm_smoke.swift
 )
 
-# 2) SPM resolve + Shared library build — must fail the gate on build errors
+# 2) SPM resolve + Shared library build + tests — must fail the gate on build/test errors
 (
   cd "$NATIVE"
   swift package resolve
@@ -42,6 +44,12 @@ echo "# host: CLT-or-Xcode (xcodebuild intentionally not required for this gate)
     exit 1
   fi
   echo "OK swift build (IoTASPShared)"
+  if ! swift test >"$TEST_OUT" 2>"$TEST_ERR"; then
+    echo "FAIL: swift test (IoTASPSharedTests) failed — see ${TEST_ERR}" >&2
+    head -n 40 "$TEST_ERR" >&2 || true
+    exit 1
+  fi
+  echo "OK swift test (IoTASPSharedTests)"
 )
 
 # 3) Honesty: do not claim app-scheme compile without Xcode.app
