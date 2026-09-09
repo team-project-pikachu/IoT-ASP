@@ -21,9 +21,13 @@ let package = Package(
                 "Alarm/AlarmStateMachine.swift",
                 "Sensors/ImpulseDetector.swift",
                 "Fleet/FleetConfig.swift",
+                "Audio/BeamAirPlayHeadroom.swift",
             ]
         ),
-        // XCTest requires full Xcode.app. On CLT-only hosts run:
-        //   swift Scripts/alarm_smoke.swift
+        .testTarget(
+            name: "IoTASPSharedTests",
+            dependencies: ["IoTASPShared"],
+            path: "Tests"
+        ),
     ]
 )
