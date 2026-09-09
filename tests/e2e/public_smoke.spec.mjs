@@ -160,7 +160,7 @@ test.describe("public blaster smoke", () => {
     // Max hop dwell is 1 s (DWELL_MAX_S). Commit the long end of the allowed band.
     await setDwell(page, 1);
     await page.click("#power");
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(800);
     const s = await state(page);
     expect(s.running).toBe(true);
     expect(s.algo).toBe("hop");
@@ -179,12 +179,18 @@ test.describe("public blaster smoke", () => {
     let w = await watchdog(page);
     expect(w.committedDwellS).toBeCloseTo(1, 1);
     expect(w.stallLimitMs).toBe(Math.round(1 * 1.5 * 1000 + 1000));
-    // review finding 1: lowering the sliders mid-dwell must NOT change the committed limit nor trip the watchdog
-    // Live min (0.1 s) would make stallLimit≈1150 ms if misread; wait past that but under committed 2500 ms.
+    // review finding 1: lowering sliders mid-dwell must NOT change committed stall math.
+    // With DWELL_MAX_S=1 the next hop arrives ~1 s later, so assert immediately (and briefly)
+    // rather than waiting past a live-0.1 stall window — that wait outlives the committed hop.
     await setDwell(page, 0.1);
-    await page.waitForTimeout(0.1 * 1.5 * 1000 + 1000 + 600);
     w = await watchdog(page);
     expect(w.committedDwellS).toBeCloseTo(1, 1);
+    expect(w.stallLimitMs).toBe(2500);
+    expect(w.watchdogTrips).toBe(0);
+    await page.waitForTimeout(350);
+    w = await watchdog(page);
+    expect(w.committedDwellS).toBeCloseTo(1, 1);
+    expect(w.stallLimitMs).toBe(2500);
     expect(w.watchdogTrips).toBe(0);
     expect(w.nextHopOverdueMs).toBeLessThan(0);
     expect((await payload(page)).watchdogTrips).toBe(0);
