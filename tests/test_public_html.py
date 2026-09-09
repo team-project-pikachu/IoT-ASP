@@ -330,7 +330,7 @@ def test_volume_locked_at_100_no_slider(html: str) -> None:
     assert 'id="vol"' in html
     assert 'type="range" id="vol"' not in html
     assert 'type="hidden" id="vol" value="100"' in html
-    assert "const AIRPLAY_BEAM_PEAK = 0.60;" in html
+    assert "const AIRPLAY_BEAM_PEAK = 0.40;" in html
     assert 'function normalizeAudioSink(v){' in html
     assert 'localStorage.getItem("hop.audioSink")' in html
     assert "isBeamAirPlaySink" in html
