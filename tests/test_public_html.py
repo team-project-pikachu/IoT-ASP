@@ -102,6 +102,12 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "if (!force && !running && !sensorsArmed)" in note
     assert "enterExtremeFromBurst(" in note
     assert "blastVolJump(" in note
+    # An explicit click may bypass the armed-sensor guard — #181 does that with the
+    # `force` flag asserted above, replacing an earlier `source !== "simulate"` special
+    # case. Either way the bypass is opt-in and never implicit...
+    # ...and Hold / Manual is checked FIRST and is never bypassed (CLAUDE.md invariant 6).
+    guard_lines = [ln.strip() for ln in note.splitlines() if "return false" in ln]
+    assert guard_lines and "holdManual" in guard_lines[0], guard_lines
     # #54 SM: EMA accel rise (no gravity baseline warm-up vars)
     assert "accelBaselineReady" not in html
     assert "ACCEL_BASELINE_WARM_N" not in html
@@ -251,7 +257,9 @@ def test_banner_lines_well_formed(html: str) -> None:
 # ── 12. size guard ───────────────────────────────────────────────────────────
 def test_size_guard() -> None:
     # Raised 2026-09-08 for fleet cards + impulse/alarm SM (#11/#42/#44/#45).
-    # Raised 2026-09-09 for Chromecast CAF bootstrap + sink/headroom wiring.
+    # Raised again 2026-09-08 for the Nest tiles + pollNest guard (#85/#101) landing on top of
+    # the platform/sink tiles from #138.
+    # Raised 2026-09-09 for Chromecast CAF bootstrap + sink/headroom wiring (#188).
     assert HTML_PATH.stat().st_size < 150_000
 
 
@@ -464,6 +472,65 @@ def test_impulse_alarm_and_fleet_stub(html: str) -> None:
     assert "fleetPeers[d.instanceId] = d" in html
     assert "deviceId, instanceId, seed" in html
 
+
+def test_nest_status_surface_is_display_only(html: str) -> None:
+    """#101 Nest/SDM surface renders status and must never become a second control plane.
+
+    The alarm has exactly one escalation path: backend authors a clamped patch, the app
+    polls and hot-applies it (docs/api-contract.md). If the Nest status poller could also
+    drive the alarm, Hold/Manual and the clamps would have a route around them.
+    """
+    # tiles exist
+    for el in ('id="telNestEvent"', 'id="telNestClass"', 'id="telNestAge"'):
+        assert el in html, el
+    assert 'const BACKEND_NEST_PATH = "/nest.json"' in html
+    assert 'qs.get("nest")' in html
+
+    body = _fn_body(html, "async function pollNest(){")
+    # read-only fetch, cache-busted like the patch poll
+    assert "fetch(" in body and 'cache: "no-store"' in body
+    # ...and it drives NOTHING. These are the functions that escalate.
+    for forbidden in (
+        "noteImpulse", "setAlarmState", "blastVolJump", "enterExtremeFromBurst",
+        "applyPatch", "holdManual =", "volBlast =", "alarmState =",
+    ):
+        assert forbidden not in body, f"pollNest must not call/assign {forbidden}"
+    # no credential ever leaves the page on this path
+    for forbidden in ("Authorization", "Bearer", "access_token", "client_secret", "apiKey"):
+        assert forbidden not in body, f"pollNest must not send {forbidden}"
+
+
+def test_nest_mock_is_schema_version_1_and_carries_no_pii() -> None:
+    data = json.loads((ROOT / "public" / "nest.json").read_text(encoding="utf-8"))
+    assert data["schemaVersion"] == 1
+    blob = json.dumps(data)
+    # Google's docs placeholders only — never a real resource name, preview URL or address.
+    for forbidden in ("previewUrl", "enterprises/", "structures/", "home.google.com", "@gmail.com"):
+        assert forbidden not in blob, forbidden
+
+
+def test_nest_url_override_cannot_be_pointed_off_origin(html: str) -> None:
+    """CodeQL client-side request forgery (alert 26): `?nest=` is attacker-controllable.
+
+    A crafted link must not be able to make a victim's page fetch an arbitrary URL. The
+    guard resolves the value against location.href and requires (a) the SAME origin and
+    (b) a plain `*.json` path. Same-origin alone stops the forgery; the path shape stops
+    a junk value issuing a pointless request and stops a crafted override reaching an
+    unrelated same-origin endpoint (`/../../etc/passwd` normalises to `/etc/passwd`).
+
+    `?patch=` is deliberately NOT restricted this way: docs/api-contract.md documents it
+    as accepting an absolute live-backend URL. The Nest status object is always written
+    beside patch.json on our own origin, so the restriction costs nothing there.
+    """
+    assert "function sameOriginPath(candidate, fallback){" in html
+    guard = _fn_body(html, "function sameOriginPath(candidate, fallback){")
+    assert "new URL(" in guard
+    assert "u.origin !== location.origin" in guard, "must compare origins"
+    assert ".json$" in guard, "must constrain the resolved path shape"
+    assert "return fallback" in guard
+    # the override is routed through the guard, never used raw
+    assert 'const NEST_URL = sameOriginPath(qs.get("nest"), BACKEND_NEST_PATH);' in html
+    assert 'qs.get("nest") ||' not in html, "raw ?nest= must not reach fetch()"
 
 # ── hop button boot / platform (post-#138 regression) ─────────────────────
 def test_logseq_initialized_before_boot_setbandmode(html: str) -> None:

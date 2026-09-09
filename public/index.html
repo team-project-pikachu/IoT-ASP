@@ -440,6 +440,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <div>sink <b id="telSink">unknown</b></div>
       <div>power <b id="telPower">ac120</b></div>
       <div>net <b id="telNet">wifi</b></div>
+      <div>nest <b id="telNestEvent">—</b></div>
+      <div>nest class <b id="telNestClass">—</b></div>
+      <div>nest age <b id="telNestAge">—</b></div>
       <div>hop age <b id="telHopAge">—</b></div>
       <div>ctx resumes <b id="telResumes">0</b></div>
       <div>watchdog <b id="telWatchdog">0</b></div>
@@ -550,6 +553,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const BACKEND_PATCH_PATH = "/patch.json";
   const BACKEND_TELEMETRY_PATH = "/ingest";
   const BACKEND_POLL_MS_DEFAULT = 3000;
+  const BACKEND_NEST_PATH = "/nest.json";   // #101 read-only Nest status mirror
 
   const $ = id => document.getElementById(id);
   const powerBtn = $("power"), powerLabel = $("powerLabel");
@@ -581,6 +585,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const telSensors = $("telSensors"), telSensMic = $("telSensMic"), telSensMotion = $("telSensMotion");
   const telSensOrient = $("telSensOrient"), telSensLight = $("telSensLight");
   const telNight = $("telNight"), telHwBand = $("telHwBand"), telNet = $("telNet");
+  const telNestEvent = $("telNestEvent"), telNestClass = $("telNestClass"), telNestAge = $("telNestAge");
   const telBand = $("telBand"), telPlatform = $("telPlatform"), telSink = $("telSink"), telPower = $("telPower");
   const armSensorsBtn = $("armSensorsBtn");
   const bandUsBtn = $("bandUs"), bandLegend = $("bandLegend"), bandGateNote = $("bandGateNote");
@@ -627,6 +632,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let accelMag=0, lfMag=0, acousticEnergy=-120;
   let pulseOn=true;
   let holdManual=false, lastPeakHz=null, lastPatchAt=0, lastPatchFp="", patchStatus="idle";
+  let nestStatus = null, nestStatusAt = 0;  // #101 declared early: updateTelUI() runs during init
   let pulseMs=120, shriekMs=55;
   // deviceId: persisted localStorage for telemetry. instanceId + seed: per-tab sessionStorage
   // so same-origin peer compare does not collide on shared seed / BroadcastChannel identity.
@@ -679,6 +685,30 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     || BACKEND_TELEMETRY_URL
     || (BACKEND_BASE_URL ? joinBackend(BACKEND_BASE_URL, BACKEND_TELEMETRY_PATH) : "");
   const POLL_MS = Math.max(2000, Math.min(5000, +(qs.get("pollMs") || BACKEND_POLL_MS_DEFAULT)));
+  // CodeQL client-side request forgery: `?nest=` is attacker-controllable via a crafted
+  // link, so it must not be able to point the page's fetch at an arbitrary host. Unlike
+  // `?patch=`, which is DOCUMENTED as accepting an absolute live-backend URL
+  // (docs/api-contract.md), the Nest status object is always same-origin — the backend
+  // writes it beside patch.json — so same-origin is a real restriction that costs nothing.
+  // new URL() also gives an opaque ("null") origin for javascript:/data:, so those fail
+  // the comparison too.
+  function sameOriginPath(candidate, fallback){
+    if (!candidate) return fallback;
+    try {
+      const u = new URL(String(candidate), location.href);
+      if (u.origin !== location.origin) return fallback;
+      // Same-origin is what stops the forgery, but a junk value like "::::" still
+      // resolves same-origin to "/::::" and would issue a pointless request. Require a
+      // plain path so a malformed override falls back instead of guessing.
+      // Tight shape: a plain same-origin *.json path. Blocks junk like "::::" and stops a
+      // crafted override reaching an unrelated same-origin endpoint ("/../../etc/passwd"
+      // normalises to "/etc/passwd" and would otherwise be fetched).
+      if (!/^\/[A-Za-z0-9._~\-/]*\.json$/.test(u.pathname)) return fallback;
+      return u.pathname + u.search;
+    } catch (e) { return fallback; }
+  }
+  const NEST_URL = sameOriginPath(qs.get("nest"), BACKEND_NEST_PATH);
+  const NEST_POLL_MS = Math.max(5000, Math.min(60000, +(qs.get("nestMs") || 15000)));
   const VOL_PATCH_MAX = 100, VOL_STEP = 0.5;
   const BAND_US_LO = 17000, BAND_US_HI = 23000;
   let BAND_ABS_LO = 17000, BAND_ABS_HI = 23000;
@@ -2034,6 +2064,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (telHwBand) telHwBand.textContent = HW_PREF_FMIN + "-" + HW_PREF_FMAX;
     if (telPower) telPower.textContent = POWER_FLEET;
     if (telNet) telNet.textContent = netKind();
+    if (telNestEvent) telNestEvent.textContent = nestStatus ? (nestStatus.nestEvent || "none") : "—";
+    if (telNestClass) telNestClass.textContent = nestStatus ? (nestStatus.nestBurstClass || "—") : "—";
+    if (telNestAge) telNestAge.textContent = nestStatusAt ? (Math.round((Date.now() - nestStatusAt) / 1000) + "s") : "—";
   }
   const refreshLfGateUi = refreshBandUi; // legacy alias
 
@@ -2769,6 +2802,23 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   // Continuous poll while page is open (armed/Signal not required). Errors → "offline"; interval keeps running.
+  // #101 Nest / SDM status surface — DISPLAY ONLY.
+  // The backend poller writes this object; the app never calls the SDM API, holds no
+  // credential, and does not escalate from it. Alarm escalation stays on the patch path
+  // (docs/api-contract.md) so there is exactly one control plane.
+  async function pollNest(){
+    try {
+      const sep = NEST_URL.indexOf("?") >= 0 ? "&" : "?";
+      const r = await fetch(NEST_URL + sep + "_cb=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) return;
+      const j = await r.json();
+      if (!j || typeof j !== "object") return;
+      nestStatus = j;
+      nestStatusAt = Date.now();
+      updateTelUI();
+    } catch (e) { /* offline is normal; tiles simply stay stale */ }
+  }
+
   async function pollPatch(){
     if (holdManual) { patchStatus = "held"; updateTelUI(); return; }
     patchStatus = "polling";
@@ -2807,6 +2857,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   setInterval(beaconTelemetry, 2000);
   setInterval(function(){ alarmTick(performance.now()); }, 200);
   setInterval(pollPatch, POLL_MS); // default 3000 ms; ?pollMs= clamps 2000–5000
+  setInterval(pollNest, NEST_POLL_MS);
   setTimeout(pollPatch, 500);
   updateTelUI();
   monLog("scientific tooling ready · patch " + redactUrlQuery(PATCH_URL) + " · poll " + POLL_MS + "ms (hot-apply)");
