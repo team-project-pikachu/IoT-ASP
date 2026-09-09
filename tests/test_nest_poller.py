@@ -624,7 +624,7 @@ def test_np16_acoustic_event_reaches_the_burst_wire():
     assert result["events"] == 1
     assert puller.acked == ["ack-0"]
 
-    row = [r for r in sink.rows if r.get("nestSource") == mapping.SOURCE_EVENT][0]
+    row = [r for r in sink.rows if r.get("nestSource") == poller.SOURCE_EVENT][0]
     assert row["schemaVersion"] == 1
     assert row["deviceId"] == NODE
     assert row["event"] == "soundBurst"
@@ -649,7 +649,7 @@ def test_np17_poll_heartbeat_and_connectivity_reconciliation():
     assert len(sink.rows) == len(CAMERA_IDS)
     offline = [r for r in sink.rows if r.get("nestConnectivity") == "OFFLINE"]
     assert len(offline) == 1
-    assert offline[0]["nestSource"] == mapping.SOURCE_POLL
+    assert offline[0]["nestSource"] == poller.SOURCE_POLL
     assert offline[0]["nestDeviceRef"] == mapping.device_ref(CAMERA_IDS[0])
     assert offline[0]["nestDeviceType"] == constants.TYPE_CAMERA
 

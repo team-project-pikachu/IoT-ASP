@@ -242,6 +242,46 @@ def normalize_ts(value: Any = None, *, now: float | None = None) -> str:
     return datetime.fromtimestamp(epoch, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def device_state_record(dev: Any) -> dict[str, Any]:
+    """One device → the record written to the private ``meta/nest/state/<ref>.json``.
+
+    Re-homed from ``mapping.device_to_state`` (removed by a8942cf, but still called
+    here — the poller was swallowing the resulting AttributeError into a retry, so
+    ``devices.list`` silently registered nothing). It stays out of mapping because it
+    is deliberately *richer* than the wire allowlist: the private tree keeps trait
+    **names** for diagnostics, which ``WIRE_KEYS`` rightly excludes.
+
+    Safe even if copied somewhere public: truncated ref, device type, connectivity and
+    trait names — never a raw device id, resource name, structure id, or any trait
+    *value*. Trait values include ``sdm.devices.traits.Info.customName``, a user-chosen
+    label that can name a room or a person, so no trait payload is copied.
+    """
+    traits = getattr(dev, "traits", None)
+    trait_names = (
+        sorted(k for k in traits if isinstance(k, str)) if isinstance(traits, Mapping) else []
+    )
+    dev_type = getattr(dev, "type", None)
+    dev_type = dev_type if isinstance(dev_type, str) and dev_type else None
+    connectivity = getattr(dev, "connectivity", None)
+    connectivity = connectivity if isinstance(connectivity, str) and connectivity else None
+    camera_like = getattr(dev, "is_camera_like", None)
+
+    state: dict[str, Any] = {
+        "schemaVersion": 1,
+        "nestDeviceRef": mapping.device_ref(getattr(dev, "device_id", "") or ""),
+        "nestTraits": trait_names,
+        "nestEventTraits": [t for t in trait_names if t in constants.CAMERA_TRAITS],
+        "nestCameraLike": bool(camera_like)
+        if isinstance(camera_like, bool)
+        else dev_type in constants.CAMERA_LIKE_TYPES,
+    }
+    if dev_type is not None:
+        state["nestDeviceType"] = dev_type
+    if connectivity is not None:
+        state["nestConnectivity"] = connectivity
+    return state
+
+
 def wire_to_telemetry(
     wire: Any,
     *,
@@ -856,16 +896,16 @@ class NestPoller:
     def _poll_telemetry(self, device: Any) -> dict[str, Any]:
         """A ``nestSource: "poll"`` heartbeat: reference, type, connectivity, nothing else.
 
-        Deliberately narrower than ``mapping.device_to_state`` (which also lists trait
+        Deliberately narrower than :func:`device_state_record` (which also lists trait
         names for the private ``meta/nest/state`` tree): the public heartbeat carries
         only the wire fields ``docs/api-contract.md`` names for a Nest poll.
         """
-        state = mapping.device_to_state(device)
+        state = device_state_record(device)
         telemetry: dict[str, Any] = {
             "schemaVersion": state.get("schemaVersion"),
             "deviceId": self._node_id,
             "ts": normalize_ts(None, now=float(self._wall_clock())),
-            "nestSource": mapping.SOURCE_POLL,
+            "nestSource": SOURCE_POLL,
         }
         for key in ("nestDeviceRef", "nestDeviceType", "nestConnectivity"):
             value = state.get(key)
@@ -875,7 +915,7 @@ class NestPoller:
 
     def _write_state_record(self, device: Any) -> None:
         """Write ``meta/nest/state/<ref>.json`` (private tree), guarded. Never fatal."""
-        state = mapping.device_to_state(device)
+        state = device_state_record(device)
         ref = str(state.get("nestDeviceRef") or "")
         if not ref:
             return

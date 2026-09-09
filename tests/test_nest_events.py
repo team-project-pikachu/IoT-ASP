@@ -534,10 +534,12 @@ def test_nm03_optional_fields_and_source():
         connectivity="ONLINE",
     )
     assert out["nestSource"] == "poll"
-    assert out["nestDeviceType"] == nc.TYPE_DOORBELL
-    assert out["nestConnectivity"] == "ONLINE"
+    # a8942cf shortens the type on the wire: sdm.devices.types.DOORBELL -> DOORBELL.
+    assert out["nestDeviceType"] == nm.device_type_wire(nc.TYPE_DOORBELL) == "DOORBELL"
     assert out["nestHasClip"] is True
-    assert out["nestEventSessionId"] == ev.event_session_id
+    # Liveness moved to the device fragment as the boolean nestOnline; the event row
+    # no longer carries nestConnectivity, and nestEventSessionId is off the allowlist.
+    assert "nestConnectivity" not in out and "nestEventSessionId" not in out
 
     bare = _row(ev, node_id="node1")
     assert "nestDeviceType" not in bare and "nestConnectivity" not in bare
@@ -545,14 +547,24 @@ def test_nm03_optional_fields_and_source():
 
 
 def test_nm04_ts_falls_back_to_the_injected_clock():
-    """NM-04: an absent / unparseable timestamp uses the injected now, never a real clock."""
-    ev = StubEvent(wire_name="sound", timestamp=None)
-    assert _row(ev, node_id="n", now=0.0)["ts"] == "1970-01-01T00:00:00Z"
-    ev = StubEvent(wire_name="sound", timestamp="not-a-timestamp")
-    assert _row(ev, node_id="n", now=86400.0)["ts"] == "1970-01-02T00:00:00Z"
+    """NM-04: an absent / unparseable timestamp uses the injected now, never a real clock.
+
+    a8942cf moved ts composition out of mapping (``event_to_wire`` no longer takes
+    ``now``) and made the mapper reject anything that is not a real ``NestEvent``, so
+    this asserts the property at ``poller.wire_to_telemetry``, where it now lives.
+    """
+    frag = nm.event_to_wire(ne.parse_event(load("camera_sound")))
+
+    def ts_for(timestamp, now):
+        return npoll.wire_to_telemetry(
+            frag, node_id="n", now=now, source=npoll.SOURCE_EVENT, timestamp=timestamp
+        )["ts"]
+
+    assert ts_for(None, 0.0) == "1970-01-01T00:00:00Z"
+    assert ts_for("not-a-timestamp", 86400.0) == "1970-01-02T00:00:00Z"
     # fractional seconds and offsets normalise to the repo's UTC format
-    ev = StubEvent(wire_name="sound", timestamp="2019-01-01T00:00:01.5Z")
-    assert _row(ev, node_id="n")["ts"] == "2019-01-01T00:00:01Z"
+    assert ts_for("2019-01-01T00:00:01.5Z", 0.0) == "2019-01-01T00:00:01Z"
+    assert ts_for("2019-01-01T00:00:01+00:00", 0.0) == "2019-01-01T00:00:01Z"
 
 
 def test_nm05_node_id_is_required():
@@ -604,7 +616,7 @@ def test_nm06_no_preview_url_or_raw_device_id_at_any_depth():
     assert out["nestHasClip"] is True
 
     # device_to_state (private tree) is safe too: no raw id, no trait values
-    state = nm.device_to_state(
+    state = npoll.device_state_record(
         StubDevice(
             device_id=RAW_ID_SENTINEL,
             traits={nc.TRAIT_INFO: {"customName": "DO-NOT-LEAK-CUSTOM-NAME"}},
@@ -625,7 +637,7 @@ def test_nm07_device_ref_is_stable_truncated_sha256():
     expected = hashlib.sha256(DEVICE_ID.encode()).hexdigest()[:12]
     assert nm.device_ref(DEVICE_ID) == expected
     assert nm.device_ref(DEVICE_NAME) == expected
-    assert len(nm.device_ref(DEVICE_ID)) == nm.DEVICE_REF_LEN
+    assert len(nm.device_ref(DEVICE_ID)) == nm.DEVICE_REF_HEX_LEN
     assert nm.device_ref(DEVICE_ID) != nm.device_ref("other-device-id")
     for empty in ("", "   ", None, 7, "/"):
         assert nm.device_ref(empty) == ""  # type: ignore[arg-type]
@@ -646,9 +658,9 @@ def test_nm08_mapper_never_sets_hold_sudden_vol_or_a_patch_field():
         "relation_update",
     ):
         ev = ne.parse_event(load(fixture))
-        out = _row(
-            ev, node_id="node1", device_type=nc.TYPE_CAMERA, connectivity="ONLINE"
-        )
+        out = _row(ev, node_id="node1", device_type=nc.TYPE_CAMERA)
+        if out is None:
+            continue  # deliberately ignored envelope emits nothing to contain
         leaked = npoll.FORBIDDEN_TELEMETRY_KEYS & set(out)
         assert not leaked, f"{fixture} emitted forbidden key(s): {sorted(leaked)}"
         assert out["schemaVersion"] == 1  # never bumped (NEST_DESIGN.md #1)
@@ -679,12 +691,9 @@ def test_nm09_emitted_keys_are_documented_or_nest_namespaced():
         "relation_update",
     ):
         ev = ne.parse_event(load(fixture))
-        emitted |= set(
-            _row(
-                ev, node_id="node1", device_type=nc.TYPE_CAMERA, connectivity="ONLINE"
-            )
-        )
-    emitted |= set(_row(StubEvent(wire_name="sound"), node_id="n"))
+        row = _row(ev, node_id="node1", device_type=nc.TYPE_CAMERA)
+        if row is not None:
+            emitted |= set(row)
 
     undocumented = {k for k in emitted if k not in documented and not k.startswith("nest")}
     assert not undocumented, f"undocumented non-nest wire keys: {sorted(undocumented)}"

@@ -149,7 +149,17 @@ def main() -> int:
         if ev is None:
             print(f"  {path.name}: not an SDM envelope (ignored)")
             continue
-        tel = mapping.event_to_telemetry(ev, node_id=NODE, now=1767225600.0)
+        wire = mapping.event_to_wire(ev)
+        if wire is None:
+            print(f"  {path.name}: deliberately ignored by the allowlist")
+            continue
+        tel = poller.wire_to_telemetry(
+            wire,
+            node_id=NODE,
+            now=1767225600.0,
+            source=poller.SOURCE_EVENT,
+            timestamp=getattr(ev, "timestamp", None),
+        )
         poller.assert_telemetry_only(tel)
         assert tel["schemaVersion"] == 1, tel
         assert "previewUrl" not in json.dumps(tel), "recording URI reached the wire"
