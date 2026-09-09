@@ -316,9 +316,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     </div>
 
     <div class="grp">
-      <p class="legend">Dwell · random each hop</p>
-      <div class="row"><label for="dMin">min</label><input type="range" id="dMin" min="1" max="60" step="1" value="8"><output id="dMinOut">8 s</output></div>
-      <div class="row"><label for="dMax">max</label><input type="range" id="dMax" min="1" max="60" step="1" value="19"><output id="dMaxOut">19 s</output></div>
+      <p class="legend">Dwell · random each hop · max 1 s</p>
+      <div class="row"><label for="dMin">min</label><input type="range" id="dMin" min="0.1" max="1" step="0.1" value="0.3"><output id="dMinOut">0.3 s</output></div>
+      <div class="row"><label for="dMax">max</label><input type="range" id="dMax" min="0.1" max="1" step="0.1" value="1"><output id="dMaxOut">1.0 s</output></div>
     </div>
 
     <div class="grp">
@@ -576,6 +576,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let ctx=null, osc=null, toneGain=null, bus=null, analyser=null, loopAnalyser=null;
   let running=false, glide=false;
   let nextHopAt=0, lastTarget=19000, hopCount=0;
+  // Hop dwell hard cap: carrier must not sit on one freq longer than 1 s.
+  const DWELL_MIN_S = 0.1, DWELL_MAX_S = 1;
   let algo="hop"; // hop | pulse | shriek | cry | siren | metal
   let vibAuto=false, vibClass="none", lastVibSwitch=0;
   let suddenAuto=true, suddenState="idle", lastSuddenAt=0, geminiAutorouteFlag=false;
@@ -678,8 +680,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const ceilHz   = () => Math.floor(nyquist()*0.98);
   const bandLow  = () => Math.min(+fMin.value, ceilHz());
   const bandHigh = () => Math.min(+fMax.value, ceilHz());
-  const dwellLo  = () => Math.min(+dMin.value,+dMax.value);
-  const dwellHi  = () => Math.max(+dMin.value,+dMax.value);
+  const clampDwellS = s => Math.min(DWELL_MAX_S, Math.max(DWELL_MIN_S, +s || DWELL_MIN_S));
+  const dwellLo  = () => clampDwellS(Math.min(+dMin.value,+dMax.value));
+  const dwellHi  = () => clampDwellS(Math.max(+dMin.value,+dMax.value));
   const level    = () => +vol.value/100;
   function MIN_HOP_DELTA_HZ(){ return Math.max(200, 0.05 * (bandHigh() - bandLow())); }
   const pickFreq  = () => {
@@ -690,7 +693,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     }
     return f;
   };
-  const pickDwell = () => dwellLo() + rand()*(dwellHi()-dwellLo());
+  const pickDwell = () => clampDwellS(dwellLo() + rand()*(dwellHi()-dwellLo()));
 
   // ══ carrier schedulers (hop / pulse / shriek) ══════════════════════════
   // Unbounded loop, refilled against the audio clock so intervals stay exact
@@ -1000,10 +1003,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     const idx = Math.max(0, order.indexOf(algo));
     const next = order[(idx + 1 + Math.floor(rand() * 2)) % order.length];
     setAlgo(next, true);
-    // light param jitter (neighbor-safe)
-    const dSpan = Math.max(1, +dMax.value - +dMin.value);
-    dMin.value = Math.max(1, Math.min(60, +dMin.value + (rand() < 0.5 ? -1 : 1)));
-    dMax.value = Math.max(+dMin.value, Math.min(60, +dMin.value + dSpan));
+    // light param jitter within ≤1 s dwell cap (neighbor-safe)
+    const step = 0.1;
+    const dSpan = Math.max(step, +dMax.value - +dMin.value);
+    dMin.value = clampDwellS(+dMin.value + (rand() < 0.5 ? -step : step));
+    dMax.value = Math.max(+dMin.value, clampDwellS(+dMin.value + dSpan));
     if (typeof syncDwell === "function") syncDwell();
     pulseMs = Math.max(20, Math.min(200, pulseMs + Math.round((rand() - 0.5) * 40)));
     shriekMs = Math.max(20, Math.min(120, shriekMs + Math.round((rand() - 0.5) * 20)));
@@ -1220,9 +1224,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     }
     alignTxToBurstBand(bandBurst);
 
-    const dJump = 3 + Math.floor(rand() * 6);
-    dMin.value = Math.max(1, Math.min(55, +dMin.value + (rand() < 0.5 ? -dJump : dJump)));
-    dMax.value = Math.max(+dMin.value + 1, Math.min(60, +dMin.value + 4 + Math.floor(rand() * 12)));
+    const dJump = 0.1 * (1 + Math.floor(rand() * 3)); // 0.1–0.3 s within ≤1 s cap
+    dMin.value = clampDwellS(+dMin.value + (rand() < 0.5 ? -dJump : dJump));
+    dMax.value = Math.max(+dMin.value, clampDwellS(+dMin.value + 0.1 * (1 + Math.floor(rand() * 4))));
     if (typeof syncDwell === "function") syncDwell();
     pulseMs = Math.max(20, Math.min(200, pulseMs + Math.round((rand() - 0.5) * 80)));
     shriekMs = Math.max(20, Math.min(120, 40 + Math.floor(rand() * 80)));
@@ -2103,11 +2107,13 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   fMax.addEventListener("input", syncBand);
 
   function syncDwell(){
+    dMin.value = clampDwellS(dMin.value);
+    dMax.value = clampDwellS(dMax.value);
     if (+dMin.value > +dMax.value){
       if (document.activeElement === dMin) dMax.value = dMin.value; else dMin.value = dMax.value;
     }
-    dMinOut.textContent = dMin.value + " s";
-    dMaxOut.textContent = dMax.value + " s";
+    dMinOut.textContent = (+dMin.value).toFixed(1) + " s";
+    dMaxOut.textContent = (+dMax.value).toFixed(1) + " s";
   }
   dMin.addEventListener("input", syncDwell);
   dMax.addEventListener("input", syncDwell);

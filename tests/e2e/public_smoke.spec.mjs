@@ -157,7 +157,8 @@ test.describe("public blaster smoke", () => {
     await page.click("#holdPatchBtn");
     await page.click("#suddenOff");
     expect((await state(page)).holdManual).toBe(true);
-    await setDwell(page, 60);
+    // Max hop dwell is 1 s (DWELL_MAX_S). Commit the long end of the allowed band.
+    await setDwell(page, 1);
     await page.click("#power");
     await page.waitForTimeout(1500);
     const s = await state(page);
@@ -173,36 +174,37 @@ test.describe("public blaster smoke", () => {
       expect(errors).toEqual([]);
       return;
     }
-    // first hop delivered with a committed dwell of ~60 s
+    // first hop delivered with a committed dwell of ~1 s (hard cap)
     expect(Number.isFinite(p.lastHopAgeMs) && p.lastHopAgeMs >= 0).toBe(true);
     let w = await watchdog(page);
-    expect(w.committedDwellS).toBeCloseTo(60, 0);
-    expect(w.stallLimitMs).toBe(Math.round(60 * 1.5 * 1000 + 1000));
+    expect(w.committedDwellS).toBeCloseTo(1, 1);
+    expect(w.stallLimitMs).toBe(Math.round(1 * 1.5 * 1000 + 1000));
     // review finding 1: lowering the sliders mid-dwell must NOT change the committed limit nor trip the watchdog
-    await setDwell(page, 1);
-    await page.waitForTimeout(1 * 1.5 * 1000 + 1000 + 2000);
+    // Live min (0.1 s) would make stallLimit≈1150 ms if misread; wait past that but under committed 2500 ms.
+    await setDwell(page, 0.1);
+    await page.waitForTimeout(0.1 * 1.5 * 1000 + 1000 + 600);
     w = await watchdog(page);
-    expect(w.committedDwellS).toBeCloseTo(60, 0);
+    expect(w.committedDwellS).toBeCloseTo(1, 1);
     expect(w.watchdogTrips).toBe(0);
     expect(w.nextHopOverdueMs).toBeLessThan(0);
     expect((await payload(page)).watchdogTrips).toBe(0);
     expect((await log(page)).filter(r => r.event === "watchdog")).toEqual([]);
     await expect(page.locator("#telWatchdog")).toHaveText("0");
     expect(s.algo).toBe((await state(page)).algo);            // no patch applied while held
-    // reschedule under the 1 s dwell (Reseed = reschedule from now) → committed dwell ≈ 1 s, limit 2.5 s
+    // reschedule under the 0.1 s dwell (Reseed = reschedule from now) → committed ≤ 0.1 s, limit ≤ 1150 ms
     await page.click("#reseedBtn");
-    await page.waitForFunction(() => { const w = window.__hop.getWatchdog(); return w.committedDwellS > 0 && w.committedDwellS <= 1.0; }, null, { timeout: 5000 });
+    await page.waitForFunction(() => { const w = window.__hop.getWatchdog(); return w.committedDwellS > 0 && w.committedDwellS <= 0.15; }, null, { timeout: 5000 });
     w = await watchdog(page);
-    expect(w.stallLimitMs).toBeLessThanOrEqual(2500);
+    expect(w.stallLimitMs).toBeLessThanOrEqual(1150);
     expect(w.watchdogTrips).toBe(0);
     // real stall: freeze the audio clock while the context still reports "running"
     await page.evaluate(() => { window.__freezeAudioClock = true; });
-    await page.waitForFunction(() => window.__hop.getWatchdog().watchdogTrips >= 1, null, { timeout: 8000 });
+    await page.waitForFunction(() => window.__hop.getWatchdog().watchdogTrips >= 1, null, { timeout: 5000 });
     const trip = (await log(page)).find(r => r.event === "watchdog" && r.msg === "watchdog reschedule");
     expect(trip).toBeTruthy();
     expect(trip.level).toBe("warn");
     expect(trip.fields.reason).toBe("clockStalled");
-    expect(trip.fields.limitMs).toBeLessThanOrEqual(2500);
+    expect(trip.fields.limitMs).toBeLessThanOrEqual(1150);
     expect(trip.fields.ageMs).toBeGreaterThan(trip.fields.limitMs);
     expect(trip.fields.algo).toBe("hop");
     p = await payload(page);
