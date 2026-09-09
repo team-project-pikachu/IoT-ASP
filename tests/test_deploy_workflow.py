@@ -262,8 +262,9 @@ def test_dp08_secrets_hygiene(raw: str):
         if "echo" in line:
             for var in ("$VT", "$VO", "$VP", "$HP", "$VERCEL_TOKEN", "$VERCEL_DEPLOY_HOOK_PROD"):
                 assert var not in line, line
-    # tokens only ever travel on --token= (run:) or env:, never as literal values
-    assert "--token=${{ secrets.VERCEL_TOKEN }}" in raw
+    # Project-scoped tokens fail with `--token=`; CLI auth is via env VERCEL_TOKEN only.
+    assert "VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}" in raw
+    assert "--token=${{ secrets.VERCEL_TOKEN }}" not in raw
 
 
 # ── DP-09 ────────────────────────────────────────────────────────────────────
