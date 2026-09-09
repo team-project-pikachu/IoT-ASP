@@ -97,8 +97,9 @@ def test_fleet_log_export_and_impulse_sim(html: str) -> None:
     assert "function copyFleetLogJsonl()" in html
     assert "function fleetLogLineFromTel(" in html
     assert 'id="simImpulseBtn"' in html
-    assert "noteImpulse(true, false)" in html
-    note = _fn_body(html, "function noteImpulse(source, deltaHint){")
+    assert 'noteImpulse("simulate", false, true)' in html
+    note = _fn_body(html, "function noteImpulse(source, deltaHint, force){")
+    assert "if (!force && !running && !sensorsArmed)" in note
     assert "enterExtremeFromBurst(" in note
     assert "blastVolJump(" in note
     # #54 SM: EMA accel rise (no gravity baseline warm-up vars)
@@ -314,6 +315,15 @@ def test_hold_manual_short_circuits_preserved(html: str) -> None:
 
 
 # ── review fixes: watchdog judges the COMMITTED schedule, not the live sliders ────
+def test_hop_dwell_capped_at_one_second(html: str) -> None:
+    """Hops must not dwell longer than 1 s (slider max + clampDwellS)."""
+    assert 'const DWELL_MIN_S = 0.1, DWELL_MAX_S = 1;' in html
+    assert 'const clampDwellS =' in html
+    assert 'id="dMin" min="0.1" max="1"' in html
+    assert 'id="dMax" min="0.1" max="1"' in html
+    assert 'pickDwell = () => clampDwellS(' in html
+
+
 def test_watchdog_stall_uses_committed_schedule(html: str) -> None:
     """Lowering dMin/dMax mid-dwell must not trip the watchdog (review finding 1)."""
     limit = _fn_body(html, "function stallLimitMs(){")
