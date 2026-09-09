@@ -59,6 +59,8 @@ struct ContentView: View {
         }
         eng.attach(osc)
         eng.connect(osc, to: eng.mainMixerNode, format: nil)
+        // Keep send-path peak below FS so AirPlay×Beam does not click/clip/go static at high OS volume.
+        eng.mainMixerNode.outputVolume = 0.60
         do {
             try eng.start()
             engine = eng

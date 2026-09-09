@@ -21,6 +21,7 @@ let package = Package(
                 "Alarm/AlarmStateMachine.swift",
                 "Sensors/ImpulseDetector.swift",
                 "Fleet/FleetConfig.swift",
+                "Audio/BeamAirPlayHeadroom.swift",
             ]
         ),
         // XCTest requires full Xcode.app. On CLT-only hosts run:

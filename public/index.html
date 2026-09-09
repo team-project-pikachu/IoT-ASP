@@ -465,14 +465,17 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   </div>
 
   <div class="note warn">
-    <b>Sonos Beam (Gen 2) · max volume without warping.</b> Web Audio → OS default output → Beam.
+    <b>Sonos Beam (Gen 2) · AirPlay · avoid click / clip / static.</b> Web Audio → OS AirPlay → Beam.
     Official Sonos guide lists <b>five Class-D amplifiers</b>, one tweeter + four elliptical midwoofers,
-    adjustable <b>bass / treble / loudness</b>, <b>Trueplay</b>, <b>Speech Enhancement</b>, and <b>Night Sound</b>
+    AirPlay&nbsp;2, adjustable EQ / loudness, Night Sound, Speech Enhancement, Trueplay, and per-room
+    <b>Volume Limit</b> (0–100)
     (<a href="https://www.sonos.com/en-us/guides/beam" style="color:var(--uv-hot)">sonos.com/guides/beam</a>;
     shop <a href="https://www.sonos.com/en-us/shop/beam" style="color:var(--uv-hot)">sonos.com/shop/beam</a>).
-    Night Sound reduces intensity of loud sounds; Speech Enhancement / Loudness / Trueplay also reshape the curve —
-    for clean scientific TX turn those <b>OFF</b> in the Sonos app, set EQ flat, raise <b>OS + Sonos volume to max</b>,
-    and keep Web Audio at 100% without stacking boosts (avoid &gt;0&nbsp;dBFS digital clipping).
+    For clean TX turn Night Sound / Speech / Loudness <b>OFF</b>, set EQ flat. UI stays at <b>100%</b> (C4) but Beam
+    AirPlay digital peak is capped at <b>0.60</b> (−4.4&nbsp;dBFS) so FS content does not stack with high OS/AirPlay
+    volume into <b>audible clicks, clips, or harsh static/crackle</b> (field report above ~60% OS volume — not a Sonos-published 60% spec).
+    Prefer OS/AirPlay volume ≤~60% or a Sonos Volume Limit; raise Sonos player volume for SPL after headroom.
+    See docs/sonos-beam-gen2-airplay-volume-constraints.md.
     Sonos does <b>not</b> publish SPL, wattage, or 17–23&nbsp;kHz FR for Beam Gen 2 — treat ultrasonic as experimental.
   </div>
 
@@ -484,8 +487,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     <code>display:standalone</code>; Add to Dock / Home Screen where supported). Tap <b>Arm sensors</b> or
     <b>Signal on</b> to unlock Web Audio and request mic (plus DeviceMotion / DeviceOrientation on phones;
     Ambient Light often <i>na</i>). Prefer HTTPS (this Vercel deploy). Fleet power: <b>continuous 120&nbsp;V AC</b>.
-    TX band is <b>17–23&nbsp;kHz only</b> (optional 10–20&nbsp;Hz path removed). Max practical level = Web Audio 100%
-    + OS/Sonos volume max + Night Sound / Speech Enhancement / Loudness off (see Beam note above).
+    TX band is <b>17–23&nbsp;kHz only</b> (optional 10–20&nbsp;Hz path removed). Max clean AirPlay level = Web Audio UI 100%
+    with Beam peak headroom 0.60 + Night Sound / Speech / Loudness off (see Beam note above).
   </div>
 
   <div class="note">
@@ -683,8 +686,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   const clampDwellS = s => Math.min(DWELL_MAX_S, Math.max(DWELL_MIN_S, +s || DWELL_MIN_S));
   const dwellLo  = () => clampDwellS(Math.min(+dMin.value,+dMax.value));
   const dwellHi  = () => clampDwellS(Math.max(+dMin.value,+dMax.value));
-  // Gain hard-wired to 100% — no loudness/volume slider; night/patch/nudge cannot lower.
-  const level    = () => 1;
+  // UI / patch still lock at VOL_PATCH_MAX (C4). Beam AirPlay gets digital headroom so
+  // 100% UI does not push FS PCM into the AirPlay×receiver stack (click/clip/static ~60% OS vol).
+  // See docs/sonos-beam-gen2-airplay-volume-constraints.md — 0.60 is policy, not a Sonos spec.
+  const AIRPLAY_BEAM_PEAK = 0.60;
+  const isBeamAirPlaySink = () => (hwCaps.audioSink || "sonos-beam-2") === "sonos-beam-2";
+  const level = () => (isBeamAirPlaySink() ? AIRPLAY_BEAM_PEAK : 1);
   function MIN_HOP_DELTA_HZ(){ return Math.max(200, 0.05 * (bandHigh() - bandLow())); }
   const pickFreq  = () => {
     const lo = bandLow(), hi = bandHigh(), d = MIN_HOP_DELTA_HZ();
@@ -1950,12 +1957,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   }
 
   function applyVolUi(_v, fromNight){
-    // Loudness locked at 100% — ignore requested attenuations (night/patch/nudge).
+    // Loudness locked at 100% UI — ignore requested attenuations (night/patch/nudge).
+    // Peak gain may be AIRPLAY_BEAM_PEAK for Beam AirPlay headroom (not a UI attenuator).
     if (fromNight) nightUserOverride = false;
     vol.value = VOL_PATCH_MAX;
     if (volOut) volOut.textContent = VOL_PATCH_MAX + " %";
-    if (dbfs) dbfs.textContent = "0.0 dBFS";
-    if (toneGain && ctx && !txActive) toneGain.gain.setTargetAtTime(1, ctx.currentTime, 0.02);
+    const peak = Math.max(level(), 0.0002);
+    if (dbfs) dbfs.textContent = (20 * Math.log10(peak)).toFixed(1) + " dBFS";
+    if (toneGain && ctx && !txActive) toneGain.gain.setTargetAtTime(peak, ctx.currentTime, 0.02);
   }
 
   function nightTick(){
@@ -1974,7 +1983,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (bandGateNote) {
       bandGateNote.textContent = "TX " + bandWireTag() + " · " + (hwCaps.platform || "?")
         + " · sink " + (hwCaps.audioSink || "sonos-beam-2")
-        + " · max clean: OS/Sonos vol max, Night Sound/Speech/Loudness OFF";
+        + " · max clean: Beam peak " + AIRPLAY_BEAM_PEAK + " · OS/AirPlay ≤~60% · Night/Speech/Loudness OFF";
     }
     if (telBand) telBand.textContent = bandWireTag();
     if (telPlatform) telPlatform.textContent = hwCaps.platform || "—";
@@ -2837,7 +2846,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     // OS system audio route only — not Web Bluetooth (no GATT / no sink enum in Safari)
     lines.push(row("Audio route", "ok", "OS system output → " + (hwCaps.audioSink || "sonos-beam-2") + " (not Web Bluetooth)"));
     lines.push(row("Sonos Beam 2", "na", "macOS Sound / AirPlay · pair this node 1:1"));
-    lines.push(row("Beam clean TX", "ok", "Night Sound OFF · Speech Enhancement OFF · Loudness OFF · OS+Sonos vol max"));
+    lines.push(row("Beam clean TX", "ok", "Night/Speech/Loudness OFF · digital peak " + AIRPLAY_BEAM_PEAK + " · OS/AirPlay ≤~60%"));
     lines.push(row("Fleet", "ok", "Mac Studio/desktop + phones · Sonos Beam 2 · incoherent TX"));
     lines.push(row("This node", "ok", phoneRole === "tx" ? "Blaster / TX" : phoneRole === "rx" ? "Listen (debug)" : "Carrier only"));
     lines.push(row("Algorithm", "ok", algo + (vibAuto ? " · vib auto (" + vibClass + ")" : " · manual")));

@@ -102,4 +102,5 @@ Apple docs (cite):
 - [connectivity-wifi.md](connectivity-wifi.md) — Google Home Wi‑Fi
 - Specs index: [specs/README.md](specs/README.md) (Project 5 notes for #39 / #41 / #42)
 - Native app: [`native/IoTASP/`](../native/IoTASP/) (fleet sink picker includes Sonos AirPlay)
+- AirPlay volume / click-clip-**static** constraints: [sonos-beam-gen2-airplay-volume-constraints.md](sonos-beam-gen2-airplay-volume-constraints.md)
 - Skills: in-repo [`.claude/skills/awesome-swift-ios/`](../.claude/skills/awesome-swift-ios/SKILL.md) (marketplace source [skills-repo PR #1](https://github.com/team-project-pikachu/skills-repo/pull/1))

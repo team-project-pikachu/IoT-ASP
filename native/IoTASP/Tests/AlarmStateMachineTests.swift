@@ -45,4 +45,8 @@ final class AlarmStateMachineTests: XCTestCase {
         XCTAssertTrue(sinks.contains(.soundcore2A2DP))
         XCTAssertTrue(sinks.contains(.sonosBeamAirPlay))
     }
+
+    func testBeamAirPlayHeadroomPeak() {
+        XCTAssertEqual(BeamAirPlayHeadroom.peakGain, 0.60, accuracy: 0.0001)
+    }
 }

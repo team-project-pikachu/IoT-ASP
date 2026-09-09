@@ -3,7 +3,7 @@
 Primary public sink for hop-ultrasonic on Mac Studio / desktop: **Sonos Beam (Gen 2)** via
 **OS system audio** (macOS Sound / AirPlay / Control Center). **Not** Web Bluetooth.
 
-## Sonos Beam (Gen 2) — official claims (anti-warp / max clean level)
+## Sonos Beam (Gen 2) — official claims + AirPlay clean level
 
 Sources (2026-09-08 Firecrawl scrape):
 
@@ -12,6 +12,7 @@ Sources (2026-09-08 Firecrawl scrape):
 - Night Sound FAQ: <https://faq.sonos.com/nightsound>
 - Speech Enhancement FAQ: <https://faq.sonos.com/tvspeech>
 - EQ / loudness FAQ: <https://faq.sonos.com/eqsettings>
+- AirPlay volume constraints (fleet): [`docs/sonos-beam-gen2-airplay-volume-constraints.md`](docs/sonos-beam-gen2-airplay-volume-constraints.md)
 
 | Spec | Official claim | Implication for HOP |
 |------|----------------|---------------------|
@@ -20,11 +21,13 @@ Sources (2026-09-08 Firecrawl scrape):
 | EQ | Bass, treble, **loudness** adjustable in Sonos app | Loudness warps curve — **OFF** for scientific TX |
 | Trueplay | Room EQ tuning (iOS) | Reshapes response — prefer **OFF** / flat for TX honesty |
 | Speech Enhancement | Clarifies TV dialogue | Dynamic speech DSP — **OFF** for clean carriers |
-| Night Sound | Enhances quiet sounds; **reduces intensity of loud sounds** | Compression / warping at “loud” — **OFF** for max clean TX |
-| SPL / wattage / FR curve | **Not published** on guide/shop pages scraped | Do **not** invent numbers; raise OS + Sonos volume to max instead |
+| Night Sound | Enhances quiet sounds; **reduces intensity of loud sounds** | Compression at “loud” — **OFF** for clean TX |
+| Volume Limit | Per-room max on **0–100** scale (Sonos app) | Optional hardware guard beside software headroom |
+| SPL / wattage / FR curve | **Not published** on guide/shop pages scraped | Do **not** invent numbers |
 
-**Max practical level without warping (app policy):** Web Audio / `VOL_PATCH_MAX` = **100%** (C4);
-OS + Sonos volume max; Night Sound / Speech Enhancement / Loudness **OFF**; EQ flat; no stacked boosts above 0 dBFS.
+**Field symptom (AirPlay):** on **Mac Studio (M4 Max) → AirPlay → Beam Gen 2**, clicking + clipping + **staticky/crackle** above ~60% macOS/AirPlay system volume with near-FS digital content — **not** a Sonos-published 60% spec.
+
+**Max clean AirPlay policy:** Web Audio / `VOL_PATCH_MAX` = **100%** UI (C4); Beam sink digital peak `AIRPLAY_BEAM_PEAK = 0.60` (−4.4 dBFS); prefer OS/AirPlay ≤~60% or Sonos Volume Limit; Night Sound / Speech / Loudness **OFF**; EQ flat; **do not** stack FS Web Audio with max OS + max Sonos volume.
 
 Public TX band is **17–23 kHz only** (optional 10–20 Hz UI removed from the control surface).
 
