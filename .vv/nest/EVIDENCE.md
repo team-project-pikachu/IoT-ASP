@@ -2,8 +2,8 @@
 
 **Configuration item:** `services/autoroute-adk/iot_asp_autoroute/nest/**`, `tests/test_nest_*.py`,
 `scripts/nest_gcp_bootstrap.sh`, `scripts/nest_dev.sh`, `scripts/nest_secrets_headless.sh`.
-**Revision under test:** branch `claude/google-home-integration-l0zu25` merged with base `main` @ `d790831`
-(#183, which locks Web Audio gain at 100% and removes the volume slider).
+**Revision under test:** branch `claude/google-home-integration-l0zu25` merged with base `main` @ `80b32b5`
+(#185, Beam AirPlay headroom; on top of #183, which locks Web Audio gain at 100% and removes the slider).
 **Date (UTC):** 2026-09-09. **Operator:** Claude Code session (remote Linux container).
 **Secrets:** none read, none present. No values appear in this file.
 
@@ -16,9 +16,9 @@
 | `bash scripts/autoroute_dev.sh` | `0` | `OK fleet_log jsonl` |
 | `python3 scripts/mdc_convert.py --check` | `0` | `OK mdc_convert --check` |
 | `bash scripts/nest_gcp_bootstrap.sh` (dry run) | `0` | `OK nest_gcp_bootstrap` |
-| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `557 passed in 45.70s` |
+| `PYTHONPATH=services/autoroute-adk python3 -m pytest tests -q` | `0` | `557 passed in 50.42s` |
 | `… pytest tests/test_nest_*.py -q` | `0` | `224 passed in 11.95s` |
-| `bash tests/e2e/run.sh` | `0` | `11 passed (11.2s)` / `OK e2e` |
+| `bash tests/e2e/run.sh` | `0` | `11 passed (10.9s)` / `OK e2e` |
 | `bash scripts/nest_secrets_headless.sh check` | **`1`** | `FAIL: op not installed (brew install 1password-cli)` |
 
 The last row is an **expected** non-zero: the container has no `op` binary, and the script is
@@ -27,7 +27,10 @@ host with `op` and `OP_SERVICE_ACCOUNT_TOKEN` exported.
 
 Determinism: the suite was run twice from a cleared `__pycache__` at `e41b32a` — `556 passed` both
 times, the second with `-p no:randomly`. The count is `557` in the table above because merging #183
-brought its own tests with it.
+brought its own tests with it. Merging #185 left the count at `557`: it added assertions inside
+existing tests rather than new test functions (verified — no `def test_` added or removed in its
+diff), and those assertions pin exact literals from its own `public/index.html` changes, so a green
+suite is itself proof the merge preserved #185's code verbatim.
 
 Carried from an earlier revision and still the standing explanation: two failures once seen in
 `test_nest_poller.py` were traced to a stale bytecode cache left by a branch reset that briefly
