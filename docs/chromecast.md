@@ -13,7 +13,7 @@ Optional **Google Cast** output path for the public hop / near-ultrasonic PWA. P
 | `/media/us-carrier-19khz.wav` | Same-origin 19 kHz sine (−8 dBFS peak) loaded on session start |
 | Playback-rate nudge | Hop target ≈ `f / 19000` on the carrier bed (approximate) |
 | Headroom | Cast session sets sink `chromecast` and reuses Beam digital peak **0.40** (−8 dBFS); Cast receiver volume also capped near 0.40 |
-| Optional custom receiver | [`/cast-receiver.html`](../public/cast-receiver.html) + `?castAppId=` for true oscillator hops on-device |
+| Optional custom receiver | [`/cast-receiver` (file `public/cast-receiver.html`)](../public/cast-receiver.html) + `?castAppId=` for true oscillator hops on-device |
 
 Sender logic lives in [`public/cast-sender.js`](../public/cast-sender.js); the blaster bootstraps it from [`public/index.html`](../public/index.html).
 
@@ -45,7 +45,7 @@ Same policy family as Beam AirPlay ([sonos-beam-gen2-airplay-volume-constraints.
 | Browser | Cast Web Sender is Chrome/Edge (and Chromium) — not Safari/iOS |
 | HTTPS | Required for Cast on the open web |
 | Default Media Receiver | Plays a **hosted media URL**, not a live `AudioContext` graph. Hop algorithms stay on the OS audio route; Cast gets a carrier bed + rate nudge |
-| Custom hop-on-Cast | Needs a Cast Developer Console **Application ID** pointed at `/cast-receiver.html` (allowlist prod + preview origins), then `?castAppId=` or `<meta name="google-cast-app-id">` |
+| Custom hop-on-Cast | Needs a Cast Developer Console **Application ID** pointed at `/cast-receiver` (file `public/cast-receiver.html`) (allowlist prod + preview origins), then `?castAppId=` or `<meta name="google-cast-app-id">` |
 | Allowlisting | Custom receivers must allowlist Vercel origins; Default Media Receiver does not need sender origin registration for basic media load |
 | Secrets | No Cast API keys in git. App ID is public configuration (meta / query / `localStorage hop.castAppId`) |
 

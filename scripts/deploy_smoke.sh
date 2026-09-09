@@ -136,6 +136,8 @@ public_url_path() {
   local rel="$1"
   case "$rel" in
     index.html) echo "" ;;
+    # Vercel cleanUrls: /foo.html → 308 /foo (smoke must not follow redirects).
+    *.html) echo "/${rel%.html}" ;;
     *) echo "/${rel}" ;;
   esac
 }
