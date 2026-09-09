@@ -34,8 +34,8 @@ Public IoT-ASP scientific tooling. **These are non-negotiable product constraint
 
 | Rule | Detail |
 |------|--------|
-| Default / clamps | Default **vol = 100%** (slider max); autoroute soft/hard clamp ceiling **100** UI percent — not neighbor-safe 8% |
-| Hold | **Hold / Manual** freezes remote patches; human may lower gain locally |
+| Default / clamps | **vol locked = 100%** (no UI attenuator); autoroute soft/hard clamp ceiling **100** UI percent — not neighbor-safe 8% |
+| Hold | **Hold / Manual** freezes remote patches; Web Audio gain stays at 100% (cannot lower via UI) |
 | Warning | **BT absolute volume + speaker hardware/DSP still limit SPL**; app requests max Web Audio gain path only |
 | Drivers | Utilize Soundcore **12 W** dual drivers via OS A2DP + max in-app gain; SDD via the app (**C3**) |
 
