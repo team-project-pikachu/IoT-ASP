@@ -337,9 +337,8 @@ def test_volume_locked_at_100_no_slider(html: str) -> None:
     assert "AIRPLAY_BEAM_PEAK" in html
     assert 'const isBeamAirPlaySink = () => hwCaps.audioSink === "sonos-beam-2";' in html
     assert "const level = () => (isBeamAirPlaySink() ? AIRPLAY_BEAM_PEAK : 1);" in html
-    assert 'hwCaps.audioSink = "sonos-beam-2"' in html or "sonos-beam-2" in html
-    assert "form === \"desktop\") && hwCaps.audioSink === \"unknown\"" in html or \
-           '(isMac || form === "desktop") && hwCaps.audioSink === "unknown"' in html
+    assert '(isMac || form === "desktop") && hwCaps.audioSink === "unknown"' in html
+    assert 'hwCaps.audioSink = "sonos-beam-2";' in html
     apply = _fn_body(html, "function applyVolUi(_v, fromNight){")
     assert "vol.value = VOL_PATCH_MAX;" in apply
     assert "Loudness locked at 100%" in apply or "ignore requested attenuations" in apply

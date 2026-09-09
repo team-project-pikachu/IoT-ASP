@@ -1902,6 +1902,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     hwCaps.platform = id;
     hwCaps.platformLabel = label + (os !== "unknown" ? (" · " + os) : "");
     hwCaps.formFactor = form;
+    // Mac Studio / desktop primary sink is Beam AirPlay (SPEC). Keep phone sinks
+    // explicit (?audioSink= / localStorage) so Soundcore A2DP is not auto-capped.
+    if ((isMac || form === "desktop") && hwCaps.audioSink === "unknown") {
+      hwCaps.audioSink = "sonos-beam-2";
+    }
     if (isMac || form === "desktop") hwCaps.route = "system";
     else if (isIOS) hwCaps.route = "a2dp";
     return hwCaps.platform;
