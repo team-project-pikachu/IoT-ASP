@@ -17,7 +17,7 @@ xcodebuild -version
 On this Studio checkout (2026-09-07): only **Command Line Tools** are active — `xcodebuild` requires full **Xcode.app**. Open the sources in:
 
 - **Xcode** (preferred): File → New → App, drop in `Sources/`, or
-- **Swift Playgrounds** (iPad/Mac): paste **all three** of `SonosRouteShellApp.swift`, `ContentView.swift`, and `RoutePicker.swift` into an App playground (`ContentView` references `RoutePicker`).
+- **Swift Playgrounds** (iPad/Mac): paste `SonosRouteShellApp.swift`, `ContentView.swift`, `RoutePicker.swift`, and `BeamAirPlayHeadroom.swift` into an App playground (`ContentView` references `RoutePicker` and `BeamAirPlayHeadroom`).
 
 ## Session policy (sketch)
 
@@ -38,6 +38,7 @@ See Apple: [Supporting AirPlay in your app](https://developer.apple.com/document
 | `Sources/SonosRouteShellApp.swift` | `@main` app entry |
 | `Sources/ContentView.swift` | Placeholder tone + `AVRoutePickerView` |
 | `Sources/RoutePicker.swift` | `UIViewRepresentable` wrapper |
+| `Sources/BeamAirPlayHeadroom.swift` | Shared AirPlay peak headroom constant |
 
 ## Honesty
 

@@ -140,6 +140,7 @@ def test_backend_url_query_overrides(html: str) -> None:
     """#61 — live URLs via query, never baked secrets."""
     assert 'id="telemetryUrlLabel"' in html
     assert 'id="patchUrlLabel"' in html
+    assert 'qs.get("audioSink")' in html
     assert 'qs.get("patch")' in html or "qs.get('patch')" in html
     assert 'qs.get("telemetry")' in html
     assert 'qs.get("pollMs")' in html
@@ -330,8 +331,11 @@ def test_volume_locked_at_100_no_slider(html: str) -> None:
     assert 'type="range" id="vol"' not in html
     assert 'type="hidden" id="vol" value="100"' in html
     assert "const AIRPLAY_BEAM_PEAK = 0.60;" in html
+    assert 'function normalizeAudioSink(v){' in html
+    assert 'localStorage.getItem("hop.audioSink")' in html
     assert "isBeamAirPlaySink" in html
     assert "AIRPLAY_BEAM_PEAK" in html
+    assert 'const isBeamAirPlaySink = () => hwCaps.audioSink === "sonos-beam-2";' in html
     assert "const level = () => (isBeamAirPlaySink() ? AIRPLAY_BEAM_PEAK : 1);" in html
     apply = _fn_body(html, "function applyVolUi(_v, fromNight){")
     assert "vol.value = VOL_PATCH_MAX;" in apply

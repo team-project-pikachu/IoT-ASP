@@ -424,7 +424,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       <div>hwBand <b id="telHwBand">—</b></div>
       <div>band <b id="telBand">17-23k</b></div>
       <div>platform <b id="telPlatform">—</b></div>
-      <div>sink <b id="telSink">sonos-beam-2</b></div>
+      <div>sink <b id="telSink">unknown</b></div>
       <div>power <b id="telPower">ac120</b></div>
       <div>net <b id="telNet">wifi</b></div>
       <div>hop age <b id="telHopAge">—</b></div>
@@ -472,7 +472,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     (<a href="https://www.sonos.com/en-us/guides/beam" style="color:var(--uv-hot)">sonos.com/guides/beam</a>;
     shop <a href="https://www.sonos.com/en-us/shop/beam" style="color:var(--uv-hot)">sonos.com/shop/beam</a>).
     For clean TX turn Night Sound / Speech / Loudness <b>OFF</b>, set EQ flat. UI stays at <b>100%</b> (C4) but Beam
-    AirPlay digital peak is capped at <b>0.60</b> (−4.4&nbsp;dBFS) so FS content does not stack with high OS/AirPlay
+    AirPlay digital peak is capped at <b>0.60</b> (−4.4&nbsp;dBFS) when <code>?audioSink=sonos-beam-2</code> is configured,
+    so FS content does not stack with high OS/AirPlay
     volume into <b>audible clicks, clips, or harsh static/crackle</b> (field report above ~60% OS volume — not a Sonos-published 60% spec).
     Prefer OS/AirPlay volume ≤~60% or a Sonos Volume Limit; raise Sonos player volume for SPL after headroom.
     See docs/sonos-beam-gen2-airplay-volume-constraints.md.
@@ -635,6 +636,15 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     seedSource = "entropy";
   }
   const qs = new URLSearchParams(location.search);
+  function normalizeAudioSink(v){
+    const sink = String(v || "").trim().toLowerCase();
+    return sink === "sonos-beam-2" || sink === "soundcore-2-a2dp" ? sink : "unknown";
+  }
+  let configuredAudioSink = normalizeAudioSink(qs.get("audioSink") || qs.get("sink"));
+  try {
+    if (configuredAudioSink !== "unknown") localStorage.setItem("hop.audioSink", configuredAudioSink);
+    else configuredAudioSink = normalizeAudioSink(localStorage.getItem("hop.audioSink"));
+  } catch (_) {}
   function joinBackend(base, path){
     if (!base) return path || "";
     const b = String(base).replace(/\/$/, "");
@@ -666,7 +676,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   let txOsc=null, txGain=null, txActive=false, txTimer=null, txLoop=false;
   let micStream=null, micAnalyser=null, micData=null, micOn=false, micSr=0, micStartPending=false;
   let sensorsArmed=false, sensorStatus={audio:"idle",mic:"idle",motion:"idle",orientation:"idle",ambientLight:"na"};
-  let hwCaps={sampleRate:0,nyquist:0,prefFMax:HW_PREF_FMAX,rolloffSuspect:true,motionOk:false,micOk:false,route:"system",lfDriveCapable:false,platform:"unknown",platformLabel:"—",formFactor:"unknown",audioSink:"sonos-beam-2"};
+  let hwCaps={sampleRate:0,nyquist:0,prefFMax:HW_PREF_FMAX,rolloffSuspect:true,motionOk:false,micOk:false,route:"system",lfDriveCapable:false,platform:"unknown",platformLabel:"—",formFactor:"unknown",audioSink:configuredAudioSink};
   let geoAudit={lat:null,lon:null,accuracy:null,source:"none"}; // no street address PII
   let nightActive=false, nightTargetVol=100, nightUserOverride=false, senseStream=null;
   let bandMode="us", lfArmed=false; // TX fixed 17-23k; lfArmed always false (10-20 Hz UI removed)
@@ -690,7 +700,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
   // 100% UI does not push FS PCM into the AirPlay×receiver stack (click/clip/static ~60% OS vol).
   // See docs/sonos-beam-gen2-airplay-volume-constraints.md — 0.60 is policy, not a Sonos spec.
   const AIRPLAY_BEAM_PEAK = 0.60;
-  const isBeamAirPlaySink = () => (hwCaps.audioSink || "sonos-beam-2") === "sonos-beam-2";
+  const audioSinkName = () => hwCaps.audioSink || "unknown";
+  const isBeamAirPlaySink = () => hwCaps.audioSink === "sonos-beam-2";
   const level = () => (isBeamAirPlaySink() ? AIRPLAY_BEAM_PEAK : 1);
   function MIN_HOP_DELTA_HZ(){ return Math.max(200, 0.05 * (bandHigh() - bandLow())); }
   const pickFreq  = () => {
@@ -1891,7 +1902,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     hwCaps.platform = id;
     hwCaps.platformLabel = label + (os !== "unknown" ? (" · " + os) : "");
     hwCaps.formFactor = form;
-    if (!hwCaps.audioSink) hwCaps.audioSink = "sonos-beam-2";
     if (isMac || form === "desktop") hwCaps.route = "system";
     else if (isIOS) hwCaps.route = "a2dp";
     return hwCaps.platform;
@@ -1982,12 +1992,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     if (bandLegend) bandLegend.textContent = "Band · 17k–23k";
     if (bandGateNote) {
       bandGateNote.textContent = "TX " + bandWireTag() + " · " + (hwCaps.platform || "?")
-        + " · sink " + (hwCaps.audioSink || "sonos-beam-2")
-        + " · max clean: Beam peak " + AIRPLAY_BEAM_PEAK + " · OS/AirPlay ≤~60% · Night/Speech/Loudness OFF";
+        + " · sink " + audioSinkName()
+        + " · " + (isBeamAirPlaySink()
+          ? ("max clean: Beam peak " + AIRPLAY_BEAM_PEAK + " · OS/AirPlay ≤~60% · Night/Speech/Loudness OFF")
+          : "max clean: 100% UI (set ?audioSink=sonos-beam-2 for Beam headroom)");
     }
     if (telBand) telBand.textContent = bandWireTag();
     if (telPlatform) telPlatform.textContent = hwCaps.platform || "—";
-    if (telSink) telSink.textContent = hwCaps.audioSink || "sonos-beam-2";
+    if (telSink) telSink.textContent = audioSinkName();
     if (telHwBand) telHwBand.textContent = HW_PREF_FMIN + "-" + HW_PREF_FMAX;
     if (telPower) telPower.textContent = POWER_FLEET;
     if (telNet) telNet.textContent = netKind();
@@ -2526,7 +2538,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
       lfArmed: false,
       platform: hwCaps.platform || "unknown",
       formFactor: hwCaps.formFactor || "unknown",
-      audioSink: hwCaps.audioSink || "sonos-beam-2",
+      audioSink: audioSinkName(),
       power: POWER_FLEET,
       nightNY: !!nightActive,
       nightTargetVol: nightTargetVol,
@@ -2844,9 +2856,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:2px;bac
     lines.push(row("SensorKit (native)", "na", "requires iOS app entitlement — web uses mic + Web Audio"));
 
     // OS system audio route only — not Web Bluetooth (no GATT / no sink enum in Safari)
-    lines.push(row("Audio route", "ok", "OS system output → " + (hwCaps.audioSink || "sonos-beam-2") + " (not Web Bluetooth)"));
+    lines.push(row("Audio route", "ok", "OS system output → " + audioSinkName() + " (not Web Bluetooth)"));
     lines.push(row("Sonos Beam 2", "na", "macOS Sound / AirPlay · pair this node 1:1"));
-    lines.push(row("Beam clean TX", "ok", "Night/Speech/Loudness OFF · digital peak " + AIRPLAY_BEAM_PEAK + " · OS/AirPlay ≤~60%"));
+    lines.push(row("Beam clean TX", isBeamAirPlaySink() ? "ok" : "na",
+      isBeamAirPlaySink()
+        ? ("Night/Speech/Loudness OFF · digital peak " + AIRPLAY_BEAM_PEAK + " · OS/AirPlay ≤~60%")
+        : "set ?audioSink=sonos-beam-2 to enable Beam headroom"));
     lines.push(row("Fleet", "ok", "Mac Studio/desktop + phones · Sonos Beam 2 · incoherent TX"));
     lines.push(row("This node", "ok", phoneRole === "tx" ? "Blaster / TX" : phoneRole === "rx" ? "Listen (debug)" : "Carrier only"));
     lines.push(row("Algorithm", "ok", algo + (vibAuto ? " · vib auto (" + vibClass + ")" : " · manual")));
