@@ -80,11 +80,21 @@ _FORBIDDEN_SUBSTRINGS: Final[tuple[str, ...]] = (
 def device_ref(device_id: str | None) -> str:
     """Truncated SHA-256 of an SDM device id — never the raw id.
 
+    Hashes the **last path segment**, so a bare device id and the full
+    ``enterprises/{project}/devices/{device-id}`` resource name yield the *same*
+    reference. That matters because the two arrive by different routes —
+    ``devices.list`` returns resource names, events carry bare ids — and the ref's
+    whole purpose is to be joinable across records for one physical device. Hashing
+    the raw string gives one camera two refs depending on which call observed it.
+
     Empty / non-string input yields ``""`` so callers can omit the field.
     """
-    if not isinstance(device_id, str) or not device_id:
+    if not isinstance(device_id, str) or not device_id.strip():
         return ""
-    return hashlib.sha256(device_id.encode("utf-8")).hexdigest()[:DEVICE_REF_HEX_LEN]
+    segment = device_id.strip().rstrip("/").rsplit("/", 1)[-1].strip()
+    if not segment:
+        return ""
+    return hashlib.sha256(segment.encode("utf-8")).hexdigest()[:DEVICE_REF_HEX_LEN]
 
 
 def device_type_wire(sdm_type: str | None) -> str | None:

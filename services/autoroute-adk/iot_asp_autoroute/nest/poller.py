@@ -214,8 +214,8 @@ def assert_not_patch_path(object_name: str) -> None:
 EVENT_SOUND_BURST: Final[str] = "soundBurst"
 VIB_CLASS_ACOUSTIC: Final[str] = "acoustic"
 SOURCE_EVENT: Final[str] = "event"
-SOURCE_LIST: Final[str] = "list"
-SOURCE_GET: Final[str] = "get"
+SOURCE_POLL: Final[str] = "poll"
+SOURCES: Final[frozenset[str]] = frozenset({SOURCE_EVENT, SOURCE_POLL})
 
 
 def normalize_ts(value: Any = None, *, now: float | None = None) -> str:
@@ -260,12 +260,16 @@ def wire_to_telemetry(
     """
     if wire is None:
         return None
+    # Both guarantees moved here with the composition and are not test artifacts:
+    # NM-05 — a missing node id is refused, never silently defaulted;
+    # NM-03 — an unrecognised source falls back to "event" rather than reaching the wire.
+    if not isinstance(node_id, str) or not node_id.strip():
+        raise ValueError("refuse: node_id is required")
+    src = source if source in SOURCES else SOURCE_EVENT
     fragment = wire.as_dict() if hasattr(wire, "as_dict") else dict(wire)
     out: dict[str, Any] = {
-        "schemaVersion": constants.SCHEMA_VERSION
-        if hasattr(constants, "SCHEMA_VERSION")
-        else fragment.get("schemaVersion", 1),
-        "deviceId": node_id,
+        "schemaVersion": fragment.get("schemaVersion", 1),
+        "deviceId": node_id.strip(),
         "ts": normalize_ts(timestamp, now=now),
     }
     if fragment.get("nestAcoustic"):
@@ -273,7 +277,7 @@ def wire_to_telemetry(
         out["soundBurst"] = True
         out["vibClass"] = VIB_CLASS_ACOUSTIC
     out.update(fragment)
-    out["nestSource"] = source
+    out["nestSource"] = src
     return out
 
 

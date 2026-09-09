@@ -29,6 +29,7 @@ if str(PKG_ROOT) not in sys.path:
 from iot_asp_autoroute.nest import constants as nc  # noqa: E402
 from iot_asp_autoroute.nest import events as ne  # noqa: E402
 from iot_asp_autoroute.nest import mapping as nm  # noqa: E402
+from iot_asp_autoroute.nest import poller as npoll  # noqa: E402
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "nest"
 API_CONTRACT = ROOT / "docs" / "api-contract.md"
@@ -44,6 +45,24 @@ PREVIEW_SENTINEL = "https://preview-sentinel.invalid/DO-NOT-LEAK-CLIP"
 RAW_ID_SENTINEL = "RAW-DEVICE-ID-DO-NOT-LEAK"
 TOKEN_SENTINEL = "Zx9-TOKEN-SENTINEL-9xZ"
 
+
+
+def _row(ev, *, node_id="node1", now=None, source=None, device_type=None, connectivity=None):
+    """Compose exactly as the poller does: fragment (mapping) → full row (poller).
+
+    a8942cf split these — ``event_to_wire`` returns the allowlisted Nest fragment and
+    ``wire_to_telemetry`` completes the telemetry row. These tests assert the *contract*
+    (burst-field reuse, ts fallback, node/source validation, PII containment), which is a
+    property of the composition, so they exercise the composition rather than either half.
+    """
+    wire = nm.event_to_wire(ev, device_type=device_type)
+    return npoll.wire_to_telemetry(
+        wire,
+        node_id=node_id,
+        now=0.0 if now is None else now,
+        source=npoll.SOURCE_EVENT if source is None else source,
+        timestamp=getattr(ev, "timestamp", None),
+    )
 
 # ── fixtures / fakes ─────────────────────────────────────────────────────────
 
@@ -482,7 +501,7 @@ def test_nm01_acoustic_event_reuses_the_existing_burst_fields():
     """NM-01: sound / chime land on event + soundBurst + vibClass (#86 #103)."""
     for fixture in ("camera_sound", "doorbell_chime"):
         ev = ne.parse_event(load(fixture))
-        out = nm.event_to_wire(ev, node_id="node1", now=1546300801.0)
+        out = _row(ev, node_id="node1", now=1546300801.0)
         assert out["schemaVersion"] == 1
         assert out["deviceId"] == "node1"
         assert out["ts"] == "2019-01-01T00:00:01Z"
@@ -497,7 +516,7 @@ def test_nm02_non_acoustic_events_never_touch_the_burst_path():
     """NM-02 (negative): motion / person / clip_preview set no burst field."""
     for fixture in ("camera_motion", "camera_person", "clip_preview"):
         ev = ne.parse_event(load(fixture))
-        out = nm.event_to_wire(ev, node_id="node1")
+        out = _row(ev, node_id="node1")
         assert "event" not in out
         assert "soundBurst" not in out
         assert "vibClass" not in out
@@ -507,7 +526,7 @@ def test_nm02_non_acoustic_events_never_touch_the_burst_path():
 def test_nm03_optional_fields_and_source():
     """NM-03: device type / connectivity / clip flag are additive and optional."""
     ev = ne.parse_event(load("clip_preview"))
-    out = nm.event_to_wire(
+    out = _row(
         ev,
         node_id="node1",
         source="poll",
@@ -517,23 +536,23 @@ def test_nm03_optional_fields_and_source():
     assert out["nestSource"] == "poll"
     assert out["nestDeviceType"] == nc.TYPE_DOORBELL
     assert out["nestConnectivity"] == "ONLINE"
-    assert out["nestClipAvailable"] is True
+    assert out["nestHasClip"] is True
     assert out["nestEventSessionId"] == ev.event_session_id
 
-    bare = nm.event_to_wire(ev, node_id="node1")
+    bare = _row(ev, node_id="node1")
     assert "nestDeviceType" not in bare and "nestConnectivity" not in bare
-    assert nm.event_to_wire(ev, node_id="node1", source="nonsense")["nestSource"] == "event"
+    assert _row(ev, node_id="node1", source="nonsense")["nestSource"] == "event"
 
 
 def test_nm04_ts_falls_back_to_the_injected_clock():
     """NM-04: an absent / unparseable timestamp uses the injected now, never a real clock."""
     ev = StubEvent(wire_name="sound", timestamp=None)
-    assert nm.event_to_wire(ev, node_id="n", now=0.0)["ts"] == "1970-01-01T00:00:00Z"
+    assert _row(ev, node_id="n", now=0.0)["ts"] == "1970-01-01T00:00:00Z"
     ev = StubEvent(wire_name="sound", timestamp="not-a-timestamp")
-    assert nm.event_to_wire(ev, node_id="n", now=86400.0)["ts"] == "1970-01-02T00:00:00Z"
+    assert _row(ev, node_id="n", now=86400.0)["ts"] == "1970-01-02T00:00:00Z"
     # fractional seconds and offsets normalise to the repo's UTC format
     ev = StubEvent(wire_name="sound", timestamp="2019-01-01T00:00:01.5Z")
-    assert nm.event_to_wire(ev, node_id="n")["ts"] == "2019-01-01T00:00:01Z"
+    assert _row(ev, node_id="n")["ts"] == "2019-01-01T00:00:01Z"
 
 
 def test_nm05_node_id_is_required():
@@ -541,7 +560,7 @@ def test_nm05_node_id_is_required():
     ev = ne.parse_event(load("camera_sound"))
     for bad in (None, "", "   ", 7):
         with pytest.raises(ValueError):
-            nm.event_to_wire(ev, node_id=bad)  # type: ignore[arg-type]
+            _row(ev, node_id=bad)  # type: ignore[arg-type]
 
 
 # ── NM-06: PII containment ───────────────────────────────────────────────────
@@ -571,7 +590,7 @@ def test_nm06_no_preview_url_or_raw_device_id_at_any_depth():
     assert ev.preview_url == PREVIEW_SENTINEL  # held in memory …
     assert ev.device_id == RAW_ID_SENTINEL
 
-    out = nm.event_to_wire(ev, node_id="node1", device_type=nc.TYPE_CAMERA)
+    out = _row(ev, node_id="node1", device_type=nc.TYPE_CAMERA)
     blob = json.dumps(out)
     for sentinel in (PREVIEW_SENTINEL, RAW_ID_SENTINEL, "structure-id", "previewUrl"):
         assert sentinel not in blob, f"{sentinel} leaked into telemetry"
@@ -582,7 +601,7 @@ def test_nm06_no_preview_url_or_raw_device_id_at_any_depth():
 
     # … and the wire carries the hash instead
     assert out["nestDeviceRef"] == nm.device_ref(RAW_ID_SENTINEL)
-    assert out["nestClipAvailable"] is True
+    assert out["nestHasClip"] is True
 
     # device_to_state (private tree) is safe too: no raw id, no trait values
     state = nm.device_to_state(
@@ -627,10 +646,10 @@ def test_nm08_mapper_never_sets_hold_sudden_vol_or_a_patch_field():
         "relation_update",
     ):
         ev = ne.parse_event(load(fixture))
-        out = nm.event_to_wire(
+        out = _row(
             ev, node_id="node1", device_type=nc.TYPE_CAMERA, connectivity="ONLINE"
         )
-        leaked = nm.FORBIDDEN_KEYS & set(out)
+        leaked = npoll.FORBIDDEN_TELEMETRY_KEYS & set(out)
         assert not leaked, f"{fixture} emitted forbidden key(s): {sorted(leaked)}"
         assert out["schemaVersion"] == 1  # never bumped (NEST_DESIGN.md #1)
 
@@ -661,11 +680,11 @@ def test_nm09_emitted_keys_are_documented_or_nest_namespaced():
     ):
         ev = ne.parse_event(load(fixture))
         emitted |= set(
-            nm.event_to_wire(
+            _row(
                 ev, node_id="node1", device_type=nc.TYPE_CAMERA, connectivity="ONLINE"
             )
         )
-    emitted |= set(nm.event_to_wire(StubEvent(wire_name="sound"), node_id="n"))
+    emitted |= set(_row(StubEvent(wire_name="sound"), node_id="n"))
 
     undocumented = {k for k in emitted if k not in documented and not k.startswith("nest")}
     assert not undocumented, f"undocumented non-nest wire keys: {sorted(undocumented)}"
