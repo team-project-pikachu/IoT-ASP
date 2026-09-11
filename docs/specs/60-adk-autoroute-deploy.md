@@ -2,7 +2,9 @@
 
 ## Status
 
-Open MVP control-plane work; design landed in earlier ADK issues.
+**Done on main** for service code + dry-run path. Live GCP deploy remains **owner-gated**.
+
+Evidence: `.vv/60/adk-autoroute-deploy-status.md`
 
 ## Goal
 
@@ -14,11 +16,19 @@ Reuse `docs/adk-autoroute.md`, `docs/api-contract.md`, and the existing ADK serv
 
 ## Shipped on `main`
 
-Service code and dry-run path exist under `services/autoroute-adk/`; production deploy URL is not yet the fleet default.
+| Deliverable | Location |
+|-------------|----------|
+| ADK agent package | `services/autoroute-adk/iot_asp_autoroute/` (`root_agent`, tools, clamps) |
+| HTTP ingest entry | `services/autoroute-adk/ingest_main.py` |
+| Deploy docs | `docs/adk-autoroute.md` (Agent Engine / Cloud Run commands) |
+| Local dry-run | `scripts/autoroute_dev.sh`, `IOT_ASP_AUTOROUTE_DRY_RUN=1` |
+| Compatibility shim | `adk_agent/` (re-exports `root_agent`) |
 
-## Remaining scope
+Production deploy URL is not yet the fleet default.
 
-Owner-gated GCP deploy, documented base URL, and smoke that `?patch=` / telemetry round-trip against the live service.
+## Remaining scope (owner)
+
+Owner-gated GCP deploy, documented base URL, and smoke that `?patch=` / telemetry round-trip against the live service. No secret values or live URLs are invented in-repo.
 
 ## Wire fields
 
@@ -30,7 +40,10 @@ No new contract fields; `docs/api-contract.md` remains canonical for patch/telem
 
 ## Acceptance tests
 
-Deployed service returns schemaVersion-1 patch JSON; local `bash scripts/autoroute_dev.sh` remains green.
+- [x] Service tree + dry-run path present on main
+- [x] Local `bash scripts/autoroute_dev.sh` / CI `autoroute` job path exists
+- [ ] Deployed service returns schemaVersion-1 patch JSON (owner)
+- [ ] Fleet-facing base URL documented after apply (owner)
 
 ## CI gate
 
@@ -44,3 +57,4 @@ GCP billing, IAM, and Agent Engine quotas are outside the static CI surface.
 
 - https://github.com/team-project-pikachu/IoT-ASP/issues/60
 - `docs/adk-autoroute.md`, `docs/api-contract.md`
+- `.vv/60/adk-autoroute-deploy-status.md`
