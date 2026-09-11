@@ -2,7 +2,9 @@
 
 ## Status
 
-`docs/mvp-roadmap.md` maps milestones M0–ship to issue numbers; living doc with closed-log convention.
+**Done on main.** Canonical plan is `docs/roadmap.md` (OS/product surface milestones). Legacy `docs/mvp-roadmap.md` remains as a pointer so old links resolve.
+
+Evidence: [`.vv/69/mvp-roadmap-closeout.md`](../../.vv/69/mvp-roadmap-closeout.md).
 
 ## Goal
 
@@ -14,11 +16,16 @@ Pair with `docs/mvp-closed-log.md` (#65/#68) and `docs/specs/README.md`; do not 
 
 ## Shipped on `main`
 
-In-flight with Balanced PR6 / related docs PRs.
+| Deliverable | Location |
+|-------------|----------|
+| Canonical OS/surface roadmap | `docs/roadmap.md` |
+| Legacy M0–M9 pointer | `docs/mvp-roadmap.md` |
+| Closed-issue audit trail | `docs/mvp-closed-log.md` + append script |
+| Specs index | `docs/specs/README.md` |
 
 ## Remaining scope
 
-Update milestone rows only when ownership changes; closes go to the closed log.
+None for acceptance. Update milestone ownership only when issues move; closes go to the closed log.
 
 ## Wire fields
 
@@ -30,7 +37,10 @@ Public docs stay generic (no street addresses / PII).
 
 ## Acceptance tests
 
-Roadmap links resolve; closed-log convention documents timeline-comment + `--backfill`.
+- [x] Roadmap links resolve
+- [x] Parked vs active called out
+- [x] C1/C2 constraints noted
+- [x] Closed-log convention documented
 
 ## CI gate
 
@@ -38,9 +48,10 @@ Doc presence asserted by `tests/test_mvp_closed_log.py`.
 
 ## Risks / HW limits
 
-Stale milestone rows if not updated when issues move.
+Stale milestone rows if not updated when issues move (process, not code).
 
 ## Sources
 
 - https://github.com/team-project-pikachu/IoT-ASP/issues/69
+- `docs/roadmap.md`
 - `docs/mvp-roadmap.md`
