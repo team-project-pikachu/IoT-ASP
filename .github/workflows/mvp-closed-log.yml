@@ -1,10 +1,10 @@
+name: MVP closed-log append
 # Append closed MVP issues to docs/mvp-closed-log.md
 #
 # Opens/updates PR branch automation/mvp-closed-log (works under main-protection
 # with empty bypass_actors). Optional direct main push: repo variable
 # MVP_CLOSED_LOG_PUSH_MAIN=1 when Actions has a bypass.
 # Related: docs/mvp-roadmap.md, issue #65.
-#
 # Security: never interpolate issue title/body into run: scripts via ${{ }}.
 # Pass only issue number through expressions; fetch title/outcome via gh + env.
 
@@ -16,18 +16,21 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: Issue number to append (backfill)
-        required: true
-      outcome:
-        description: One-line outcome
+        description: "Issue number to append (optional; defaults to event issue)"
         required: false
-        default: closed
 
+# Default GITHUB_TOKEN often has contents: read. Rulesets may block direct push to main.
+# Append failures (auth/API/parse) must fail the job. Push denial is soft-handled separately.
 permissions:
   contents: write
   issues: read
   pull-requests: write
 
+        description: Issue number to append (backfill)
+        required: true
+      outcome:
+        description: One-line outcome
+        default: closed
 concurrency:
   group: mvp-closed-log
   cancel-in-progress: false
@@ -36,48 +39,101 @@ jobs:
   append:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Append closed issue to log
+        id: write
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_FROM_EVENT: ${{ github.event.issue.number }}
+          ISSUE_FROM_INPUT: ${{ github.event.inputs.issue_number }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "${ISSUE_FROM_INPUT:-}" ]; then
+            N="$ISSUE_FROM_INPUT"
+          else
+            N="${ISSUE_FROM_EVENT:-}"
+          fi
+          case "$N" in
+            ''|*[!0-9]*) echo "No valid issue number; skipping"; exit 0 ;;
+          esac
+          echo "n=$N" >> "$GITHUB_OUTPUT"
+          chmod +x scripts/mvp_closed_log_append.sh
+          # Do NOT suppress append failures — only push denial is soft below.
+          bash scripts/mvp_closed_log_append.sh "$N"
+
+      - name: Commit log if changed
+        if: steps.write.outputs.n != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          N: ${{ steps.write.outputs.n }}
+          PUSH_MAIN: ${{ vars.MVP_CLOSED_LOG_PUSH_MAIN || '0' }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          bash scripts/mvp_closed_log_append.sh "$N" || true
+        id: commit
+        continue-on-error: true
+          if git diff --quiet -- docs/mvp-closed-log.md; then
+            echo "No log change"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/mvp-closed-log.md
+          git commit -m "docs: append closed issue #${N} to MVP log"
+
+          if [ "$PUSH_MAIN" = "1" ]; then
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "NOTICE: push to main blocked (ruleset/contents). Falling back to automation branch."
+          fi
+
+          # Unique branch per run avoids non-fast-forward on a shared tip.
+          BRANCH="automation/mvp-closed-log-${N}-${RUN_ID}"
+          if git push -u origin "HEAD:${BRANCH}"; then
+            if gh pr view "$BRANCH" -R "$REPO" >/dev/null 2>&1; then
+              echo "PR for ${BRANCH} already open"
+            else
+              gh pr create -R "$REPO" \
+                --base main \
+                --head "$BRANCH" \
+                --title "chore: mvp closed-log (#${N})" \
+                --body "Append closed issue #${N} to docs/mvp-closed-log.md. Tracks #68."
+            fi
+          else
+            echo "NOTICE: could not push ${BRANCH}; run scripts/mvp_closed_log_append.sh locally (docs/mvp-closed-log.md)."
+            BRANCH="automation/mvp-closed-log"
+            git push -u origin "HEAD:${BRANCH}" || echo "NOTICE: could not push ${BRANCH}; manual CLI path documented in docs/mvp-closed-log.md"
       - name: Resolve issue number
         id: num
-        env:
           EVENT_NAME: ${{ github.event_name }}
           ISSUE_FROM_EVENT: ${{ github.event.issue.number }}
           ISSUE_FROM_INPUT: ${{ inputs.issue_number }}
-        run: |
-          set -euo pipefail
           if [ "$EVENT_NAME" = "issues" ]; then
             N="$ISSUE_FROM_EVENT"
-          else
             N="$ISSUE_FROM_INPUT"
-          fi
           case "$N" in
             ''|*[!0-9]*) echo "invalid issue number: [$N]" >&2; exit 1 ;;
           esac
           echo "n=$N" >> "$GITHUB_OUTPUT"
-
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Append log line (idempotent)
         id: write
-        env:
           GH_TOKEN: ${{ github.token }}
-          EVENT_NAME: ${{ github.event_name }}
           N: ${{ steps.num.outputs.n }}
           INPUT_OUTCOME: ${{ inputs.outcome }}
           REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
           LOG=docs/mvp-closed-log.md
           test -f "$LOG"
           if grep -F "| #${N} |" "$LOG" >/dev/null 2>&1; then
             echo "already_logged=true" >> "$GITHUB_OUTPUT"
             echo "Issue #${N} already in log; skip"
-            exit 0
-          fi
-
           TITLE="$(gh issue view "$N" -R "$REPO" --json title --jq .title)"
-          if [ "$EVENT_NAME" = "issues" ]; then
             # Closing-associated comment from timeline (not latest comment page).
             # Prefer last ISSUE_COMMENT at/before CLOSED_EVENT; else title fallback.
             OUTCOME="$(gh api graphql -f query='
@@ -112,10 +168,7 @@ jobs:
             if [ -z "$OUTCOME" ]; then
               OUTCOME="$TITLE"
             fi
-          else
             OUTCOME="${INPUT_OUTCOME:-closed}"
-          fi
-
           # Sanitize for single-line pipe-delimited log (untrusted text)
           TITLE="$(printf '%s' "$TITLE" | tr '|\n\r' ' /  ' | sed 's/  */ /g' | cut -c1-160)"
           OUTCOME="$(printf '%s' "$OUTCOME" | tr '|\n\r' ' /  ' | sed 's/  */ /g' | cut -c1-200)"
@@ -129,20 +182,10 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
           echo "Appended: $LINE"
-
       - name: Commit via PR branch
         if: steps.write.outputs.already_logged != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          N: ${{ steps.num.outputs.n }}
           LINE: ${{ steps.write.outputs.line }}
           PUSH_MAIN: ${{ vars.MVP_CLOSED_LOG_PUSH_MAIN || '0' }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           BRANCH="automation/mvp-closed-log"
           git fetch origin main
           # Preserve unmerged rows: reuse remote automation branch, then merge main.
@@ -150,30 +193,19 @@ jobs:
             git fetch origin "$BRANCH"
             git checkout -B "$BRANCH" "origin/${BRANCH}"
             git merge --no-edit origin/main
-          else
             git checkout -B "$BRANCH" origin/main
-          fi
-
-          LOG=docs/mvp-closed-log.md
           if ! grep -F "| #${N} |" "$LOG" >/dev/null 2>&1; then
             printf '%s\n' "$LINE" >> "$LOG"
-          fi
           git add "$LOG"
           if git diff --cached --quiet; then
             echo "nothing to commit"
-            exit 0
-          fi
           git commit -m "chore: log closed issue #${N}" -m "Refs #65"
-
           if [ "$PUSH_MAIN" = "1" ]; then
             git push origin "HEAD:main" && exit 0
-          fi
-
           # Fast-forward from remote tip after merge — no force-push of a recreated tip.
           git push -u origin "$BRANCH"
           if gh pr view "$BRANCH" -R "$REPO" >/dev/null 2>&1; then
             echo "PR for ${BRANCH} already open"
-          else
             gh pr create -R "$REPO" \
               --base main \
               --head "$BRANCH" \
@@ -181,10 +213,8 @@ jobs:
               --body "## Summary
           - Append closed issue #${N} to `docs/mvp-closed-log.md`
           - Automation for #65 (no new secrets)
-
           ## Test plan
           - [ ] Diff is a single append-only log line
           - [ ] No secrets in the line
-
           Tracks #65."
           fi
