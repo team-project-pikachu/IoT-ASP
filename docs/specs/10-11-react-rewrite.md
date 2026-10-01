@@ -9,7 +9,30 @@ Related: [01-m0-public-blaster.md](01-m0-public-blaster.md) (the static app this
 `public/index.html` to React / React Strict DOM. Do not block shipping the static blaster." #11 (device
 cards, seed compare, fleet health) depends on #10. This spec does not schedule the rewrite; it records the
 invariants any rewrite must preserve, the build-shape that keeps the repo rules intact, and the
-acceptance gates that would prove the rewrite is behaviour-identical. No code lands with it.
+acceptance gates that would prove the rewrite is behaviour-identical. No React / RSD code lands with it.
+
+## M0 deferral (authoritative)
+
+**Decision:** #10 is **out of M0 ship scope**. Milestone M0 tracks the static hop ultrasonic PWA
+(all-blast, incoherent hops, 1 iPhone ↔ 1 Soundcore 2, Vercel public URL). The React rewrite is
+optional polish and must not block closing M0.
+
+| Criterion | M0 outcome |
+|-----------|------------|
+| Ship path | Static `public/index.html` only (no `web/` package, no npm at repo root) |
+| Issue #10 | Keep `parked` / close as deferred from M0 tracking — **do not** implement rewrite for M0 |
+| Issue #11 React cards | Blocked on #10; static fleet strip already on `main` (see #11 note) |
+| Milestone closeout | Remove #10 (and React portion of #11) from milestone/1 once this deferral is recorded |
+
+**Unpark #10 only when all of the following are true:**
+
+1. Static blaster has field acceptance on ≥3 phones (`#62`) and Vercel prod URL is stable.
+2. `public/index.html` has outgrown maintainability (owner judgment) **or** a native shell (#9 / #41)
+   needs shared RSD components — not before.
+3. Owner Mac clone is not ahead of `origin/main` on `public/index.html` (merge-friction risk in Risks).
+4. A dedicated `web/` scaffold PR lands parity first (Acceptance tests below) before any UX churn.
+
+Until then: no React scaffold, no StyleX/RSD dependency, no `deploy.yml` `web_build` job.
 
 ## Goal
 
@@ -20,22 +43,31 @@ a card per device (`deviceId`, `seed`, `seedSource`, `algo`, `vibClass`, watchdo
 compare view (three phones, incoherence check), and a fleet-health strip (`lastHopAgeMs`, `ctxResumes`,
 `watchdogTrips`, patch status).
 
+## Prior art
+
+- **This repo:** single-file vanilla PWA at `public/index.html` — the only ship surface for M0.
+- **Sibling `hop-ultrasonic`:** also a static `public/index.html` PWA (no React app); useful for
+  UX/copy parity, not a React migration target.
+- **React Strict DOM:** upstream still documents native as work-in-progress; web output would be
+  the only shippable RSD surface if unparked (see Sources).
+- **No prior React scaffold** exists in this repository (`web/` package absent on `main`).
+
 ## Shipped on `main`
 
-Verified by reading `origin/main` @ `0625e91` and the rules:
+Verified by reading `origin/main` @ `ddb6c7b` (2026-09-08) and the rules:
 
 | What | Where |
 |------|-------|
-| Single-file PWA: CSS + HTML + one IIFE script; no bundler, no npm at repo root; Vercel serves `public/` statically | `public/index.html` (1563 lines on `main`); `vercel.json`; `.claude/rules/public-frontend.md:9` |
-| Literals CI asserts: `Hold / Manual` label, `holdManual` wire key, `holdPatchBtn` id, `SCHEMA_VERSION = 1` | `public/index.html:326`, `:435`, `:1358`; `scripts/ci_static_gates.sh` |
-| Patch path order: `pollPatch()` → `applyPatch()` → `clampPatch()`; Hold short-circuits both | `public/index.html:1375-1441` |
-| Web Audio rules: gesture unlock, 48 kHz, mic constraints AEC/NS/AGC off, never route mic to output | `.claude/rules/public-frontend.md:15`; `docs/iphone-bluetooth.md:12-21` |
-| Per-tab seed (`mulberry32`), no shared seed; `localStorage` keys `hop.*` | `public/index.html:496-503`, `:523`; rule `:16` |
-| Telemetry payload = device metrics only, additive under `schemaVersion: 1` | `public/index.html:1332-1359`; `docs/api-contract.md` |
+| Single-file PWA: CSS + HTML + one IIFE script; no bundler, no npm at repo root; Vercel serves `public/` statically | `public/index.html` (~2848 lines / ~135 kB on `main`); `vercel.json`; `.claude/rules/public-frontend.md:9` |
+| Literals CI asserts: `Hold / Manual` label, `holdManual` wire key, `holdPatchBtn` id, `SCHEMA_VERSION = 1` | `scripts/ci_static_gates.sh` + `public/index.html` |
+| Patch path order: `pollPatch()` → `applyPatch()` → `clampPatch()`; Hold short-circuits both | `public/index.html` (Hold / Manual path) |
+| Web Audio rules: gesture unlock, 48 kHz, mic constraints AEC/NS/AGC off, never route mic to output | `.claude/rules/public-frontend.md:15`; `docs/iphone-bluetooth.md` |
+| Per-tab seed (`mulberry32`), no shared seed; `localStorage` keys `hop.*` | `public/index.html`; rule `:16` |
+| Telemetry payload = device metrics only, additive under `schemaVersion: 1` | `public/index.html`; `docs/api-contract.md` |
 | No keys / ADK / Vertex in `public/`; static gate greps `AIza…`, `sk-…`, `PRIVATE KEY`, `apiKey:` | `scripts/ci_static_gates.sh`; `CLAUDE.md` invariant 3 |
-| Static HTML tests + Playwright smoke exist for the current file | `tests/test_public_html.py`, `tests/e2e/` (branch) |
-| Ship pipeline: gates → dev (Vercel preview) → test (smoke) → prod, `vercel build` / `vercel deploy --prebuilt` | `.github/workflows/deploy.yml`, `docs/deploy.md` (branch, spec 27) |
-| Multi-device monitor grid today: single device (`telSeed`, `telMic`, `telVib`, `telHold`) — no fleet view | `public/index.html:359-364`, `:1321-1323` |
+| Static HTML tests + Playwright smoke exist for the current file | `tests/test_public_html.py`, `tests/e2e/` |
+| Ship pipeline: gates → dev (Vercel preview) → test (smoke) → prod | `.github/workflows/deploy.yml`, `docs/deploy.md` |
+| Static multi-device fleet strip (M0-compatible #11 slice): seed compare, Simulate impulse, peer cards | `fleetSeedCompare`, `simImpulseBtn`, fleet panel in `public/index.html` (landed via Balanced PR2 / #66) |
 
 ## Remaining scope (constraints a rewrite must satisfy)
 
@@ -92,7 +124,7 @@ it exists — integration request, not part of this spec.
 4. `grep -rn "bluetooth\|requestDevice" web/src public/index.html` → empty (C1).
 5. Build determinism: two `npm run build` runs produce identical `public/index.html` (or identical hashed bundle set).
 6. #11: with a fixture fleet feed of three devices, two sharing a seed, the seed-compare view renders a warning; health strip turns red when `lastHopAgeMs > 5000`.
-7. Bundle budget: shipped JS ≤ 150 kB gzipped (the static file is ~60 kB); measured in CI and printed as a `::notice`.
+7. Bundle budget: shipped JS ≤ 150 kB gzipped (static `public/index.html` is ~135 kB uncompressed on `main` @ `ddb6c7b`); measured in CI and printed as a `::notice`.
 
 ## CI gate
 
