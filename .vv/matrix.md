@@ -20,13 +20,13 @@ Living matrix. Evidence packages land under `.vv/<issue>/`. Do not mark Project 
 
 | Req ID | Statement | Issue(s) | Verify | Validate | Evidence | Status |
 |--------|-----------|----------|--------|----------|----------|--------|
-| C1-BT | Carrier TX = iOS native A2DP only; no Web Bluetooth TX | #12, #9 | Code/docs audit: no `navigator.bluetooth` for TX | Chrome iOS route uses system BT sink | `.vv/12/`, `.vv/9/` | stub |
-| C3-SDD | App is SDD control surface (discover→…→execute) | #12 | UI + autoroute loop documented | Human Hold/Manual can override Gemini | `.vv/12/` | stub |
-| C4-VOL | Default/max UI vol path 100%; clamps `vol_hard_max=100` | #12 | Unit: `validate_patch` accepts vol≤100; rejects >100 | Night curve not battery-duty; SPL still HW-limited | `.vv/12/` | stub |
-| C5-120V | Continuous **120 V AC**; telemetry `power=ac120` | #12, #17 | Schema allows `power`; dry-run fixtures use `ac120` | No battery-save caps in autoroute prompts | `.vv/12/`, `.vv/17/` | stub |
-| C6-LF | Default band 17–23 kHz; gated **10–20 Hz** when `lfDriveCapable` + armed | #12, #16 | Reject/skip LF when gate false; tag `band` | Systems check honesty when HW `na` | `.vv/12/`, `.vv/16/` | stub |
-| SCH1 | Telemetry + patch `schemaVersion: 1` | #12, #17 | JSON schema / dry-run assert | Frontend polls only; no keys in HTML | `.vv/12/`, `.vv/17/` | stub |
-| HOLD1 | Hold / Manual freezes remote patch apply | #12 | Flag in telemetry; worker respects hold | UI Hold blocks `/patch.json` apply | `.vv/12/` | stub |
+| C1-BT | Carrier TX = iOS native A2DP only; no Web Bluetooth TX | #12, #9 | Code/docs audit: no `navigator.bluetooth` for TX | Chrome iOS route uses system BT sink | `.vv/12/`, `.vv/9/`, `.vv/64/` | pass |
+| C3-SDD | App is SDD control surface (discover→…→execute) | #12 | UI + autoroute loop documented | Human Hold/Manual can override Gemini | `.vv/12/`, `.vv/64/` | pass |
+| C4-VOL | Default/max UI vol path 100%; clamps `vol_hard_max=100` | #12 | Unit: `validate_patch` accepts vol≤100; rejects >100 | Night curve not battery-duty; SPL still HW-limited | `.vv/12/`, `.vv/64/` | pass |
+| C5-120V | Continuous **120 V AC**; telemetry `power=ac120` | #12, #17 | Schema allows `power`; dry-run fixtures use `ac120` | No battery-save caps in autoroute prompts | `.vv/12/`, `.vv/17/`, `.vv/64/` | pass |
+| C6-LF | Default band 17–23 kHz; gated **10–20 Hz** when `lfDriveCapable` + armed | #12, #16 | Reject/skip LF when gate false; tag `band` | Systems check honesty when HW `na` | `.vv/12/`, `.vv/16/`, `.vv/64/` | pass |
+| SCH1 | Telemetry + patch `schemaVersion: 1` | #12, #17 | JSON schema / dry-run assert | Frontend polls only; no keys in HTML | `.vv/12/`, `.vv/17/`, `.vv/64/` | pass |
+| HOLD1 | Hold / Manual freezes remote patch apply | #12 | Flag in telemetry; worker respects hold | UI Hold blocks `/patch.json` apply | `.vv/12/`, `.vv/64/` | pass |
 
 ## Issue #12 — Gemini continuous monitor + audio engineering
 
@@ -80,9 +80,9 @@ Living matrix. Evidence packages land under `.vv/<issue>/`. Do not mark Project 
 
 | Drift ID | Detail | Affects |
 |----------|--------|---------|
-| DRIFT-VOL | `scripts/autoroute_dev.sh` asserts refuse for `vol=50` / hard max 20; `clamps.py` has `vol_hard_max=100` | I12-R1, C4-VOL |
+| DRIFT-VOL | Partially resolved: `clamps.py` and dry-run assert `vol_hard_max=100`; legacy script notes remain for review | I12-R1, C4-VOL |
 | DRIFT-GCPDOC | Missing `docs/gcp-recordings.md` | ops / #17 evidence narrative |
 
 ## Revision
 
-Phase 1: this matrix + `docs/vv/README.md` + stub dirs. Parallel exec lanes may fill `.vv/{12,16,17}/` with procedures/results; Status cells above stay `stub` until integrate lane promotes Project Done. Drift rows remain open until fixed.
+Phase 1 scaffold + 2026-10-16 #64 closeout: cross-cutting C1-BT / C3-SDD / C4-VOL / C5-120V / C6-LF / SCH1 / HOLD1 promoted to `pass` citing existing `.vv/12/` (and siblings) packages. See `.vv/64/vv-matrix-pass-status.md`. Issue-specific I12-* etc. remain stub pending full integrate. No product/wire changes.
