@@ -6,11 +6,11 @@ Owned files: `services/autoroute-adk/iot_asp_autoroute/features_live.py`, `tests
 
 ## Status
 
-**Implemented 2026-09-08 on branch `claude/mdc-conversion-features-gu3yzk` (not yet on `main`).**
-`features_live.py`, `tests/test_features_live.py` (FL-01 … FL-16), the regenerated notebook
-pair and `.vv/colab-sensors.md` are on the branch; the offline path (dry-run mirror) is fully tested in
-CI. The live GCS write is gated behind Colab `userdata` names and is recorded as `live: PENDING` in
-`.vv/colab-sensors.md` until an owner runs the notebook with `LIVE_GCS=1`.
+**Done on main (dry-run / offline path).** Closeout evidence: `.vv/26/colab-gcs-closeout.md` (2026-10-12).
+`features_live.py`, `tests/test_features_live.py` (FL-01 … FL-16), notebooks, `.vv/colab-sensors.md`,
+and the hermetic fixture scripts are on `main`. Offline path is CI-tested.
+Live GCS write remains **owner-gated** (`LIVE_GCS=1` + Colab `userdata` names `GCP_SA_JSON`,
+`IOT_ASP_GCS_BUCKET`); recorded as `live: PENDING` in `.vv/colab-sensors.md`. No secret values in git.
 
 ### Implemented on the branch (differences from the plan below)
 
@@ -183,103 +183,22 @@ Telemetry (optional, additive):
 | Field | Type | Notes |
 |-------|------|-------|
 | `ax` `ay` `az` | number (g) | DeviceMotion accel axes |
-| `gx` `gy` `gz` | number (rad/s) | DeviceMotion rotation-rate axes |
-| `accelAxes` / `gyroAxes` | `[x, y, z]` | 3 floats; synthesised from scalar axes when absent |
-| `outLevel` | number (dB) | TX output level estimate |
-| `micDiff` | number (dB) | `micEnergy − 0.85·outLevel` (α = 0.85); phone value wins when present |
-| `bandBurst` | `lf` \| `us` \| `both` \| absent | LF ≥ −60 dB / US ≥ −55 dB band burst |
-| `soundBurst` | bool | Phone-side burst detector |
-| `extremeActive` | bool | Phone-side extreme-mode flag |
-| `lfEnergy` / `usEnergy` | number (dB) | Band energies |
-| `lastHopAgeMs` | int | ms since last hop |
-| `ctxResumes` / `watchdogTrips` | int | AudioContext resume / watchdog counters |
+| `gx` `gy` `gz` | number (rad/s) | DeviceMotion gyro axes |
+| `accelAxes` `gyroAxes` | [number, number, number] | synthesised if scalars present |
+| `outLevel` | number (dB) | current output level |
+| `micDiff` | number (dB) | micEnergy - 0.85 * outLevel (phone or computed) |
+| `bandBurst` | "lf" \| "us" \| "both" \| null | heuristic band label |
+| `soundBurst` `extremeActive` | bool | frontend burst flags |
+| `lfEnergy` `usEnergy` | number (dB) | felt-proxy / ultrasonic band energy |
+| `lastHopAgeMs` `ctxResumes` `watchdogTrips` | int | counters |
 
-Features object (`meta/features/<deviceId>/<ts>.json`, additive over `colab_etl.extract_features`):
+Features object (written only to `meta/features/`):
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `sensors` | object | Projected latest sensor columns incl. computed `micDiff`, `bandBurst` |
-| `shriekBias` | bool | `soundBurst ∨ extremeActive ∨ micDiff > 6 dB` — hint only, patch author still clamps |
-| `sourceCount` | int | Points consumed (≤ `limit`) |
-| `live` | bool | `true` only when written to GCS with `LIVE_GCS=1` |
-| `sensorColumns` | list[str] | `SENSOR_COLUMNS` |
-| `micDiffAlpha` | number | `0.85` |
-| `writer` | string | `iot_asp_autoroute.features_live` |
+Adds `sensors`, `shriekBias`, `sourceCount`, `live`, `sensorColumns`, `micDiffAlpha`, `sampleHz`, `sourceObjects`, `writer` to the `colab_etl.extract_features` record. `kind` remains `iot_asp_features`. `schemaVersion` remains 1.
 
-## Clamps / safety
+## Acceptance
 
-- **Never writes `meta/patches/`**: `assert_features_path` (which includes `assert_not_patch_path`) raises
-  `ValueError` before any write; the only write target is `meta/features/<node>/<ts>.json`.
-- **Path-safe names**: `node` must match `^[A-Za-z0-9_-]+$` and `ts` must be strict ISO-8601 before an object
-  name is built; `..`, `.`, empty segments, absolute names and backslashes are refused; in dry-run the
-  resolved on-disk target must stay under `DRY_ROOT/meta/features/`. Phone-controlled `ts` values and
-  ADK-tool-supplied `node_id` values therefore cannot redirect a read or write into the `meta/patches/` mirror.
-- No patch authoring here: `shriekBias` is a feature, not a patch; `clamps.validate_patch` remains the single
-  policy source and `tools.write_patch` still refuses on `holdManual`. `holdManual` telemetry is projected
-  unchanged (it is in `TELEMETRY_FEATURE_COLUMNS`), so downstream authors can still refuse.
-- Secrets by name only: `GCP_SA_JSON`, `IOT_ASP_GCS_BUCKET`, `LIVE_GCS`, `GOOGLE_CLOUD_PROJECT`; values never
-  printed, logged, or written into features.
-- Live write requires **both** `LIVE_GCS == "1"` and a non-empty `IOT_ASP_GCS_BUCKET`; anything else is the
-  dry-run mirror. Tests run with `IOT_ASP_AUTOROUTE_DRY_ROOT=<tmp_path>` and never import
-  `google.cloud.storage`.
-- Vib series is `absA`/`a` in g at 1 Hz through the shared `vib_anomaly` (no re-implementation).
-- Physics honesty: `lfEnergy` is a felt-proxy band energy, not infrasound capture; no CFD claims; `bandBurst`
-  thresholds are heuristic labels.
-- No PII: sensor columns are device metrics only.
-
-## Acceptance tests (`tests/test_features_live.py`, offline, deterministic)
-
-| ID | Test | Check |
-|----|------|-------|
-| FL-01 | `mic_diff(-40.0, -30.0)` | `== pytest.approx(-14.5)`; `mic_diff(-40.0, -30.0, given=3.25) == 3.25`; `mic_diff(None, None) == 0.0` |
-| FL-02 | `band_burst` | `(-50,-50)→'both'`, `(-50,-70)→'lf'`, `(-70,-50)→'us'`, `(-70,-70)→None`, `(None,None)→None` |
-| FL-03 | `project_sensor_features` | axes coerced to 3 floats; `accelAxes` synthesised from `ax,ay,az`; a 2-element `gyroAxes` dropped; `bandBurst='nope'` dropped; unknown key ignored |
-| FL-04 | `parse_telemetry_objects` | one `.jsonl` (3 lines, one malformed) + two `.json` → 4 points sorted by `ts` ascending; `latest_points(node, limit=2)` returns the 2 newest; epoch-ms `ts` normalised to ISO |
-| FL-05 | `build_feature_record` | with 12 points: `sourceCount == 12`, `anomaly.n == 12`, `sensors.micDiff == pytest.approx(micEnergy − 0.85·outLevel)`, `kind == "iot_asp_features"`, `schemaVersion == 1` |
-| FL-06 | `shriekBias` | true for `soundBurst=True`; true for `extremeActive=True`; true for `micDiff=6.5`; false for `micDiff=5.9` with both flags false |
-| FL-07 | `run_live` dry-run | `monkeypatch` `gcs_io.DRY_RUN=True`, `gcs_io.DRY_ROOT=tmp_path`, `IOT_ASP_AUTOROUTE_DRY_ROOT=tmp_path`, env `LIVE_GCS` unset: after `_seed_demo` + `run_live("node1", 50)`, exactly one file under `tmp_path/meta/features/node1/`, name ends with `.json` and has no `:`; `not (tmp_path/"meta/patches").exists()`; result `ok is True`, `live is False`, `uri.startswith("file://")`, `sourceCount == 12` |
-| FL-08 | Guard | `assert_not_patch_path("meta/patches/node1.json")` raises `ValueError`; `assert_not_patch_path("meta/features/node1/x.json")` does not |
-| FL-09 | Env gate | with `LIVE_GCS=1` but `IOT_ASP_GCS_BUCKET` unset, `run_live(..., write=False)["live"] is False`; with both set and `write=False` (reads stubbed via `monkeypatch` on `latest_points`), `live is True`, `gcs_io.DRY_RUN` was `False` during the run and restored after, nothing is written; explicit `live=True` without a bucket → `live is False` |
-| FL-10 | No telemetry | `run_live("ghost", write=True)` → `ok is False`, no file created |
-| FL-11 | CLI | `python3 -m iot_asp_autoroute.features_live --node node1 --limit 50 --seed-demo` with `IOT_ASP_AUTOROUTE_DRY_ROOT=<tmp>` exits 0 and prints JSON with `"ok": true` and a `file://` uri (subprocess, `PYTHONPATH=services/autoroute-adk`) |
-| FL-12 | Notebook sync | `.ipynb` parses as JSON with `nbformat == 4`; code-cell sources concatenated contain `userdata.get("GCP_SA_JSON")`, `userdata.get("IOT_ASP_GCS_BUCKET")`, `userdata.get("LIVE_GCS")`, `features_live.run_live(`, `services/autoroute-adk`; do **not** contain `meta/patches` or key-like patterns; the `.md` file contains the same three names and `run_live(`, its ```python fences equal the `.ipynb` code cells in order, and every `.ipynb` markdown cell appears in the `.md` |
-| FL-13 | Constants | `ALL_COLUMNS[:len(TELEMETRY_FEATURE_COLUMNS)] == TELEMETRY_FEATURE_COLUMNS`; `MIC_DIFF_ALPHA == 0.85`; `len(SENSOR_COLUMNS) == 18` |
-| FL-14 | Path-safe names | `assert_not_patch_path` / `assert_features_path` raise on `meta/features/node1/../../patches/node1.json`, `//`, `./`, absolute and `\` names; `validate_node` / `features_object_name` / `list_telemetry_names` / `_seed_demo` / `run_live` raise `ValueError("refuse: node id …")` for `../patches/x`, `node1/../../patches`, `a/b`, `""`, `"node 1"`, `.`, `..` with nothing created under `tmp_path/meta`; `features_object_name("node1", ts)` raises for `z/../../../patches/node1`, `garbage`, `""`, `None`, `2026-13-45` (invalid month/day), `nan`, `True`, `day`, and accepts real ISO variants (`2026-09-08` → `…T00-00-00Z`, `+01:00` offset → UTC, `T00-00-05Z` object-name form); with a pre-existing `meta/patches/node1.json`, a `.jsonl` line `ts="zz/../../../patches/node1"` and a `.json` object `ts="z/../../../patches/node1"` (name stem `2026-09-08T00-00-01Z`), `run_live("node1")` writes only `meta/features/node1/2026-09-08T00-00-09Z.json`, `meta/patches/` still holds exactly the unchanged `node1.json`; CLI `--node ../patches/x --seed-demo` exits 2 with `"ok": false`, `"node id"` in `error`, and no `tmp_path/meta` |
-| FL-15 | Unparseable ts dropped | `.jsonl` lines without `ts` / with `ts="garbage"` are dropped and reported as `{"line": i, "error": "unparseable ts"}`; the remaining `soundBurst` point stays latest → `run_live` writes `…T00-00-09Z.json` with `shriekBias is True`, `sourceCount == 1`; a `.json` object without `ts` uses its name stem (`2026-09-08T00-00-05Z.json` → `2026-09-08T00:00:05Z`) while `notats.json` is dropped; `normalize_ts("garbage") is None` |
-| FL-16 | Dry-run target resolution | `assert_features_path` accepts `meta/features/node1/<ts>.json`, refuses `meta/telemetry/…` and `meta/patches/…`, and refuses `meta/features/linked/<ts>.json` when `linked` is a symlink to a directory outside `DRY_ROOT/meta/features/` (`refuse: … resolves outside`) |
-
-## CI gate
-
-- `tests` job: `python3 -m pytest tests/test_features_live.py -q` (part of `pytest tests -q`) — offline, `tmp_path` dry root.
-- `autoroute` job import smoke may add `from iot_asp_autoroute import features_live` (integration request; not required).
-- `bash scripts/ci_static_gates.sh` and `bash scripts/autoroute_dev.sh` remain unchanged and green (module is not on their path).
-- Live GCS execution is **not** a CI gate (`docs/ci.md` "Out of scope"); evidence is `.vv/colab-sensors.md`.
-
-## Risks / HW limits
-
-- `gcs_io.list_prefix` dry-run only globs `*.json`; `.jsonl` support lives in `features_live.latest_points`
-  (extra glob) rather than a `gcs_io` edit (not owned). Live `list_blobs` returns both.
-- `ts` ordering: object names replace `:` with `-`; sort uses the parsed `ts` field, not the name, so mixed
-  ISO / epoch-ms inputs order correctly. Points whose `ts` cannot be parsed are dropped (reported in `errors`),
-  so a garbage `ts` can neither become "latest" nor name the features object.
-- `ingest_telemetry` (`tools.py`, not owned) still passes `deviceId` / `ts` through with only `:`→`-`; hostile
-  values can therefore land under `meta/telemetry/` in the mirror. `features_live` refuses them on read
-  (`validate_node`, ts normalisation) — a matching input guard in `ingest_telemetry` is an integration request.
-- Sensor fields are not yet emitted by `public/index.html` on `origin/main`; until the Mac frontend merges,
-  live runs will produce records with an empty `sensors` block except computed `micDiff` when
-  `micEnergy`+`outLevel` exist (`micEnergy` is stored "as sent", dB or linear — `micDiff` is only meaningful
-  when both are dB).
-- iOS DeviceMotion at ~1 Hz beacon rate: gyro/accel axes are coarse; LF energy is a felt proxy, not infrasound.
-- Colab service-account JSON is written to a temp file for `GOOGLE_APPLICATION_CREDENTIALS`; the notebook
-  must not print it and the runtime is ephemeral.
-- `google-cloud-storage` pinned `>=2.14,<4` in `services/autoroute-adk/requirements.txt`; the live path is only
-  exercised in Colab, not CI.
-
-## Sources
-
-- Context7 `/jupyter/nbformat` — notebook top-level keys (`cells`, `metadata`, `nbformat: 4`, `nbformat_minor`), markdown/code cell shapes (`cell_type`, `metadata`, `source`, code cells add `execution_count`, `outputs`).
-- Context7 `/googleapis/python-storage` (v3.x) — `Client(project=, credentials=)`, `list_blobs(bucket_or_name, prefix=)`, `Blob.upload_from_string(data, content_type=)`.
-- Firecrawl developer search — Colab secrets API `from google.colab import userdata; userdata.get('<NAME>')`: https://guides.library.stanford.edu/api_auth/colab , https://github.com/googlecolab/colab-vscode/issues/215
-- Firecrawl developer search (prior art, JSONL from GCS): https://clickhouse.com/resources/engineering/read-jsonl-file-python , https://markusodenthal.medium.com/the-easy-way-to-read-files-from-google-cloud-storage-with-pandas-or-dask-3a424b71af14 , chDB `DataStore` factory methods in https://github.com/clickhouse/clickhouse-docs (docs/chdb/datastore/factory-methods.md)
-- Firecrawl developer search (object-name traversal): Apache Airflow "Validate destination paths derived from GCS object names" https://github.com/apache/airflow/issues/67667 ; Cloud Storage flat namespace https://docs.cloud.google.com/storage/docs/hns-overview ; S3 object-key guidance on `.`/`..` segments https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
-- Repo: `docs/api-contract.md`, `docs/colab-gemini-pipeline.md`, `.claude/rules/autoroute-backend.md`, `.claude/rules/docs-and-specs.md`, GitHub issue #26.
+- [x] Offline `--seed-demo` produces `file://` features under `meta/features/` and never `meta/patches/`
+- [x] Path safety: bad node / bad ts / `..` refused before write
+- [x] Tests FL-01 … FL-16 green
+- [ ] Live GCS write with owner `userdata` names (residual)
